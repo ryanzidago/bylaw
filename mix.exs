@@ -6,6 +6,7 @@ defmodule Bylaw.MixProject do
       app: :bylaw,
       version: "0.1.0",
       elixir: "~> 1.19",
+      usage_rules: usage_rules(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -21,8 +22,14 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:dep_from_hexpm, "~> 0.3.0"},
-      # {:dep_from_git, git: "https://github.com/elixir-lang/my_dep.git", tag: "0.1.0"}
+      {:usage_rules, "~> 1.2", only: :dev, runtime: false}
+    ]
+  end
+
+  defp usage_rules do
+    [
+      file: "AGENTS.md",
+      usage_rules: [:usage_rules]
     ]
   end
 end
