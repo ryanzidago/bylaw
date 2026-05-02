@@ -42,8 +42,34 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
     end
 
+    test "passes when delete_all has a keyword where clause" do
+      query = from(Post, where: [status: "archived"])
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "passes when delete_all has a dynamic where expression" do
+      status = "archived"
+      predicate = dynamic([post], post.status == ^status)
+      query = from(post in Post, where: ^predicate)
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "passes when a schema-less delete_all query has a where clause" do
+      query = from(post in "posts", where: field(post, :status) == "archived")
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
     test "passes when delete_all has an or_where clause" do
       query = from(post in Post, or_where: post.status == ^"archived")
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "passes when delete_all has a where clause added through composition" do
+      query = where(Post, [post], post.status == "archived")
 
       assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
     end
@@ -70,6 +96,21 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
 
     test "returns an issue when delete_all cannot find where clauses on a non-query value" do
       assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, :not_a_query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
+    test "passes supported raw query maps with where entries" do
+      query = %{wheres: [%{expr: true, op: :and, params: []}]}
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "returns an issue for supported raw query maps without where entries" do
+      query = %{wheres: []}
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
