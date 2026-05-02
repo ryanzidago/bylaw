@@ -154,7 +154,13 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   defp offset?(%{offset: _offset}), do: true
   defp offset?(_query), do: false
 
-  defp ordered?(%{order_bys: order_bys}) when is_list(order_bys), do: not Enum.empty?(order_bys)
+  defp ordered?(%{order_bys: order_bys}) when is_list(order_bys) do
+    Enum.any?(order_bys, fn
+      %{expr: exprs} when is_list(exprs) -> not Enum.empty?(exprs)
+      _order_by -> false
+    end)
+  end
+
   defp ordered?(_query), do: false
 
   defp exists_query?(:all, query) do

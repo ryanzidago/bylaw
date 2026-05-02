@@ -107,6 +107,27 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert :ok = RequiredOrder.validate(:all, query, [])
     end
 
+    test "returns an issue when limit has an empty order_by" do
+      query = from(post in Post, order_by: [], limit: 10)
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.check == RequiredOrder
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "returns an issue when limit has an empty interpolated order_by" do
+      order_by = []
+      query = from(post in Post, order_by: ^order_by, limit: 10)
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.check == RequiredOrder
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
     test "passes when offset has any order_by" do
       query = from(post in Post, order_by: post.title, offset: 50)
 
