@@ -284,34 +284,45 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
   defp boundary_violations_in_expr(_expr, _fields, _root_aliases), do: []
 
   defp comparison_violation(left, right, operator, fields, root_aliases) do
-    cond do
-      field_comparison?(left, fields, root_aliases) ->
-        left
-        |> field_violation(right, operator, root_aliases)
+    case {checked_root_field(left, fields, root_aliases),
+          checked_root_field(right, fields, root_aliases)} do
+      {{:ok, field}, _right_field} ->
+        field
+        |> field_violation(right, operator)
         |> List.wrap()
 
-      field_comparison?(right, fields, root_aliases) ->
-        right
-        |> field_violation(left, reverse_operator(operator), root_aliases)
+      {:error, {:ok, field}} ->
+        field
+        |> field_violation(left, reverse_operator(operator))
         |> List.wrap()
 
-      true ->
+      {:error, :error} ->
         []
     end
   end
 
-  defp field_comparison?(expr, fields, root_aliases) do
+  defp checked_root_field(expr, fields, root_aliases) do
     case direct_root_field(expr, root_aliases) do
-      {:ok, field} -> MapSet.member?(fields, field)
-      :error -> false
+      {:ok, field} -> checked_field(fields, field)
+      :error -> :error
     end
   end
 
-  defp field_violation(field_expr, other_expr, operator, root_aliases) do
+  defp checked_field(fields, field) when is_atom(field) do
+    if MapSet.member?(fields, field), do: {:ok, field}, else: :error
+  end
+
+  defp checked_field(fields, field) when is_binary(field) do
+    case Enum.find(fields, &(Atom.to_string(&1) == field)) do
+      nil -> :error
+      matched_field -> {:ok, matched_field}
+    end
+  end
+
+  defp field_violation(field, other_expr, operator) do
     if field_reference?(other_expr) do
       nil
     else
-      {:ok, field} = direct_root_field(field_expr, root_aliases)
       violation(field, operator)
     end
   end
@@ -341,8 +352,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
   defp reverse_operator(:>), do: :<
   defp reverse_operator(:>=), do: :<=
 
+  defp direct_root_field({:type, _meta, [expr, _type]}, root_aliases) do
+    direct_root_field(expr, root_aliases)
+  end
+
   defp direct_root_field({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
-       when is_atom(field) do
+       when is_atom(field) or is_binary(field) do
     if root_binding?(source, root_aliases) do
       {:ok, field}
     else
@@ -350,7 +365,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
     end
   end
 
-  defp direct_root_field({:field, _meta, [source, field]}, root_aliases) when is_atom(field) do
+  defp direct_root_field({:field, _meta, [source, field]}, root_aliases)
+       when is_atom(field) or is_binary(field) do
     if root_binding?(source, root_aliases) do
       {:ok, field}
     else
@@ -360,10 +376,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
 
   defp direct_root_field(_expr, _root_aliases), do: :error
 
-  defp field_reference?({{:., _meta, [_source, field]}, _call_meta, []}) when is_atom(field),
-    do: true
+  defp field_reference?({{:., _meta, [_source, field]}, _call_meta, []})
+       when is_atom(field) or is_binary(field),
+       do: true
 
-  defp field_reference?({:field, _meta, [_source, field]}) when is_atom(field), do: true
+  defp field_reference?({:field, _meta, [_source, field]})
+       when is_atom(field) or is_binary(field),
+       do: true
 
   defp field_reference?(expr) when is_tuple(expr) do
     expr
