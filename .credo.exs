@@ -233,7 +233,6 @@
           {Bylaw.Credo.Check.Warning.NoRepoInController, []},
           {Bylaw.Credo.Check.Warning.NoRepoPreloadAfterQuery, []},
           {Bylaw.Credo.Check.Warning.ComposablePreloadQueries, []},
-          {Bylaw.Credo.Check.Warning.NoRepoMutationInLoop, []},
           {Bylaw.Credo.Check.Warning.NoRepoTransaction, []},
           {Bylaw.Credo.Check.Warning.NoGlobalStateInTests, []},
           {Bylaw.Credo.Check.Warning.NoSetupInTests, [excluded_paths: ["test/support/"]]},
