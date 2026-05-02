@@ -35,7 +35,9 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
 
     test "returns unknown for schema-less and malformed sources" do
-      assert Introspection.root_schema(from(post in "posts")) == :unknown
+      query = from(post in "posts")
+
+      assert Introspection.root_schema(query) == :unknown
       assert Introspection.root_schema(%{from: %{source: {"posts", NotSchema}}}) == :unknown
       assert Introspection.root_schema(:not_a_query) == :unknown
     end
@@ -77,6 +79,38 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
   end
 
+  describe "query_branches/1 and combination_path_meta/1" do
+    test "returns root and nested combination branches" do
+      scoped_posts = from(post in Post, where: post.status == "published")
+      archived_posts = from(post in Post, where: post.status == "archived")
+      nested_query = union_all(scoped_posts, ^archived_posts)
+      query = union(scoped_posts, ^nested_query)
+
+      branches = Introspection.query_branches(query)
+
+      assert Enum.map(branches, &elem(&1, 0)) == [
+               [],
+               [{:union, 0}],
+               [{:union, 0}, {:union_all, 0}]
+             ]
+
+      assert Enum.all?(branches, fn {_branch_path, branch_query} ->
+               Introspection.root_schema(branch_query) == {:ok, Post}
+             end)
+    end
+
+    test "formats branch paths for issue metadata" do
+      assert Introspection.combination_path_meta([]) == %{}
+
+      assert Introspection.combination_path_meta([{:union, 0}, {:union_all, 1}]) == %{
+               combination_path: [
+                 %{operation: :union, index: 0},
+                 %{operation: :union_all, index: 1}
+               ]
+             }
+    end
+  end
+
   describe "binding_index/2" do
     test "returns positional and named binding indexes" do
       aliases = %{post: 0, comment: 1}
@@ -95,11 +129,12 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
   describe "field/2" do
     test "returns binding index and field for dot and field call expressions" do
       aliases = %{comment: 1}
+      status_field = dot_field({:&, [], [0]}, :status)
+      organisation_field = field_call({:as, [], [:comment]}, :organisation_id)
 
-      assert Introspection.field(dot_field({:&, [], [0]}, :status), aliases) ==
-               {:ok, {0, :status}}
+      assert Introspection.field(status_field, aliases) == {:ok, {0, :status}}
 
-      assert Introspection.field(field_call({:as, [], [:comment]}, :organisation_id), aliases) ==
+      assert Introspection.field(organisation_field, aliases) ==
                {:ok, {1, :organisation_id}}
     end
 
@@ -110,37 +145,43 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
   describe "root_field/2 and root_fields/2" do
     test "accept root positional fields" do
-      assert Introspection.root_field(dot_field({:&, [], [0]}, :status), %{}) == {:ok, :status}
-      assert Introspection.root_fields(field_call({:&, [], [0]}, :title), %{}) == [:title]
+      status_field = dot_field({:&, [], [0]}, :status)
+      title_field = field_call({:&, [], [0]}, :title)
+
+      assert Introspection.root_field(status_field, %{}) == {:ok, :status}
+      assert Introspection.root_fields(title_field, %{}) == [:title]
     end
 
     test "accept named root fields from aliases maps" do
       aliases = %{post: 0, comment: 1}
+      post_status = dot_field({:as, [], [:post]}, :status)
+      comment_status = field_call({:as, [], [:comment]}, :status)
 
-      assert Introspection.root_field(dot_field({:as, [], [:post]}, :status), aliases) ==
-               {:ok, :status}
+      assert Introspection.root_field(post_status, aliases) == {:ok, :status}
 
-      assert Introspection.root_fields(field_call({:as, [], [:comment]}, :status), aliases) == []
+      assert Introspection.root_fields(comment_status, aliases) == []
     end
 
     test "accept named root fields from root alias sets" do
       root_aliases = MapSet.new([:post])
+      post_status = dot_field({:as, [], [:post]}, :status)
+      comment_status = field_call({:as, [], [:comment]}, :status)
 
-      assert Introspection.root_field(dot_field({:as, [], [:post]}, :status), root_aliases) ==
-               {:ok, :status}
+      assert Introspection.root_field(post_status, root_aliases) == {:ok, :status}
 
-      assert Introspection.root_fields(field_call({:as, [], [:comment]}, :status), root_aliases) ==
-               []
+      assert Introspection.root_fields(comment_status, root_aliases) == []
     end
   end
 
   describe "field_reference?/1" do
     test "detects direct and nested field references" do
-      assert Introspection.field_reference?(dot_field({:&, [], [0]}, :status))
+      status_field = dot_field({:&, [], [0]}, :status)
+      dynamic_status_field = field_call({:&, [], [0]}, "status")
+      nested_field = {:in, [], [:status, [field_call({:&, [], [0]}, :id)]]}
 
-      assert Introspection.field_reference?(
-               {:in, [], [:status, [field_call({:&, [], [0]}, :id)]]}
-             )
+      assert Introspection.field_reference?(status_field)
+      assert Introspection.field_reference?(dynamic_status_field)
+      assert Introspection.field_reference?(nested_field)
     end
 
     test "returns false when no field references are present" do
@@ -150,7 +191,9 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
   describe "schema field helpers" do
     test "return schema field metadata" do
-      assert MapSet.subset?(MapSet.new([:id, :status, :title]), Introspection.schema_fields(Post))
+      expected_fields = MapSet.new([:id, :status, :title])
+
+      assert MapSet.subset?(expected_fields, Introspection.schema_fields(Post))
       assert Introspection.schema_field?(Post, :status)
       refute Introspection.schema_field?(Post, :missing)
     end

@@ -55,7 +55,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.{CheckOptions, Introspection, Issue}
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
+  alias Bylaw.Ecto.Query.Issue
 
   @type field_set :: list(atom())
   @type check_opts :: list({:validate, boolean()})
@@ -124,7 +126,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     query
     |> Map.get(:order_bys, [])
     |> Enum.flat_map(fn order_by ->
-      order_by |> Map.get(:expr, []) |> fields_in_order_expr(root_aliases)
+      order_by
+      |> Map.get(:expr, [])
+      |> fields_in_order_expr(root_aliases)
     end)
     |> Enum.uniq()
     |> Enum.sort()

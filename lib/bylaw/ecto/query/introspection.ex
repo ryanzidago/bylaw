@@ -6,7 +6,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
   built an `Ecto.Query` through the Ecto query API and before the adapter sends
   SQL to the database. This module collects the small pieces of query structure
   that checks commonly need: root schemas, explicit join schemas, aliases,
-  binding references, field references, and schema field metadata.
+  combination branches, binding references, field references, and schema field
+  metadata.
 
   The helpers intentionally inspect the query and expression data produced by
   Ecto. That inspectability is what lets Bylaw enforce application-specific
@@ -19,6 +20,16 @@ defmodule Bylaw.Ecto.Query.Introspection do
   helper. Query checks should treat those values as "not statically proven"
   rather than trying to guess.
   """
+
+  @typedoc """
+  A path from the root query into nested Ecto combination queries.
+  """
+  @type branch_path :: list({atom(), non_neg_integer()})
+
+  @typedoc """
+  A query branch paired with its path from the root query.
+  """
+  @type query_branch :: {branch_path(), term()}
 
   @doc """
   Returns the root schema module for an Ecto query.
@@ -50,7 +61,7 @@ defmodule Bylaw.Ecto.Query.Introspection do
   non-schema sources also return `:skip`.
   """
   @spec explicit_join_schema(term()) :: {:ok, module()} | :skip
-  def explicit_join_schema(%{assoc: assoc}) when not is_nil(assoc), do: :skip
+  def explicit_join_schema(%{assoc: assoc}) when assoc != nil, do: :skip
 
   def explicit_join_schema(%{source: {_source, schema}})
       when is_atom(schema) and not is_nil(schema) do
@@ -88,6 +99,39 @@ defmodule Bylaw.Ecto.Query.Introspection do
       _alias -> []
     end)
     |> MapSet.new()
+  end
+
+  @doc """
+  Returns the root query and every nested combination query branch.
+
+  Ecto stores `union`, `union_all`, `except`, `except_all`, `intersect`, and
+  `intersect_all` branches under the query's combinations. Checks that must
+  validate every branch independently can use this helper to traverse those
+  combinations consistently.
+
+  Each returned tuple contains `{branch_path, query}`. The root query has an
+  empty branch path. Combination branch paths contain `{operation, index}`
+  entries, where `operation` is the combination operation and `index` is the
+  zero-based position within that query's combinations.
+  """
+  @spec query_branches(term()) :: list(query_branch())
+  def query_branches(query) do
+    query
+    |> query_branches([])
+    |> Enum.map(fn {branch_path, branch_query} -> {Enum.reverse(branch_path), branch_query} end)
+  end
+
+  @doc """
+  Formats a combination branch path for issue metadata.
+
+  The root branch returns an empty map. Combination branches return a
+  `:combination_path` list with `%{operation: operation, index: index}` entries.
+  """
+  @spec combination_path_meta(branch_path()) :: map()
+  def combination_path_meta([]), do: %{}
+
+  def combination_path_meta(branch_path) do
+    %{combination_path: Enum.map(branch_path, &combination_path_entry/1)}
   end
 
   @doc """
@@ -181,13 +225,17 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   The expression is traversed recursively through tuples and lists. This helps
   checks reject field-to-field comparisons when only field-to-value predicates
-  should count as explicit query constraints.
+  should count as explicit query constraints. Dynamic field expressions that use
+  string field names are treated as field references too.
   """
   @spec field_reference?(term()) :: boolean()
-  def field_reference?({{:., _meta, [_source, field]}, _call_meta, []}) when is_atom(field),
-    do: true
+  def field_reference?({{:., _meta, [_source, field]}, _call_meta, []})
+      when is_atom(field) or is_binary(field),
+      do: true
 
-  def field_reference?({:field, _meta, [_source, field]}) when is_atom(field), do: true
+  def field_reference?({:field, _meta, [_source, field]})
+      when is_atom(field) or is_binary(field),
+      do: true
 
   def field_reference?(expr) when is_tuple(expr) do
     expr
@@ -205,7 +253,11 @@ defmodule Bylaw.Ecto.Query.Introspection do
   `explicit_join_schema/1` first when the source may not be a schema.
   """
   @spec schema_fields(module()) :: MapSet.t(atom())
-  def schema_fields(schema), do: MapSet.new(schema.__schema__(:fields))
+  def schema_fields(schema) do
+    fields = schema.__schema__(:fields)
+
+    MapSet.new(fields)
+  end
 
   @doc """
   Returns whether `field` is declared by an Ecto schema module.
@@ -215,6 +267,28 @@ defmodule Bylaw.Ecto.Query.Introspection do
   """
   @spec schema_field?(module(), atom()) :: boolean()
   def schema_field?(schema, field), do: field in schema.__schema__(:fields)
+
+  defp query_branches(query, branch_path) do
+    [{branch_path, query} | combination_branches(query, branch_path)]
+  end
+
+  defp combination_branches(%{combinations: combinations}, branch_path)
+       when is_list(combinations) do
+    combinations
+    |> Enum.with_index()
+    |> Enum.flat_map(fn
+      {{combination_operation, combination_query}, combination_index} ->
+        combination_path = [{combination_operation, combination_index} | branch_path]
+        query_branches(combination_query, combination_path)
+
+      {_combination, _combination_index} ->
+        []
+    end)
+  end
+
+  defp combination_branches(_query, _branch_path), do: []
+
+  defp combination_path_entry({operation, index}), do: %{operation: operation, index: index}
 
   defp field(source, field, aliases) do
     case binding_index(source, aliases) do

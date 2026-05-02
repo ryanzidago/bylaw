@@ -37,6 +37,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
@@ -74,9 +76,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
 
-    if enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) do
       case issues(operation, query) do
         [] -> :ok
         [issue] -> {:error, issue}
@@ -91,23 +93,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts), do: opts
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
-
   defp issues(operation, query) when is_map(query) do
-    aliases = query_aliases(query)
+    aliases = Introspection.aliases(query)
     aliases_by_index = aliases_by_index(aliases)
 
     root_as_issues(operation, query, aliases_by_index) ++
@@ -117,9 +104,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp issues(_operation, _query), do: []
-
-  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
-  defp query_aliases(_query), do: %{}
 
   defp aliases_by_index(aliases) do
     Enum.reduce(aliases, %{}, fn
@@ -209,7 +193,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp select_expression_sources(nil), do: []
 
   defp select_expression_sources(select) do
-    List.wrap(expression_source(select, :select, %{}))
+    select
+    |> expression_source(:select, %{})
+    |> List.wrap()
   end
 
   defp by_expression_sources(name, expressions) do
@@ -219,7 +205,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp distinct_expression_sources(nil), do: []
 
   defp distinct_expression_sources(distinct) do
-    List.wrap(expression_source(distinct, :distinct, %{}))
+    distinct
+    |> expression_source(:distinct, %{})
+    |> List.wrap()
   end
 
   defp query_expression_sources(name, expressions) do
@@ -320,9 +308,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp from_source_subqueries(query) do
-    query
-    |> Map.get(:from)
-    |> case do
+    from = Map.get(query, :from)
+
+    case from do
       %{source: source} -> subquery_query(source)
       _from -> []
     end
@@ -363,13 +351,15 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
       check: __MODULE__,
       message: message,
       meta:
-        %{
-          operation: operation,
-          reason: reason,
-          line: line(meta_source),
-          file: file(meta_source)
-        }
-        |> Map.merge(extra_meta)
+        Map.merge(
+          %{
+            operation: operation,
+            reason: reason,
+            line: line(meta_source),
+            file: file(meta_source)
+          },
+          extra_meta
+        )
     }
   end
 

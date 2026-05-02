@@ -20,7 +20,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.{CheckOptions, Introspection, Issue}
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
+  alias Bylaw.Ecto.Query.Issue
 
   @type match :: :any | :all
   @type check_opts ::
@@ -98,7 +100,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
           )
         ]
       else
-        _ -> []
+        _not_applicable -> []
       end
     end)
   end
