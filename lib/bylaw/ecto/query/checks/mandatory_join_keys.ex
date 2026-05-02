@@ -100,7 +100,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
           )
         ]
       else
-        _not_applicable -> []
+        _other -> []
       end
     end)
   end

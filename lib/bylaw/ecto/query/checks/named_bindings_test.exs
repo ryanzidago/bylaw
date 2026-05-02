@@ -337,8 +337,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
   end
 
   defp assert_reasons(issues, reasons) do
-    assert issues
-           |> List.wrap()
-           |> Enum.map(& &1.meta.reason) == reasons
+    issues = List.wrap(issues)
+    assert Enum.map(issues, & &1.meta.reason) == reasons
   end
 end
