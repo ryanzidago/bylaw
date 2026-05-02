@@ -88,6 +88,15 @@ escape hatch.
   Catches impossible root predicates such as `status == :draft` and
   `status == :published` in the same satisfiable branch.
 
+- `Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons`
+
+  Option key: `:date_datetime_mixed_comparisons`
+
+  Required config: none
+
+  Catches direct comparisons between `:date` fields and datetime fields without
+  an explicit date truncation or cast.
+
 - `Bylaw.Ecto.Query.Checks.DeterministicOrder`
 
   Option key: `:deterministic_order`
@@ -124,6 +133,15 @@ escape hatch.
   Catches temporal lower bounds written with `>` and upper bounds written with
   `<=` instead of half-open `>=` and `<` boundaries.
 
+- `Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema`
+
+  Option key: `:hard_delete_on_soft_delete_schema`
+
+  Required config: none
+
+  Catches `delete_all` operations against root schemas that declare persisted
+  soft-delete fields such as `:deleted_at` or `:archived_at`.
+
 - `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
 
   Option key: `:left_join_where_predicates`
@@ -151,6 +169,15 @@ escape hatch.
   Catches root queries that do not constrain configured key fields in supported
   `where` predicates.
 
+- `Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc`
+
+  Option key: `:manual_join_instead_of_assoc`
+
+  Required config: none
+
+  Catches explicit schema joins that duplicate a relationship already declared
+  as an association on the query root schema.
+
 - `Bylaw.Ecto.Query.Checks.NamedBindings`
 
   Option key: `:named_bindings`
@@ -160,6 +187,15 @@ escape hatch.
   Catches root or join bindings without `:as` aliases, plus positional field
   references in query expressions.
 
+- `Bylaw.Ecto.Query.Checks.OffsetWithoutLimit`
+
+  Option key: `:offset_without_limit`
+
+  Required config: none
+
+  Catches queries that use `offset` without `limit`, including nested subqueries
+  and combination branches.
+
 - `Bylaw.Ecto.Query.Checks.RequiredOrder`
 
   Option key: `:required_order`
@@ -168,6 +204,24 @@ escape hatch.
 
   Catches queries with `limit`, `offset`, or stream operations that do not
   include `order_by`.
+
+- `Bylaw.Ecto.Query.Checks.UnboundedDeletes`
+
+  Option key: `:unbounded_deletes`
+
+  Required config: none
+
+  Catches `delete_all` queries where any possible root branch has no
+  non-literal-true `where` predicate.
+
+- `Bylaw.Ecto.Query.Checks.UnboundedUpdates`
+
+  Option key: `:unbounded_updates`
+
+  Required config: none
+
+  Catches `update_all` queries that do not include at least one non-literal-true
+  root `where` predicate.
 
 - `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
 
@@ -179,7 +233,7 @@ escape hatch.
 
 ## Suggested Starting Set
 
-Start with checks that do not require application-specific configuration:
+One conservative starting set is:
 
 ```elixir
 @checks [
@@ -192,6 +246,21 @@ Start with checks that do not require application-specific configuration:
 ```
 
 No `@bylaw` configuration is required for these checks.
+
+Other zero-config checks can be added when the matching risk matters for the
+application:
+
+```elixir
+@checks [
+  Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
+  Bylaw.Ecto.Query.Checks.DuplicateJoins,
+  Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema,
+  Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc,
+  Bylaw.Ecto.Query.Checks.OffsetWithoutLimit,
+  Bylaw.Ecto.Query.Checks.UnboundedDeletes,
+  Bylaw.Ecto.Query.Checks.UnboundedUpdates
+]
+```
 
 Then add configured checks where the application has clear invariants:
 
