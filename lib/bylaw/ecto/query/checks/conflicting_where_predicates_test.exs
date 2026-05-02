@@ -75,7 +75,6 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.check == ConflictingWherePredicates
-      assert issue.code == :conflicting_where_predicates
       assert issue.message == "expected enum where predicates on :status to agree on a value"
       assert issue.meta.operation == :all
       assert issue.meta.field == :status

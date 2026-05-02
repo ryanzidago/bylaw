@@ -86,10 +86,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    if disabled?(check_opts) do
-      :ok
-    else
+    if enabled?(check_opts) do
       validate_enabled(operation, query)
+    else
+      :ok
     end
   end
 
@@ -124,7 +124,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_enabled(operation, query) do
     case root_schema(query) do
@@ -364,7 +364,6 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp issue(operation, schema, field, predicates) do
     %Issue{
       check: __MODULE__,
-      code: :conflicting_where_predicates,
       message: "expected enum where predicates on #{inspect(field)} to agree on a value",
       meta: %{
         operation: operation,
