@@ -55,8 +55,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   The check is static. It accepts configured root fields when they appear
   directly in `where` expressions, including `is_nil(field)`, `not is_nil(field)`,
-  bare field predicates, comparisons, and `in` predicates. It cannot prove
-  visibility fields hidden inside raw SQL fragments or subqueries.
+  bare field predicates, comparisons against values or parameters, and `in`
+  predicates whose right side has no field references. Field-to-field
+  comparisons are not treated as explicit constraints. It cannot prove visibility
+  fields hidden inside raw SQL fragments or subqueries.
 
   When the root query schema is not configured, the check returns `:ok`.
   Configured fields that do not exist on the root schema are ignored. If no

@@ -203,6 +203,20 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
+    test "does not accept field/2 visibility fields compared to other root fields" do
+      query =
+        from(post in Post,
+          where: is_nil(field(post, :deleted_at)),
+          where: field(post, :status) == field(post, :title)
+        )
+
+      assert {:error, %Issue{} = issue} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      assert issue.meta.missing_fields == [:status]
+      assert issue.meta.found_visibility_fields == [:deleted_at]
+    end
+
     test "passes when configured fields are referenced from named root bindings" do
       query =
         from(post in Post,
@@ -223,6 +237,21 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
         )
 
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
+    end
+
+    test "does not accept field/2 visibility fields compared to named root fields" do
+      query =
+        from(post in Post,
+          as: :post,
+          where: is_nil(field(as(:post), :deleted_at)),
+          where: field(as(:post), :status) == field(as(:post), :title)
+        )
+
+      assert {:error, %Issue{} = issue} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      assert issue.meta.missing_fields == [:status]
+      assert issue.meta.found_visibility_fields == [:deleted_at]
     end
 
     test "passes for every Ecto prepare_query operation when explicit predicates are present" do
