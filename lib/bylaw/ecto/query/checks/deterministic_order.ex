@@ -47,10 +47,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
-  The check is static. It infers root schema primary keys with
-  `c:Ecto.Schema.__schema__/1`. Schema-less queries and schemas without primary
-  keys cannot be proven deterministic by this check, so ordered queries in those
-  cases return an issue unless validation is explicitly disabled.
+  The check is static. It infers root schema primary keys with Ecto schema
+  reflection. Schema-less queries and schemas without primary keys cannot be
+  proven deterministic by this check, so ordered queries in those cases return
+  an issue unless validation is explicitly disabled.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
