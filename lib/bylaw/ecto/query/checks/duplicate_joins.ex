@@ -78,10 +78,10 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    if disabled?(check_opts) do
-      :ok
-    else
+    if enabled?(check_opts) do
       validate_enabled(operation, query)
+    else
+      :ok
     end
   end
 
@@ -116,7 +116,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_enabled(operation, query) do
     case duplicate_issues(operation, query) do
@@ -304,7 +304,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   defp issue(operation, join, join_index, binding_index, original) do
     %Issue{
       check: __MODULE__,
-      code: :duplicate_join,
       message: message(join_index, original.join_index),
       meta: %{
         operation: operation,

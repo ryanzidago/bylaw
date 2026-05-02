@@ -70,7 +70,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.check == DuplicateJoins
-      assert issue.code == :duplicate_join
 
       assert issue.message ==
                "expected query not to repeat equivalent joins; join 1 duplicates join 0"
