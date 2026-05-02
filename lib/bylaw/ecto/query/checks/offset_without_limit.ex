@@ -113,15 +113,30 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   defp limited?(%{limit: limit}), do: expression_present?(limit)
   defp limited?(_query), do: false
 
-  defp expression_present?(%{expr: {:^, _meta, [index]}, params: params})
-       when is_integer(index) and is_list(params) do
+  defp expression_present?(%{expr: expr, params: params}) when is_list(params) do
+    expression_present?(expr, params)
+  end
+
+  defp expression_present?(%{expr: expr}) do
+    expression_present?(expr, [])
+  end
+
+  defp expression_present?(_expr), do: true
+
+  defp expression_present?(nil, _params), do: false
+
+  defp expression_present?({:^, _meta, [index]}, params) when is_integer(index) do
     case Enum.fetch(params, index) do
       {:ok, param} -> not nil_param?(param)
       :error -> true
     end
   end
 
-  defp expression_present?(_expr), do: true
+  defp expression_present?({:type, _meta, [expr, _type]}, params) do
+    expression_present?(expr, params)
+  end
+
+  defp expression_present?(_expr, _params), do: true
 
   defp nil_param?({nil, _type}), do: true
   defp nil_param?(nil), do: true
@@ -129,7 +144,8 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   defp nested_queries(query) do
     source_queries(query) ++
-      join_queries(query) ++ cte_queries(query) ++ combination_queries(query)
+      join_queries(query) ++
+      cte_queries(query) ++ combination_queries(query) ++ expression_subquery_queries(query)
   end
 
   defp source_queries(%{from: %{source: source}}), do: subquery_source_queries(source)
@@ -161,6 +177,29 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   end
 
   defp combination_queries(_query), do: []
+
+  defp expression_subquery_queries(query) do
+    Enum.flat_map(
+      [:distinct, :select, :wheres, :havings, :order_bys, :group_bys, :windows],
+      fn field ->
+        query
+        |> Map.get(field)
+        |> expression_subqueries()
+      end
+    )
+  end
+
+  defp expression_subqueries(expressions) when is_list(expressions) do
+    Enum.flat_map(expressions, &expression_subqueries/1)
+  end
+
+  defp expression_subqueries({_name, expression}), do: expression_subqueries(expression)
+
+  defp expression_subqueries(%{subqueries: subqueries}) when is_list(subqueries) do
+    Enum.flat_map(subqueries, &subquery_source_queries/1)
+  end
+
+  defp expression_subqueries(_expression), do: []
 
   defp subquery_source_queries(%{__struct__: Ecto.SubQuery, query: query}), do: [query]
   defp subquery_source_queries(_source), do: []
