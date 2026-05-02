@@ -168,6 +168,12 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   defp repo_queryable_file?(_file), do: false
 
+  defp ecto_query_planner_file?(file) when is_binary(file) do
+    String.ends_with?(file, "/ecto/query/planner.ex")
+  end
+
+  defp ecto_query_planner_file?(_file), do: false
+
   defp repo_lookup_expr?({:and, _meta, [left, right]}) do
     repo_lookup_expr?(left) and repo_lookup_expr?(right)
   end
@@ -192,14 +198,11 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     repo_queryable_file?(source.file) and repo_lookup_expr?(source.expr)
   end
 
-  defp repo_lookup_expression_source?(source) do
-    positional_references_empty? =
-      source.expr
-      |> positional_references()
-      |> Enum.empty?()
-
-    Enum.empty?(source.subqueries) and positional_references_empty?
+  defp repo_lookup_expression_source?(%{macro: :select, expr: {:&, _meta, [0]}} = source) do
+    ecto_query_planner_file?(source.file) and Enum.empty?(source.subqueries)
   end
+
+  defp repo_lookup_expression_source?(_source), do: false
 
   defp aliases_by_index(aliases) do
     Enum.reduce(aliases, %{}, fn

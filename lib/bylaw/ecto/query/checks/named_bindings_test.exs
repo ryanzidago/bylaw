@@ -169,6 +169,22 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(operation, query, [])
     end
 
+    test "requires a named root binding for caller-authored selects under Ecto repo lookups" do
+      {operation, query, _opts} =
+        capture_prepare_query(fn ->
+          Queryable.get_by(
+            CaptureRepo,
+            from(post in Post, select: post),
+            [id: 1],
+            repo_tuplet()
+          )
+        end)
+
+      assert operation == :all
+      assert {:error, issues} = NamedBindings.validate(operation, query, [])
+      assert_reasons(issues, [:missing_root_as, :positional_binding_reference])
+    end
+
     test "still validates caller-authored subqueries under Ecto repo lookups" do
       inner_query =
         from(post in Post,
