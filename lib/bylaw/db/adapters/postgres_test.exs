@@ -115,10 +115,10 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       assert_received {:query, Postgres, "select 1", [], [timeout: 1_000]}
     end
 
-    test "returns an error when a repo target cannot load ecto_sql" do
-      target = Postgres.target(repo: __MODULE__)
+    test "returns an error when dynamic repos are requested for unsupported repos" do
+      target = Postgres.target(repo: __MODULE__, dynamic_repo: :tenant_foo)
 
-      assert {:error, {:missing_dependency, :ecto_sql}} =
+      assert {:error, {:dynamic_repo_not_supported, __MODULE__}} =
                Postgres.query(target, "select 1", [], [])
     end
 

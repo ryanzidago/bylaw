@@ -1,291 +1,117 @@
 defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true
 
   alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Postgres.Checks.ForeignKeyIndexes
+  alias Bylaw.Db.Postgres.TestDatabase
+  alias Bylaw.Db.Postgres.TestRepo
+  alias Ecto.Adapters.SQL.Sandbox
 
   @moduletag :postgres
   @moduletag timeout: 30_000
 
-  @default_postgres_url "postgres://localhost:5432/bylaw_test"
-
   setup_all do
-    url = System.get_env("BYLAW_POSTGRES_URL", @default_postgres_url)
+    TestDatabase.start_repo!()
+    TestDatabase.reset_fixtures!()
 
-    {:ok, conn} =
-      url
-      |> connection_opts()
-      |> Postgrex.start_link()
-
-    on_exit(fn ->
-      if Process.alive?(conn) do
-        GenServer.stop(conn)
-      end
-    end)
-
-    {:ok, conn: conn}
+    :ok
   end
 
-  setup %{conn: conn} do
-    schema = "bylaw_fk_indexes_#{System.unique_integer([:positive])}"
+  setup tags do
+    owner = Sandbox.start_owner!(TestRepo, shared: not tags[:async])
+    on_exit(fn -> Sandbox.stop_owner(owner) end)
 
-    query!(conn, "CREATE SCHEMA #{quote_identifier(schema)}")
-
-    on_exit(fn ->
-      query!(conn, "DROP SCHEMA IF EXISTS #{quote_identifier(schema)} CASCADE")
-    end)
-
-    {:ok, schema: schema, target: target(conn)}
+    {:ok, target: Postgres.target(repo: TestRepo)}
   end
 
-  test "reports actual foreign keys without supporting indexes", %{
-    conn: conn,
-    schema: schema,
+  test "reports all foreign keys without supporting indexes from the fixture schema", %{
     target: target
   } do
-    create_single_column_fk!(conn, schema)
+    assert {:error, issues} =
+             Postgres.validate(target, [
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()]}
+             ])
 
+    assert Enum.map(issues, & &1.meta.constraint) == [
+             "included_events_account_fkey",
+             "ordered_orders_user_id_fkey",
+             "orders_user_id_fkey",
+             "partial_orders_user_id_fkey"
+           ]
+  end
+
+  test "returns issue metadata for missing foreign key indexes", %{target: target} do
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+             Postgres.validate(target, [
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
+             ])
 
     assert issue.message ==
-             "expected foreign key orders_user_id_fkey on #{schema}.orders to have a supporting index"
+             "expected foreign key orders_user_id_fkey on #{TestDatabase.schema()}.orders to have a supporting index"
 
-    assert issue.meta.schema == schema
+    assert issue.meta.schema == TestDatabase.schema()
     assert issue.meta.table == "orders"
     assert issue.meta.constraint == "orders_user_id_fkey"
     assert issue.meta.columns == ["user_id"]
   end
 
-  test "reports user schemas that start with pg but not pg underscore", %{
-    conn: conn,
-    target: target
-  } do
-    schema = "pgapp_fk_indexes_#{System.unique_integer([:positive])}"
+  test "passes when scoped to foreign keys with supporting indexes", %{target: target} do
+    assert :ok =
+             Postgres.validate(target, [
+               {ForeignKeyIndexes,
+                schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
+             ])
+  end
 
-    query!(conn, "CREATE SCHEMA #{quote_identifier(schema)}")
-
-    on_exit(fn ->
-      query!(conn, "DROP SCHEMA IF EXISTS #{quote_identifier(schema)} CASCADE")
-    end)
-
-    create_single_column_fk!(conn, schema)
-
+  test "ignores partial indexes", %{target: target} do
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+             Postgres.validate(target, [
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
+             ])
 
-    assert issue.meta.schema == schema
-    assert issue.meta.constraint == "orders_user_id_fkey"
+    assert issue.meta.constraint == "partial_orders_user_id_fkey"
   end
 
-  test "passes when actual foreign keys have supporting indexes", %{
-    conn: conn,
-    schema: schema,
-    target: target
-  } do
-    create_single_column_fk!(conn, schema)
-    query!(conn, "CREATE INDEX orders_user_id_idx ON #{table(schema, "orders")} (user_id)")
-
-    assert :ok = Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
-  end
-
-  test "ignores partial indexes", %{conn: conn, schema: schema, target: target} do
-    create_single_column_fk!(conn, schema)
-
-    query!(
-      conn,
-      "CREATE INDEX orders_user_id_partial_idx ON #{table(schema, "orders")} (user_id) WHERE user_id IS NOT NULL"
-    )
-
+  test "requires foreign key columns to be leading index columns", %{target: target} do
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+             Postgres.validate(target, [
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
+             ])
 
-    assert issue.meta.constraint == "orders_user_id_fkey"
+    assert issue.meta.constraint == "ordered_orders_user_id_fkey"
   end
 
-  test "requires foreign key columns to be leading index columns", %{
-    conn: conn,
-    schema: schema,
-    target: target
-  } do
-    create_single_column_fk!(conn, schema)
-
-    query!(
-      conn,
-      "CREATE INDEX orders_status_user_id_idx ON #{table(schema, "orders")} (status, user_id)"
-    )
-
+  test "ignores included columns for composite foreign key index coverage", %{target: target} do
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+             Postgres.validate(target, [
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
+             ])
 
-    assert issue.meta.constraint == "orders_user_id_fkey"
-  end
-
-  test "passes when composite foreign key columns are the leading index columns", %{
-    conn: conn,
-    schema: schema,
-    target: target
-  } do
-    create_composite_fk!(conn, schema)
-
-    query!(
-      conn,
-      "CREATE INDEX events_account_idx ON #{table(schema, "events")} (account_id, tenant_id)"
-    )
-
-    assert :ok = Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
-  end
-
-  test "ignores included columns for composite foreign key index coverage", %{
-    conn: conn,
-    schema: schema,
-    target: target
-  } do
-    create_composite_fk!(conn, schema)
-
-    query!(
-      conn,
-      "CREATE INDEX events_tenant_include_account_idx ON #{table(schema, "events")} (tenant_id) INCLUDE (account_id)"
-    )
-
-    assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
-
-    assert issue.meta.constraint == "events_account_fkey"
+    assert issue.meta.constraint == "included_events_account_fkey"
     assert issue.meta.columns == ["tenant_id", "account_id"]
   end
 
-  test "applies schema and table scope", %{conn: conn, schema: schema, target: target} do
-    other_schema = "#{schema}_other"
-
-    query!(conn, "CREATE SCHEMA #{quote_identifier(other_schema)}")
-
-    on_exit(fn ->
-      query!(conn, "DROP SCHEMA IF EXISTS #{quote_identifier(other_schema)} CASCADE")
-    end)
-
-    create_single_column_fk!(conn, schema)
-    create_single_column_fk!(conn, other_schema)
-
+  test "reports user schemas that start with pg but not pg underscore", %{target: target} do
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
-               {ForeignKeyIndexes, schemas: [schema], tables: ["orders"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
              ])
 
-    assert issue.meta.schema == schema
-    assert issue.meta.table == "orders"
+    assert issue.meta.schema == TestDatabase.pg_schema()
+    assert issue.meta.constraint == "orders_user_id_fkey"
   end
 
-  defp target(conn) do
-    Postgres.target(
-      query: fn _target, sql, params, opts ->
-        Postgrex.query(conn, sql, params, opts)
-      end
-    )
-  end
+  test "applies schema and table scope together", %{target: target} do
+    assert {:error, issues} =
+             Postgres.validate(target, [
+               {ForeignKeyIndexes,
+                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
+             ])
 
-  defp connection_opts(url) do
-    uri = URI.parse(url)
-
-    if uri.scheme not in ["postgres", "postgresql"] do
-      raise ArgumentError, "expected BYLAW_POSTGRES_URL to use postgres:// or postgresql://"
-    end
-
-    {username, password} = credentials(uri)
-
-    [
-      hostname: uri.host || "localhost",
-      port: uri.port || 5432,
-      database: database!(uri),
-      username: username,
-      password: password,
-      timeout: 15_000,
-      connect_timeout: 15_000,
-      prepare: :unnamed
-    ]
-    |> Keyword.reject(fn {_key, value} -> is_nil(value) end)
-    |> maybe_enable_ssl(uri)
-  end
-
-  defp credentials(%URI{userinfo: nil}), do: {nil, nil}
-
-  defp credentials(%URI{userinfo: userinfo}) do
-    case String.split(userinfo, ":", parts: 2) do
-      [username, password] -> {URI.decode(username), URI.decode(password)}
-      [username] -> {URI.decode(username), nil}
-    end
-  end
-
-  defp database!(%URI{path: "/" <> database}) when byte_size(database) > 0 do
-    URI.decode(database)
-  end
-
-  defp database!(_uri),
-    do: raise(ArgumentError, "expected BYLAW_POSTGRES_URL to include a database")
-
-  defp maybe_enable_ssl(opts, %URI{query: query}) when is_binary(query) do
-    query_params = URI.decode_query(query)
-
-    if query_params["sslmode"] == "require" do
-      Keyword.put(opts, :ssl, true)
-    else
-      opts
-    end
-  end
-
-  defp maybe_enable_ssl(opts, _uri), do: opts
-
-  defp create_single_column_fk!(conn, schema) do
-    query!(conn, """
-    CREATE TABLE #{table(schema, "users")} (
-      id bigint PRIMARY KEY
-    )
-    """)
-
-    query!(conn, """
-    CREATE TABLE #{table(schema, "orders")} (
-      id bigint PRIMARY KEY,
-      user_id bigint NOT NULL,
-      status text NOT NULL DEFAULT 'open',
-      CONSTRAINT orders_user_id_fkey
-        FOREIGN KEY (user_id)
-        REFERENCES #{table(schema, "users")} (id)
-    )
-    """)
-  end
-
-  defp create_composite_fk!(conn, schema) do
-    query!(conn, """
-    CREATE TABLE #{table(schema, "accounts")} (
-      tenant_id bigint NOT NULL,
-      account_id bigint NOT NULL,
-      PRIMARY KEY (tenant_id, account_id)
-    )
-    """)
-
-    query!(conn, """
-    CREATE TABLE #{table(schema, "events")} (
-      id bigint PRIMARY KEY,
-      tenant_id bigint NOT NULL,
-      account_id bigint NOT NULL,
-      CONSTRAINT events_account_fkey
-        FOREIGN KEY (tenant_id, account_id)
-        REFERENCES #{table(schema, "accounts")} (tenant_id, account_id)
-    )
-    """)
-  end
-
-  defp query!(conn, sql) when is_pid(conn) do
-    Postgrex.query!(conn, sql, [], timeout: 15_000)
-  end
-
-  defp query!(nil, _sql), do: raise("Postgres integration connection not configured")
-
-  defp table(schema, name), do: quote_identifier(schema) <> "." <> quote_identifier(name)
-
-  defp quote_identifier(identifier) do
-    escaped = String.replace(identifier, ~s("), ~s(""))
-    ~s("#{escaped}")
+    assert Enum.map(issues, &{&1.meta.schema, &1.meta.table}) == [
+             {TestDatabase.schema(), "orders"},
+             {TestDatabase.pg_schema(), "orders"}
+           ]
   end
 end
