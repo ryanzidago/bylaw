@@ -19,9 +19,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   Supported options:
 
       [
-        left_join_where_predicates: [
-          validate: true
-        ]
+        left_join_where_predicates: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.

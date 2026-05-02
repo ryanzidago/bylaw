@@ -48,7 +48,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
       [
         mandatory_join_keys: [
-          validate: true,
           keys: [:organisation_id],
           match: :any
         ]

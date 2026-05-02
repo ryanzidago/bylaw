@@ -35,7 +35,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
       [
         mandatory_where_keys: [
-          validate: true,
           keys: [:organisation_id, :user_id],
           match: :any
         ]

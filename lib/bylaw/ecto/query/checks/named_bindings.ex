@@ -27,9 +27,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   Supported options:
 
       [
-        named_bindings: [
-          validate: true
-        ]
+        named_bindings: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.

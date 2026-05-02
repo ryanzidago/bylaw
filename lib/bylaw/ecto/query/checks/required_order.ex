@@ -9,11 +9,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   For repo-wide enforcement, call this check from Ecto's
   `c:Ecto.Repo.prepare_query/3` callback:
 
-      @bylaw [
-        required_order: [
-          validate: true
-        ]
-      ]
+      @bylaw []
 
       def prepare_query(operation, query, opts) do
         bylaw_opts =
@@ -35,9 +31,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   Supported options:
 
       [
-        required_order: [
-          validate: true
-        ]
+        required_order: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.

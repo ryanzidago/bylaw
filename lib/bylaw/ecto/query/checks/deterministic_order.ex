@@ -17,11 +17,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   For repo-wide enforcement, call this check from Ecto's
   `c:Ecto.Repo.prepare_query/3` callback:
 
-      @bylaw [
-        deterministic_order: [
-          validate: true
-        ]
-      ]
+      @bylaw []
 
       def prepare_query(operation, query, opts) do
         bylaw_opts =
@@ -43,9 +39,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   Supported options:
 
       [
-        deterministic_order: [
-          validate: true
-        ]
+        deterministic_order: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
