@@ -234,8 +234,12 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     [MapSet.new(equality_root_fields(left, right, aliases))]
   end
 
-  defp field_branches_in_expr({:in, _meta, [left, _right]}, aliases) do
-    [MapSet.new(direct_root_fields(left, aliases))]
+  defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
+    if field_reference?(right) do
+      [MapSet.new()]
+    else
+      [MapSet.new(direct_root_fields(left, aliases))]
+    end
   end
 
   defp field_branches_in_expr(_expr, _aliases), do: [MapSet.new()]
