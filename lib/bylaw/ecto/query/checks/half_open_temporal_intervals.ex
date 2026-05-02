@@ -240,9 +240,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   end
 
   defp checked_root_field(expr, fields, root_aliases) do
-    case direct_root_field(expr, root_aliases) do
+    case Introspection.direct_root_field(expr, root_aliases) do
       {:ok, field} -> checked_field(fields, field)
-      :error -> :error
+      :unknown -> :error
     end
   end
 
@@ -289,38 +289,6 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   defp reverse_operator(:<=), do: :>=
   defp reverse_operator(:>), do: :<
   defp reverse_operator(:>=), do: :<=
-
-  defp direct_root_field({:type, _meta, [expr, _type]}, root_aliases) do
-    direct_root_field(expr, root_aliases)
-  end
-
-  defp direct_root_field({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
-       when is_atom(field) or is_binary(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field({:field, _meta, [source, field]}, root_aliases)
-       when is_atom(field) or is_binary(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field(_expr, _root_aliases), do: :error
-
-  defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
-
-  defp root_binding?({:as, _meta, [alias_name]}, root_aliases) when is_atom(alias_name) do
-    MapSet.member?(root_aliases, alias_name)
-  end
-
-  defp root_binding?(_expr, _root_aliases), do: false
 
   defp result([]), do: :ok
   defp result([issue]), do: {:error, issue}

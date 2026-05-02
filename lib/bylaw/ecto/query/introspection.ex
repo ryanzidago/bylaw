@@ -11,6 +11,21 @@ defmodule Bylaw.Ecto.Query.Introspection do
   """
   @type query_branch :: {branch_path(), term()}
 
+  @typedoc """
+  A field name extracted from an Ecto field expression.
+  """
+  @type field_name :: atom() | String.t()
+
+  @expression_subquery_fields [
+    :distinct,
+    :select,
+    :wheres,
+    :havings,
+    :order_bys,
+    :group_bys,
+    :windows
+  ]
+
   @doc """
   Returns the root schema module for an Ecto query.
 
@@ -100,6 +115,27 @@ defmodule Bylaw.Ecto.Query.Introspection do
     |> query_branches([])
     |> Enum.map(fn {branch_path, branch_query} -> {Enum.reverse(branch_path), branch_query} end)
   end
+
+  @doc """
+  Returns the direct nested queries referenced by an Ecto query.
+
+  This covers source and join subqueries, CTE query bodies, combination
+  branches, and expression subqueries stored by Ecto query expressions such as
+  `select`, `where`, `having`, `order_by`, `group_by`, `distinct`, and
+  `windows`.
+
+  The returned list contains only the immediate nested query references for the
+  given query. Checks that need full-depth validation should recursively call
+  this helper for returned queries.
+  """
+  @spec nested_queries(term()) :: list(term())
+  def nested_queries(query) when is_map(query) do
+    source_queries(query) ++
+      join_queries(query) ++
+      cte_queries(query) ++ combination_queries(query) ++ expression_queries(query)
+  end
+
+  def nested_queries(_query), do: []
 
   @doc """
   Formats a combination branch path for issue metadata.
@@ -201,6 +237,43 @@ defmodule Bylaw.Ecto.Query.Introspection do
   end
 
   @doc """
+  Resolves a direct root field expression and unwraps `type/2` wrappers.
+
+  This helper accepts dot-field expressions such as `&0.status`, dynamic field
+  expressions such as `field(&0, :status)`, and the same expressions wrapped by
+  Ecto's `type/2`. Unlike `root_field/2`, it returns binary field names too, so
+  callers that compare against atom field configuration can decide how to
+  normalize those names.
+  """
+  @spec direct_root_field(term(), map() | MapSet.t(atom())) :: {:ok, field_name()} | :unknown
+  def direct_root_field({:type, _meta, [expr, _type]}, aliases_or_root_aliases) do
+    direct_root_field(expr, aliases_or_root_aliases)
+  end
+
+  def direct_root_field(
+        {{:., _meta, [source, field]}, _call_meta, []},
+        aliases_or_root_aliases
+      )
+      when is_atom(field) or is_binary(field) do
+    if root_binding?(source, aliases_or_root_aliases) do
+      {:ok, field}
+    else
+      :unknown
+    end
+  end
+
+  def direct_root_field({:field, _meta, [source, field]}, aliases_or_root_aliases)
+      when is_atom(field) or is_binary(field) do
+    if root_binding?(source, aliases_or_root_aliases) do
+      {:ok, field}
+    else
+      :unknown
+    end
+  end
+
+  def direct_root_field(_expr, _aliases_or_root_aliases), do: :unknown
+
+  @doc """
   Returns whether an expression contains any direct field reference.
 
   The expression is traversed recursively through tuples and lists. This helps
@@ -269,6 +342,59 @@ defmodule Bylaw.Ecto.Query.Introspection do
   defp combination_branches(_query, _branch_path), do: []
 
   defp combination_path_entry({operation, index}), do: %{operation: operation, index: index}
+
+  defp source_queries(%{from: %{source: source}}), do: subquery_source_queries(source)
+  defp source_queries(_query), do: []
+
+  defp join_queries(%{joins: joins}) when is_list(joins) do
+    Enum.flat_map(joins, fn
+      %{source: source} -> subquery_source_queries(source)
+      _join -> []
+    end)
+  end
+
+  defp join_queries(_query), do: []
+
+  defp cte_queries(%{with_ctes: %{queries: queries}}) when is_list(queries) do
+    Enum.flat_map(queries, fn
+      {_name, _opts, query} -> [query]
+      _cte -> []
+    end)
+  end
+
+  defp cte_queries(_query), do: []
+
+  defp combination_queries(%{combinations: combinations}) when is_list(combinations) do
+    Enum.flat_map(combinations, fn
+      {_operation, query} -> [query]
+      _combination -> []
+    end)
+  end
+
+  defp combination_queries(_query), do: []
+
+  defp expression_queries(query) do
+    Enum.flat_map(@expression_subquery_fields, fn field ->
+      query
+      |> Map.get(field)
+      |> expression_subqueries()
+    end)
+  end
+
+  defp expression_subqueries(expressions) when is_list(expressions) do
+    Enum.flat_map(expressions, &expression_subqueries/1)
+  end
+
+  defp expression_subqueries({_name, expression}), do: expression_subqueries(expression)
+
+  defp expression_subqueries(%{subqueries: subqueries}) when is_list(subqueries) do
+    Enum.flat_map(subqueries, &subquery_source_queries/1)
+  end
+
+  defp expression_subqueries(_expression), do: []
+
+  defp subquery_source_queries(%{__struct__: Ecto.SubQuery, query: query}), do: [query]
+  defp subquery_source_queries(_source), do: []
 
   defp field(source, field, aliases) do
     case binding_index(source, aliases) do
