@@ -90,7 +90,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
-    test "passes when an update_all query is bounded by a filtered subquery join" do
+    test "returns an issue when a filtered subquery join has no root where clause" do
       unpublished_posts =
         from(post in Post,
           where: post.published == false,
@@ -101,143 +101,6 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
         from(post in Post,
           join: unpublished_post in subquery(unpublished_posts),
           on: unpublished_post.id == post.id,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
-    end
-
-    test "passes when a filtered subquery join constrains a named root binding" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          as: :post,
-          join: unpublished_post in subquery(unpublished_posts),
-          on: unpublished_post.id == as(:post).id,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
-    end
-
-    test "returns an issue when a filtered subquery join does not constrain the update target" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          join: unpublished_post in subquery(unpublished_posts),
-          on: true,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery is left joined" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          left_join: unpublished_post in subquery(unpublished_posts),
-          on: unpublished_post.id == post.id,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery join uses a non-equality predicate" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          join: unpublished_post in subquery(unpublished_posts),
-          on: unpublished_post.id != post.id,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery join negates the root equality" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          join: unpublished_post in subquery(unpublished_posts),
-          on: not (unpublished_post.id == post.id),
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery join only constrains earlier bindings" do
-      comments_with_body =
-        from(comment in Comment,
-          where: comment.body == ^"spam",
-          select: %{id: comment.id}
-        )
-
-      query =
-        from(post in Post,
-          join: comment in Comment,
-          on: comment.post_id == post.id,
-          join: comment_with_body in subquery(comments_with_body),
-          on: comment.post_id == post.id,
-          update: [set: [title: ^"Archived"]]
-        )
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery join references bindings separately" do
-      unpublished_posts =
-        from(post in Post,
-          where: post.published == false,
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          join: unpublished_post in subquery(unpublished_posts),
-          on: post.id == post.id and unpublished_post.id == unpublished_post.id,
           update: [set: [title: ^"Archived"]]
         )
 
@@ -255,7 +118,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert issue.check == UnboundedUpdates
 
       assert issue.message ==
-               "expected update_all query to be bounded by a where clause or filtered subquery join"
+               "expected update_all query to include at least one non-true root where clause"
 
       assert issue.meta.operation == :update_all
     end
@@ -292,28 +155,6 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
     test "returns an issue when an update_all query only has a typed true where clause" do
       always_true = true
       query = from(post in Post, where: type(^always_true, :boolean))
-
-      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
-
-      assert issue.check == UnboundedUpdates
-      assert issue.meta.operation == :update_all
-    end
-
-    test "returns an issue when a filtered subquery join only has a typed true filter" do
-      always_true = true
-
-      all_posts =
-        from(post in Post,
-          where: type(^always_true, :boolean),
-          select: %{id: post.id}
-        )
-
-      query =
-        from(post in Post,
-          join: all_post in subquery(all_posts),
-          on: all_post.id == post.id,
-          update: [set: [title: ^"Archived"]]
-        )
 
       assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
 
