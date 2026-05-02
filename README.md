@@ -26,3 +26,13 @@ end
 ```
 
 Documentation is published on [HexDocs](https://hexdocs.pm/bylaw).
+
+## Development
+
+Postgres integration tests are tagged with `:postgres` and excluded by default.
+Run them against a disposable test database with:
+
+```sh
+BYLAW_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/bylaw_test \
+  mix test --include postgres
+```
