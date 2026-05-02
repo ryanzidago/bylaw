@@ -1,14 +1,20 @@
 defmodule Bylaw.MixProject do
   use Mix.Project
 
+  @version "0.1.0"
+  @source_url "https://github.com/ryanzidago/bylaw"
+
   def project do
     [
       app: :bylaw,
-      version: "0.1.0",
+      version: @version,
       elixir: "~> 1.19",
       test_paths: test_paths(Mix.env()),
       dialyzer: dialyzer(),
       usage_rules: usage_rules(),
+      source_url: @source_url,
+      homepage_url: "https://hexdocs.pm/bylaw",
+      docs: docs(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -39,6 +45,7 @@ defmodule Bylaw.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
+      {:ex_doc, "~> 0.39", only: :dev, runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
@@ -56,6 +63,32 @@ defmodule Bylaw.MixProject do
     [
       file: "AGENTS.md",
       usage_rules: [{:usage_rules, sub_rules: ["otp"]}]
+    ]
+  end
+
+  defp docs do
+    [
+      main: "checks",
+      source_ref: "main",
+      extras: [
+        "README.md",
+        "guides/checks.md": [title: "Checks"]
+      ],
+      groups_for_extras: [
+        Guides: ~r/guides\//
+      ],
+      groups_for_modules: [
+        Core: [
+          Bylaw,
+          Bylaw.Ecto.Query.Check,
+          Bylaw.Ecto.Query.Issue
+        ],
+        "Ecto query checks": ~r/^Elixir\.Bylaw\.Ecto\.Query\.Checks(\.|$)/,
+        "Mix tasks": ~r/^Elixir\.Mix\.Tasks\./
+      ],
+      nest_modules_by_prefix: [
+        Bylaw.Ecto.Query.Checks
+      ]
     ]
   end
 end

@@ -4,6 +4,9 @@ defmodule Bylaw.Ecto.Query.Check do
 
   Checks are intentionally small and directly callable so callers can decide how
   to compose them in `c:Ecto.Repo.prepare_query/3`.
+
+  See `Bylaw.Ecto.Query.Checks` for the built-in check list and the
+  [Checks guide](checks.html) for repo wiring and option examples.
   """
 
   alias Bylaw.Ecto.Query.Issue

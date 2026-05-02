@@ -16,6 +16,49 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   Like Bylaw's other Ecto query checks, this reads Ecto query structs directly.
   Ecto treats those structs as opaque, so this check intentionally supports a
   small, tested subset of Ecto's query AST.
+
+      @bylaw [
+        mandatory_join_keys: [
+          keys: [:organisation_id],
+          match: :all
+        ]
+      ]
+
+      def prepare_query(operation, query, opts) do
+        bylaw_opts =
+          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
+            Keyword.merge(default, override)
+          end)
+
+        case Bylaw.Ecto.Query.Checks.MandatoryJoinKeys.validate(operation, query, bylaw_opts) do
+          :ok -> {query, opts}
+          {:error, issue_or_issues} -> raise inspect(issue_or_issues)
+        end
+      end
+
+  The check is enabled by default. A caller must explicitly set the query-level
+  escape hatch to `false` to skip it:
+
+      Repo.all(query, bylaw: [mandatory_join_keys: [validate: false]])
+
+  Supported options:
+
+      [
+        mandatory_join_keys: [
+          validate: true,
+          keys: [:organisation_id],
+          match: :any
+        ]
+      ]
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:keys` - required non-empty list of field names when the check runs.
+    * `:match` - `:any` or `:all`. Defaults to `:any`.
+
+  When a join schema does not contain any configured keys, that join is not
+  applicable and the check returns no issue for it. For applicable joins, the
+  check accepts direct equality predicates between the joined binding and
+  another query binding in the join `on` expression.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
