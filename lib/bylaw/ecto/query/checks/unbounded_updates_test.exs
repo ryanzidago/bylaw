@@ -107,6 +107,24 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
+    test "passes when a filtered subquery join constrains a named root binding" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          as: :post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: unpublished_post.id == as(:post).id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
     test "returns an issue when a filtered subquery join does not constrain the update target" do
       unpublished_posts =
         from(post in Post,
@@ -118,6 +136,48 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
         from(post in Post,
           join: unpublished_post in subquery(unpublished_posts),
           on: true,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a filtered subquery join only constrains earlier bindings" do
+      comments_with_body =
+        from(comment in Comment,
+          where: comment.body == ^"spam",
+          select: %{id: comment.id}
+        )
+
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          join: comment_with_body in subquery(comments_with_body),
+          on: comment.post_id == post.id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a filtered subquery join references bindings separately" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: post.id == post.id and unpublished_post.id == unpublished_post.id,
           update: [set: [title: ^"Archived"]]
         )
 
