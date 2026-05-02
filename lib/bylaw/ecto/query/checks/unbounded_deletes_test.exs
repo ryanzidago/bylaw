@@ -32,12 +32,36 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
-      assert issue.message == "expected delete_all query to include at least one where clause"
+
+      assert issue.message ==
+               "expected delete_all query to include at least one non-true root where clause"
+
       assert issue.meta.operation == :delete_all
     end
 
     test "returns an issue when delete_all only has a literal true where clause" do
       query = from(post in Post, where: true)
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
+    test "returns an issue when delete_all only has a dynamic true where clause" do
+      always_true = true
+      predicate = dynamic([_post], ^always_true)
+      query = from(post in Post, where: ^predicate)
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
+    test "returns an issue when delete_all only has a typed true where clause" do
+      always_true = true
+      query = from(post in Post, where: type(^always_true, :boolean))
 
       assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
 
