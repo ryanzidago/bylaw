@@ -87,6 +87,24 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       assert :ok = DeterministicOrder.validate(:all, query, [])
     end
 
+    test "passes when Ecto.Query.first/2 and last/2 order by primary key" do
+      assert :ok = DeterministicOrder.validate(:all, first(Post), [])
+      assert :ok = DeterministicOrder.validate(:all, last(Post), [])
+    end
+
+    test "returns an issue when Ecto.Query.first/2 and last/2 use non-primary order fields" do
+      assert {:error, %Issue{} = first_issue} =
+               DeterministicOrder.validate(:all, first(Post, :title), [])
+
+      assert {:error, %Issue{} = last_issue} =
+               DeterministicOrder.validate(:all, last(Post, :title), [])
+
+      assert first_issue.meta.primary_key == [:id]
+      assert first_issue.meta.found_order_keys == [:title]
+      assert last_issue.meta.primary_key == [:id]
+      assert last_issue.meta.found_order_keys == [:title]
+    end
+
     test "passes for every Ecto prepare_query operation when order_by is deterministic" do
       query = from(post in Post, order_by: [desc: post.title, desc: post.id])
 
@@ -287,6 +305,14 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
                    fn ->
                      DeterministicOrder.validate(:all, query, deterministic_order: :bad)
                    end
+    end
+
+    test "raises when top-level opts are not a keyword list" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: :bad", fn ->
+        DeterministicOrder.validate(:all, query, :bad)
+      end
     end
   end
 end
