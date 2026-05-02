@@ -127,12 +127,20 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   defp issues(operation, query) do
     query
+    |> Introspection.query_branches()
+    |> Enum.flat_map(&issues_for_branch(operation, &1))
+    |> Enum.sort_by(
+      &{Map.get(&1.meta, :combination_path, []), &1.meta.date_binding_index, &1.meta.date_field}
+    )
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}) do
+    query
     |> mixed_comparison_violations()
     |> Enum.group_by(&{&1.date_binding_index, &1.date_schema, &1.date_field})
     |> Enum.map(fn {{date_binding_index, date_schema, date_field}, violations} ->
-      issue(operation, date_binding_index, date_schema, date_field, violations)
+      issue(operation, branch_path, date_binding_index, date_schema, date_field, violations)
     end)
-    |> Enum.sort_by(&{&1.meta.date_binding_index, &1.meta.date_field})
   end
 
   defp mixed_comparison_violations(query) when is_map(query) do
@@ -306,23 +314,29 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
-  defp issue(operation, date_binding_index, date_schema, date_field, violations) do
+  defp issue(operation, branch_path, date_binding_index, date_schema, date_field, violations) do
     violations =
       violations
       |> Enum.uniq_by(&{&1.operator, &1.datetime_binding_index, &1.datetime_field})
       |> Enum.sort_by(&{&1.datetime_binding_index, &1.datetime_field, &1.operator})
 
+    meta =
+      Map.merge(
+        %{
+          operation: operation,
+          date_schema: date_schema,
+          date_binding_index: date_binding_index,
+          date_field: date_field,
+          violations: Enum.map(violations, &violation_meta/1)
+        },
+        Introspection.combination_path_meta(branch_path)
+      )
+
     %Issue{
       check: __MODULE__,
       message:
         "expected date field #{inspect(date_field)} to compare with datetime fields only after explicit date truncation",
-      meta: %{
-        operation: operation,
-        date_schema: date_schema,
-        date_binding_index: date_binding_index,
-        date_field: date_field,
-        violations: Enum.map(violations, &violation_meta/1)
-      }
+      meta: meta
     }
   end
 
