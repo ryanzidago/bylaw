@@ -105,9 +105,13 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
+    if Keyword.keyword?(opts) do
+      opts
+      |> Keyword.get(name(), [])
+      |> normalize_check_opts!()
+    else
+      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+    end
   end
 
   defp normalize_check_opts!(opts) when is_list(opts) do
