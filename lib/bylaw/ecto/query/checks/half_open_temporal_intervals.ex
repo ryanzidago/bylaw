@@ -12,6 +12,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   This catches the common off-by-one interval boundary shapes `>` for a lower
   bound and `<=` for an upper bound on root temporal fields.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         half_open_temporal_intervals: [
           fields: [:occurred_at]

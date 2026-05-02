@@ -6,6 +6,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   It intentionally does not decide whether the existing order is deterministic;
   use `Bylaw.Ecto.Query.Checks.DeterministicOrder` for that separate question.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         required_order: [
           validate: true

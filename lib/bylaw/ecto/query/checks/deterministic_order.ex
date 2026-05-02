@@ -14,6 +14,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   intentionally ordered by another unique database key, use the explicit escape
   hatch until a DB-aware check can verify those constraints directly.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         deterministic_order: [
           validate: true

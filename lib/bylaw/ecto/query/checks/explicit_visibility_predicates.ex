@@ -9,6 +9,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   against configured schemas mention those fields in supported root `where`
   predicates.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         explicit_visibility_predicates: [
           schemas: [
