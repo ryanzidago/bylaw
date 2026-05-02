@@ -60,7 +60,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.{Branches, CheckOptions, Introspection, Issue}
 
   @type comparable_value :: atom() | integer() | String.t()
   @type operator :: :== | :in | :is_nil
@@ -91,9 +91,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
 
-    if enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
     else
       :ok
@@ -104,66 +104,19 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
-
   defp validate_enabled(operation, query) do
-    case root_schema(query) do
+    case Introspection.root_schema(query) do
       {:ok, schema} ->
         operation
-        |> issues(schema, where_predicate_branches(query, schema, root_aliases(query)))
+        |> issues(
+          schema,
+          where_predicate_branches(query, schema, Introspection.root_aliases(query))
+        )
         |> result()
 
       :unknown ->
         :ok
     end
-  end
-
-  defp root_schema(%{from: %{source: {_source, schema}}})
-       when is_atom(schema) and not is_nil(schema) do
-    if function_exported?(schema, :__schema__, 1) do
-      {:ok, schema}
-    else
-      :unknown
-    end
-  end
-
-  defp root_schema(_query), do: :unknown
-
-  defp root_aliases(query) do
-    query
-    |> Map.get(:aliases, %{})
-    |> Enum.flat_map(fn
-      {alias_name, 0} -> [alias_name]
-      _alias -> []
-    end)
-    |> MapSet.new()
   end
 
   defp where_predicate_branches(query, schema, root_aliases) when is_map(query) do
@@ -173,8 +126,8 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
       where_branches = predicate_branches_in_where(where, schema, root_aliases)
 
       case Map.get(where, :op, :and) do
-        :or -> concat_predicate_branches(branches, where_branches)
-        _op -> merge_predicate_branches(branches, where_branches)
+        :or -> Branches.concat(branches, where_branches)
+        _op -> Branches.merge(branches, where_branches, &append_predicate_branches/2)
       end
     end)
     |> case do
@@ -190,9 +143,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp predicate_branches_in_where(_where, _schema, _root_aliases), do: [[]]
 
   defp predicate_branches_in_expr({:and, _meta, [left, right]}, params, schema, root_aliases) do
-    merge_predicate_branches(
+    Branches.merge(
       predicate_branches_in_expr(left, params, schema, root_aliases),
-      predicate_branches_in_expr(right, params, schema, root_aliases)
+      predicate_branches_in_expr(right, params, schema, root_aliases),
+      &append_predicate_branches/2
     )
   end
 
@@ -215,18 +169,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   defp predicate_branches_in_expr(_expr, _params, _schema, _root_aliases), do: [[]]
 
-  defp merge_predicate_branches(nil, branches), do: branches
-
-  defp merge_predicate_branches(left_branches, right_branches) do
-    for left <- left_branches, right <- right_branches do
-      left ++ right
-    end
-  end
-
-  defp concat_predicate_branches(nil, branches), do: branches
-
-  defp concat_predicate_branches(left_branches, right_branches),
-    do: left_branches ++ right_branches
+  defp append_predicate_branches(left_branch, right_branch), do: left_branch ++ right_branch
 
   defp equality_predicates(left, right, params, schema, root_aliases) do
     case field_predicate(left, right, :==, params, schema, root_aliases) do
@@ -242,21 +185,21 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp in_predicates(left, right, params, schema, root_aliases) do
-    case direct_root_field(left, root_aliases) do
+    case Introspection.root_field(left, root_aliases) do
       {:ok, field} ->
         case comparable_values(schema, field, right, params) do
           {:ok, values} -> [%{field: field, operator: :in, values: values}]
           :error -> []
         end
 
-      :error ->
+      :unknown ->
         []
     end
   end
 
   defp nil_predicates(expr, schema, root_aliases) do
-    with {:ok, field} <- direct_root_field(expr, root_aliases),
-         true <- schema_field?(schema, field) do
+    with {:ok, field} <- Introspection.root_field(expr, root_aliases),
+         true <- Introspection.schema_field?(schema, field) do
       [%{field: field, operator: :is_nil, values: [nil]}]
     else
       _other -> []
@@ -264,14 +207,16 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp field_predicate(field_expr, value_expr, operator, params, schema, root_aliases) do
-    with {:ok, field} <- direct_root_field(field_expr, root_aliases),
+    with {:ok, field} <- Introspection.root_field(field_expr, root_aliases),
          {:ok, value} <- comparable_value(schema, field, value_expr, params) do
       {:ok, %{field: field, operator: operator, values: [value]}}
+    else
+      _other -> :error
     end
   end
 
   defp comparable_value(schema, field, expr, params) do
-    with true <- schema_field?(schema, field),
+    with true <- Introspection.schema_field?(schema, field),
          {:ok, value} <- value(expr, params) do
       normalize_comparable_value(schema, field, value)
     else
@@ -280,15 +225,13 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp comparable_values(schema, field, expr, params) do
-    with true <- schema_field?(schema, field),
+    with true <- Introspection.schema_field?(schema, field),
          {:ok, values} <- values(expr, params) do
       normalize_comparable_values(schema, field, values)
     else
       _other -> :error
     end
   end
-
-  defp schema_field?(schema, field), do: field in schema.__schema__(:fields)
 
   defp enum_field?(schema, field) do
     schema
@@ -383,33 +326,6 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp values(_expr, _params), do: :error
-
-  defp direct_root_field({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
-       when is_atom(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field({:field, _meta, [source, field]}, root_aliases) when is_atom(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field(_expr, _root_aliases), do: :error
-
-  defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
-
-  defp root_binding?({:as, _meta, [alias_name]}, root_aliases) when is_atom(alias_name) do
-    MapSet.member?(root_aliases, alias_name)
-  end
-
-  defp root_binding?(_expr, _root_aliases), do: false
 
   defp issues(operation, schema, predicate_branches) do
     branch_issues = Enum.map(predicate_branches, &issues_for_predicates(operation, schema, &1))
