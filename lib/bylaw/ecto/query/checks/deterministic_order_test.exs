@@ -319,5 +319,13 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
         DeterministicOrder.validate(:all, query, :bad)
       end
     end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [:bad]", fn ->
+        DeterministicOrder.validate(:all, query, [:bad])
+      end
+    end
   end
 end
