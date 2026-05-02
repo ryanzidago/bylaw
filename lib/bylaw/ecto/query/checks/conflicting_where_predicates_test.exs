@@ -26,6 +26,14 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     end
   end
 
+  defmodule PlainPost do
+    use Ecto.Schema
+
+    schema "plain_posts" do
+      field(:status, :string)
+    end
+  end
+
   describe "validate/3" do
     test "passes when there are no where predicates" do
       query = from(post in Post)
@@ -84,6 +92,21 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
         from(post in Post,
           where: post.status == ^:draft and post.status == ^:published
         )
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [:draft]},
+               %{operator: :==, values: [:published]}
+             ]
+    end
+
+    test "returns an issue when enum equality predicates conflict inside a dynamic expression" do
+      status = :draft
+      predicate = dynamic([post], post.status == ^status and post.status == ^:published)
+      query = from(post in Post, where: ^predicate)
 
       assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
 
@@ -281,8 +304,48 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
+    test "ignores schemas without enum fields" do
+      query =
+        from(post in PlainPost,
+          where: post.status == "draft",
+          where: post.status == "published"
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
     test "ignores enum comparisons to another field" do
       query = from(post in Post, where: post.status == post.title, where: post.status == :draft)
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "ignores enum comparisons to joined fields" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: true,
+          where: post.status == comment.status,
+          where: post.status == :draft
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "ignores greater-than predicates" do
+      query = from(post in Post, where: post.status > :draft, where: post.status == :draft)
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "ignores negated equality predicates" do
+      query = from(post in Post, where: not (post.status == :draft), where: post.status == :draft)
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "ignores null checks" do
+      query = from(post in Post, where: is_nil(post.status), where: post.status == :draft)
 
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
@@ -354,6 +417,18 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
+    test "ignores enum in predicates with joined field values" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: true,
+          where: post.status in [comment.status],
+          where: post.status == :draft
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
     test "ignores enum in predicates with non-list expressions" do
       query = from(post in Post, where: post.status in post.title, where: post.status == :draft)
 
@@ -386,11 +461,37 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
+    test "ignores enum predicates hidden inside exists subqueries" do
+      query =
+        from(post in Post,
+          where:
+            exists(
+              from(comment in Comment,
+                where: comment.status == ^:draft
+              )
+            ),
+          where: post.status == :published
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
     test "passes for schema-less sources" do
       query =
         from(post in "posts",
           where: field(post, :status) == ^:draft,
           where: field(post, :status) == ^:published
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "passes for named schema-less root bindings" do
+      query =
+        from(post in "posts",
+          as: :post,
+          where: field(as(:post), :status) == ^:draft,
+          where: field(as(:post), :status) == ^:published
         )
 
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
