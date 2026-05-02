@@ -70,7 +70,7 @@ defmodule Bylaw.MixProject do
     [
       main: "checks",
       source_ref: "v#{@version}",
-      skip_code_autolink_to: ["Bylaw.Credo", "Bylaw.Db"],
+      skip_code_autolink_to: ["Bylaw.Credo", "Bylaw.Db", "Bylaw.Ecto.Query.Checks"],
       extras: [
         "README.md",
         "guides/checks.md": [title: "Checks Overview"],
@@ -84,7 +84,6 @@ defmodule Bylaw.MixProject do
         "Bylaw.Ecto.Query": [
           Bylaw.Ecto.Query,
           Bylaw.Ecto.Query.Check,
-          Bylaw.Ecto.Query.Checks,
           Bylaw.Ecto.Query.Issue
         ],
         "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./,
