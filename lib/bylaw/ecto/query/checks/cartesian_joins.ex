@@ -177,11 +177,19 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
        )
        when qual in @lateral_quals do
     query
-    |> parent_binding_references()
+    |> predicate_parent_binding_references()
     |> Enum.any?(&previous_parent_binding?(&1, aliases, binding_index))
   end
 
   defp correlated_lateral_join?(_join, _aliases, _binding_index), do: false
+
+  defp predicate_parent_binding_references(query) when is_map(query) do
+    query
+    |> Map.get(:wheres, [])
+    |> Enum.flat_map(fn where -> where |> Map.get(:expr) |> parent_binding_references() end)
+  end
+
+  defp predicate_parent_binding_references(_query), do: []
 
   defp previous_parent_binding?(name, aliases, binding_index) do
     case Map.get(aliases, name) do
