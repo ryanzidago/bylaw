@@ -148,7 +148,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
           )
         ]
       else
-        _ -> []
+        _other -> []
       end
     end)
   end
@@ -158,7 +158,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
   defp query_aliases(_query), do: %{}
 
-  defp explicit_join_schema(%{assoc: assoc}) when not is_nil(assoc), do: :skip
+  defp explicit_join_schema(%{assoc: assoc}) when assoc != nil, do: :skip
 
   defp explicit_join_schema(%{source: {_source, schema}})
        when is_atom(schema) and not is_nil(schema) do
@@ -172,7 +172,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   defp explicit_join_schema(_join), do: :skip
 
   defp applicable_keys(schema, keys) do
-    schema_fields = MapSet.new(schema.__schema__(:fields))
+    fields = schema.__schema__(:fields)
+    schema_fields = MapSet.new(fields)
+
     Enum.filter(keys, &MapSet.member?(schema_fields, &1))
   end
 
@@ -200,7 +202,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
       when is_integer(other_index) and other_index < binding_index ->
         [field]
 
-      _ ->
+      _other ->
         []
     end
   end

@@ -267,24 +267,28 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp applicable_fields(schema, fields) do
-    schema_fields = MapSet.new(schema.__schema__(:fields))
+    schema_field_names = schema.__schema__(:fields)
+    schema_fields = MapSet.new(schema_field_names)
+
     Enum.filter(fields, &MapSet.member?(schema_fields, &1))
   end
 
   defp where_field_branches(query) when is_map(query) do
     aliases = query_aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> concat_branches(branches, expr_branches)
-        _op -> merge_branch_fields(branches, expr_branches)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> concat_branches(branches, expr_branches)
+          _op -> merge_branch_fields(branches, expr_branches)
+        end
+      end)
+
+    case branches do
       nil -> [MapSet.new()]
       branches -> branches
     end
@@ -307,7 +311,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp field_branches_in_expr({:not, _meta, [{:is_nil, _is_nil_meta, [expr]}]}, aliases) do
-    [MapSet.new(direct_root_fields(expr, aliases))]
+    fields = direct_root_fields(expr, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:not, _meta, [{op, _op_meta, [_left, _right]} = expr]}, aliases)
@@ -316,27 +321,32 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp field_branches_in_expr({:not, _meta, [expr]}, aliases) do
-    [MapSet.new(direct_root_fields(expr, aliases))]
+    fields = direct_root_fields(expr, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:is_nil, _meta, [expr]}, aliases) do
-    [MapSet.new(direct_root_fields(expr, aliases))]
+    fields = direct_root_fields(expr, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({op, _meta, [left, right]}, aliases) when op in @comparison_ops do
-    [MapSet.new(comparison_root_fields(left, right, aliases))]
+    fields = comparison_root_fields(left, right, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
     if field_reference?(right) do
       [MapSet.new()]
     else
-      [MapSet.new(direct_root_fields(left, aliases))]
+      fields = direct_root_fields(left, aliases)
+      [MapSet.new(fields)]
     end
   end
 
   defp field_branches_in_expr(expr, aliases) do
-    [MapSet.new(direct_root_fields(expr, aliases))]
+    fields = direct_root_fields(expr, aliases)
+    [MapSet.new(fields)]
   end
 
   defp merge_branch_fields(nil, branches), do: branches

@@ -176,7 +176,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp applicable_keys(query, keys) do
     case root_schema(query) do
       {:ok, schema} ->
-        schema_fields = MapSet.new(schema.__schema__(:fields))
+        fields = schema.__schema__(:fields)
+        schema_fields = MapSet.new(fields)
+
         Enum.filter(keys, &MapSet.member?(schema_fields, &1))
 
       :unknown ->
@@ -198,17 +200,19 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp where_field_branches(query) when is_map(query) do
     aliases = query_aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> concat_branches(branches, expr_branches)
-        _op -> merge_branch_fields(branches, expr_branches)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> concat_branches(branches, expr_branches)
+          _op -> merge_branch_fields(branches, expr_branches)
+        end
+      end)
+
+    case branches do
       nil -> [MapSet.new()]
       branches -> branches
     end
@@ -231,14 +235,16 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp field_branches_in_expr({:==, _meta, [left, right]}, aliases) do
-    [MapSet.new(equality_root_fields(left, right, aliases))]
+    fields = equality_root_fields(left, right, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
     if field_reference?(right) do
       [MapSet.new()]
     else
-      [MapSet.new(direct_root_fields(left, aliases))]
+      fields = direct_root_fields(left, aliases)
+      [MapSet.new(fields)]
     end
   end
 
@@ -327,6 +333,11 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp branch_has_any_key?(fields, keys), do: Enum.any?(keys, &MapSet.member?(fields, &1))
 
   defp issue(operation, keys, fields, missing, match) do
+    found_where_keys =
+      fields
+      |> MapSet.to_list()
+      |> Enum.sort()
+
     %Issue{
       check: __MODULE__,
       message: message(keys, missing, match),
@@ -335,7 +346,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
         keys: keys,
         match: match,
         missing_keys: missing,
-        found_where_keys: fields |> MapSet.to_list() |> Enum.sort()
+        found_where_keys: found_where_keys
       }
     }
   end
