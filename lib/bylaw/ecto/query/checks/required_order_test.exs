@@ -272,6 +272,40 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert :ok = RequiredOrder.validate(:all, query, [])
     end
 
+    test "returns an issue when a where subquery has limit and no order_by" do
+      limited_posts = from(post in Post, select: post.id, limit: 10)
+      query = from(post in Post, where: post.id in subquery(limited_posts))
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "passes when a where subquery with limit has order_by" do
+      limited_posts = from(post in Post, select: post.id, order_by: post.title, limit: 10)
+      query = from(post in Post, where: post.id in subquery(limited_posts))
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
+
+    test "returns an issue when a select subquery has limit and no order_by" do
+      limited_posts = from(post in Post, select: count(), limit: 10)
+      query = from(post in Post, select: %{id: post.id, limited_count: subquery(limited_posts)})
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "passes when a select subquery with limit has order_by" do
+      limited_posts = from(post in Post, select: count(), order_by: post.title, limit: 10)
+      query = from(post in Post, select: %{id: post.id, limited_count: subquery(limited_posts)})
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
+
     test "passes when Ecto.Query.first/2 and last/2 provide order_by" do
       assert :ok = RequiredOrder.validate(:all, first(Post), [])
       assert :ok = RequiredOrder.validate(:all, last(Post), [])
