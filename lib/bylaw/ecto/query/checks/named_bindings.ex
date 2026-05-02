@@ -103,7 +103,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   defp issues(operation, query) when is_map(query) do
     if repo_lookup_query?(operation, query) do
-      []
+      subquery_issues(operation, query)
     else
       aliases = Introspection.aliases(query)
       aliases_by_index = aliases_by_index(aliases)
