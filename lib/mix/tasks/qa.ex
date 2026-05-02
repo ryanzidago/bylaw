@@ -118,6 +118,12 @@ defmodule Mix.Tasks.Qa do
         ]
       },
       %{
+        label: "docs",
+        commands: [
+          ["docs", "--warnings-as-errors"]
+        ]
+      },
+      %{
         label: "dialyzer",
         commands: [
           ["dialyzer", "--no-compile", "--quiet-with-result"]
