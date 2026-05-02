@@ -167,7 +167,8 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
     end
   end
 
-  defp association_join?(%{assoc: assoc}) when not is_nil(assoc), do: true
+  defp association_join?(%{assoc: nil}), do: false
+  defp association_join?(%{assoc: _assoc}), do: true
   defp association_join?(_join), do: false
 
   defp correlated_lateral_join?(
@@ -186,7 +187,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   defp predicate_parent_binding_references(query) when is_map(query) do
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(fn where -> where |> Map.get(:expr) |> parent_binding_references() end)
+    |> Enum.flat_map(fn where ->
+      where
+      |> Map.get(:expr)
+      |> parent_binding_references()
+    end)
   end
 
   defp predicate_parent_binding_references(_query), do: []
