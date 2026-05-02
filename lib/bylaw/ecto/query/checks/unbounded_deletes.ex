@@ -40,7 +40,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
   The check only validates the root query prepared for the `:delete_all`
   operation. It requires every possible root `where` branch to include at least
-  one non-literal-true expression and does not try to prove whether that
+  one non-true expression and does not try to prove whether that
   predicate is selective.
   """
 
