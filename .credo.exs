@@ -159,7 +159,6 @@
            ]},
           {Bylaw.Credo.Check.Readability.WithElseClause, []},
           {Bylaw.Credo.Check.Readability.NoCatchAllInWithElse, false},
-          {Bylaw.Credo.Check.Readability.NoFunctionCallInWithBody, []},
 
           #
           ## Refactoring Opportunities
