@@ -151,6 +151,60 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert issue.meta.rejecting_where_fields == [:status]
     end
 
+    test "returns an issue for not in predicates on left join bindings" do
+      statuses = [:hidden]
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status not in ^statuses
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "returns an issue for not equal predicates on left join bindings" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status != ^:hidden
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "returns an issue for range comparisons on left join bindings" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.id > ^0
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:id]
+    end
+
+    test "returns an issue for negated bare predicates on left join bindings" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: not comment.visible
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:visible]
+    end
+
     test "returns an issue when the left join field is on the right side of a comparison" do
       status = :published
 
@@ -164,6 +218,32 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
 
       assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "returns an issue for self comparisons on left join bindings" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status == comment.status
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "returns an issue for field-to-field comparisons involving left join bindings" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.body == post.title
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:body]
     end
 
     test "passes when an or branch preserves unmatched left join rows" do
@@ -295,6 +375,36 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
         from(post in Post,
           left_join: comment in assoc(post, :comments),
           where: comment.status == ^status
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.binding_index == 1
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "validates schema-less left joins" do
+      query =
+        from(post in "posts",
+          left_join: comment in "comments",
+          on: field(comment, :post_id) == field(post, :id),
+          where: field(comment, :status) == ^"published"
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.binding_index == 1
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "validates subquery left joins" do
+      comments_query = from(comment in Comment, where: comment.visible == ^true)
+
+      query =
+        from(post in Post,
+          left_join: comment in subquery(comments_query),
+          on: comment.post_id == post.id,
+          where: field(comment, :status) == ^"published"
         )
 
       assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
@@ -439,6 +549,40 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
                )
     end
 
+    test "validates when validate is explicitly true" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status == ^status
+        )
+
+      assert {:error, %Issue{} = issue} =
+               LeftJoinWherePredicates.validate(:all, query,
+                 left_join_where_predicates: [validate: true]
+               )
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "requires an explicit false escape hatch" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status == ^status
+        )
+
+      assert {:error, %Issue{}} =
+               LeftJoinWherePredicates.validate(:all, query,
+                 left_join_where_predicates: [validate: nil]
+               )
+    end
+
     test "raises for unknown check options" do
       query = from(post in Post)
 
@@ -463,6 +607,18 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
                    end
     end
 
+    test "raises when check options are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "expected :left_join_where_predicates opts to be a keyword list, got: [true]",
+                   fn ->
+                     LeftJoinWherePredicates.validate(:all, query,
+                       left_join_where_predicates: [true]
+                     )
+                   end
+    end
+
     test "raises when opts are not a keyword list" do
       query = from(post in Post)
 
@@ -470,6 +626,16 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
                    "expected opts to be a keyword list, got: true",
                    fn ->
                      LeftJoinWherePredicates.validate(:all, query, true)
+                   end
+    end
+
+    test "raises when opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "expected opts to be a keyword list, got: [true]",
+                   fn ->
+                     LeftJoinWherePredicates.validate(:all, query, [true])
                    end
     end
   end
