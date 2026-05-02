@@ -134,13 +134,13 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   defp keyword_list!(opts, label) do
-    unless Keyword.keyword?(opts) do
+    if not Keyword.keyword?(opts) do
       raise ArgumentError, "expected #{label} to be a keyword list, got: #{inspect(opts)}"
     end
   end
 
   defp validate_postgres_target!(%Target{adapter: __MODULE__} = target) do
-    unless valid_query_source?(target.repo, target.query) do
+    if not valid_query_source?(target.repo, target.query) do
       raise ArgumentError, "expected Postgres target to include :repo or a four-arity :query"
     end
 

@@ -188,7 +188,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   defp connection_opts(url) do
     uri = URI.parse(url)
 
-    unless uri.scheme in ["postgres", "postgresql"] do
+    if uri.scheme not in ["postgres", "postgresql"] do
       raise ArgumentError, "expected BYLAW_POSTGRES_URL to use postgres:// or postgresql://"
     end
 
