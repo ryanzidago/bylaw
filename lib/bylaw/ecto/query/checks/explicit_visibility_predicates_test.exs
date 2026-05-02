@@ -256,7 +256,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                ExplicitVisibilityPredicates.validate(:all, query, opts())
 
       assert issue.check == ExplicitVisibilityPredicates
-      assert issue.code == :missing_explicit_visibility_predicate
       assert issue.meta.root_schema == Post
       assert issue.meta.configured_fields == [:deleted_at, :status]
       assert issue.meta.applicable_fields == [:deleted_at, :status]

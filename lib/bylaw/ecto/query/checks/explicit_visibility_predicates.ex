@@ -416,7 +416,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp issue(operation, schema, configured_fields, applicable_fields, found_fields, missing) do
     %Issue{
       check: __MODULE__,
-      code: :missing_explicit_visibility_predicate,
       message: message(missing),
       meta: %{
         operation: operation,
