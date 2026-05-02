@@ -29,6 +29,10 @@ defmodule Bylaw.Db do
     |> result()
   end
 
+  def validate(_target_or_targets, checks) do
+    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
+  end
+
   defp target_issues(%Target{} = target, checks) do
     Enum.flat_map(checks, &check_issues(target, &1))
   end
@@ -52,7 +56,14 @@ defmodule Bylaw.Db do
     |> issues()
   end
 
-  defp normalize_check!({check, opts}) when is_atom(check) and is_list(opts), do: {check, opts}
+  defp normalize_check!({check, opts}) when is_atom(check) do
+    if is_list(opts) and Keyword.keyword?(opts) do
+      {check, opts}
+    else
+      raise ArgumentError, "expected check opts to be a keyword list, got: #{inspect(opts)}"
+    end
+  end
+
   defp normalize_check!(check) when is_atom(check), do: {check, []}
 
   defp normalize_check!(check) do

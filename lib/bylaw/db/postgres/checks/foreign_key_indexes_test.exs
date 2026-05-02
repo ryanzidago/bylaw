@@ -91,6 +91,34 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
       assert :ok = ForeignKeyIndexes.validate(target, validate: false)
     end
 
+    test "rejects unknown options" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError, ~r/unknown foreign_key_indexes option: :unknown/, fn ->
+        ForeignKeyIndexes.validate(target, unknown: true)
+      end
+    end
+
+    test "requires keyword options" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes opts to be a keyword list/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, [:not_keyword])
+                   end
+    end
+
+    test "requires options to be a list" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes opts to be a keyword list/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, :not_a_list)
+                   end
+    end
+
     test "returns an issue when introspection fails" do
       target = target({:error, :connection_closed})
 

@@ -88,6 +88,22 @@ defmodule Bylaw.DbTest do
       end
     end
 
+    test "raises for malformed check options" do
+      target = target(:primary)
+
+      assert_raise ArgumentError, ~r/expected check opts to be a keyword list/, fn ->
+        Db.validate(target, [{PassingCheck, [:not_keyword]}])
+      end
+    end
+
+    test "raises for malformed check lists" do
+      target = target(:primary)
+
+      assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
+        Db.validate(target, PassingCheck)
+      end
+    end
+
     test "raises for missing targets" do
       assert_raise ArgumentError, ~r/expected a database target or list of targets/, fn ->
         Db.validate(nil, [PassingCheck])

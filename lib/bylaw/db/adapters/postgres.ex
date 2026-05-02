@@ -50,6 +50,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   @impl Bylaw.Db.Adapter
   @spec target(atom(), target_opts()) :: Target.t()
   def target(name, opts) when is_atom(name) and is_list(opts) do
+    keyword_list!(opts, "Postgres target opts")
     validate_target_opts!(opts)
 
     %Target{
@@ -61,6 +62,11 @@ defmodule Bylaw.Db.Adapters.Postgres do
       query: Keyword.get(opts, :query),
       meta: Keyword.get(opts, :meta, %{})
     }
+  end
+
+  def target(_name, opts) do
+    raise ArgumentError,
+          "expected Postgres target opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   @doc """
@@ -75,6 +81,10 @@ defmodule Bylaw.Db.Adapters.Postgres do
     Enum.each(targets, &validate_postgres_target!/1)
 
     Db.validate(targets, checks)
+  end
+
+  def validate(_target_or_targets, checks) do
+    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
   end
 
   @doc """
@@ -121,6 +131,12 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
     if is_nil(Keyword.get(opts, :repo)) and not is_function(Keyword.get(opts, :query), 4) do
       raise ArgumentError, "expected Postgres target to include :repo or a four-arity :query"
+    end
+  end
+
+  defp keyword_list!(opts, label) do
+    unless Keyword.keyword?(opts) do
+      raise ArgumentError, "expected #{label} to be a keyword list, got: #{inspect(opts)}"
     end
   end
 

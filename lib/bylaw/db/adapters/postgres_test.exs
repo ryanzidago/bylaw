@@ -43,6 +43,12 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       end
     end
 
+    test "requires keyword options" do
+      assert_raise ArgumentError, ~r/expected Postgres target opts to be a keyword list/, fn ->
+        Postgres.target(:primary_public, [:not_keyword])
+      end
+    end
+
     test "requires a repo or query source" do
       assert_raise ArgumentError, ~r/expected Postgres target to include :repo/, fn ->
         Postgres.target(:primary_public, schema: "public")
@@ -75,6 +81,14 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     test "rejects missing targets" do
       assert_raise ArgumentError, ~r/expected a Postgres target or list of targets/, fn ->
         Postgres.validate(nil, [FailingCheck])
+      end
+    end
+
+    test "rejects malformed check lists" do
+      target = Postgres.target(:primary_public, schema: "public", query: query_fun())
+
+      assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
+        Postgres.validate(target, FailingCheck)
       end
     end
   end
