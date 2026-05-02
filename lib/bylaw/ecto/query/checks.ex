@@ -5,9 +5,9 @@ defmodule Bylaw.Ecto.Query.Checks do
   Each check is a small module that implements `Bylaw.Ecto.Query.Check` and can
   be called directly from `c:Ecto.Repo.prepare_query/3`.
 
-  See the [Checks guide](checks.html) for installation, `prepare_query/3`
-  wiring, option keys, escape hatches, and guidance on which checks to enable
-  first.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for
+  installation, `prepare_query/3` wiring, option keys, escape hatches, and
+  guidance on which checks to enable first.
 
   ## Available checks
 
