@@ -88,6 +88,15 @@ escape hatch.
   Catches impossible root predicates such as `status == :draft` and
   `status == :published` in the same satisfiable branch.
 
+- `Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons`
+
+  Option key: `:date_datetime_mixed_comparisons`
+
+  Required config: none
+
+  Catches date fields compared directly to datetime fields without explicit
+  truncation.
+
 - `Bylaw.Ecto.Query.Checks.DeterministicOrder`
 
   Option key: `:deterministic_order`
@@ -124,6 +133,15 @@ escape hatch.
   Catches temporal lower bounds written with `>` and upper bounds written with
   `<=` instead of half-open `>=` and `<` boundaries.
 
+- `Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema`
+
+  Option key: `:hard_delete_on_soft_delete_schema`
+
+  Required config: none
+
+  Catches `delete_all` operations against root schemas that declare persisted
+  soft-delete fields.
+
 - `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
 
   Option key: `:left_join_where_predicates`
@@ -151,6 +169,15 @@ escape hatch.
   Catches root queries that do not constrain configured key fields in supported
   `where` predicates.
 
+- `Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc`
+
+  Option key: `:manual_join_instead_of_assoc`
+
+  Required config: none
+
+  Catches direct schema joins that should use an association declared on the
+  root schema.
+
 - `Bylaw.Ecto.Query.Checks.NamedBindings`
 
   Option key: `:named_bindings`
@@ -160,6 +187,15 @@ escape hatch.
   Catches root or join bindings without `:as` aliases, plus positional field
   references in query expressions.
 
+- `Bylaw.Ecto.Query.Checks.OffsetWithoutLimit`
+
+  Option key: `:offset_without_limit`
+
+  Required config: none
+
+  Catches queries that skip rows with `offset` but do not bound the result with
+  `limit`.
+
 - `Bylaw.Ecto.Query.Checks.RequiredOrder`
 
   Option key: `:required_order`
@@ -168,6 +204,24 @@ escape hatch.
 
   Catches queries with `limit`, `offset`, or stream operations that do not
   include `order_by`.
+
+- `Bylaw.Ecto.Query.Checks.UnboundedDeletes`
+
+  Option key: `:unbounded_deletes`
+
+  Required config: none
+
+  Catches `delete_all` operations whose root query does not include a
+  restricting `where` branch.
+
+- `Bylaw.Ecto.Query.Checks.UnboundedUpdates`
+
+  Option key: `:unbounded_updates`
+
+  Required config: none
+
+  Catches `update_all` operations whose root query does not include a
+  restricting `where` branch.
 
 - `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
 
