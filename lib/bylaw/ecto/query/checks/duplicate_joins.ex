@@ -292,11 +292,12 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   end
 
   defp normalize_join_term({operator, meta, [left, right]}, context) when operator == :== do
-    operands =
-      Enum.sort_by(
-        [normalize_join_term(left, context), normalize_join_term(right, context)],
-        &:erlang.term_to_binary/1
-      )
+    operands = [
+      normalize_join_term(left, context),
+      normalize_join_term(right, context)
+    ]
+
+    operands = Enum.sort_by(operands, &:erlang.term_to_binary/1)
 
     {operator, normalize_ast_meta(meta), operands}
   end
