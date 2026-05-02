@@ -15,6 +15,13 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   rejected because Ecto either requires binding variables for those forms or
   erases the source syntax before this check runs.
 
+  Ecto's repo lookup helpers, such as `Repo.get_by/3`, generate rootless
+  keyword `where` queries inside Ecto repo internals before
+  `c:Ecto.Repo.prepare_query/3` runs. The original caller did not have a place
+  to provide a root `:as` alias in that form, so this check ignores that
+  generated lookup shape. Predicate-oriented checks can still validate those
+  generated `where` fields.
+
       query =
         Post
         |> from(as: :post)
@@ -95,16 +102,111 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp issues(operation, query) when is_map(query) do
-    aliases = Introspection.aliases(query)
-    aliases_by_index = aliases_by_index(aliases)
-
-    root_as_issues(operation, query, aliases_by_index) ++
-      join_as_issues(operation, query) ++
-      expression_reference_issues(operation, query, aliases_by_index) ++
+    if repo_lookup_query?(operation, query) do
       subquery_issues(operation, query)
+    else
+      aliases = Introspection.aliases(query)
+      aliases_by_index = aliases_by_index(aliases)
+
+      root_as_issues(operation, query, aliases_by_index) ++
+        join_as_issues(operation, query) ++
+        expression_reference_issues(operation, query, aliases_by_index) ++
+        subquery_issues(operation, query)
+    end
   end
 
   defp issues(_operation, _query), do: []
+
+  defp repo_lookup_query?(:all, query) do
+    # Repo lookup helpers reach prepare_query/3 as normal :all queries. Keep
+    # the exemption tied to the generated lookup shapes Ecto leaves behind.
+    aliases_empty? =
+      query
+      |> Introspection.aliases()
+      |> Enum.empty?()
+
+    joins_empty? =
+      query
+      |> Map.get(:joins, [])
+      |> Enum.empty?()
+
+    repo_lookup_wheres? =
+      query
+      |> Map.get(:wheres, [])
+      |> repo_lookup_wheres?()
+
+    repo_lookup_expression_sources? =
+      query
+      |> expression_sources()
+      |> Enum.all?(&repo_lookup_expression_source?/1)
+
+    aliases_empty? and generated_unaliased_root?(query) and joins_empty? and repo_lookup_wheres? and
+      repo_lookup_expression_sources?
+  end
+
+  defp repo_lookup_query?(_operation, _query), do: false
+
+  defp generated_unaliased_root?(%{from: %{as: nil, file: nil}}), do: true
+  defp generated_unaliased_root?(_query), do: false
+
+  defp repo_lookup_wheres?([_where | _rest] = wheres) do
+    Enum.all?(wheres, &repo_lookup_where?/1)
+  end
+
+  defp repo_lookup_wheres?(_wheres), do: false
+
+  defp repo_lookup_where?(where) do
+    # Caller-authored keyword wheres have the caller file here; generated repo
+    # lookups point back into Ecto's repo queryable implementation.
+    Map.get(where, :op) == :and and repo_queryable_file?(Map.get(where, :file)) and
+      repo_lookup_expr?(Map.get(where, :expr))
+  end
+
+  defp repo_queryable_file?(file) when is_binary(file) do
+    String.ends_with?(file, "/ecto/repo/queryable.ex")
+  end
+
+  defp repo_queryable_file?(_file), do: false
+
+  defp ecto_query_planner_file?(file) when is_binary(file) do
+    String.ends_with?(file, "/ecto/query/planner.ex")
+  end
+
+  defp ecto_query_planner_file?(_file), do: false
+
+  defp repo_lookup_expr?({:and, _meta, [left, right]}) do
+    repo_lookup_expr?(left) and repo_lookup_expr?(right)
+  end
+
+  defp repo_lookup_expr?({:==, _meta, [left, right]}) do
+    root_field_access?(left) and pinned_param?(right)
+  end
+
+  defp repo_lookup_expr?({:in, _meta, [left, right]}) do
+    root_field_access?(left) and pinned_param?(right)
+  end
+
+  defp repo_lookup_expr?(_expr), do: false
+
+  defp root_field_access?({{:., _meta, [{:&, _binding_meta, [0]}, field]}, _call_meta, []})
+       when is_atom(field) do
+    true
+  end
+
+  defp root_field_access?(_expr), do: false
+
+  defp pinned_param?({:^, _meta, [param_index]}) when is_integer(param_index), do: true
+  defp pinned_param?(_expr), do: false
+
+  defp repo_lookup_expression_source?(%{macro: :where} = source) do
+    repo_queryable_file?(source.file) and repo_lookup_expr?(source.expr)
+  end
+
+  defp repo_lookup_expression_source?(%{macro: :select, expr: {:&, _meta, [0]}} = source) do
+    ecto_query_planner_file?(source.file) and Enum.empty?(source.subqueries)
+  end
+
+  defp repo_lookup_expression_source?(_source), do: false
 
   defp aliases_by_index(aliases) do
     Enum.reduce(aliases, %{}, fn
