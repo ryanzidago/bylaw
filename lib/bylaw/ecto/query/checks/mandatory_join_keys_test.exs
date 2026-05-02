@@ -167,11 +167,46 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                )
     end
 
+    test "passes when mandatory key equality uses field expressions" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            comment.post_id == post.id and
+              field(comment, :organisation_id) == field(post, :organisation_id),
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
     test "returns an issue when keyword join predicates omit mandatory keys" do
       query =
         from(post in Post,
           join: comment in Comment,
           on: [post_id: post.id],
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
+    test "does not accept mandatory key matches behind or predicates" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            comment.post_id == post.id or
+              comment.organisation_id == post.organisation_id,
           where: post.organisation_id == ^123
         )
 
