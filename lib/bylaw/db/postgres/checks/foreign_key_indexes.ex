@@ -148,7 +148,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    unless Keyword.keyword?(opts) do
+    if not Keyword.keyword?(opts) do
       raise ArgumentError,
             "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
     end
