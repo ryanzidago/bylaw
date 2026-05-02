@@ -16,8 +16,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   trusts direct `==`, `in`, and `is_nil` predicates in `AND` where expressions.
   `Ecto.Enum` fields are normalized through the schema enum mapping. Non-enum
   fields only compare simple literal values that already match the schema field
-  type. `or_where`, `or` expressions, fragments, subqueries, and non-root
-  bindings are ignored.
+  type. `or_where` and `or` expressions are handled as separate branches and
+  only rejected when every branch conflicts. Fragments, subqueries, and
+  non-root bindings are ignored.
 
       @bylaw [
         conflicting_where_predicates: [
@@ -136,7 +137,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     case root_schema(query) do
       {:ok, schema} ->
         operation
-        |> issues(schema, where_predicates(query, schema, root_aliases(query)))
+        |> issues(schema, where_predicate_branches(query, schema, root_aliases(query)))
         |> result()
 
       :unknown ->
@@ -165,38 +166,67 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     |> MapSet.new()
   end
 
-  defp where_predicates(query, schema, root_aliases) when is_map(query) do
+  defp where_predicate_branches(query, schema, root_aliases) when is_map(query) do
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(&predicates_in_where(&1, schema, root_aliases))
+    |> Enum.reduce(nil, fn where, branches ->
+      where_branches = predicate_branches_in_where(where, schema, root_aliases)
+
+      case Map.get(where, :op, :and) do
+        :or -> concat_predicate_branches(branches, where_branches)
+        _op -> merge_predicate_branches(branches, where_branches)
+      end
+    end)
+    |> case do
+      nil -> [[]]
+      branches -> branches
+    end
   end
 
-  defp predicates_in_where(%{op: :and, expr: expr, params: params}, schema, root_aliases) do
-    predicates_in_expr(expr, params, schema, root_aliases)
+  defp predicate_branches_in_where(%{expr: expr, params: params}, schema, root_aliases) do
+    predicate_branches_in_expr(expr, params, schema, root_aliases)
   end
 
-  defp predicates_in_where(_where, _schema, _root_aliases), do: []
+  defp predicate_branches_in_where(_where, _schema, _root_aliases), do: [[]]
 
-  defp predicates_in_expr({:and, _meta, [left, right]}, params, schema, root_aliases) do
-    predicates_in_expr(left, params, schema, root_aliases) ++
-      predicates_in_expr(right, params, schema, root_aliases)
+  defp predicate_branches_in_expr({:and, _meta, [left, right]}, params, schema, root_aliases) do
+    merge_predicate_branches(
+      predicate_branches_in_expr(left, params, schema, root_aliases),
+      predicate_branches_in_expr(right, params, schema, root_aliases)
+    )
   end
 
-  defp predicates_in_expr({:or, _meta, [_left, _right]}, _params, _schema, _root_aliases), do: []
-
-  defp predicates_in_expr({:==, _meta, [left, right]}, params, schema, root_aliases) do
-    equality_predicates(left, right, params, schema, root_aliases)
+  defp predicate_branches_in_expr({:or, _meta, [left, right]}, params, schema, root_aliases) do
+    predicate_branches_in_expr(left, params, schema, root_aliases) ++
+      predicate_branches_in_expr(right, params, schema, root_aliases)
   end
 
-  defp predicates_in_expr({:in, _meta, [left, right]}, params, schema, root_aliases) do
-    in_predicates(left, right, params, schema, root_aliases)
+  defp predicate_branches_in_expr({:==, _meta, [left, right]}, params, schema, root_aliases) do
+    [equality_predicates(left, right, params, schema, root_aliases)]
   end
 
-  defp predicates_in_expr({:is_nil, _meta, [expr]}, _params, schema, root_aliases) do
-    nil_predicates(expr, schema, root_aliases)
+  defp predicate_branches_in_expr({:in, _meta, [left, right]}, params, schema, root_aliases) do
+    [in_predicates(left, right, params, schema, root_aliases)]
   end
 
-  defp predicates_in_expr(_expr, _params, _schema, _root_aliases), do: []
+  defp predicate_branches_in_expr({:is_nil, _meta, [expr]}, _params, schema, root_aliases) do
+    [nil_predicates(expr, schema, root_aliases)]
+  end
+
+  defp predicate_branches_in_expr(_expr, _params, _schema, _root_aliases), do: [[]]
+
+  defp merge_predicate_branches(nil, branches), do: branches
+
+  defp merge_predicate_branches(left_branches, right_branches) do
+    for left <- left_branches, right <- right_branches do
+      left ++ right
+    end
+  end
+
+  defp concat_predicate_branches(nil, branches), do: branches
+
+  defp concat_predicate_branches(left_branches, right_branches),
+    do: left_branches ++ right_branches
 
   defp equality_predicates(left, right, params, schema, root_aliases) do
     case field_predicate(left, right, :==, params, schema, root_aliases) do
@@ -380,7 +410,20 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   defp root_binding?(_expr, _root_aliases), do: false
 
-  defp issues(operation, schema, predicates) do
+  defp issues(operation, schema, predicate_branches) do
+    branch_issues = Enum.map(predicate_branches, &issues_for_predicates(operation, schema, &1))
+
+    if Enum.any?(branch_issues, &Enum.empty?/1) do
+      []
+    else
+      branch_issues
+      |> List.flatten()
+      |> Enum.uniq_by(&issue_key/1)
+      |> Enum.sort_by(&{&1.meta.field, inspect(&1.meta.predicates)})
+    end
+  end
+
+  defp issues_for_predicates(operation, schema, predicates) do
     predicates
     |> Enum.group_by(& &1.field)
     |> Enum.flat_map(fn {field, field_predicates} ->
@@ -391,6 +434,13 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
       end
     end)
     |> Enum.sort_by(& &1.meta.field)
+  end
+
+  defp issue_key(issue) do
+    {
+      issue.meta.field,
+      Enum.map(issue.meta.predicates, &{&1.operator, &1.values})
+    }
   end
 
   defp conflicting?(predicates) do
