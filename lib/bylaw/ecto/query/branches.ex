@@ -1,22 +1,5 @@
 defmodule Bylaw.Ecto.Query.Branches do
-  @moduledoc """
-  Helpers for aggregating facts across boolean query branches.
-
-  Many query checks need to answer questions such as "which fields are present
-  in every possible path through this `where` expression?". `and` expressions
-  combine facts from both sides, while `or` expressions keep separate possible
-  branches.
-
-  This module provides the small branch operations shared by those checks:
-
-    * initialize or cross-product branch facts for `and` expressions
-    * append independent branch alternatives for `or` expressions
-    * reduce all branches to the facts guaranteed on every branch
-
-  Branch values are intentionally generic. Existing checks use sets for field
-  names and lists for predicates, but custom checks can use any value that their
-  merge function understands.
-  """
+  @moduledoc false
 
   @doc """
   Merges two branch lists by combining every left branch with every right branch.
