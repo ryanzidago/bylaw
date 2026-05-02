@@ -42,6 +42,11 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   Queries with `limit`, `offset`, or the `:stream` operation require an
   `order_by` clause. If any `order_by` exists, this check passes and leaves
   deterministic tie-breaker validation to `DeterministicOrder`.
+
+  Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
+  synthetic limit is ignored because existence checks do not depend on which row
+  is returned. A preserved `offset` still requires ordering because the skipped
+  rows are otherwise undefined.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -123,11 +128,13 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   end
 
   defp direct_missing_order_reasons(operation, query) do
-    required_by = required_by(operation, query)
+    required_by =
+      operation
+      |> required_by(query)
+      |> ignore_exists_limit(operation, query)
 
     cond do
       Enum.empty?(required_by) -> []
-      exists_query?(operation, query) -> []
       ordered?(query) -> []
       true -> required_by
     end
@@ -168,6 +175,14 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   end
 
   defp exists_query?(_operation, _query), do: false
+
+  defp ignore_exists_limit(required_by, operation, query) do
+    if exists_query?(operation, query) do
+      List.delete(required_by, :limit)
+    else
+      required_by
+    end
+  end
 
   defp literal_select?(%{select: %{expr: value}}, value), do: true
   defp literal_select?(_query, _value), do: false

@@ -153,6 +153,24 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert :ok = RequiredOrder.validate(:all, query, [])
     end
 
+    test "returns an issue when an Ecto exists query rewrite preserves offset" do
+      query =
+        Post
+        |> offset(50)
+        |> exclude(:select)
+        |> exclude(:preload)
+        |> exclude(:order_by)
+        |> exclude(:distinct)
+        |> select(1)
+        |> limit(1)
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.check == RequiredOrder
+      assert issue.message == "expected query with offset to include order_by"
+      assert issue.meta.required_by == [:offset]
+    end
+
     test "returns an issue when a source subquery has limit and no order_by" do
       limited_posts = from(post in Post, limit: 10)
       query = from(post in subquery(limited_posts), select: count())
@@ -171,6 +189,87 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
 
       assert issue.message == "expected query with offset to include order_by"
       assert issue.meta.required_by == [:offset]
+    end
+
+    test "returns an issue when a join subquery has limit and no order_by" do
+      limited_posts = from(post in Post, limit: 10)
+
+      query =
+        from(post in Post,
+          join: limited_post in subquery(limited_posts),
+          on: limited_post.id == post.id
+        )
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "passes when a join subquery with limit has order_by" do
+      limited_posts = from(post in Post, order_by: post.title, limit: 10)
+
+      query =
+        from(post in Post,
+          join: limited_post in subquery(limited_posts),
+          on: limited_post.id == post.id
+        )
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
+
+    test "returns an issue when a CTE query has limit and no order_by" do
+      limited_posts = from(post in Post, limit: 10)
+
+      query =
+        Post
+        |> with_cte("limited_posts", as: ^limited_posts)
+        |> join(:inner, [post], limited_post in "limited_posts",
+          on: field(limited_post, :id) == post.id
+        )
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "passes when a CTE query with limit has order_by" do
+      limited_posts = from(post in Post, order_by: post.title, limit: 10)
+
+      query =
+        Post
+        |> with_cte("limited_posts", as: ^limited_posts)
+        |> join(:inner, [post], limited_post in "limited_posts",
+          on: field(limited_post, :id) == post.id
+        )
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
+
+    test "returns an issue when a combination query has limit and no order_by" do
+      limited_posts = from(post in Post, select: post.id, limit: 10)
+
+      query =
+        Post
+        |> select([post], post.id)
+        |> union_all(^limited_posts)
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "passes when a combination query with limit has order_by" do
+      limited_posts = from(post in Post, select: post.id, order_by: post.title, limit: 10)
+
+      query =
+        Post
+        |> select([post], post.id)
+        |> union_all(^limited_posts)
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
     end
 
     test "passes when Ecto.Query.first/2 and last/2 provide order_by" do
