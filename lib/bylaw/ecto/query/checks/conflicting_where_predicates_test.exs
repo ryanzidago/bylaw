@@ -265,6 +265,15 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert issue.meta.predicates == [%{operator: :in, values: []}]
     end
 
+    test "returns an issue when an enum in predicate only contains nil values" do
+      query = from(post in Post, where: post.status in ^[nil])
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+      assert issue.meta.predicates == [%{operator: :in, values: []}]
+    end
+
     test "ignores enum in predicates with invalid enum values" do
       query =
         from(post in Post,
