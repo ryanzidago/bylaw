@@ -221,7 +221,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_where_keys == []
+      assert Enum.empty?(issue.meta.found_where_keys)
     end
 
     test "does not accept mandatory keys when an or_where branch can match without them" do
@@ -237,7 +237,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_where_keys == []
+      assert Enum.empty?(issue.meta.found_where_keys)
     end
 
     test "requires every mandatory key to be present in every or_where branch when match is all" do
@@ -256,7 +256,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.meta.missing_keys == [:organisation_id, :user_id]
-      assert issue.meta.found_where_keys == []
+      assert Enum.empty?(issue.meta.found_where_keys)
     end
 
     test "accepts mandatory keys in root equality predicates when the field is on the right" do
