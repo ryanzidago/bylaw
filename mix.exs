@@ -24,12 +24,23 @@ defmodule Bylaw.MixProject do
   defp test_paths(:test), do: ["lib"]
   defp test_paths(_env), do: ["test"]
 
+  def cli do
+    [
+      preferred_envs: [
+        qa: :test,
+        dialyzer: :test
+      ]
+    ]
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7.18", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13", optional: true},
+      {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
+      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
