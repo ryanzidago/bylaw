@@ -581,6 +581,108 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert Enum.empty?(issue.meta.found_where_keys)
     end
 
+    test "passes when every combination branch references a mandatory key" do
+      scoped_posts =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          select: post.id
+        )
+
+      other_scoped_posts =
+        from(post in Post,
+          where: post.organisation_id == ^456,
+          select: post.id
+        )
+
+      query = union_all(scoped_posts, ^other_scoped_posts)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "returns an issue when a combination branch is missing a mandatory key" do
+      scoped_posts =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          select: post.id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      Enum.each(combination_queries(scoped_posts, unscoped_posts), fn {operation, query} ->
+        assert {:error, %Issue{} = issue} =
+                 MandatoryWhereKeys.validate(:all, query,
+                   mandatory_where_keys: [keys: [:organisation_id]]
+                 )
+
+        assert issue.meta.missing_keys == [:organisation_id]
+        assert issue.meta.found_where_keys == [:title]
+        assert issue.meta.combination_path == [%{operation: operation, index: 0}]
+      end)
+    end
+
+    test "returns every issue when the root and a combination branch are missing mandatory keys" do
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      other_unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"private",
+          select: post.id
+        )
+
+      query = union_all(unscoped_posts, ^other_unscoped_posts)
+
+      assert {:error, [%Issue{} = root_issue, %Issue{} = combination_issue]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      refute Map.has_key?(root_issue.meta, :combination_path)
+      assert root_issue.meta.missing_keys == [:organisation_id]
+
+      assert combination_issue.meta.missing_keys == [:organisation_id]
+      assert combination_issue.meta.combination_path == [%{operation: :union_all, index: 0}]
+    end
+
+    test "tracks nested combination branches missing mandatory keys" do
+      scoped_posts =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          select: post.id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      nested_query = union_all(scoped_posts, ^unscoped_posts)
+      query = union(scoped_posts, ^nested_query)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+
+      assert issue.meta.combination_path == [
+               %{operation: :union, index: 0},
+               %{operation: :union_all, index: 0}
+             ]
+    end
+
     test "returns the missing keys when match is all" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
@@ -697,5 +799,16 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
       end
     end
+  end
+
+  defp combination_queries(left_query, right_query) do
+    [
+      {:union, union(left_query, ^right_query)},
+      {:union_all, union_all(left_query, ^right_query)},
+      {:except, except(left_query, ^right_query)},
+      {:except_all, except_all(left_query, ^right_query)},
+      {:intersect, intersect(left_query, ^right_query)},
+      {:intersect_all, intersect_all(left_query, ^right_query)}
+    ]
   end
 end
