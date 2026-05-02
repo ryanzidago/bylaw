@@ -28,9 +28,9 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
-  Only the root schema for the prepared `:delete_all` query is inspected. The
-  check ignores schema-less queries, non-query values, virtual fields, and
-  soft-delete fields that appear only on joined schemas.
+  The root query and every combination branch are inspected independently. The
+  check ignores schema-less queries, non-query values, virtual fields, source
+  subqueries, and soft-delete fields that appear only on joined schemas.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -65,11 +65,10 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = CheckOptions.fetch!(opts, name(), [:validate])
 
-    with true <- CheckOptions.enabled?(check_opts),
-         {:error, issue} <- issue_for(operation, query) do
-      {:error, issue}
+    if CheckOptions.enabled?(check_opts) do
+      validate_enabled(operation, query)
     else
-      _ok -> :ok
+      :ok
     end
   end
 
@@ -77,17 +76,28 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp issue_for(:delete_all, query) do
+  defp validate_enabled(:delete_all, query) do
+    query
+    |> Introspection.query_branches()
+    |> Enum.flat_map(&issues_for_branch(:delete_all, &1))
+    |> result()
+  end
+
+  defp validate_enabled(_operation, _query), do: :ok
+
+  defp issues_for_branch(operation, {branch_path, query}) do
     with {:ok, schema} <- Introspection.root_schema(query),
          soft_delete_fields = soft_delete_fields(schema),
          false <- Enum.empty?(soft_delete_fields) do
-      {:error, issue(schema, soft_delete_fields)}
+      [issue(operation, schema, soft_delete_fields, branch_path)]
     else
-      _not_applicable -> :ok
+      _not_applicable -> []
     end
   end
 
-  defp issue_for(_operation, _query), do: :ok
+  defp result([]), do: :ok
+  defp result([issue]), do: {:error, issue}
+  defp result(issues), do: {:error, issues}
 
   defp soft_delete_fields(schema) do
     schema_fields = Introspection.schema_fields(schema)
@@ -95,16 +105,20 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
     Enum.filter(@soft_delete_fields, &MapSet.member?(schema_fields, &1))
   end
 
-  @spec issue(module(), list(atom())) :: Issue.t()
-  defp issue(schema, soft_delete_fields) do
+  @spec issue(Bylaw.Ecto.Query.Check.operation(), module(), list(atom()), list()) :: Issue.t()
+  defp issue(operation, schema, soft_delete_fields, branch_path) do
     %Issue{
       check: __MODULE__,
       message: "expected delete_all on schema with soft-delete fields to use update_all instead",
-      meta: %{
-        operation: :delete_all,
-        root_schema: schema,
-        soft_delete_fields: soft_delete_fields
-      }
+      meta:
+        Map.merge(
+          %{
+            operation: operation,
+            root_schema: schema,
+            soft_delete_fields: soft_delete_fields
+          },
+          Introspection.combination_path_meta(branch_path)
+        )
     }
   end
 end
