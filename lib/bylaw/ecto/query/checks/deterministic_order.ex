@@ -55,6 +55,8 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type field_set :: list(atom())
@@ -80,51 +82,18 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
 
-      if enabled?(check_opts) and ordered?(query) do
-        validate_ordered_query(operation, query)
-      else
-        :ok
-      end
+    if CheckOptions.enabled?(check_opts) and ordered?(query) do
+      validate_ordered_query(operation, query)
     else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+      :ok
     end
   end
 
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
-
-  defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_ordered_query(operation, query) do
     fields = order_fields(query)
@@ -138,7 +107,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   end
 
   defp primary_key(query) do
-    case root_schema(query) do
+    case Introspection.root_schema(query) do
       {:ok, schema} ->
         schema.__schema__(:primary_key)
 
@@ -147,23 +116,12 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     end
   end
 
-  defp root_schema(%{from: %{source: {_source, schema}}})
-       when is_atom(schema) and not is_nil(schema) do
-    if function_exported?(schema, :__schema__, 1) do
-      {:ok, schema}
-    else
-      :unknown
-    end
-  end
-
-  defp root_schema(_query), do: :unknown
-
   defp ordered?(%{order_bys: order_bys}) when is_list(order_bys), do: not Enum.empty?(order_bys)
   defp ordered?(_query), do: false
 
   @spec order_fields(term()) :: field_set()
   defp order_fields(query) when is_map(query) do
-    root_aliases = root_aliases(query)
+    root_aliases = Introspection.root_aliases(query)
 
     query
     |> Map.get(:order_bys, [])
@@ -178,51 +136,14 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   defp order_fields(_query), do: []
 
-  defp root_aliases(query) do
-    query
-    |> Map.get(:aliases, %{})
-    |> Enum.flat_map(fn
-      {alias_name, 0} -> [alias_name]
-      _alias -> []
-    end)
-    |> MapSet.new()
-  end
-
   defp fields_in_order_expr(exprs, root_aliases) when is_list(exprs) do
     Enum.flat_map(exprs, fn
-      {_direction, expr} -> direct_root_fields(expr, root_aliases)
-      expr -> direct_root_fields(expr, root_aliases)
+      {_direction, expr} -> Introspection.root_fields(expr, root_aliases)
+      expr -> Introspection.root_fields(expr, root_aliases)
     end)
   end
 
   defp fields_in_order_expr(_expr, _root_aliases), do: []
-
-  defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
-       when is_atom(field) do
-    if root_binding?(source, root_aliases) do
-      [field]
-    else
-      []
-    end
-  end
-
-  defp direct_root_fields({:field, _meta, [source, field]}, root_aliases) when is_atom(field) do
-    if root_binding?(source, root_aliases) do
-      [field]
-    else
-      []
-    end
-  end
-
-  defp direct_root_fields(_expr, _root_aliases), do: []
-
-  defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
-
-  defp root_binding?({:as, _meta, [alias_name]}, root_aliases) when is_atom(alias_name) do
-    MapSet.member?(root_aliases, alias_name)
-  end
-
-  defp root_binding?(_expr, _root_aliases), do: false
 
   @spec deterministic?(field_set(), field_set()) :: boolean()
   defp deterministic?(_fields, []), do: false

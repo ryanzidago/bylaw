@@ -37,6 +37,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
@@ -74,10 +76,16 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      validate_with_opts(operation, query, check_opts!(opts))
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+
+    if CheckOptions.enabled?(check_opts) do
+      case issues(operation, query) do
+        [] -> :ok
+        [issue] -> {:error, issue}
+        issues -> {:error, issues}
+      end
     else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+      :ok
     end
   end
 
@@ -85,53 +93,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
-
-  defp validate_with_opts(operation, query, check_opts) do
-    if enabled?(check_opts) do
-      validate_enabled(operation, query)
-    else
-      :ok
-    end
-  end
-
-  defp validate_enabled(operation, query) do
-    case issues(operation, query) do
-      [] -> :ok
-      [issue] -> {:error, issue}
-      issues -> {:error, issues}
-    end
-  end
-
   defp issues(operation, query) when is_map(query) do
-    aliases = query_aliases(query)
+    aliases = Introspection.aliases(query)
     aliases_by_index = aliases_by_index(aliases)
 
     root_as_issues(operation, query, aliases_by_index) ++
@@ -141,9 +104,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp issues(_operation, _query), do: []
-
-  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
-  defp query_aliases(_query), do: %{}
 
   defp aliases_by_index(aliases) do
     Enum.reduce(aliases, %{}, fn
