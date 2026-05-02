@@ -52,13 +52,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
-  The check is static. It inspects direct field-to-field comparisons in `where`,
-  `having`, and direct join `on` predicates, reflecting field types from the
-  root schema, direct explicit join schemas, and association join schemas when
-  the owner binding schema is known. It detects dot field access, `field/2`,
-  named bindings, dynamic predicates, and `type(field, :date)` wrappers used as
-  explicit truncation. It ignores values, schema-less sources, fragments that
-  hide field access, and subqueries.
+  The check is static. It inspects direct field-to-field comparisons and `in`
+  predicates in `where`, `having`, and direct join `on` predicates, reflecting
+  field types from the root schema, direct explicit join schemas, and
+  association join schemas when the owner binding schema is known. It detects
+  dot field access, `field/2`, named bindings, dynamic predicates, and
+  `type(field, :date)` wrappers used as explicit truncation. It ignores values,
+  schema-less sources, fragments that hide field access, and subqueries.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -248,7 +248,22 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
     |> List.wrap()
   end
 
+  defp violations_in_expr({:in, _meta, [left, right]}, aliases, schemas) do
+    left_side = field_side(left, aliases, schemas)
+
+    right
+    |> in_candidates()
+    |> Enum.flat_map(fn candidate ->
+      left_side
+      |> comparison_violation(field_side(candidate, aliases, schemas), :in)
+      |> List.wrap()
+    end)
+  end
+
   defp violations_in_expr(_expr, _aliases, _schemas), do: []
+
+  defp in_candidates(candidates) when is_list(candidates), do: candidates
+  defp in_candidates(_candidates), do: []
 
   defp comparison_violation({:ok, left}, {:ok, right}, operator) do
     mixed_field_violation(left, right, operator)
@@ -323,6 +338,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   defp reverse_operator(:<=), do: :>=
   defp reverse_operator(:>), do: :<
   defp reverse_operator(:>=), do: :<=
+  defp reverse_operator(:in), do: :in
 
   defp violation(date, datetime, operator) do
     %{
