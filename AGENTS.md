@@ -31,6 +31,7 @@ Before opening or updating a PR, run:
 mix format
 mix test
 mix compile --warnings-as-errors
+mix dialyzer
 ```
 
 If a command cannot run, include the reason in the PR notes.

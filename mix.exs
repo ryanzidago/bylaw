@@ -6,6 +6,7 @@ defmodule Bylaw.MixProject do
       app: :bylaw,
       version: "0.1.0",
       elixir: "~> 1.19",
+      dialyzer: dialyzer(),
       usage_rules: usage_rules(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -22,7 +23,15 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
+    ]
+  end
+
+  defp dialyzer do
+    [
+      plt_add_apps: [:ex_unit, :mix],
+      plt_local_path: "priv/plts"
     ]
   end
 
