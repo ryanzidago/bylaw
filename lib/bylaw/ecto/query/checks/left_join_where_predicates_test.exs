@@ -13,6 +13,8 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
 
     schema "posts" do
       field(:title, :string)
+
+      has_many(:comments, Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest.Comment)
     end
   end
 
@@ -20,10 +22,11 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
     use Ecto.Schema
 
     schema "comments" do
-      field(:post_id, :integer)
       field(:status, Ecto.Enum, values: [:draft, :published, :hidden])
       field(:body, :string)
       field(:visible, :boolean)
+
+      belongs_to(:post, Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest.Post)
     end
   end
 
@@ -148,6 +151,21 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert issue.meta.rejecting_where_fields == [:status]
     end
 
+    test "returns an issue when the left join field is on the right side of a comparison" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: ^status == comment.status
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
     test "passes when an or branch preserves unmatched left join rows" do
       status = :published
 
@@ -161,6 +179,20 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert :ok = LeftJoinWherePredicates.validate(:all, query, [])
     end
 
+    test "passes when an or_where branch preserves unmatched left join rows" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status == ^status,
+          or_where: is_nil(comment.id)
+        )
+
+      assert :ok = LeftJoinWherePredicates.validate(:all, query, [])
+    end
+
     test "returns an issue when every or branch rejects the left join binding" do
       status = :published
 
@@ -169,6 +201,22 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
           left_join: comment in Comment,
           on: comment.post_id == post.id,
           where: comment.status == ^status or comment.body == ^"hello"
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:body, :status]
+    end
+
+    test "returns an issue when every or_where branch rejects the left join binding" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: comment.status == ^status,
+          or_where: comment.body == ^"hello"
         )
 
       assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
@@ -222,6 +270,64 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
 
       assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "supports dynamic left join predicates in where clauses" do
+      status = :published
+      predicate = dynamic([_post, comment], comment.status == ^status)
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: ^predicate
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "validates association left joins" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in assoc(post, :comments),
+          where: comment.status == ^status
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.binding_index == 1
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "validates left lateral joins" do
+      comments_query = from(comment in Comment)
+
+      query =
+        from(post in Post,
+          left_lateral_join: comment in subquery(comments_query),
+          on: true,
+          where: field(comment, :status) == ^"published"
+        )
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :left_lateral
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "ignores left join fields hidden inside fragments" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: fragment("? = ?", comment.status, ^"published")
+        )
+
+      assert :ok = LeftJoinWherePredicates.validate(:all, query, [])
     end
 
     test "returns multiple issues when multiple left joins are filtered in where" do
@@ -279,6 +385,44 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       end)
     end
 
+    test "passes when the query is not an Ecto query struct" do
+      assert :ok = LeftJoinWherePredicates.validate(:all, :not_a_query, [])
+    end
+
+    test "detects left join where filters in supported raw query maps" do
+      query = %{
+        aliases: %{},
+        joins: [
+          %{qual: :left}
+        ],
+        wheres: [
+          %{
+            op: :and,
+            expr: {:==, [], [join_field(:status), pinned_param(0)]}
+          }
+        ]
+      }
+
+      assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.binding_index == 1
+      assert issue.meta.rejecting_where_fields == [:status]
+    end
+
+    test "ignores malformed raw where entries" do
+      query = %{
+        aliases: %{},
+        joins: [
+          %{qual: :left}
+        ],
+        wheres: [
+          %{op: :and}
+        ]
+      }
+
+      assert :ok = LeftJoinWherePredicates.validate(:all, query, [])
+    end
+
     test "can be disabled explicitly" do
       status = :published
 
@@ -329,4 +473,10 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
                    end
     end
   end
+
+  defp join_field(field) do
+    {{:., [], [{:&, [], [1]}, field]}, [], []}
+  end
+
+  defp pinned_param(index), do: {:^, [], [index]}
 end
