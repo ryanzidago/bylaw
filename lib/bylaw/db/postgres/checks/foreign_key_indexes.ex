@@ -83,11 +83,18 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   @impl Bylaw.Db.Check
   @spec validate(Target.t(), check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
+    opts = check_opts!(opts)
+
     if Keyword.get(opts, :validate, true) == false do
       :ok
     else
       validate_foreign_key_indexes(target)
     end
+  end
+
+  def validate(%Target{adapter: Postgres}, opts) do
+    raise ArgumentError,
+          "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   def validate(%Target{} = target, _opts) do
@@ -124,6 +131,21 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   defp result([]), do: :ok
   defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
+
+  defp check_opts!(opts) do
+    unless Keyword.keyword?(opts) do
+      raise ArgumentError,
+            "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
+    end
+
+    Enum.each(opts, fn {key, _value} ->
+      if key != :validate do
+        raise ArgumentError, "unknown foreign_key_indexes option: #{inspect(key)}"
+      end
+    end)
+
+    opts
+  end
 
   @spec issue(Target.t(), result_row()) :: Issue.t()
   defp issue(target, row) do
