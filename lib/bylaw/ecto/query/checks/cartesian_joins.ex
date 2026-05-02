@@ -11,8 +11,8 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   It rejects `cross_join`, uncorrelated `cross_lateral_join`, and
   non-association joins whose `on` expression is literally `true`. Correlated
-  lateral subqueries that use `parent_as/1` are treated as constrained by their
-  subquery predicate.
+  lateral subqueries are treated as constrained when a supported subquery
+  predicate compares a local subquery binding with a previous parent binding.
 
       @bylaw [
         cartesian_joins: [
@@ -61,6 +61,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   @type reason :: :cross_join | :cross_lateral_join | :literal_true_on
   @type check_opts :: list({:validate, boolean()})
   @type opts :: list({:cartesian_joins, check_opts()})
+  @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
   @lateral_quals [:cross_lateral, :inner_lateral, :left_lateral]
 
   @doc """
@@ -177,58 +178,123 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
          binding_index
        )
        when qual in @lateral_quals do
-    query
-    |> predicate_parent_binding_references()
-    |> Enum.any?(&previous_parent_binding?(&1, aliases, binding_index))
+    correlated_lateral_query?(query, aliases, binding_index)
   end
 
   defp correlated_lateral_join?(_join, _aliases, _binding_index), do: false
 
-  defp predicate_parent_binding_references(query) when is_map(query) do
+  defp correlated_lateral_query?(query, parent_aliases, parent_binding_index)
+       when is_map(query) do
+    local_aliases = query_aliases(query)
+
+    query
+    |> predicate_expressions()
+    |> Enum.any?(&correlated_predicate?(&1, parent_aliases, parent_binding_index, local_aliases))
+  end
+
+  defp correlated_lateral_query?(_query, _parent_aliases, _parent_binding_index), do: false
+
+  defp predicate_expressions(query) do
+    where_expressions(query) ++ join_on_expressions(query)
+  end
+
+  defp where_expressions(query) do
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(fn where ->
-      where
-      |> Map.get(:expr)
-      |> parent_binding_references()
+    |> Enum.flat_map(fn
+      %{expr: expr} -> [expr]
+      _where -> []
     end)
   end
 
-  defp predicate_parent_binding_references(_query), do: []
+  defp join_on_expressions(query) do
+    query
+    |> Map.get(:joins, [])
+    |> Enum.flat_map(fn
+      %{on: %{expr: expr}} -> [expr]
+      _join -> []
+    end)
+  end
 
-  defp previous_parent_binding?(name, aliases, binding_index) do
+  defp correlated_predicate?({:and, _meta, [left, right]}, parent_aliases, binding_index, aliases) do
+    correlated_predicate?(left, parent_aliases, binding_index, aliases) or
+      correlated_predicate?(right, parent_aliases, binding_index, aliases)
+  end
+
+  defp correlated_predicate?({:or, _meta, [left, right]}, parent_aliases, binding_index, aliases) do
+    correlated_predicate?(left, parent_aliases, binding_index, aliases) and
+      correlated_predicate?(right, parent_aliases, binding_index, aliases)
+  end
+
+  defp correlated_predicate?({op, _meta, [left, right]}, parent_aliases, binding_index, aliases)
+       when op in @comparison_ops do
+    correlated_comparison?(left, right, parent_aliases, binding_index, aliases)
+  end
+
+  defp correlated_predicate?(_expr, _parent_aliases, _binding_index, _aliases), do: false
+
+  defp correlated_comparison?(left, right, parent_aliases, binding_index, aliases) do
+    (parent_field?(left, parent_aliases, binding_index) and local_field?(right, aliases)) or
+      (local_field?(left, aliases) and parent_field?(right, parent_aliases, binding_index))
+  end
+
+  defp parent_field?(expr, aliases, binding_index) do
+    match?({_parent_index, _field}, parent_field(expr, aliases, binding_index))
+  end
+
+  defp parent_field({{:., _meta, [source, field]}, _call_meta, []}, aliases, binding_index)
+       when is_atom(field) do
+    parent_field(source, field, aliases, binding_index)
+  end
+
+  defp parent_field({:field, _meta, [source, field]}, aliases, binding_index)
+       when is_atom(field) do
+    parent_field(source, field, aliases, binding_index)
+  end
+
+  defp parent_field(_expr, _aliases, _binding_index), do: :unknown
+
+  defp parent_field({:parent_as, _meta, [name]}, field, aliases, binding_index)
+       when is_atom(name) do
     case Map.get(aliases, name) do
-      index when is_integer(index) and index < binding_index -> true
-      _index -> false
+      index when is_integer(index) and index < binding_index -> {index, field}
+      _index -> :unknown
     end
   end
 
-  defp parent_binding_references({:parent_as, _meta, [name]}) when is_atom(name), do: [name]
-  defp parent_binding_references({:parent_as, _meta, [_name]}), do: []
+  defp parent_field(_source, _field, _aliases, _binding_index), do: :unknown
 
-  defp parent_binding_references(tuple) when is_tuple(tuple) do
-    tuple
-    |> Tuple.to_list()
-    |> Enum.flat_map(&parent_binding_references/1)
+  defp local_field?(expr, aliases) do
+    match?({_local_index, _field}, local_field(expr, aliases))
   end
 
-  defp parent_binding_references(list) when is_list(list) do
-    Enum.flat_map(list, &parent_binding_references/1)
+  defp local_field({{:., _meta, [source, field]}, _call_meta, []}, aliases)
+       when is_atom(field) do
+    local_field(source, field, aliases)
   end
 
-  defp parent_binding_references(%_struct{} = struct) do
-    struct
-    |> Map.from_struct()
-    |> parent_binding_references()
+  defp local_field({:field, _meta, [source, field]}, aliases) when is_atom(field) do
+    local_field(source, field, aliases)
   end
 
-  defp parent_binding_references(map) when is_map(map) do
-    map
-    |> Map.values()
-    |> Enum.flat_map(&parent_binding_references/1)
+  defp local_field(_expr, _aliases), do: :unknown
+
+  defp local_field(source, field, aliases) do
+    case local_binding_index(source, aliases) do
+      index when is_integer(index) -> {index, field}
+      :unknown -> :unknown
+    end
   end
 
-  defp parent_binding_references(_term), do: []
+  defp local_binding_index({:&, _meta, [index]}, _aliases) when is_integer(index) do
+    index
+  end
+
+  defp local_binding_index({:as, _meta, [name]}, aliases) when is_atom(name) do
+    Map.get(aliases, name, :unknown)
+  end
+
+  defp local_binding_index(_source, _aliases), do: :unknown
 
   defp literal_true_on_reason(%{on: %{expr: true}}), do: :literal_true_on
   defp literal_true_on_reason(_join), do: nil
