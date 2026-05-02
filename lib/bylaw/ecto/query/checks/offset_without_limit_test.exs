@@ -35,6 +35,40 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
 
+    test "returns an issue when offset has an interpolated nil limit" do
+      limit = nil
+      query = from(post in Post, limit: ^limit, offset: 50)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "passes when offset has an interpolated integer limit" do
+      limit = 10
+      query = from(post in Post, limit: ^limit, offset: 50)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "passes when interpolated nil offset has no limit" do
+      offset = nil
+      query = from(post in Post, offset: ^offset)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "returns an issue when interpolated offset has no limit" do
+      offset = 50
+      query = from(post in Post, offset: ^offset)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
+    end
+
     test "passes when offset is bounded by limit through query composition" do
       query =
         Post
