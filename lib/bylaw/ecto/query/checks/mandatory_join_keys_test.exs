@@ -1,0 +1,179 @@
+defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
+  use ExUnit.Case, async: true
+
+  import Ecto.Query
+
+  alias Bylaw.Ecto.Query.Checks.MandatoryJoinKeys
+  alias Bylaw.Ecto.Query.Issue
+
+  defmodule Post do
+    use Ecto.Schema
+
+    schema "posts" do
+      field(:organisation_id, :integer)
+      field(:title, :string)
+
+      has_many(:comments, Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest.Comment)
+    end
+  end
+
+  defmodule Comment do
+    use Ecto.Schema
+
+    schema "comments" do
+      field(:organisation_id, :integer)
+      field(:body, :string)
+
+      belongs_to(:post, Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest.Post)
+    end
+  end
+
+  defmodule GlobalComment do
+    use Ecto.Schema
+
+    schema "global_comments" do
+      field(:post_id, :integer)
+      field(:body, :string)
+    end
+  end
+
+  describe "validate/3" do
+    test "returns an issue when an explicit schema join omits the mandatory key equality" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.check == MandatoryJoinKeys
+      assert issue.code == :missing_mandatory_join_key
+      assert issue.meta.join_index == 0
+      assert issue.meta.binding_index == 1
+      assert issue.meta.join_schema == Comment
+      assert issue.meta.keys == [:organisation_id]
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
+    test "passes when an explicit schema join matches the mandatory key to an earlier binding" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when the mandatory key equality is written with the joined binding on the right" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and post.organisation_id == comment.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "validates only configured keys that exist on the joined schema" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [
+                   keys: [:organisation_id, :user_id],
+                   match: :all
+                 ]
+               )
+    end
+
+    test "returns missing keys when match is all" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [
+                   keys: [:organisation_id],
+                   match: :all
+                 ]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+    end
+
+    test "passes when the joined schema has none of the configured keys" do
+      query =
+        from(post in Post,
+          join: comment in GlobalComment,
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not validate association joins" do
+      query =
+        from(post in Post,
+          join: comment in assoc(post, :comments),
+          where: post.organisation_id == ^123,
+          select: comment.id
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "respects the explicit query-level escape hatch" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [validate: false])
+    end
+
+    test "raises when keys are missing" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, "missing required :keys option", fn ->
+        MandatoryJoinKeys.validate(:all, query, [])
+      end
+    end
+  end
+end
