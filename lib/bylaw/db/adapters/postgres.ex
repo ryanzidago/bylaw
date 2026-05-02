@@ -25,8 +25,6 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
-  @ecto_sql Module.concat([Ecto, Adapters, SQL])
-
   @typedoc """
   Options accepted by `target/1`.
   """
@@ -101,11 +99,11 @@ defmodule Bylaw.Db.Adapters.Postgres do
   def query(%Target{adapter: __MODULE__, repo: repo} = target, sql, params, opts)
       when is_atom(repo) and not is_nil(repo) and is_binary(sql) and is_list(params) and
              is_list(opts) do
-    with {:module, _module} <- Code.ensure_loaded(@ecto_sql),
+    with {:module, _module} <- Code.ensure_loaded(Ecto.Adapters.SQL),
          :ok <- ensure_dynamic_repo_support(target) do
       with_dynamic_repo(target, fn ->
         # credo:disable-for-next-line Credo.Check.Refactor.Apply
-        apply(@ecto_sql, :query, [repo, sql, params, opts])
+        apply(Ecto.Adapters.SQL, :query, [repo, sql, params, opts])
       end)
     else
       {:error, :nofile} -> {:error, {:missing_dependency, :ecto_sql}}
