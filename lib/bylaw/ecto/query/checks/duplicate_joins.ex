@@ -135,13 +135,14 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   defp duplicate_issues(operation, %{joins: joins} = query) when is_list(joins) do
     aliases = query_aliases(query)
+    predicate_usages = predicate_usages_by_binding(query, joins, aliases)
 
     {_seen, issues} =
       joins
       |> Enum.with_index()
       |> Enum.reduce({%{}, []}, fn {join, join_index}, {seen, issues} ->
         binding_index = join_index + 1
-        signature = join_signature(join, binding_index, aliases)
+        signature = join_signature(join, binding_index, aliases, predicate_usages)
 
         case Map.fetch(seen, signature) do
           {:ok, original} ->
@@ -161,7 +162,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
   defp query_aliases(_query), do: %{}
 
-  defp join_signature(join, binding_index, aliases) do
+  defp join_signature(join, binding_index, aliases, predicate_usages) do
     context = normalize_context(binding_index, aliases)
 
     {
@@ -171,9 +172,60 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
       normalize_static_term(Map.get(join, :prefix)),
       normalize_static_term(Map.get(join, :hints, [])),
       normalize_query_expr(Map.get(join, :on), context),
-      normalize_static_term(Map.get(join, :params, []))
+      normalize_static_term(Map.get(join, :params, [])),
+      Map.get(predicate_usages, binding_index, [])
     }
   end
+
+  defp predicate_usages_by_binding(query, joins, aliases) do
+    predicate_expressions = predicate_expressions(query)
+
+    joins
+    |> Enum.with_index(1)
+    |> Map.new(fn {_join, binding_index} ->
+      {binding_index, predicate_usage(predicate_expressions, binding_index, aliases)}
+    end)
+  end
+
+  defp predicate_expressions(query) when is_map(query) do
+    query_expressions(query, :wheres, :where) ++ query_expressions(query, :havings, :having)
+  end
+
+  defp query_expressions(query, key, name) do
+    case Map.get(query, key, []) do
+      expressions when is_list(expressions) -> Enum.map(expressions, &{name, &1})
+      _other -> []
+    end
+  end
+
+  defp predicate_usage(predicate_expressions, binding_index, aliases) do
+    context = normalize_context(binding_index, aliases)
+
+    predicate_expressions
+    |> Enum.flat_map(fn {name, predicate_expression} ->
+      predicate_context = %{
+        context
+        | params: normalize_on_params(Map.get(predicate_expression, :params, []), context)
+      }
+
+      predicate_expression
+      |> Map.get(:expr)
+      |> predicate_terms()
+      |> Enum.filter(&binding_referenced?(&1, binding_index, aliases))
+      |> Enum.map(fn term ->
+        {name, Map.get(predicate_expression, :op, :and),
+         normalize_join_term(term, predicate_context)}
+      end)
+    end)
+    |> Enum.sort_by(&:erlang.term_to_binary/1)
+  end
+
+  defp predicate_terms({operator, _meta, [left, right]}) when operator in [:and, :or] do
+    predicate_terms(left) ++ predicate_terms(right)
+  end
+
+  defp predicate_terms(nil), do: []
+  defp predicate_terms(expr), do: [expr]
 
   defp normalize_context(binding_index \\ nil, aliases \\ %{}, params \\ %{}) do
     %{aliases: aliases, binding_index: binding_index, params: params}
@@ -303,6 +355,46 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   defp normalize_boolean_operand(expr, _operator, context),
     do: [normalize_join_term(expr, context)]
+
+  defp binding_referenced?({:&, _meta, [referenced_binding_index]}, binding_index, _aliases)
+       when is_integer(referenced_binding_index) do
+    referenced_binding_index == binding_index
+  end
+
+  defp binding_referenced?({:as, _meta, [alias_name]}, binding_index, aliases)
+       when is_atom(alias_name) do
+    Map.get(aliases, alias_name) == binding_index
+  end
+
+  defp binding_referenced?({referenced_binding_index, field}, binding_index, _aliases)
+       when is_integer(referenced_binding_index) and is_atom(field) do
+    referenced_binding_index == binding_index
+  end
+
+  defp binding_referenced?(tuple, binding_index, aliases) when is_tuple(tuple) do
+    tuple
+    |> Tuple.to_list()
+    |> Enum.any?(&binding_referenced?(&1, binding_index, aliases))
+  end
+
+  defp binding_referenced?(list, binding_index, aliases) when is_list(list) do
+    Enum.any?(list, &binding_referenced?(&1, binding_index, aliases))
+  end
+
+  defp binding_referenced?(%_struct{} = term, binding_index, aliases) do
+    term
+    |> Map.from_struct()
+    |> binding_referenced?(binding_index, aliases)
+  end
+
+  defp binding_referenced?(map, binding_index, aliases) when is_map(map) do
+    Enum.any?(map, fn {key, value} ->
+      binding_referenced?(key, binding_index, aliases) or
+        binding_referenced?(value, binding_index, aliases)
+    end)
+  end
+
+  defp binding_referenced?(_term, _binding_index, _aliases), do: false
 
   defp normalize_binding_index(binding_index, %{binding_index: binding_index}) do
     {:&, [], [:join]}
