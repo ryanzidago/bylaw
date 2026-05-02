@@ -69,7 +69,7 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   @spec validate_allowed_keys!(keyword(), atom(), list(atom())) :: :ok
   def validate_allowed_keys!(opts, check_name, allowed_keys) do
     Enum.each(opts, fn {key, _value} ->
-      unless key in allowed_keys do
+      if key not in allowed_keys do
         raise ArgumentError, "unknown #{inspect(check_name)} option: #{inspect(key)}"
       end
     end)
