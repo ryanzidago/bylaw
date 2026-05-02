@@ -3,7 +3,7 @@ defmodule Bylaw.Db.Check do
   Behaviour for checks that validate database internals.
 
   Database checks receive a single `t:Bylaw.Db.Target.t/0`. A target represents
-  one adapter/database/schema combination, so checks can stay narrow and avoid
+  one adapter/database query source, so checks can stay narrow and avoid
   discovering their own execution context.
   """
 
