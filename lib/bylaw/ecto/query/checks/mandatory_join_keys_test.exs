@@ -199,6 +199,76 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                )
     end
 
+    test "passes when mandatory key equality uses a named root binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          on:
+            comment.post_id == as(:post).id and
+              comment.organisation_id == as(:post).organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when mandatory key equality uses a named root binding in field expressions" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          on:
+            field(comment, :post_id) == as(:post).id and
+              field(comment, :organisation_id) == field(as(:post), :organisation_id),
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when mandatory key equality uses named joined and root bindings" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          as: :comment,
+          on:
+            as(:comment).post_id == as(:post).id and
+              as(:comment).organisation_id == as(:post).organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when mandatory key equality uses named bindings in field expressions" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          as: :comment,
+          on:
+            field(as(:comment), :post_id) == as(:post).id and
+              field(as(:comment), :organisation_id) == field(as(:post), :organisation_id),
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
     test "returns an issue when keyword join predicates omit mandatory keys" do
       query =
         from(post in Post,
@@ -342,6 +412,44 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
           join: reaction in Reaction,
           on: reaction.post_id == post.id and reaction.organisation_id == comment.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "accepts mandatory key matches to named prior non-root bindings" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          as: :comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          join: reaction in Reaction,
+          on:
+            reaction.post_id == post.id and
+              reaction.organisation_id == as(:comment).organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "accepts mandatory key matches to named prior non-root bindings in field expressions" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          as: :comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          join: reaction in Reaction,
+          on:
+            reaction.post_id == post.id and
+              field(reaction, :organisation_id) == field(as(:comment), :organisation_id),
           where: post.organisation_id == ^123
         )
 
@@ -544,6 +652,26 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         from(post in Post,
           join: comment in Comment,
           on: comment.post_id == post.id and comment.organisation_id == comment.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
+    test "does not accept mandatory keys in named joined self comparisons" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          as: :comment,
+          on:
+            comment.post_id == post.id and
+              as(:comment).organisation_id == field(as(:comment), :organisation_id),
           where: post.organisation_id == ^123
         )
 
