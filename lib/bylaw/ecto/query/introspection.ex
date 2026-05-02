@@ -6,8 +6,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
   built an `Ecto.Query` through the Ecto query API and before the adapter sends
   SQL to the database. This module collects the small pieces of query structure
   that checks commonly need: root schemas, explicit join schemas, aliases,
-  combination branches, binding references, field references, and schema field
-  metadata.
+  combination branches, nested queries, binding references, field references,
+  and schema field metadata.
 
   The helpers intentionally inspect the query and expression data produced by
   Ecto. That inspectability is what lets Bylaw enforce application-specific
@@ -30,6 +30,16 @@ defmodule Bylaw.Ecto.Query.Introspection do
   A query branch paired with its path from the root query.
   """
   @type query_branch :: {branch_path(), term()}
+
+  @expression_subquery_fields [
+    :distinct,
+    :select,
+    :wheres,
+    :havings,
+    :order_bys,
+    :group_bys,
+    :windows
+  ]
 
   @doc """
   Returns the root schema module for an Ecto query.
@@ -120,6 +130,27 @@ defmodule Bylaw.Ecto.Query.Introspection do
     |> query_branches([])
     |> Enum.map(fn {branch_path, branch_query} -> {Enum.reverse(branch_path), branch_query} end)
   end
+
+  @doc """
+  Returns the direct nested queries referenced by an Ecto query.
+
+  This covers source and join subqueries, CTE query bodies, combination
+  branches, and expression subqueries stored by Ecto query expressions such as
+  `select`, `where`, `having`, `order_by`, `group_by`, `distinct`, and
+  `windows`.
+
+  The returned list contains only the immediate nested query references for the
+  given query. Checks that need full-depth validation should recursively call
+  this helper for returned queries.
+  """
+  @spec nested_queries(term()) :: list(term())
+  def nested_queries(query) when is_map(query) do
+    source_queries(query) ++
+      join_queries(query) ++
+      cte_queries(query) ++ combination_queries(query) ++ expression_queries(query)
+  end
+
+  def nested_queries(_query), do: []
 
   @doc """
   Formats a combination branch path for issue metadata.
@@ -289,6 +320,59 @@ defmodule Bylaw.Ecto.Query.Introspection do
   defp combination_branches(_query, _branch_path), do: []
 
   defp combination_path_entry({operation, index}), do: %{operation: operation, index: index}
+
+  defp source_queries(%{from: %{source: source}}), do: subquery_source_queries(source)
+  defp source_queries(_query), do: []
+
+  defp join_queries(%{joins: joins}) when is_list(joins) do
+    Enum.flat_map(joins, fn
+      %{source: source} -> subquery_source_queries(source)
+      _join -> []
+    end)
+  end
+
+  defp join_queries(_query), do: []
+
+  defp cte_queries(%{with_ctes: %{queries: queries}}) when is_list(queries) do
+    Enum.flat_map(queries, fn
+      {_name, _opts, query} -> [query]
+      _cte -> []
+    end)
+  end
+
+  defp cte_queries(_query), do: []
+
+  defp combination_queries(%{combinations: combinations}) when is_list(combinations) do
+    Enum.flat_map(combinations, fn
+      {_operation, query} -> [query]
+      _combination -> []
+    end)
+  end
+
+  defp combination_queries(_query), do: []
+
+  defp expression_queries(query) do
+    Enum.flat_map(@expression_subquery_fields, fn field ->
+      query
+      |> Map.get(field)
+      |> expression_subqueries()
+    end)
+  end
+
+  defp expression_subqueries(expressions) when is_list(expressions) do
+    Enum.flat_map(expressions, &expression_subqueries/1)
+  end
+
+  defp expression_subqueries({_name, expression}), do: expression_subqueries(expression)
+
+  defp expression_subqueries(%{subqueries: subqueries}) when is_list(subqueries) do
+    Enum.flat_map(subqueries, &subquery_source_queries/1)
+  end
+
+  defp expression_subqueries(_expression), do: []
+
+  defp subquery_source_queries(%{__struct__: Ecto.SubQuery, query: query}), do: [query]
+  defp subquery_source_queries(_source), do: []
 
   defp field(source, field, aliases) do
     case binding_index(source, aliases) do
