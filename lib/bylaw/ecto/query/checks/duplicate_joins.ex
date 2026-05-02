@@ -326,9 +326,12 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   end
 
   defp normalize_join_term({operator, meta, [left, right]}, context) when operator == :== do
-    operands =
-      [normalize_join_term(left, context), normalize_join_term(right, context)]
-      |> Enum.sort_by(&:erlang.term_to_binary/1)
+    operands = [
+      normalize_join_term(left, context),
+      normalize_join_term(right, context)
+    ]
+
+    operands = Enum.sort_by(operands, &:erlang.term_to_binary/1)
 
     {operator, normalize_ast_meta(meta), operands}
   end
@@ -361,7 +364,12 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   end
 
   defp normalize_join_term(%struct{} = term, context) do
-    {struct, term |> Map.from_struct() |> normalize_map(context, :join, metadata_keys(struct))}
+    normalized_map =
+      term
+      |> Map.from_struct()
+      |> normalize_map(context, :join, metadata_keys(struct))
+
+    {struct, normalized_map}
   end
 
   defp normalize_join_term(map, context) when is_map(map) do

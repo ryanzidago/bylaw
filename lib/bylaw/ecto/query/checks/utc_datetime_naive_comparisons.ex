@@ -162,7 +162,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   defp checked_fields(query, opts) do
     case {configured_fields(opts), root_schema(query)} do
       {{:ok, fields}, {:ok, schema}} ->
-        schema_fields = MapSet.new(schema.__schema__(:fields))
+        field_names = schema.__schema__(:fields)
+        schema_fields = MapSet.new(field_names)
+
         Enum.filter(fields, &MapSet.member?(schema_fields, &1))
 
       {{:ok, fields}, :unknown} ->
@@ -334,9 +336,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
     if field_reference?(expr) do
       []
     else
-      expr
-      |> naive_datetime_source(params)
-      |> case do
+      case naive_datetime_source(expr, params) do
         {:ok, source} ->
           [
             %{
