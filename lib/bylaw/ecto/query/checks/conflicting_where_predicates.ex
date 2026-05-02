@@ -324,6 +324,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     values
     |> Enum.reduce_while([], fn value, acc ->
       case normalize_comparable_value(schema, field, value) do
+        {:ok, nil} -> {:cont, acc}
         {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
         :error -> {:halt, :error}
       end
