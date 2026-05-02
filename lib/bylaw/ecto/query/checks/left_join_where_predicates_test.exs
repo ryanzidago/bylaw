@@ -123,6 +123,37 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert issue.meta.rejecting_where_fields == [:id]
     end
 
+    test "returns an issue for false is_nil comparisons on left join bindings" do
+      queries = [
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: is_nil(comment.id) == false
+        ),
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: false == is_nil(comment.id)
+        ),
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: is_nil(comment.id) != true
+        ),
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: true != is_nil(comment.id)
+        )
+      ]
+
+      Enum.each(queries, fn query ->
+        assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
+
+        assert issue.meta.rejecting_where_fields == [:id]
+      end)
+    end
+
     test "returns an issue for bare predicates on left join bindings" do
       query =
         from(post in Post,
@@ -203,6 +234,19 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       assert {:error, %Issue{} = issue} = LeftJoinWherePredicates.validate(:all, query, [])
 
       assert issue.meta.rejecting_where_fields == [:visible]
+    end
+
+    test "passes when a negated conjunction can preserve unmatched left join rows" do
+      status = :published
+
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: not (comment.status == ^status and post.title == ^"draft")
+        )
+
+      assert :ok = LeftJoinWherePredicates.validate(:all, query, [])
     end
 
     test "returns an issue when the left join field is on the right side of a comparison" do
