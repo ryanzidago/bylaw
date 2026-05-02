@@ -7,5 +7,4 @@ if [ "$command" != "rebase" ]; then
   exit 0
 fi
 
-hook_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-exec "$hook_dir/run-mix-qa" post-rewrite
+mix qa
