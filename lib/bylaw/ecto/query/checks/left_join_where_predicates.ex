@@ -34,6 +34,9 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.Branches
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
@@ -63,49 +66,17 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      check_opts = check_opts!(opts)
-      validate_query(operation, query, check_opts)
-    else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
-    end
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+
+    validate_query(operation, query, check_opts)
   end
 
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
-
   defp validate_query(operation, query, check_opts) do
-    if enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
     else
       :ok
@@ -151,7 +122,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp left_join?(_join), do: false
 
   defp where_rejection_branches(query) do
-    aliases = query_aliases(query)
+    aliases = Introspection.aliases(query)
 
     branches =
       query
@@ -160,8 +131,8 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
         expr_branches = rejection_branches_in_expr(Map.get(where, :expr), aliases)
 
         case Map.get(where, :op, :and) do
-          :or -> concat_branches(branches, expr_branches)
-          _op -> merge_branch_rejections(branches, expr_branches)
+          :or -> Branches.concat(branches, expr_branches)
+          _op -> Branches.merge(branches, expr_branches, &merge_rejection_maps/2)
         end
       end)
 
@@ -171,14 +142,11 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
     end
   end
 
-  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
-  defp query_aliases(_query), do: %{}
-
   defp rejection_branches_in_expr({:and, _meta, [left, right]}, aliases) do
-    merge_branch_rejections(
-      rejection_branches_in_expr(left, aliases),
-      rejection_branches_in_expr(right, aliases)
-    )
+    left_branches = rejection_branches_in_expr(left, aliases)
+    right_branches = rejection_branches_in_expr(right, aliases)
+
+    Branches.merge(left_branches, right_branches, &merge_rejection_maps/2)
   end
 
   defp rejection_branches_in_expr({:or, _meta, [left, right]}, aliases) do
@@ -199,10 +167,10 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   end
 
   defp rejection_branches_in_negated_expr({:or, _meta, [left, right]}, aliases) do
-    merge_branch_rejections(
-      rejection_branches_in_negated_expr(left, aliases),
-      rejection_branches_in_negated_expr(right, aliases)
-    )
+    left_branches = rejection_branches_in_negated_expr(left, aliases)
+    right_branches = rejection_branches_in_negated_expr(right, aliases)
+
+    Branches.merge(left_branches, right_branches, &merge_rejection_maps/2)
   end
 
   defp rejection_branches_in_negated_expr({:not, _meta, [expr]}, aliases) do
@@ -212,17 +180,6 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp rejection_branches_in_negated_expr(expr, aliases) do
     [rejecting_fields_in_negated_predicate(expr, aliases)]
   end
-
-  defp merge_branch_rejections(nil, branches), do: branches
-
-  defp merge_branch_rejections(left_branches, right_branches) do
-    for left <- left_branches, right <- right_branches do
-      merge_rejection_maps(left, right)
-    end
-  end
-
-  defp concat_branches(nil, branches), do: branches
-  defp concat_branches(left_branches, right_branches), do: left_branches ++ right_branches
 
   defp rejecting_fields_in_predicate({:is_nil, _meta, [_expr]}, _aliases), do: %{}
 
@@ -299,37 +256,16 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp nil_check_fields({:is_nil, _meta, [expr]}, aliases), do: direct_fields(expr, aliases)
   defp nil_check_fields(_expr, _aliases), do: %{}
 
-  defp direct_fields({{:., _meta, [source, field]}, _call_meta, []}, aliases)
-       when is_atom(field) do
-    source
-    |> source_binding_index(aliases)
-    |> field_map(field)
+  defp direct_fields(expr, aliases) do
+    case Introspection.field(expr, aliases) do
+      {:ok, {binding_index, field}} -> field_map(binding_index, field)
+      :unknown -> %{}
+    end
   end
 
-  defp direct_fields({:field, _meta, [source, field]}, aliases) when is_atom(field) do
-    source
-    |> source_binding_index(aliases)
-    |> field_map(field)
-  end
-
-  defp direct_fields(_expr, _aliases), do: %{}
-
-  defp source_binding_index({:&, _meta, [binding_index]}, _aliases)
-       when is_integer(binding_index) do
-    binding_index
-  end
-
-  defp source_binding_index({:as, _meta, [name]}, aliases) when is_atom(name) do
-    Map.get(aliases, name, :unknown)
-  end
-
-  defp source_binding_index(_source, _aliases), do: :unknown
-
-  defp field_map(binding_index, field) when is_integer(binding_index) do
+  defp field_map(binding_index, field) do
     %{binding_index => MapSet.new([field])}
   end
-
-  defp field_map(_binding_index, _field), do: %{}
 
   defp merge_rejection_maps(left, right) do
     Map.merge(left, right, fn _binding_index, left_fields, right_fields ->

@@ -65,6 +65,8 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
@@ -102,9 +104,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate, :fields])
 
-    if enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
     else
       :ok
@@ -114,40 +116,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
-
-  defp check_opts!(opts) do
-    if Keyword.keyword?(opts) do
-      opts
-      |> Keyword.get(name(), [])
-      |> normalize_check_opts!()
-    else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-  defp validate_check_opt!({:fields, fields}), do: normalize_fields!(fields)
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_enabled(operation, query, check_opts) do
     case checked_fields(query, check_opts) do
@@ -162,11 +130,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp checked_fields(query, opts) do
-    case {configured_fields(opts), root_schema(query)} do
+    case {configured_fields(opts), Introspection.root_schema(query)} do
       {{:ok, fields}, {:ok, schema}} ->
-        field_names = schema.__schema__(:fields)
-        schema_fields = MapSet.new(field_names)
-
+        schema_fields = Introspection.schema_fields(schema)
         Enum.filter(fields, &MapSet.member?(schema_fields, &1))
 
       {{:ok, fields}, :unknown} ->
@@ -187,14 +153,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
     end
   end
 
-  defp normalize_fields!([]) do
-    raise ArgumentError,
-          "expected :fields to be a non-empty list of atoms, got: []"
-  end
-
   defp normalize_fields!(fields) when is_list(fields) do
     fields
-    |> Enum.map(&normalize_field!/1)
+    |> CheckOptions.non_empty_atoms!(:fields)
     |> Enum.uniq()
   end
 
@@ -202,24 +163,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
     raise ArgumentError,
           "expected :fields to be a non-empty list of atoms, got: #{inspect(fields)}"
   end
-
-  defp normalize_field!(field) when is_atom(field), do: field
-
-  defp normalize_field!(field) do
-    raise ArgumentError,
-          "expected :fields to contain only atoms, got: #{inspect(field)}"
-  end
-
-  defp root_schema(%{from: %{source: {_source, schema}}})
-       when is_atom(schema) and not is_nil(schema) do
-    if function_exported?(schema, :__schema__, 1) do
-      {:ok, schema}
-    else
-      :unknown
-    end
-  end
-
-  defp root_schema(_query), do: :unknown
 
   defp utc_datetime_schema_fields(schema) do
     schema.__schema__(:fields)
@@ -247,7 +190,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
   defp naive_comparison_violations(query, fields) when is_map(query) do
     fields = MapSet.new(fields)
-    root_aliases = root_aliases(query)
+    root_aliases = Introspection.root_aliases(query)
 
     query
     |> Map.get(:wheres, [])
@@ -255,16 +198,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp naive_comparison_violations(_query, _fields), do: []
-
-  defp root_aliases(query) do
-    query
-    |> Map.get(:aliases, %{})
-    |> Enum.flat_map(fn
-      {alias_name, 0} -> [alias_name]
-      _alias -> []
-    end)
-    |> MapSet.new()
-  end
 
   defp violations_in_where(%{expr: expr} = where, fields, root_aliases) do
     params = Map.get(where, :params, [])
@@ -335,7 +268,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp value_violations(field, operator, expr, params) do
-    if field_reference?(expr) do
+    if Introspection.field_reference?(expr) do
       []
     else
       case naive_datetime_source(expr, params) do
@@ -427,23 +360,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp direct_root_field(_expr, _root_aliases), do: :error
-
-  defp field_reference?({{:., _meta, [_source, field]}, _call_meta, []})
-       when is_atom(field) or is_binary(field),
-       do: true
-
-  defp field_reference?({:field, _meta, [_source, field]})
-       when is_atom(field) or is_binary(field),
-       do: true
-
-  defp field_reference?(expr) when is_tuple(expr) do
-    expr
-    |> Tuple.to_list()
-    |> field_reference?()
-  end
-
-  defp field_reference?(expr) when is_list(expr), do: Enum.any?(expr, &field_reference?/1)
-  defp field_reference?(_expr), do: false
 
   defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
 
