@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+command="${1:-}"
+
+if [ "$command" != "rebase" ]; then
+  exit 0
+fi
+
+mix qa

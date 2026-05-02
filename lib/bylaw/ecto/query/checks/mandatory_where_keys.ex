@@ -86,10 +86,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    if disabled?(check_opts) do
-      :ok
-    else
+    if enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
+    else
+      :ok
     end
   end
 
@@ -110,7 +110,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
           "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_enabled(operation, query, check_opts) do
     keys = fetch_keys!(check_opts)
@@ -196,10 +196,12 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp root_schema(_query), do: :unknown
 
   defp where_field_branches(query) when is_map(query) do
+    aliases = query_aliases(query)
+
     query
     |> Map.get(:wheres, [])
     |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr))
+      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
       case Map.get(where, :op, :and) do
         :or -> concat_branches(branches, expr_branches)
@@ -214,23 +216,33 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp where_field_branches(_query), do: [MapSet.new()]
 
-  defp field_branches_in_expr({:and, _meta, [left, right]}) do
-    merge_branch_fields(field_branches_in_expr(left), field_branches_in_expr(right))
+  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
+  defp query_aliases(_query), do: %{}
+
+  defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
+    merge_branch_fields(
+      field_branches_in_expr(left, aliases),
+      field_branches_in_expr(right, aliases)
+    )
   end
 
-  defp field_branches_in_expr({:or, _meta, [left, right]}) do
-    field_branches_in_expr(left) ++ field_branches_in_expr(right)
+  defp field_branches_in_expr({:or, _meta, [left, right]}, aliases) do
+    field_branches_in_expr(left, aliases) ++ field_branches_in_expr(right, aliases)
   end
 
-  defp field_branches_in_expr({:==, _meta, [left, right]}) do
-    [MapSet.new(equality_root_fields(left, right))]
+  defp field_branches_in_expr({:==, _meta, [left, right]}, aliases) do
+    [MapSet.new(equality_root_fields(left, right, aliases))]
   end
 
-  defp field_branches_in_expr({:in, _meta, [left, _right]}) do
-    [MapSet.new(direct_root_fields(left))]
+  defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
+    if field_reference?(right) do
+      [MapSet.new()]
+    else
+      [MapSet.new(direct_root_fields(left, aliases))]
+    end
   end
 
-  defp field_branches_in_expr(_expr), do: [MapSet.new()]
+  defp field_branches_in_expr(_expr, _aliases), do: [MapSet.new()]
 
   defp merge_branch_fields(nil, branches), do: branches
 
@@ -249,39 +261,40 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp guaranteed_fields([]), do: MapSet.new()
 
-  defp equality_root_fields(left, right) do
+  defp equality_root_fields(left, right, aliases) do
     cond do
       field_reference?(left) and field_reference?(right) ->
         []
 
       field_reference?(left) ->
-        direct_root_fields(left)
+        direct_root_fields(left, aliases)
 
       field_reference?(right) ->
-        direct_root_fields(right)
+        direct_root_fields(right, aliases)
 
       true ->
         []
     end
   end
 
-  defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}) when is_atom(field) do
-    if root_binding?(source) do
+  defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}, aliases)
+       when is_atom(field) do
+    if root_binding?(source, aliases) do
       [field]
     else
       []
     end
   end
 
-  defp direct_root_fields({:field, _meta, [source, field]}) when is_atom(field) do
-    if root_binding?(source) do
+  defp direct_root_fields({:field, _meta, [source, field]}, aliases) when is_atom(field) do
+    if root_binding?(source, aliases) do
       [field]
     else
       []
     end
   end
 
-  defp direct_root_fields(_expr), do: []
+  defp direct_root_fields(_expr, _aliases), do: []
 
   defp field_reference?({{:., _meta, [_source, field]}, _call_meta, []}) when is_atom(field),
     do: true
@@ -297,8 +310,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp field_reference?(expr) when is_list(expr), do: Enum.any?(expr, &field_reference?/1)
   defp field_reference?(_expr), do: false
 
-  defp root_binding?({:&, _meta, [0]}), do: true
-  defp root_binding?(_expr), do: false
+  defp root_binding?({:&, _meta, [0]}, _aliases), do: true
+  defp root_binding?({:as, _meta, [name]}, aliases) when is_atom(name), do: aliases[name] == 0
+  defp root_binding?(_expr, _aliases), do: false
 
   defp missing_keys(keys, field_branches, :any) do
     if Enum.all?(field_branches, &branch_has_any_key?(&1, keys)), do: [], else: keys
@@ -315,7 +329,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp issue(operation, keys, fields, missing, match) do
     %Issue{
       check: __MODULE__,
-      code: :missing_mandatory_where_key,
       message: message(keys, missing, match),
       meta: %{
         operation: operation,
