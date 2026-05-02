@@ -107,7 +107,6 @@
           {Credo.Check.Readability.AliasOrder, []},
           {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Readability.FunctionNames, []},
-          {Bylaw.Credo.Check.Readability.ExplicitUnitNames, []},
           {Bylaw.Credo.Check.Readability.UseMaybeInFunctionName, []},
           {Credo.Check.Readability.ImplTrue, []},
           {Credo.Check.Readability.LargeNumbers, []},
