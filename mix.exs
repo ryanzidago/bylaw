@@ -29,7 +29,7 @@ defmodule Bylaw.MixProject do
   defp usage_rules do
     [
       file: "AGENTS.md",
-      usage_rules: [:usage_rules]
+      usage_rules: [{:usage_rules, sub_rules: ["otp"]}]
     ]
   end
 end
