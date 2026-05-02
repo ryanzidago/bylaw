@@ -28,7 +28,7 @@ Bylaw is an Elixir library for validating code, database, query, schema, and wor
 Before opening or updating a PR, run:
 
 ```sh
-mix format --check-formatted
+mix format
 mix test
 mix compile --warnings-as-errors
 ```
