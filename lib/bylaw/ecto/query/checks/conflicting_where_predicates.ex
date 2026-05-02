@@ -1,17 +1,23 @@
 defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @moduledoc """
-  Validates that root `Ecto.Enum` where predicates can all be satisfied.
+  Validates that root `where` predicates can all be satisfied.
 
-  This catches impossible enum filters such as:
+  This catches impossible filters such as:
 
       from post in Post,
         where: post.status == ^:draft,
         where: post.status == ^:published
 
-  The check is intentionally narrow. It only evaluates root schema fields backed
-  by `Ecto.Enum`, and it only trusts direct `==` and `in` predicates in `AND`
-  where expressions. `or_where`, `or` expressions, fragments, subqueries, and
-  non-root bindings are ignored.
+      from post in Post,
+        where: post.sequence == ^1,
+        where: post.sequence == ^2
+
+  The check is intentionally narrow. It evaluates root schema fields and only
+  trusts direct `==`, `in`, and `is_nil` predicates in `AND` where expressions.
+  `Ecto.Enum` fields are normalized through the schema enum mapping. Non-enum
+  fields only compare simple literal values that already match the schema field
+  type. `or_where`, `or` expressions, fragments, subqueries, and non-root
+  bindings are ignored.
 
       @bylaw [
         conflicting_where_predicates: [
@@ -55,12 +61,12 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   alias Bylaw.Ecto.Query.Issue
 
-  @type enum_value :: atom()
-  @type operator :: :== | :in
+  @type comparable_value :: atom() | integer() | String.t()
+  @type operator :: :== | :in | :is_nil
   @type predicate :: %{
           field: atom(),
           operator: operator(),
-          values: list(enum_value())
+          values: list(comparable_value())
         }
   @type check_opts :: list({:validate, boolean()})
   @type opts :: list({:conflicting_where_predicates, check_opts()})
@@ -74,7 +80,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   def name, do: :conflicting_where_predicates
 
   @doc """
-  Validates that root enum `where` predicates are mutually satisfiable.
+  Validates that root `where` predicates are mutually satisfiable.
 
   The operation is kept as issue metadata. This check applies the same static
   validation to all `c:Ecto.Repo.prepare_query/3` operations.
@@ -186,15 +192,19 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     in_predicates(left, right, params, schema, root_aliases)
   end
 
+  defp predicates_in_expr({:is_nil, _meta, [expr]}, _params, schema, root_aliases) do
+    nil_predicates(expr, schema, root_aliases)
+  end
+
   defp predicates_in_expr(_expr, _params, _schema, _root_aliases), do: []
 
   defp equality_predicates(left, right, params, schema, root_aliases) do
-    case enum_predicate(left, right, :==, params, schema, root_aliases) do
+    case field_predicate(left, right, :==, params, schema, root_aliases) do
       {:ok, predicate} ->
         [predicate]
 
       :error ->
-        case enum_predicate(right, left, :==, params, schema, root_aliases) do
+        case field_predicate(right, left, :==, params, schema, root_aliases) do
           {:ok, predicate} -> [predicate]
           :error -> []
         end
@@ -204,7 +214,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp in_predicates(left, right, params, schema, root_aliases) do
     case direct_root_field(left, root_aliases) do
       {:ok, field} ->
-        case enum_values(schema, field, right, params) do
+        case comparable_values(schema, field, right, params) do
           {:ok, values} -> [%{field: field, operator: :in, values: values}]
           :error -> []
         end
@@ -214,39 +224,62 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     end
   end
 
-  defp enum_predicate(field_expr, value_expr, operator, params, schema, root_aliases) do
+  defp nil_predicates(expr, schema, root_aliases) do
+    with {:ok, field} <- direct_root_field(expr, root_aliases),
+         true <- schema_field?(schema, field) do
+      [%{field: field, operator: :is_nil, values: [nil]}]
+    else
+      _other -> []
+    end
+  end
+
+  defp field_predicate(field_expr, value_expr, operator, params, schema, root_aliases) do
     with {:ok, field} <- direct_root_field(field_expr, root_aliases),
-         {:ok, value} <- enum_value(schema, field, value_expr, params) do
+         {:ok, value} <- comparable_value(schema, field, value_expr, params) do
       {:ok, %{field: field, operator: operator, values: [value]}}
     end
   end
 
-  defp enum_value(schema, field, expr, params) do
-    with true <- enum_field?(schema, field),
+  defp comparable_value(schema, field, expr, params) do
+    with true <- schema_field?(schema, field),
          {:ok, value} <- value(expr, params) do
-      cast_enum_value(schema, field, value)
+      normalize_comparable_value(schema, field, value)
     else
       _other -> :error
     end
   end
 
-  defp enum_values(schema, field, expr, params) do
-    with true <- enum_field?(schema, field),
+  defp comparable_values(schema, field, expr, params) do
+    with true <- schema_field?(schema, field),
          {:ok, values} <- values(expr, params) do
-      cast_enum_values(schema, field, values)
+      normalize_comparable_values(schema, field, values)
     else
       _other -> :error
     end
   end
+
+  defp schema_field?(schema, field), do: field in schema.__schema__(:fields)
 
   defp enum_field?(schema, field) do
-    field in schema.__schema__(:fields) and
-      schema
-      |> schema_type(field)
-      |> Ecto.Type.parameterized?(Ecto.Enum)
+    schema
+    |> schema_type(field)
+    |> Ecto.Type.parameterized?(Ecto.Enum)
   end
 
   defp schema_type(schema, field), do: schema.__schema__(:type, field)
+
+  defp normalize_comparable_value(schema, field, value) do
+    cond do
+      enum_field?(schema, field) ->
+        cast_enum_value(schema, field, value)
+
+      comparable_value_for_type?(schema_type(schema, field), value) ->
+        {:ok, value}
+
+      true ->
+        :error
+    end
+  end
 
   defp cast_enum_value(schema, field, value) do
     case Ecto.Enum.cast_value(schema, field, value) do
@@ -255,19 +288,29 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
     end
   end
 
-  defp cast_enum_values(schema, field, values) do
+  defp normalize_comparable_values(_schema, _field, []), do: {:ok, []}
+
+  defp normalize_comparable_values(schema, field, values) do
     values
     |> Enum.reduce_while([], fn value, acc ->
-      case cast_enum_value(schema, field, value) do
-        {:ok, enum_value} -> {:cont, [enum_value | acc]}
+      case normalize_comparable_value(schema, field, value) do
+        {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
         :error -> {:halt, :error}
       end
     end)
     |> case do
       :error -> :error
-      enum_values -> {:ok, enum_values |> Enum.uniq() |> Enum.sort()}
+      comparable_values -> {:ok, comparable_values |> Enum.uniq() |> Enum.sort()}
     end
   end
+
+  defp comparable_value_for_type?(type, value) when type in [:id, :integer], do: is_integer(value)
+
+  defp comparable_value_for_type?(type, value) when type in [:string, :binary, :binary_id],
+    do: is_binary(value)
+
+  defp comparable_value_for_type?(:boolean, value), do: is_boolean(value)
+  defp comparable_value_for_type?(_type, _value), do: false
 
   defp value(%Ecto.Query.Tagged{value: value}, _params), do: {:ok, value}
 
@@ -284,6 +327,8 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp value(_expr, _params), do: :error
+
+  defp values(%Ecto.Query.Tagged{value: values}, _params) when is_list(values), do: {:ok, values}
 
   defp values({:^, _meta, [index]} = expr, params) when is_integer(index) do
     case value(expr, params) do
@@ -364,14 +409,23 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp issue(operation, schema, field, predicates) do
     %Issue{
       check: __MODULE__,
-      message: "expected enum where predicates on #{inspect(field)} to agree on a value",
-      meta: %{
-        operation: operation,
-        field: field,
-        enum_values: Ecto.Enum.values(schema, field),
-        predicates: Enum.map(predicates, &predicate_meta/1)
-      }
+      message: "expected where predicates on #{inspect(field)} to agree on a value",
+      meta: issue_meta(operation, schema, field, predicates)
     }
+  end
+
+  defp issue_meta(operation, schema, field, predicates) do
+    meta = %{
+      operation: operation,
+      field: field,
+      predicates: Enum.map(predicates, &predicate_meta/1)
+    }
+
+    if enum_field?(schema, field) do
+      Map.put(meta, :enum_values, Ecto.Enum.values(schema, field))
+    else
+      meta
+    end
   end
 
   defp predicate_meta(predicate) do
