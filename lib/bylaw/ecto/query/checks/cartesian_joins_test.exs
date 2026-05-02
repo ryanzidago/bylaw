@@ -60,6 +60,36 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
                "expected join 0 not to be cartesian; found a literal true on expression"
     end
 
+    test "returns an issue when a schema-less join uses a literal true on expression" do
+      query =
+        from(post in "posts",
+          join: comment in "comments",
+          on: true,
+          select: {field(post, :id), field(comment, :id)}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when Ecto normalizes an interpolated true on expression" do
+      always_join? = true
+
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: ^always_join?,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner
+      assert issue.meta.reason == :literal_true_on
+    end
+
     test "returns an issue when a left join uses a literal true on expression" do
       query =
         from(post in Post,
@@ -214,6 +244,43 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :literal_true_on
     end
 
+    test "detects cross joins in supported raw query maps" do
+      query = %{
+        joins: [
+          %{
+            qual: :cross,
+            on: %{expr: true}
+          },
+          %{
+            qual: :cross_lateral,
+            on: %{expr: true}
+          }
+        ]
+      }
+
+      assert {:error, [%Issue{} = first, %Issue{} = second]} =
+               CartesianJoins.validate(:all, query, [])
+
+      assert first.meta.join_index == 0
+      assert first.meta.join_qual == :cross
+      assert first.meta.reason == :cross_join
+      assert second.meta.join_index == 1
+      assert second.meta.join_qual == :cross_lateral
+      assert second.meta.reason == :cross_lateral_join
+    end
+
+    test "ignores malformed raw join entries" do
+      query = %{
+        joins: [
+          :bad,
+          %{qual: :inner},
+          %{on: %{expr: :not_true}}
+        ]
+      }
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
     test "passes when joins have restricting on predicates" do
       query =
         from(post in Post,
@@ -229,6 +296,17 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       query =
         from(post in Post,
           join: comment in assoc(post, :comments),
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes association joins when on true is explicitly given" do
+      query =
+        from(post in Post,
+          join: comment in assoc(post, :comments),
+          on: true,
           select: {post.id, comment.id}
         )
 
