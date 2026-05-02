@@ -70,20 +70,24 @@ defmodule Bylaw.MixProject do
     [
       main: "checks",
       source_ref: "v#{@version}",
+      skip_code_autolink_to: ["Bylaw.Credo", "Bylaw.Db"],
       extras: [
         "README.md",
-        "guides/checks.md": [title: "Checks"]
+        "guides/checks.md": [title: "Checks Overview"],
+        "guides/ecto_query_checks.md": [title: "Bylaw.Ecto.Query Checks"]
       ],
       groups_for_extras: [
         Guides: ~r/guides\//
       ],
       groups_for_modules: [
-        Core: [
-          Bylaw,
+        Core: [Bylaw],
+        "Bylaw.Ecto.Query": [
+          Bylaw.Ecto.Query,
           Bylaw.Ecto.Query.Check,
+          Bylaw.Ecto.Query.Checks,
           Bylaw.Ecto.Query.Issue
         ],
-        "Ecto query checks": ~r/^Elixir\.Bylaw\.Ecto\.Query\.Checks(\.|$)/,
+        "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./,
         "Mix tasks": ~r/^Elixir\.Mix\.Tasks\./
       ],
       nest_modules_by_prefix: [
