@@ -11,7 +11,8 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
   The check requires every `from` root and join to declare an `:as` alias. When
   query expressions reference a binding, they must use `as(:name)` or
   `parent_as(:name)` instead of positional binding lists, local binding
-  variables, or keyword field shortcuts.
+  variables, or keyword field shortcuts. Association join sources and joined
+  preloads may still use binding variables where Ecto requires them.
 
       source = "from(post in Post, as: :post, where: as(:post).id == ^id)"
 
@@ -43,11 +44,19 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
     :group_by,
     :distinct,
     :preload,
+    :windows,
     :update
   ]
 
   @implicit_keyword_reference_keys [:where, :or_where, :having, :or_having, :on]
-  @implicit_atom_reference_keys [:select, :select_merge, :order_by, :group_by, :distinct]
+  @implicit_atom_reference_keys [
+    :select,
+    :select_merge,
+    :order_by,
+    :group_by,
+    :distinct,
+    :windows
+  ]
   @query_construct_names [:from, :dynamic, :join] ++ @binding_call_names
 
   @type check_opts :: list({:validate, boolean()})
@@ -155,34 +164,49 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
   end
 
   defp from_issues(meta, args) do
-    {root_vars, kw, scan_nodes} = from_parts(args)
+    {root_vars, kw, scan_nodes, binding_list} = from_parts(args)
 
     root_as_issues(meta, kw) ++
+      binding_list_issues(:from, binding_list) ++
       join_keyword_as_issues(kw) ++
       keyword_expression_issues(kw, root_vars, scan_nodes)
   end
 
   defp from_parts([kw]) when is_list(kw) do
-    {[], kw, []}
+    {[], kw, [], []}
   end
 
   defp from_parts([{:in, _meta, [binding, source]}]) do
-    {[binding], [], [source]}
+    {root_bindings, binding_list} = from_binding_parts(binding)
+    {root_bindings, [], [source], binding_list}
   end
 
   defp from_parts([{:in, _meta, [binding, source]}, kw]) when is_list(kw) do
-    {[binding], kw, [source]}
+    {root_bindings, binding_list} = from_binding_parts(binding)
+    {root_bindings, kw, [source], binding_list}
   end
 
   defp from_parts([_source, kw]) when is_list(kw) do
-    {[], kw, []}
+    {[], kw, [], []}
   end
 
   defp from_parts([source]) do
-    {[], [], [source]}
+    {[], [], [source], []}
   end
 
-  defp from_parts(_args), do: {[], [], []}
+  defp from_parts(_args), do: {[], [], [], []}
+
+  defp from_binding_parts(binding) when is_list(binding) do
+    binding_list = binding_list_if_present(binding)
+
+    if Enum.empty?(binding_list) do
+      {[binding], []}
+    else
+      {binding_asts_from_list(binding_list), binding_list}
+    end
+  end
+
+  defp from_binding_parts(binding), do: {[binding], []}
 
   defp root_as_issues(meta, kw) do
     if root_has_as?(kw) do
@@ -267,7 +291,7 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
           []
 
         {key, value} ->
-          implicit_reference_issues(value, key) ++ binding_reference_issues(value, binding_vars)
+          expression_issues(key, value, binding_vars)
       end)
 
     binding_reference_issues(scan_nodes, binding_vars) ++ kw_issues
@@ -379,7 +403,7 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
           []
 
         {key, value} ->
-          implicit_reference_issues(value, key) ++ binding_reference_issues(value, binding_vars)
+          expression_issues(key, value, binding_vars)
       end)
   end
 
@@ -399,8 +423,16 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
 
     binding_list_issues(name, binding_list) ++
       Enum.flat_map(exprs, fn expr ->
-        implicit_reference_issues(expr, name) ++ binding_reference_issues(expr, binding_vars)
+        expression_issues(name, expr, binding_vars)
       end)
+  end
+
+  defp expression_issues(:preload, expr, binding_vars) do
+    preload_reference_issues(expr, binding_vars)
+  end
+
+  defp expression_issues(key, expr, binding_vars) do
+    implicit_reference_issues(expr, key) ++ binding_reference_issues(expr, binding_vars)
   end
 
   defp binding_call_parts([binding_list | exprs]) when is_list(binding_list) do
@@ -446,16 +478,24 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
     variable_ast?(binding) or ellipsis_ast?(binding)
   end
 
+  defp binding_list_element?({{:^, _meta, [_name]}, binding}) do
+    variable_ast?(binding) or ellipsis_ast?(binding)
+  end
+
   defp binding_list_element?(binding) do
     variable_ast?(binding) or ellipsis_ast?(binding)
   end
 
-  defp binding_vars_from_list(binding_list) do
-    binding_list
-    |> Enum.flat_map(fn
+  defp binding_asts_from_list(binding_list) do
+    Enum.flat_map(binding_list, fn
       {_name, binding} -> [binding]
       binding -> [binding]
     end)
+  end
+
+  defp binding_vars_from_list(binding_list) do
+    binding_list
+    |> binding_asts_from_list()
     |> binding_var_names()
   end
 
@@ -529,6 +569,49 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
     collect_binding_reference_issues(node, binding_vars)
   end
 
+  defp preload_reference_issues(nodes, binding_vars)
+       when is_list(nodes) and is_struct(binding_vars, MapSet) do
+    Enum.flat_map(nodes, &preload_reference_issues(&1, binding_vars))
+  end
+
+  defp preload_reference_issues(node, binding_vars) when is_list(binding_vars) do
+    preload_reference_issues(node, MapSet.new(binding_vars))
+  end
+
+  defp preload_reference_issues({:^, _meta, [_expr]}, _binding_vars), do: []
+
+  defp preload_reference_issues({name, _meta, context}, binding_vars)
+       when is_atom(name) and (is_atom(context) or is_nil(context)) do
+    if MapSet.member?(binding_vars, name),
+      do: [],
+      else: binding_reference_issues(name, binding_vars)
+  end
+
+  defp preload_reference_issues(
+         {{:., _dot_meta, [_source, field]}, _meta, []} = node,
+         binding_vars
+       )
+       when is_atom(field) do
+    binding_reference_issues(node, binding_vars)
+  end
+
+  defp preload_reference_issues({:field, _meta, [_source, _field]} = node, binding_vars) do
+    binding_reference_issues(node, binding_vars)
+  end
+
+  defp preload_reference_issues(tuple, binding_vars) when is_tuple(tuple) do
+    tuple
+    |> Tuple.to_list()
+    |> preload_reference_issues(binding_vars)
+  end
+
+  defp preload_reference_issues(list, binding_vars) when is_list(list) do
+    Enum.flat_map(list, &preload_reference_issues(&1, binding_vars))
+  end
+
+  defp preload_reference_issues(expr, binding_vars),
+    do: binding_reference_issues(expr, binding_vars)
+
   defp collect_binding_reference_issues({:^, _meta, [_expr]}, _binding_vars), do: []
 
   defp collect_binding_reference_issues({:as, _meta, [_name]}, _binding_vars), do: []
@@ -568,8 +651,13 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
     call_reference_issues(:field, meta, source, binding_vars)
   end
 
-  defp collect_binding_reference_issues({:assoc, meta, [source, _association]}, binding_vars) do
-    call_reference_issues(:assoc, meta, source, binding_vars)
+  defp collect_binding_reference_issues({:assoc, _meta, [source, association]}, binding_vars) do
+    if assoc_binding_source?(source, binding_vars) do
+      collect_binding_reference_issues(association, binding_vars)
+    else
+      collect_binding_reference_issues(source, binding_vars) ++
+        collect_binding_reference_issues(association, binding_vars)
+    end
   end
 
   defp collect_binding_reference_issues({name, meta, context}, binding_vars)
@@ -604,6 +692,16 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
 
       nil ->
         collect_binding_reference_issues(source, binding_vars)
+    end
+  end
+
+  defp assoc_binding_source?(source, binding_vars) do
+    case binding_var_name(source) do
+      variable when is_atom(variable) and not is_nil(variable) ->
+        MapSet.member?(binding_vars, variable)
+
+      nil ->
+        false
     end
   end
 

@@ -172,7 +172,7 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
       assert Enum.map(issues, & &1.meta.join) == [:join, :left_join]
     end
 
-    test "rejects local binding variables in join sources and predicates" do
+    test "allows association join sources and rejects local binding variables in predicates" do
       source = """
       from(post in Post,
         as: :post,
@@ -186,11 +186,10 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
 
       assert_reasons(issues, [
         :binding_variable_reference,
-        :binding_variable_reference,
         :binding_variable_reference
       ])
 
-      assert Enum.map(issues, & &1.meta.variable) == [:post, :comment, :post]
+      assert Enum.map(issues, & &1.meta.variable) == [:comment, :post]
     end
 
     test "passes documented join source forms when aliases are declared" do
@@ -206,7 +205,7 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
         """
         from(post in Post,
           as: :post,
-          join: comment in assoc(as(:post), :comments),
+          join: comment in assoc(post, :comments),
           as: :comment,
           on: true
         )
@@ -248,6 +247,20 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
       end)
     end
 
+    test "passes joined preloads that use Ecto binding variables" do
+      source = """
+      from(post in Post,
+        as: :post,
+        join: comment in assoc(post, :comments),
+        as: :comment,
+        on: true,
+        preload: [comments: comment]
+      )
+      """
+
+      assert :ok = NamedBindings.validate(source)
+    end
+
     test "rejects pipeline join binding lists and local join references" do
       source = """
       Post
@@ -263,11 +276,39 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
       assert_reasons(issues, [
         :binding_list,
         :binding_variable_reference,
-        :binding_variable_reference,
         :binding_variable_reference
       ])
 
-      assert Enum.map(Enum.drop(issues, 1), & &1.meta.variable) == [:post, :comment, :post]
+      assert Enum.map(Enum.drop(issues, 1), & &1.meta.variable) == [:comment, :post]
+    end
+
+    test "rejects from binding lists and local references" do
+      source = """
+      from([post] in query,
+        as: :post,
+        where: post.organisation_id == ^organisation_id
+      )
+      """
+
+      assert {:error, issues} = NamedBindings.validate(source)
+
+      assert_reasons(issues, [:binding_list, :binding_variable_reference])
+      assert Enum.any?(issues, &(Map.get(&1.meta, :macro) == :from))
+      assert Enum.any?(issues, &(Map.get(&1.meta, :variable) == :post))
+    end
+
+    test "rejects dynamic named from binding lists" do
+      source = """
+      from [{^binding, post}] in query,
+        as: :post,
+        where: field(post, ^field) == ^value
+      """
+
+      assert {:error, issues} = NamedBindings.validate(source)
+
+      assert_reasons(issues, [:binding_list, :binding_variable_reference])
+      assert Enum.any?(issues, &(Map.get(&1.meta, :macro) == :from))
+      assert Enum.any?(issues, &(Map.get(&1.meta, :variable) == :post))
     end
 
     test "rejects dynamic expressions with positional binding lists" do
@@ -310,6 +351,20 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindingsTest do
 
       assert_reasons(issues, [:binding_list, :binding_variable_reference])
       assert Enum.any?(issues, &(Map.get(&1.meta, :macro) == :where))
+      assert Enum.any?(issues, &(Map.get(&1.meta, :variable) == :post))
+    end
+
+    test "rejects windows binding lists and local references" do
+      source = """
+      Post
+      |> from(as: :post)
+      |> windows([post], department: [partition_by: post.department_id])
+      """
+
+      assert {:error, issues} = NamedBindings.validate(source)
+
+      assert_reasons(issues, [:binding_list, :binding_variable_reference])
+      assert Enum.any?(issues, &(Map.get(&1.meta, :macro) == :windows))
       assert Enum.any?(issues, &(Map.get(&1.meta, :variable) == :post))
     end
 
