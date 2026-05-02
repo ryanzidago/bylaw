@@ -252,6 +252,21 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :cross_lateral_join
     end
 
+    test "returns an issue when a lateral subquery only compares parent bindings" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(parent_comparing_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
     test "passes when a correlated inner lateral join uses a literal true on expression" do
       query =
         from(post in Post,
@@ -264,11 +279,113 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert :ok = CartesianJoins.validate(:all, query, [])
     end
 
+    test "passes when a correlated lateral subquery references a dynamic parent field" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(dynamic_parent_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated lateral subquery references a dynamic local field" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(dynamic_local_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated lateral subquery uses a named local binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(named_local_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when the parent field is on the left side of the lateral predicate" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(parent_left_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "returns an issue when a lateral subquery references an unknown parent alias" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(unknown_parent_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
     test "passes when a correlated left lateral join uses a literal true on expression" do
       query =
         from(post in Post,
           as: :post,
           left_lateral_join: comment in subquery(comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a lateral subquery is correlated through a join predicate" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(join_correlated_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "returns an issue when a lateral subquery has an uncorrelated or branch" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(partly_correlated_or_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "passes when every lateral subquery or branch is correlated" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(correlated_or_comment_id_subquery()),
           on: true,
           select: {post.id, comment.id}
         )
@@ -519,6 +636,71 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
   defp parent_projecting_comment_id_subquery do
     from(comment in Comment,
       select: %{id: comment.id, parent_post_id: parent_as(:post).id}
+    )
+  end
+
+  defp parent_comparing_comment_id_subquery do
+    from(comment in Comment,
+      where: parent_as(:post).id == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp dynamic_parent_comment_id_subquery do
+    from(comment in Comment,
+      where: comment.post_id == field(parent_as(:post), :id),
+      select: %{id: comment.id}
+    )
+  end
+
+  defp dynamic_local_comment_id_subquery do
+    from(comment in Comment,
+      where: field(comment, :post_id) == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp named_local_comment_id_subquery do
+    from(comment in Comment,
+      as: :comment,
+      where: as(:comment).post_id == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp parent_left_comment_id_subquery do
+    from(comment in Comment,
+      where: parent_as(:post).id == comment.post_id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp unknown_parent_comment_id_subquery do
+    from(comment in Comment,
+      where: comment.post_id == parent_as(:missing).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp partly_correlated_or_comment_id_subquery do
+    from(comment in Comment,
+      where: comment.post_id == parent_as(:post).id or comment.body == "public",
+      select: %{id: comment.id}
+    )
+  end
+
+  defp correlated_or_comment_id_subquery do
+    from(comment in Comment,
+      where: comment.post_id == parent_as(:post).id or comment.body == parent_as(:post).title,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp join_correlated_comment_id_subquery do
+    from(comment in Comment,
+      join: post in Post,
+      on: post.id == parent_as(:post).id and comment.post_id == post.id,
+      select: %{id: comment.id}
     )
   end
 end

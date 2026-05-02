@@ -91,12 +91,16 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    if Keyword.keyword?(opts) do
+      check_opts = check_opts!(opts)
 
-    if enabled?(check_opts) do
-      validate_enabled(operation, query)
+      if enabled?(check_opts) do
+        validate_enabled(operation, query)
+      else
+        :ok
+      end
     else
-      :ok
+      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
     end
   end
 

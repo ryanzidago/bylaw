@@ -80,12 +80,16 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    if Keyword.keyword?(opts) do
+      check_opts = check_opts!(opts)
 
-    if enabled?(check_opts) and ordered?(query) do
-      validate_ordered_query(operation, query)
+      if enabled?(check_opts) and ordered?(query) do
+        validate_ordered_query(operation, query)
+      else
+        :ok
+      end
     else
-      :ok
+      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
     end
   end
 
