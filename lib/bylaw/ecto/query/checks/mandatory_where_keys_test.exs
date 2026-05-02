@@ -199,6 +199,57 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "does not accept mandatory keys that only appear in an or_where branch" do
+      query =
+        from(post in Post,
+          where: post.title == ^"hello",
+          or_where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_where_keys == []
+    end
+
+    test "does not accept mandatory keys when an or_where branch can match without them" do
+      query =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          or_where: post.title == ^"hello"
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_where_keys == []
+    end
+
+    test "requires every mandatory key to be present in every or_where branch when match is all" do
+      query =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          or_where: post.user_id == ^456
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [
+                   keys: [:organisation_id, :user_id],
+                   match: :all
+                 ]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id, :user_id]
+      assert issue.meta.found_where_keys == []
+    end
+
     test "accepts mandatory keys in root equality predicates when the field is on the right" do
       query = from(post in Post, where: ^123 == post.organisation_id)
 

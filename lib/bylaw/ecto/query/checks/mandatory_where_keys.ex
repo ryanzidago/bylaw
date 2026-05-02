@@ -89,22 +89,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     if disabled?(check_opts) do
       :ok
     else
-      keys = fetch_keys!(check_opts)
-      applicable_keys = applicable_keys(query, keys)
-
-      if Enum.empty?(applicable_keys) do
-        :ok
-      else
-        match = fetch_match!(check_opts)
-        fields = where_fields(query)
-        missing = missing_keys(applicable_keys, fields, match)
-
-        if Enum.empty?(missing) do
-          :ok
-        else
-          {:error, issue(operation, applicable_keys, fields, missing, match)}
-        end
-      end
+      validate_enabled(operation, query, check_opts)
     end
   end
 
@@ -127,30 +112,55 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
 
+  defp validate_enabled(operation, query, check_opts) do
+    keys = fetch_keys!(check_opts)
+
+    case applicable_keys(query, keys) do
+      [] -> :ok
+      applicable_keys -> validate_applicable_keys(operation, query, check_opts, applicable_keys)
+    end
+  end
+
+  defp validate_applicable_keys(operation, query, check_opts, applicable_keys) do
+    match = fetch_match!(check_opts)
+    field_branches = where_field_branches(query)
+    fields = guaranteed_fields(field_branches)
+    missing = missing_keys(applicable_keys, field_branches, match)
+
+    if Enum.empty?(missing) do
+      :ok
+    else
+      {:error, issue(operation, applicable_keys, fields, missing, match)}
+    end
+  end
+
   defp fetch_keys!(opts) do
     case Keyword.fetch(opts, :keys) do
-      {:ok, keys} when is_list(keys) ->
-        if Enum.empty?(keys) do
-          raise ArgumentError,
-                "expected :keys to be a non-empty list of atoms, got: #{inspect(keys)}"
-        else
-          Enum.map(keys, fn
-            key when is_atom(key) ->
-              key
-
-            key ->
-              raise ArgumentError,
-                    "expected :keys to contain only atoms, got: #{inspect(key)}"
-          end)
-        end
-
       {:ok, keys} ->
-        raise ArgumentError,
-              "expected :keys to be a non-empty list of atoms, got: #{inspect(keys)}"
+        normalize_keys!(keys)
 
       :error ->
         raise ArgumentError, "missing required :keys option"
     end
+  end
+
+  defp normalize_keys!([]) do
+    raise ArgumentError,
+          "expected :keys to be a non-empty list of atoms, got: []"
+  end
+
+  defp normalize_keys!(keys) when is_list(keys), do: Enum.map(keys, &normalize_key!/1)
+
+  defp normalize_keys!(keys) do
+    raise ArgumentError,
+          "expected :keys to be a non-empty list of atoms, got: #{inspect(keys)}"
+  end
+
+  defp normalize_key!(key) when is_atom(key), do: key
+
+  defp normalize_key!(key) do
+    raise ArgumentError,
+          "expected :keys to contain only atoms, got: #{inspect(key)}"
   end
 
   defp fetch_match!(opts) do
@@ -185,28 +195,59 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp root_schema(_query), do: :unknown
 
-  defp where_fields(query) when is_map(query) do
+  defp where_field_branches(query) when is_map(query) do
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(fn where -> where |> Map.get(:expr) |> fields_in_expr() end)
-    |> MapSet.new()
+    |> Enum.reduce(nil, fn where, branches ->
+      expr_branches = field_branches_in_expr(Map.get(where, :expr))
+
+      case Map.get(where, :op, :and) do
+        :or -> concat_branches(branches, expr_branches)
+        _op -> merge_branch_fields(branches, expr_branches)
+      end
+    end)
+    |> case do
+      nil -> [MapSet.new()]
+      branches -> branches
+    end
   end
 
-  defp where_fields(_query), do: MapSet.new()
+  defp where_field_branches(_query), do: [MapSet.new()]
 
-  defp fields_in_expr({:and, _meta, [left, right]}) do
-    fields_in_expr(left) ++ fields_in_expr(right)
+  defp field_branches_in_expr({:and, _meta, [left, right]}) do
+    merge_branch_fields(field_branches_in_expr(left), field_branches_in_expr(right))
   end
 
-  defp fields_in_expr({:==, _meta, [left, right]}) do
-    direct_root_fields(left) ++ direct_root_fields(right)
+  defp field_branches_in_expr({:or, _meta, [left, right]}) do
+    field_branches_in_expr(left) ++ field_branches_in_expr(right)
   end
 
-  defp fields_in_expr({:in, _meta, [left, _right]}) do
-    direct_root_fields(left)
+  defp field_branches_in_expr({:==, _meta, [left, right]}) do
+    [MapSet.new(direct_root_fields(left) ++ direct_root_fields(right))]
   end
 
-  defp fields_in_expr(_expr), do: []
+  defp field_branches_in_expr({:in, _meta, [left, _right]}) do
+    [MapSet.new(direct_root_fields(left))]
+  end
+
+  defp field_branches_in_expr(_expr), do: [MapSet.new()]
+
+  defp merge_branch_fields(nil, branches), do: branches
+
+  defp merge_branch_fields(left_branches, right_branches) do
+    for left <- left_branches, right <- right_branches do
+      MapSet.union(left, right)
+    end
+  end
+
+  defp concat_branches(nil, branches), do: branches
+  defp concat_branches(left_branches, right_branches), do: left_branches ++ right_branches
+
+  defp guaranteed_fields([first | rest]) do
+    Enum.reduce(rest, first, &MapSet.intersection/2)
+  end
+
+  defp guaranteed_fields([]), do: MapSet.new()
 
   defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}) when is_atom(field) do
     if root_binding?(source) do
@@ -229,13 +270,17 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp root_binding?({:&, _meta, [0]}), do: true
   defp root_binding?(_expr), do: false
 
-  defp missing_keys(keys, fields, :any) do
-    if Enum.any?(keys, &MapSet.member?(fields, &1)), do: [], else: keys
+  defp missing_keys(keys, field_branches, :any) do
+    if Enum.all?(field_branches, &branch_has_any_key?(&1, keys)), do: [], else: keys
   end
 
-  defp missing_keys(keys, fields, :all) do
-    Enum.reject(keys, &MapSet.member?(fields, &1))
+  defp missing_keys(keys, field_branches, :all) do
+    Enum.reject(keys, fn key ->
+      Enum.all?(field_branches, &MapSet.member?(&1, key))
+    end)
   end
+
+  defp branch_has_any_key?(fields, keys), do: Enum.any?(keys, &MapSet.member?(fields, &1))
 
   defp issue(operation, keys, fields, missing, match) do
     %Issue{
@@ -261,8 +306,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp format_keys(keys) do
-    keys
-    |> Enum.map(&inspect/1)
-    |> Enum.join(", ")
+    Enum.map_join(keys, ", ", &inspect/1)
   end
 end
