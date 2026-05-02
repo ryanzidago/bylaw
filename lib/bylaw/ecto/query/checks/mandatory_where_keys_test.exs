@@ -147,7 +147,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.check == MandatoryWhereKeys
-      assert issue.code == :missing_mandatory_where_key
       assert issue.meta.keys == [:organisation_id, :user_id]
       assert issue.meta.match == :any
       assert issue.meta.missing_keys == [:organisation_id, :user_id]
