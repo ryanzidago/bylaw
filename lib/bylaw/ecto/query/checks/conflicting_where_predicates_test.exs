@@ -604,6 +604,42 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
+    test "passes when later AND predicates are satisfiable through an or_where branch" do
+      query =
+        from(post in Post,
+          where: post.status == :draft,
+          or_where: post.status == :published,
+          where: post.status == :published
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "passes when an or_where branch avoids an AND conflict on the same field" do
+      query =
+        from(post in Post,
+          where: post.status == :draft,
+          or_where: post.title == "published post",
+          where: post.status == :published
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "returns an issue when every or_where branch conflicts" do
+      query =
+        from(post in Post,
+          where: post.status == :draft and post.status == :published,
+          or_where: post.sequence == 1 and post.sequence == 2
+        )
+
+      assert {:error, [%Issue{} = first_issue, %Issue{} = second_issue]} =
+               ConflictingWherePredicates.validate(:all, query, [])
+
+      assert first_issue.meta.field == :sequence
+      assert second_issue.meta.field == :status
+    end
+
     test "ignores predicates inside or expressions" do
       query = from(post in Post, where: post.status == :draft or post.status == :published)
 
