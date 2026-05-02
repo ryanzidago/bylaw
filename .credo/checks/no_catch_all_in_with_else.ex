@@ -26,7 +26,7 @@ defmodule Bylaw.Credo.Check.Readability.NoCatchAllInWithElse do
           with {:ok, user} <- fetch_user(id) do
             {:ok, user}
           else
-            {:error, reason} -> {:error, reason}
+            {:error, error} -> {:error, error}
           end
       """
     ]
@@ -80,7 +80,7 @@ defmodule Bylaw.Credo.Check.Readability.NoCatchAllInWithElse do
       ctx,
       message:
         "Avoid catch-all patterns in `with` else clauses. " <>
-          "Use explicit pattern matches like `{:error, reason}` instead of `#{trigger}`.",
+          "Use explicit pattern matches like `{:error, error}` instead of `#{trigger}`.",
       trigger: trigger,
       line_no: line
     )

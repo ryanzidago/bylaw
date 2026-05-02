@@ -98,7 +98,7 @@ defmodule Bylaw.Credo.Check.Readability.NoCatchAllInWithElseTest do
           with {:ok, user} <- fetch_user(id) do
             {:ok, user}
           else
-            {:error, reason} -> {:error, reason}
+            {:error, error} -> {:error, error}
           end
         end
       end
@@ -117,7 +117,7 @@ defmodule Bylaw.Credo.Check.Readability.NoCatchAllInWithElseTest do
             {:ok, account}
           else
             {:error, :not_found} -> {:error, :not_found}
-            {:error, reason} -> {:error, reason}
+            {:error, error} -> {:error, error}
           end
         end
       end

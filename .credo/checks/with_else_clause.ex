@@ -21,7 +21,7 @@ defmodule Bylaw.Credo.Check.Readability.WithElseClause do
           with {:ok, user} <- fetch_user(id) do
             {:ok, user.name}
           else
-            error -> error
+            {:error, error} -> {:error, error}
           end
       """
     ]

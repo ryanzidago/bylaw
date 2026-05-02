@@ -31,7 +31,7 @@ defmodule Bylaw.Credo.Check.Readability.WithElseClauseTest do
              {:ok, account} <- fetch_account(user) do
           {:ok, account}
         else
-          error -> error
+          {:error, error} -> {:error, error}
         end
       end
     end
