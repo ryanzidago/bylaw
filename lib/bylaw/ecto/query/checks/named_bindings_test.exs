@@ -42,11 +42,21 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "passes for every Ecto prepare_query operation when named references are used" do
+    test "passes when root expressions use named binding list references" do
+      query =
+        Post
+        |> from(as: :post)
+        |> where([post: post], post.organisation_id == ^123)
+        |> select([post: post], post.id)
+
+      assert :ok = NamedBindings.validate(:all, query, [])
+    end
+
+    test "passes for every Ecto prepare_query operation when aliases are used" do
       query =
         from(post in Post,
           as: :post,
-          where: as(:post).organisation_id == ^123
+          where: post.organisation_id == ^123
         )
 
       Enum.each(@prepare_query_operations, fn operation ->
@@ -109,36 +119,23 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert Enum.map(issues, & &1.meta.binding_index) == [1, 2]
     end
 
-    test "rejects root field references that Ecto expanded from local bindings" do
+    test "allows local root field references when the root binding has an alias" do
       query =
         from(post in Post,
           as: :post,
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
-      assert issue.meta.reason == :positional_binding_reference
-      assert issue.meta.macro == :where
-      assert issue.meta.binding_index == 0
-      assert issue.meta.binding_alias == :post
-      assert issue.meta.field == :organisation_id
-      assert issue.meta.reference == :field_access
-
-      assert issue.message ==
-               "expected Ecto query where field reference on binding :post to use as(:name) or parent_as(:name)"
+      assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "rejects keyword field shortcuts because Ecto expands them to positional root references" do
+    test "allows keyword field shortcuts when the root binding has an alias" do
       query = from(Post, as: :post, where: [organisation_id: ^123])
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
-      assert issue.meta.reason == :positional_binding_reference
-      assert issue.meta.macro == :where
-      assert issue.meta.binding_alias == :post
-      assert issue.meta.field == :organisation_id
+      assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "rejects field expressions that use positional bindings" do
+    test "allows field expressions when the referenced binding has an alias" do
       field = :organisation_id
 
       query =
@@ -147,11 +144,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           where: field(post, ^field) == ^123
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
-      assert issue.meta.reason == :positional_binding_reference
-      assert issue.meta.binding_alias == :post
-      assert issue.meta.field == :organisation_id
-      assert issue.meta.reference == :field_access
+      assert :ok = NamedBindings.validate(:all, query, [])
     end
 
     test "passes joins when aliases are declared and predicates use named references" do
@@ -167,7 +160,23 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "rejects positional binding references in join predicates" do
+    test "passes joins when aliases are declared and predicates use named binding lists" do
+      query =
+        Post
+        |> from(as: :post)
+        |> join(:inner, [post: post], comment in Comment,
+          as: :comment,
+          on: comment.post_id == post.id
+        )
+        |> where(
+          [post: post, comment: comment],
+          comment.organisation_id == post.organisation_id
+        )
+
+      assert :ok = NamedBindings.validate(:all, query, [])
+    end
+
+    test "allows local field references in join predicates when bindings are aliased" do
       query =
         from(post in Post,
           as: :post,
@@ -176,16 +185,33 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           on: comment.post_id == post.id
         )
 
+      assert :ok = NamedBindings.validate(:all, query, [])
+    end
+
+    test "reports field references that target unaliased join bindings" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
       assert {:error, issues} = NamedBindings.validate(:all, query, [])
 
       assert_reasons(issues, [
-        :positional_binding_reference,
+        :missing_join_as,
         :positional_binding_reference
       ])
 
-      assert Enum.map(issues, & &1.meta.macro) == [:join_on, :join_on]
-      assert Enum.map(issues, & &1.meta.binding_alias) == [:comment, :post]
-      assert Enum.map(issues, & &1.meta.field) == [:post_id, :id]
+      positional_issue = List.last(issues)
+
+      assert positional_issue.meta.macro == :join_on
+      assert positional_issue.meta.binding_index == 1
+      assert positional_issue.meta.binding_alias == nil
+      assert positional_issue.meta.field == :post_id
+
+      assert positional_issue.message ==
+               "expected Ecto query join_on field reference on binding 1 to target a binding with an :as alias"
     end
 
     test "allows association join sources because Ecto stores them as association metadata" do
@@ -213,7 +239,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "rejects positional references in ordering, grouping, distinct, windows, and updates" do
+    test "allows field references in ordering, grouping, distinct, windows, and updates when bindings are aliased" do
       query =
         from(post in Post,
           as: :post,
@@ -224,21 +250,10 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           update: [set: [title: post.title]]
         )
 
-      assert {:error, issues} = NamedBindings.validate(:update_all, query, [])
-
-      assert Enum.map(issues, & &1.meta.macro) == [
-               :order_by,
-               :group_by,
-               :distinct,
-               :update,
-               :windows
-             ]
-
-      assert Enum.all?(issues, &(&1.meta.reason == :positional_binding_reference))
-      assert Enum.all?(issues, &(&1.meta.binding_alias == :post))
+      assert :ok = NamedBindings.validate(:update_all, query, [])
     end
 
-    test "validates nested subqueries" do
+    test "allows aliased local field references in nested subqueries" do
       query =
         from(post in Post,
           as: :post,
@@ -251,9 +266,28 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
             )
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
+      assert :ok = NamedBindings.validate(:all, query, [])
+    end
+
+    test "validates nested subqueries that omit binding aliases" do
+      query =
+        from(post in Post,
+          as: :post,
+          where:
+            exists(
+              from(comment in Comment,
+                where: comment.post_id == parent_as(:post).id
+              )
+            )
+        )
+
+      assert {:error, issues} = NamedBindings.validate(:all, query, [])
+
+      assert_reasons(issues, [:missing_root_as, :positional_binding_reference])
+
+      issue = List.last(issues)
       assert issue.meta.reason == :positional_binding_reference
-      assert issue.meta.binding_alias == :comment
+      assert issue.meta.binding_alias == nil
       assert issue.meta.field == :post_id
     end
 
