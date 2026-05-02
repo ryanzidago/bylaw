@@ -106,24 +106,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     schema: schema,
     target: target
   } do
-    query!(conn, """
-    CREATE TABLE #{table(schema, "accounts")} (
-      tenant_id bigint NOT NULL,
-      account_id bigint NOT NULL,
-      PRIMARY KEY (tenant_id, account_id)
-    )
-    """)
-
-    query!(conn, """
-    CREATE TABLE #{table(schema, "events")} (
-      id bigint PRIMARY KEY,
-      tenant_id bigint NOT NULL,
-      account_id bigint NOT NULL,
-      CONSTRAINT events_account_fkey
-        FOREIGN KEY (tenant_id, account_id)
-        REFERENCES #{table(schema, "accounts")} (tenant_id, account_id)
-    )
-    """)
+    create_composite_fk!(conn, schema)
 
     query!(
       conn,
@@ -131,6 +114,25 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     )
 
     assert :ok = Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+  end
+
+  test "ignores included columns for composite foreign key index coverage", %{
+    conn: conn,
+    schema: schema,
+    target: target
+  } do
+    create_composite_fk!(conn, schema)
+
+    query!(
+      conn,
+      "CREATE INDEX events_tenant_include_account_idx ON #{table(schema, "events")} (tenant_id) INCLUDE (account_id)"
+    )
+
+    assert {:error, %Issue{} = issue} =
+             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+
+    assert issue.meta.constraint == "events_account_fkey"
+    assert issue.meta.columns == ["tenant_id", "account_id"]
   end
 
   test "applies schema and table scope", %{conn: conn, schema: schema, target: target} do
@@ -228,6 +230,27 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
       CONSTRAINT orders_user_id_fkey
         FOREIGN KEY (user_id)
         REFERENCES #{table(schema, "users")} (id)
+    )
+    """)
+  end
+
+  defp create_composite_fk!(conn, schema) do
+    query!(conn, """
+    CREATE TABLE #{table(schema, "accounts")} (
+      tenant_id bigint NOT NULL,
+      account_id bigint NOT NULL,
+      PRIMARY KEY (tenant_id, account_id)
+    )
+    """)
+
+    query!(conn, """
+    CREATE TABLE #{table(schema, "events")} (
+      id bigint PRIMARY KEY,
+      tenant_id bigint NOT NULL,
+      account_id bigint NOT NULL,
+      CONSTRAINT events_account_fkey
+        FOREIGN KEY (tenant_id, account_id)
+        REFERENCES #{table(schema, "accounts")} (tenant_id, account_id)
     )
     """)
   end
