@@ -65,6 +65,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       assert issue.check == MandatoryJoinKeys
       assert issue.code == :missing_mandatory_join_key
+      assert issue.meta.operation == :all
       assert issue.meta.join_index == 0
       assert issue.meta.binding_index == 1
       assert issue.meta.join_schema == Comment
@@ -177,6 +178,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert issue.meta.missing_keys == [:organisation_id]
     end
 
+    test "accepts mandatory key matches to prior non-root bindings" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          join: reaction in Reaction,
+          on: reaction.post_id == post.id and reaction.organisation_id == comment.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
     test "returns multiple issues when multiple explicit joins are missing mandatory key equality" do
       query =
         from(post in Post,
@@ -205,6 +222,53 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       query =
         from(post in Post,
           join: comment in GlobalComment,
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not validate schema-less joins" do
+      query =
+        from(post in Post,
+          join: comment in "comments",
+          on: field(comment, :post_id) == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not validate subquery joins" do
+      comments_query =
+        from(comment in Comment,
+          where: comment.body == ^"hello"
+        )
+
+      query =
+        from(post in Post,
+          join: comment in subquery(comments_query),
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not validate fragment joins" do
+      query =
+        from(post in Post,
+          join: comment in fragment("select * from comments"),
           on: comment.post_id == post.id,
           where: post.organisation_id == ^123
         )
@@ -343,6 +407,18 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                    fn ->
                      MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: true)
                    end
+    end
+
+    test "raises when top-level opts are not a keyword list" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: true", fn ->
+        MandatoryJoinKeys.validate(:all, query, true)
+      end
     end
   end
 end
