@@ -82,15 +82,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    cond do
-      disabled?(check_opts) ->
-        :ok
-
-      ordered?(query) ->
-        validate_ordered_query(operation, query)
-
-      true ->
-        :ok
+    if enabled?(check_opts) and ordered?(query) do
+      validate_ordered_query(operation, query)
+    else
+      :ok
     end
   end
 
@@ -125,7 +120,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_ordered_query(operation, query) do
     fields = order_fields(query)
@@ -234,7 +229,6 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   defp issue(operation, fields, primary_key) do
     %Issue{
       check: __MODULE__,
-      code: :non_deterministic_order,
       message: message(primary_key),
       meta: %{
         operation: operation,
