@@ -47,6 +47,12 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
+    test "passes when an update_all query has an or_where clause" do
+      query = from(post in Post, or_where: post.published == false)
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
     test "passes when a schema-less update_all query has a where clause" do
       query = from(post in "posts", where: field(post, :published) == false)
 
@@ -68,6 +74,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
         Post
         |> where([post], post.published == false)
         |> update([post], set: [title: post.title])
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
+    test "passes when an update_all query has joins and a where clause" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: post.published == false,
+          update: [set: [title: ^"Archived"]]
+        )
 
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
@@ -121,6 +139,24 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
 
     test "returns an issue for supported raw query maps without where entries" do
       query = %{wheres: []}
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue for supported raw query maps with no wheres key" do
+      query = %{}
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue for supported raw query maps with malformed wheres" do
+      query = %{wheres: :invalid}
 
       assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
 
