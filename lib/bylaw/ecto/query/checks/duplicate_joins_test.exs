@@ -716,5 +716,13 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         DuplicateJoins.validate(:all, query, :bad)
       end
     end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [true]", fn ->
+        DuplicateJoins.validate(:all, query, [true])
+      end
+    end
   end
 end
