@@ -44,7 +44,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   The check is static. It accepts configured root fields directly in `==` and `in`
   predicates inside `where` expressions, but it cannot prove fields hidden
-  inside raw SQL fragments.
+  inside raw SQL fragments. Combination queries such as `union`, `union_all`,
+  `except`, and `intersect` validate the parent query and every combination
+  branch independently.
 
   When the root query uses an Ecto schema, the configured keys are first narrowed
   to fields that exist on that schema. If none of the configured keys exist, the
@@ -115,24 +117,38 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp validate_enabled(operation, query, check_opts) do
     keys = fetch_keys!(check_opts)
 
+    query
+    |> query_branches()
+    |> Enum.flat_map(&issues_for_branch(operation, &1, check_opts, keys))
+    |> result()
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, check_opts, keys) do
     case applicable_keys(query, keys) do
-      [] -> :ok
-      applicable_keys -> validate_applicable_keys(operation, query, check_opts, applicable_keys)
+      [] ->
+        []
+
+      applicable_keys ->
+        issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path)
     end
   end
 
-  defp validate_applicable_keys(operation, query, check_opts, applicable_keys) do
+  defp issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path) do
     match = fetch_match!(check_opts)
     field_branches = where_field_branches(query)
     fields = guaranteed_fields(field_branches)
     missing = missing_keys(applicable_keys, field_branches, match)
 
     if Enum.empty?(missing) do
-      :ok
+      []
     else
-      {:error, issue(operation, applicable_keys, fields, missing, match)}
+      [issue(operation, applicable_keys, fields, missing, match, branch_path)]
     end
   end
+
+  defp result([]), do: :ok
+  defp result([issue]), do: {:error, issue}
+  defp result(issues), do: {:error, issues}
 
   defp fetch_keys!(opts) do
     case Keyword.fetch(opts, :keys) do
@@ -176,7 +192,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp applicable_keys(query, keys) do
     case root_schema(query) do
       {:ok, schema} ->
-        schema_fields = MapSet.new(schema.__schema__(:fields))
+        fields = schema.__schema__(:fields)
+        schema_fields = MapSet.new(fields)
+
         Enum.filter(keys, &MapSet.member?(schema_fields, &1))
 
       :unknown ->
@@ -195,20 +213,44 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp root_schema(_query), do: :unknown
 
+  defp query_branches(query), do: query_branches(query, [])
+
+  defp query_branches(query, branch_path) do
+    [{branch_path, query} | combination_branches(query, branch_path)]
+  end
+
+  defp combination_branches(%{combinations: combinations}, branch_path)
+       when is_list(combinations) do
+    combinations
+    |> Enum.with_index()
+    |> Enum.flat_map(fn
+      {{combination_operation, combination_query}, combination_index} ->
+        combination_path = [{combination_operation, combination_index} | branch_path]
+        query_branches(combination_query, combination_path)
+
+      {_combination, _combination_index} ->
+        []
+    end)
+  end
+
+  defp combination_branches(_query, _branch_path), do: []
+
   defp where_field_branches(query) when is_map(query) do
     aliases = query_aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> concat_branches(branches, expr_branches)
-        _op -> merge_branch_fields(branches, expr_branches)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> concat_branches(branches, expr_branches)
+          _op -> merge_branch_fields(branches, expr_branches)
+        end
+      end)
+
+    case branches do
       nil -> [MapSet.new()]
       branches -> branches
     end
@@ -231,14 +273,16 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp field_branches_in_expr({:==, _meta, [left, right]}, aliases) do
-    [MapSet.new(equality_root_fields(left, right, aliases))]
+    fields = equality_root_fields(left, right, aliases)
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
     if field_reference?(right) do
       [MapSet.new()]
     else
-      [MapSet.new(direct_root_fields(left, aliases))]
+      fields = direct_root_fields(left, aliases)
+      [MapSet.new(fields)]
     end
   end
 
@@ -326,19 +370,41 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp branch_has_any_key?(fields, keys), do: Enum.any?(keys, &MapSet.member?(fields, &1))
 
-  defp issue(operation, keys, fields, missing, match) do
+  defp issue(operation, keys, fields, missing, match, branch_path) do
+    found_where_keys =
+      fields
+      |> MapSet.to_list()
+      |> Enum.sort()
+
     %Issue{
       check: __MODULE__,
       message: message(keys, missing, match),
-      meta: %{
-        operation: operation,
-        keys: keys,
-        match: match,
-        missing_keys: missing,
-        found_where_keys: fields |> MapSet.to_list() |> Enum.sort()
-      }
+      meta:
+        Map.merge(
+          %{
+            operation: operation,
+            keys: keys,
+            match: match,
+            missing_keys: missing,
+            found_where_keys: found_where_keys
+          },
+          branch_meta(branch_path)
+        )
     }
   end
+
+  defp branch_meta([]), do: %{}
+
+  defp branch_meta(branch_path) do
+    combination_path =
+      branch_path
+      |> Enum.reverse()
+      |> Enum.map(&combination_path_entry/1)
+
+    %{combination_path: combination_path}
+  end
+
+  defp combination_path_entry({operation, index}), do: %{operation: operation, index: index}
 
   defp message(keys, _missing, :any) do
     "expected query to filter by at least one of: #{format_keys(keys)}"

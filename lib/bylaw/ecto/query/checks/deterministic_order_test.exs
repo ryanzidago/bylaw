@@ -54,6 +54,12 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       assert :ok = DeterministicOrder.validate(:all, query, [])
     end
 
+    test "passes when bounded queries have no order_by clause" do
+      query = from(post in Post, limit: 10)
+
+      assert :ok = DeterministicOrder.validate(:all, query, [])
+    end
+
     test "passes when order_by includes the root schema primary key" do
       query = from(post in Post, order_by: [asc: post.title, asc: post.id])
 
