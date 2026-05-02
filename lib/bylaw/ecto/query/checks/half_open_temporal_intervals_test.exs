@@ -381,6 +381,22 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       assert issue.meta.field == :occurred_at
     end
 
+    test "matches configured fields referenced with binary field names" do
+      end_at = end_at()
+      query = from(event in "events", where: field(event, "occurred_at") <= ^end_at)
+
+      assert {:error, %Issue{} = issue} =
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
+               )
+
+      assert issue.meta.field == :occurred_at
+
+      assert issue.meta.violations == [
+               %{boundary: :upper, operator: :<=, expected_operator: :<}
+             ]
+    end
+
     test "validates configured fields on named schema-less root bindings" do
       end_at = end_at()
 
