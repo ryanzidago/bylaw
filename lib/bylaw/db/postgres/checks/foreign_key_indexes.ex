@@ -43,7 +43,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
       ON namespace.oid = table_class.relnamespace
     WHERE constraint_record.contype = 'f'
       AND namespace.nspname <> 'information_schema'
-      AND namespace.nspname NOT LIKE 'pg_%'
+      AND namespace.nspname NOT LIKE 'pg\\_%' ESCAPE '\\'
       AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
       AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ) AS foreign_key

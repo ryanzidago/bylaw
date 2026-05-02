@@ -58,6 +58,27 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.columns == ["user_id"]
   end
 
+  test "reports user schemas that start with pg but not pg underscore", %{
+    conn: conn,
+    target: target
+  } do
+    schema = "pgapp_fk_indexes_#{System.unique_integer([:positive])}"
+
+    query!(conn, "CREATE SCHEMA #{quote_identifier(schema)}")
+
+    on_exit(fn ->
+      query!(conn, "DROP SCHEMA IF EXISTS #{quote_identifier(schema)} CASCADE")
+    end)
+
+    create_single_column_fk!(conn, schema)
+
+    assert {:error, %Issue{} = issue} =
+             Postgres.validate(target, [{ForeignKeyIndexes, schemas: [schema]}])
+
+    assert issue.meta.schema == schema
+    assert issue.meta.constraint == "orders_user_id_fkey"
+  end
+
   test "passes when actual foreign keys have supporting indexes", %{
     conn: conn,
     schema: schema,
