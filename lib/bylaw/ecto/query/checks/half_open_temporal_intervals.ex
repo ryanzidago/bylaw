@@ -1,18 +1,19 @@
-defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
+defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   @moduledoc """
-  Validates that root date/time range predicates use half-open boundaries.
+  Validates that root temporal interval predicates are half-open.
 
-  Half-open ranges include the start boundary and exclude the end boundary:
+  Half-open temporal intervals include the start boundary and exclude the end
+  boundary:
 
       from event in Event,
         where: event.occurred_at >= ^start_at,
         where: event.occurred_at < ^end_at
 
-  This catches the common off-by-one boundary shapes `>` for a lower bound and
-  `<=` for an upper bound on root date/time fields.
+  This catches the common off-by-one interval boundary shapes `>` for a lower
+  bound and `<=` for an upper bound on root temporal fields.
 
       @bylaw [
-        date_time_boundaries: [
+        half_open_temporal_intervals: [
           fields: [:occurred_at]
         ]
       ]
@@ -23,7 +24,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
             Keyword.merge(default, override)
           end)
 
-        case Bylaw.Ecto.Query.Checks.DateTimeBoundaries.validate(operation, query, bylaw_opts) do
+        case Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals.validate(operation, query, bylaw_opts) do
           :ok -> {query, opts}
           {:error, issue} -> raise inspect(issue)
         end
@@ -32,12 +33,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [date_time_boundaries: [validate: false]])
+      Repo.all(query, bylaw: [half_open_temporal_intervals: [validate: false]])
 
   Supported options:
 
       [
-        date_time_boundaries: [
+        half_open_temporal_intervals: [
           validate: true,
           fields: [:occurred_at]
         ]
@@ -45,8 +46,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:fields` - optional non-empty list of root fields to validate. When
-      omitted, the check validates date/time fields reflected from the root
-      Ecto schema.
+      omitted, the check validates temporal fields reflected from the root Ecto
+      schema.
 
   The check is static. It inspects direct root field comparisons in `where`
   expressions and ignores field-to-field comparisons, non-root bindings,
@@ -59,7 +60,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
   alias Bylaw.Ecto.Query.Issue
 
   @comparison_operators [:<, :<=, :>, :>=]
-  @date_time_types [
+  @temporal_types [
     :date,
     :time,
     :time_usec,
@@ -81,18 +82,18 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
             {:validate, boolean()}
             | {:fields, list(atom())}
           )
-  @type opts :: list({:date_time_boundaries, check_opts()})
+  @type opts :: list({:half_open_temporal_intervals, check_opts()})
 
   @doc """
   Returns the option namespace used by this check.
   """
 
   @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :date_time_boundaries
-  def name, do: :date_time_boundaries
+  @spec name() :: :half_open_temporal_intervals
+  def name, do: :half_open_temporal_intervals
 
   @doc """
-  Validates half-open date/time boundaries for a prepared Ecto query.
+  Validates half-open temporal intervals for a prepared Ecto query.
 
   The operation is kept as issue metadata. This check applies the same static
   validation to all `c:Ecto.Repo.prepare_query/3` operations.
@@ -171,7 +172,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
         fields
 
       {:infer, {:ok, schema}} ->
-        date_time_schema_fields(schema)
+        temporal_schema_fields(schema)
 
       {:infer, :unknown} ->
         []
@@ -219,21 +220,21 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
 
   defp root_schema(_query), do: :unknown
 
-  defp date_time_schema_fields(schema) do
+  defp temporal_schema_fields(schema) do
     schema.__schema__(:fields)
-    |> Enum.filter(&date_time_schema_field?(schema, &1))
+    |> Enum.filter(&temporal_schema_field?(schema, &1))
     |> Enum.sort()
   end
 
-  defp date_time_schema_field?(schema, field) do
+  defp temporal_schema_field?(schema, field) do
     schema
     |> schema_type(field)
-    |> date_time_type?()
+    |> temporal_type?()
   end
 
   defp schema_type(schema, field), do: schema.__schema__(:type, field)
 
-  defp date_time_type?(type), do: type in @date_time_types
+  defp temporal_type?(type), do: type in @temporal_types
 
   defp issues(operation, query, fields) do
     query
@@ -409,7 +410,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundaries do
     %Issue{
       check: __MODULE__,
       message:
-        "expected date/time boundaries on #{inspect(field)} to use >= for starts and < for ends",
+        "expected half-open temporal interval predicates on #{inspect(field)} to use >= for starts and < for ends",
       meta: %{
         operation: operation,
         field: field,

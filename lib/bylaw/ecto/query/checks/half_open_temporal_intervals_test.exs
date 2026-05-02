@@ -1,9 +1,9 @@
-defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
+defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
   use ExUnit.Case, async: true
 
   import Ecto.Query
 
-  alias Bylaw.Ecto.Query.Checks.DateTimeBoundaries
+  alias Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals
   alias Bylaw.Ecto.Query.Issue
 
   @prepare_query_operations [:all, :update_all, :delete_all, :stream, :insert_all]
@@ -52,10 +52,10 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
     test "passes when there are no where predicates" do
       query = from(event in Event)
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
-    test "passes when a date/time range uses half-open boundaries" do
+    test "passes when a temporal interval uses half-open boundaries" do
       start_at = start_at()
       end_at = end_at()
 
@@ -65,7 +65,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at < ^end_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "passes when date, time, and datetime ranges use half-open boundaries" do
@@ -82,7 +82,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at < ^end_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "passes when equivalent half-open boundaries put the field on the right" do
@@ -95,7 +95,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: ^end_at > event.occurred_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "ignores non-range predicates on date/time fields" do
@@ -110,15 +110,15 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: not is_nil(event.occurred_at)
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
-    test "ignores negated date/time boundary comparisons" do
+    test "ignores negated half-open temporal interval comparisons" do
       end_at = end_at()
 
       query = from(event in Event, where: not (event.occurred_at <= ^end_at))
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "passes when half-open boundaries use dynamic expressions" do
@@ -130,7 +130,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
 
       query = from(event in Event, where: ^predicate)
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "passes when half-open boundaries use field/2 and a named root binding" do
@@ -144,7 +144,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: field(as(:event), :occurred_at) < ^end_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "returns an issue when an upper boundary is inclusive" do
@@ -157,12 +157,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
-      assert issue.check == DateTimeBoundaries
+      assert issue.check == HalfOpenTemporalIntervals
 
       assert issue.message ==
-               "expected date/time boundaries on :occurred_at to use >= for starts and < for ends"
+               "expected half-open temporal interval predicates on :occurred_at to use >= for starts and < for ends"
 
       assert issue.meta.operation == :all
       assert issue.meta.field == :occurred_at
@@ -182,7 +182,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at < ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -196,7 +196,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       predicate = dynamic([event], event.occurred_at <= ^end_at)
       query = from(event in Event, where: ^predicate)
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -209,7 +209,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       end_at = end_at()
       query = from(event in Event, where: field(event, :occurred_at) <= ^end_at)
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -228,7 +228,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: ^end_at >= event.occurred_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.violations == [
                %{boundary: :lower, operator: :>, expected_operator: :>=},
@@ -241,7 +241,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(operation, query, [])
+        assert {:error, %Issue{} = issue} =
+                 HalfOpenTemporalIntervals.validate(operation, query, [])
 
         assert issue.meta.operation == operation
         assert issue.meta.field == :occurred_at
@@ -257,7 +258,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           or_where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -274,7 +275,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.title == ^"public" or event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
@@ -289,7 +290,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         )
 
       assert {:error, [%Issue{} = date_issue, %Issue{} = timestamp_issue]} =
-               DateTimeBoundaries.validate(:all, query, [])
+               HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert date_issue.meta.field == :event_date
       assert timestamp_issue.meta.field == :occurred_at
@@ -307,7 +308,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.published_at <= ^~N[2026-02-01 00:00:00.000000]
         )
 
-      assert {:error, issues} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, issues} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert Enum.map(issues, & &1.meta.field) == [
                :archived_at,
@@ -323,15 +324,15 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
     test "ignores non-date/time schema fields when fields are inferred" do
       query = from(event in Event, where: event.title <= ^"z")
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "validates configured fields even when the schema type is not date/time" do
       query = from(event in StringEvent, where: event.occurred_at <= ^"2026-02-01")
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -342,8 +343,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at, :occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at, :occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -363,8 +364,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         )
 
       assert :ok =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
     end
 
@@ -373,8 +374,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in "events", where: field(event, :occurred_at) <= ^end_at)
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -390,14 +391,14 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
     end
 
-    test "validates date/time boundaries from named root bindings" do
+    test "validates half-open temporal intervals from named root bindings" do
       end_at = end_at()
 
       query =
@@ -406,7 +407,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: as(:event).occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
@@ -415,13 +416,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       end_at = end_at()
       query = from(event in "events", where: field(event, :occurred_at) <= ^end_at)
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "passes when the query is not an Ecto query struct" do
       assert :ok =
-               DateTimeBoundaries.validate(:stream, :not_a_query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:stream, :not_a_query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
     end
 
@@ -429,12 +430,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in GlobalEvent, where: event.title <= ^"z")
 
       assert :ok =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
     end
 
-    test "does not accept date/time boundaries from non-root bindings" do
+    test "does not accept half-open temporal intervals from non-root bindings" do
       end_at = end_at()
 
       query =
@@ -444,10 +445,10 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: calendar.occurred_at <= ^end_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
-    test "validates root date/time boundaries when joins are present" do
+    test "validates root half-open temporal intervals when joins are present" do
       end_at = end_at()
 
       query =
@@ -457,12 +458,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = DateTimeBoundaries.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
 
-    test "does not accept date/time boundaries from named non-root bindings" do
+    test "does not accept half-open temporal intervals from named non-root bindings" do
       end_at = end_at()
 
       query =
@@ -474,7 +475,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: as(:calendar).occurred_at <= ^end_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "ignores date/time comparisons to joined fields" do
@@ -485,23 +486,23 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at <= calendar.occurred_at
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "ignores date/time field-to-field comparisons" do
       query = from(event in Event, where: event.occurred_at <= event.published_at)
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
-    test "ignores invalid date/time boundaries hidden inside fragments" do
+    test "ignores invalid half-open temporal intervals hidden inside fragments" do
       end_at = end_at()
       query = from(event in Event, where: fragment("? <= ?", event.occurred_at, ^end_at))
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
-    test "ignores invalid date/time boundaries hidden inside exists subqueries" do
+    test "ignores invalid half-open temporal intervals hidden inside exists subqueries" do
       end_at = end_at()
 
       query =
@@ -514,7 +515,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
             )
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "detects invalid boundaries in supported raw query maps" do
@@ -522,8 +523,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         query_with_expr({:<=, [], [root_field(:occurred_at), pinned_param(0)]})
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -538,8 +539,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         query_with_expr({:>, [], [root_field_call(:occurred_at), pinned_param(0)]})
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -558,8 +559,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
 
       assert issue.meta.field == :occurred_at
@@ -577,15 +578,15 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
           where: event.occurred_at <= field(calendar, "occurred_at")
         )
 
-      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+      assert :ok = HalfOpenTemporalIntervals.validate(:all, query, [])
     end
 
     test "ignores malformed raw where entries" do
       query = %{aliases: %{}, wheres: [%{op: :and}]}
 
       assert :ok =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [fields: [:occurred_at]]
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [fields: [:occurred_at]]
                )
     end
 
@@ -594,7 +595,9 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       assert :ok =
-               DateTimeBoundaries.validate(:all, query, date_time_boundaries: [validate: false])
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [validate: false]
+               )
     end
 
     test "validates when validate is explicitly true" do
@@ -602,8 +605,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       assert {:error, %Issue{} = issue} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [
                    fields: [:occurred_at],
                    validate: true
                  ]
@@ -617,8 +620,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       assert {:error, %Issue{}} =
-               DateTimeBoundaries.validate(:all, query,
-                 date_time_boundaries: [
+               HalfOpenTemporalIntervals.validate(:all, query,
+                 half_open_temporal_intervals: [
                    fields: [:occurred_at],
                    validate: nil
                  ]
@@ -629,7 +632,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event)
 
       assert_raise ArgumentError, "expected opts to be a keyword list, got: :invalid", fn ->
-        DateTimeBoundaries.validate(:all, query, :invalid)
+        HalfOpenTemporalIntervals.validate(:all, query, :invalid)
       end
     end
 
@@ -637,7 +640,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event)
 
       assert_raise ArgumentError, "expected opts to be a keyword list, got: [:invalid]", fn ->
-        DateTimeBoundaries.validate(:all, query, [:invalid])
+        HalfOpenTemporalIntervals.validate(:all, query, [:invalid])
       end
     end
 
@@ -645,9 +648,11 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :date_time_boundaries opts to be a keyword list, got: :invalid",
+                   "expected :half_open_temporal_intervals opts to be a keyword list, got: :invalid",
                    fn ->
-                     DateTimeBoundaries.validate(:all, query, date_time_boundaries: :invalid)
+                     HalfOpenTemporalIntervals.validate(:all, query,
+                       half_open_temporal_intervals: :invalid
+                     )
                    end
     end
 
@@ -655,17 +660,21 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :date_time_boundaries opts to be a keyword list, got: [:invalid]",
+                   "expected :half_open_temporal_intervals opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     DateTimeBoundaries.validate(:all, query, date_time_boundaries: [:invalid])
+                     HalfOpenTemporalIntervals.validate(:all, query,
+                       half_open_temporal_intervals: [:invalid]
+                     )
                    end
     end
 
     test "raises when a check option is unknown" do
       query = from(event in Event)
 
-      assert_raise ArgumentError, "unknown :date_time_boundaries option: :unknown", fn ->
-        DateTimeBoundaries.validate(:all, query, date_time_boundaries: [unknown: true])
+      assert_raise ArgumentError, "unknown :half_open_temporal_intervals option: :unknown", fn ->
+        HalfOpenTemporalIntervals.validate(:all, query,
+          half_open_temporal_intervals: [unknown: true]
+        )
       end
     end
 
@@ -675,7 +684,9 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: []",
                    fn ->
-                     DateTimeBoundaries.validate(:all, query, date_time_boundaries: [fields: []])
+                     HalfOpenTemporalIntervals.validate(:all, query,
+                       half_open_temporal_intervals: [fields: []]
+                     )
                    end
     end
 
@@ -685,8 +696,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: :occurred_at",
                    fn ->
-                     DateTimeBoundaries.validate(:all, query,
-                       date_time_boundaries: [fields: :occurred_at]
+                     HalfOpenTemporalIntervals.validate(:all, query,
+                       half_open_temporal_intervals: [fields: :occurred_at]
                      )
                    end
     end
@@ -697,8 +708,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
       assert_raise ArgumentError,
                    ~s(expected :fields to contain only atoms, got: "occurred_at"),
                    fn ->
-                     DateTimeBoundaries.validate(:all, query,
-                       date_time_boundaries: [fields: [:occurred_at, "occurred_at"]]
+                     HalfOpenTemporalIntervals.validate(:all, query,
+                       half_open_temporal_intervals: [fields: [:occurred_at, "occurred_at"]]
                      )
                    end
     end
