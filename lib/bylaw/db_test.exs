@@ -109,6 +109,12 @@ defmodule Bylaw.DbTest do
         Db.validate(nil, [PassingCheck])
       end
     end
+
+    test "raises for empty target lists" do
+      assert_raise ArgumentError, ~r/expected at least one database target/, fn ->
+        Db.validate([], [PassingCheck])
+      end
+    end
   end
 
   defp target(name) do

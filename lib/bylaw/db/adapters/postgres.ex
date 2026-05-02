@@ -161,6 +161,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   defp postgres_targets!(%Target{} = target), do: [target]
+  defp postgres_targets!([]), do: raise(ArgumentError, "expected at least one Postgres target")
   defp postgres_targets!(targets) when is_list(targets), do: targets
 
   defp postgres_targets!(target) do
