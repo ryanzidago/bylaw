@@ -645,6 +645,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       end
     end
 
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [:invalid]", fn ->
+        MandatoryWhereKeys.validate(:all, query, [:invalid])
+      end
+    end
+
     test "raises when check opts are not a keyword list" do
       query = from(post in Post)
 
@@ -653,6 +661,24 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                    fn ->
                      MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: :invalid)
                    end
+    end
+
+    test "raises when check opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "expected :mandatory_where_keys opts to be a keyword list, got: [:invalid]",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [:invalid])
+                   end
+    end
+
+    test "raises when a check option is unknown" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "unknown :mandatory_where_keys option: :unknown", fn ->
+        MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [unknown: true])
+      end
     end
 
     test "raises when keys are empty" do

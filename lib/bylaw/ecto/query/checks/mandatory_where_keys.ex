@@ -98,16 +98,36 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp check_opts!(opts) do
-    opts
-    |> Keyword.get(name(), [])
-    |> normalize_check_opts!()
+    if Keyword.keyword?(opts) do
+      opts
+      |> Keyword.get(name(), [])
+      |> normalize_check_opts!()
+    else
+      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+    end
   end
 
-  defp normalize_check_opts!(opts) when is_list(opts), do: opts
+  defp normalize_check_opts!(opts) when is_list(opts) do
+    if Keyword.keyword?(opts) do
+      Enum.each(opts, &validate_check_opt!/1)
+      opts
+    else
+      raise ArgumentError,
+            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
+    end
+  end
 
   defp normalize_check_opts!(opts) do
     raise ArgumentError,
           "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
+  end
+
+  defp validate_check_opt!({:keys, _value}), do: :ok
+  defp validate_check_opt!({:match, _value}), do: :ok
+  defp validate_check_opt!({:validate, _value}), do: :ok
+
+  defp validate_check_opt!({key, _value}) do
+    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
   end
 
   defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
