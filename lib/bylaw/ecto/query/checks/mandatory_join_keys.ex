@@ -30,6 +30,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
             | {:match, match()}
           )
   @type opts :: list({:mandatory_join_keys, check_opts()})
+  @type field_set :: list(atom())
 
   @doc """
   Returns the option namespace used by this check.
@@ -52,9 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    if disabled?(check_opts) do
-      :ok
-    else
+    if enabled?(check_opts) do
       keys = fetch_keys!(check_opts)
       match = fetch_match!(check_opts)
 
@@ -63,6 +62,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
         [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
+    else
+      :ok
     end
   end
 
@@ -83,7 +84,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
           "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp fetch_keys!(opts) do
     case Keyword.fetch(opts, :keys) do
@@ -170,13 +171,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
     Enum.filter(keys, &MapSet.member?(schema_fields, &1))
   end
 
+  @spec join_keys(term(), pos_integer()) :: field_set()
   defp join_keys(%{on: %{expr: expr}}, binding_index) do
     expr
     |> keys_in_join_expr(binding_index)
-    |> MapSet.new()
+    |> Enum.uniq()
   end
 
-  defp join_keys(_join, _binding_index), do: MapSet.new()
+  defp join_keys(_join, _binding_index), do: []
 
   defp keys_in_join_expr({:and, _meta, [left, right]}, binding_index) do
     keys_in_join_expr(left, binding_index) ++ keys_in_join_expr(right, binding_index)
@@ -211,18 +213,28 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   defp direct_field(_expr), do: :unknown
 
+  @spec missing_keys(list(atom()), field_set(), match()) :: list(atom())
   defp missing_keys(keys, found_keys, :any) do
-    if Enum.any?(keys, &MapSet.member?(found_keys, &1)), do: [], else: keys
+    if Enum.any?(keys, &Enum.member?(found_keys, &1)), do: [], else: keys
   end
 
   defp missing_keys(keys, found_keys, :all) do
-    Enum.reject(keys, &MapSet.member?(found_keys, &1))
+    Enum.reject(keys, &Enum.member?(found_keys, &1))
   end
 
+  @spec issue(
+          Bylaw.Ecto.Query.Check.operation(),
+          non_neg_integer(),
+          pos_integer(),
+          module(),
+          list(atom()),
+          field_set(),
+          list(atom()),
+          match()
+        ) :: Issue.t()
   defp issue(operation, join_index, binding_index, schema, keys, found_keys, missing_keys, match) do
     %Issue{
       check: __MODULE__,
-      code: :missing_mandatory_join_key,
       message: message(schema, keys, missing_keys, match),
       meta: %{
         operation: operation,
@@ -232,7 +244,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
         keys: keys,
         match: match,
         missing_keys: missing_keys,
-        found_join_keys: found_keys |> MapSet.to_list() |> Enum.sort()
+        found_join_keys: Enum.sort(found_keys)
       }
     }
   end

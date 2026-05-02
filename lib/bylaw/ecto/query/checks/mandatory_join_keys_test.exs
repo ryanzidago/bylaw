@@ -66,7 +66,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                )
 
       assert issue.check == MandatoryJoinKeys
-      assert issue.code == :missing_mandatory_join_key
       assert issue.meta.operation == :all
       assert issue.meta.join_index == 0
       assert issue.meta.binding_index == 1
