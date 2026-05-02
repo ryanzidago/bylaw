@@ -94,13 +94,78 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   end
 
   defp where_clause?(%{wheres: wheres}) when is_list(wheres) do
-    Enum.any?(wheres, &restricting_where?/1)
+    wheres
+    |> Enum.reduce(nil, &combine_where/2)
+    |> restricting_filter?()
   end
 
   defp where_clause?(_query), do: false
 
-  defp restricting_where?(%{expr: true}), do: false
-  defp restricting_where?(_where), do: true
+  defp combine_where(%{expr: expr} = where, nil) do
+    filter_type(expr, Map.get(where, :params, []))
+  end
+
+  defp combine_where(%{expr: expr, op: :or} = where, filter) do
+    or_filter(filter, filter_type(expr, Map.get(where, :params, [])))
+  end
+
+  defp combine_where(%{expr: expr} = where, filter) do
+    and_filter(filter, filter_type(expr, Map.get(where, :params, [])))
+  end
+
+  defp combine_where(_where, nil), do: :restricting
+  defp combine_where(_where, filter), do: and_filter(filter, :restricting)
+
+  defp filter_type(true, _params), do: :unrestricting
+  defp filter_type(false, _params), do: :empty
+
+  defp filter_type({:^, _meta, [index]}, params) when is_integer(index) do
+    case Enum.fetch(params, index) do
+      {:ok, {value, _type}} -> filter_type(value, [])
+      {:ok, value} -> filter_type(value, [])
+      :error -> :restricting
+    end
+  end
+
+  defp filter_type(%Ecto.Query.Tagged{value: value}, _params), do: filter_type(value, [])
+
+  defp filter_type({:and, _meta, [left, right]}, params) do
+    left
+    |> filter_type(params)
+    |> and_filter(filter_type(right, params))
+  end
+
+  defp filter_type({:or, _meta, [left, right]}, params) do
+    left
+    |> filter_type(params)
+    |> or_filter(filter_type(right, params))
+  end
+
+  defp filter_type({:not, _meta, [expr]}, params) do
+    expr
+    |> filter_type(params)
+    |> negate_filter()
+  end
+
+  defp filter_type(_expr, _params), do: :restricting
+
+  defp and_filter(:empty, _right), do: :empty
+  defp and_filter(_left, :empty), do: :empty
+  defp and_filter(:unrestricting, :unrestricting), do: :unrestricting
+  defp and_filter(_left, _right), do: :restricting
+
+  defp or_filter(:unrestricting, _right), do: :unrestricting
+  defp or_filter(_left, :unrestricting), do: :unrestricting
+  defp or_filter(:empty, :empty), do: :empty
+  defp or_filter(_left, _right), do: :restricting
+
+  defp negate_filter(:unrestricting), do: :empty
+  defp negate_filter(:empty), do: :unrestricting
+  defp negate_filter(:restricting), do: :restricting
+
+  defp restricting_filter?(nil), do: false
+  defp restricting_filter?(:unrestricting), do: false
+  defp restricting_filter?(_filter), do: true
 
   defp filtered_subquery_join?(%{joins: joins} = query) when is_list(joins) do
     aliases = Introspection.aliases(query)

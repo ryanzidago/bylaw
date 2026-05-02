@@ -278,6 +278,46 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert issue.meta.operation == :update_all
     end
 
+    test "returns an issue when an update_all query only has a dynamic true where clause" do
+      always_true = true
+      predicate = dynamic([_post], ^always_true)
+      query = from(post in Post, where: ^predicate)
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a restricting where clause is widened by literal true or_where" do
+      query = from(post in Post, where: post.published == false, or_where: true)
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when literal true where is combined with a restricting or_where" do
+      query = from(post in Post, where: true, or_where: post.published == false)
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a restricting where clause is widened by dynamic true or_where" do
+      always_true = true
+      predicate = dynamic([_post], ^always_true)
+      query = from(post in Post, where: post.published == false, or_where: ^predicate)
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
     test "returns an issue when an update_all query has an empty keyword where clause" do
       query = from(Post, where: [])
 
