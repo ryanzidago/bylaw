@@ -321,6 +321,23 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       assert :ok = DuplicateJoins.validate(:all, query, [])
     end
 
+    test "passes when repeated joins have different later predicate boolean operators" do
+      kind = "public"
+      body = "hello"
+
+      query =
+        from(post in Post,
+          join: first_comment in Comment,
+          on: first_comment.post_id == post.id,
+          join: second_comment in Comment,
+          on: second_comment.post_id == post.id,
+          where: first_comment.kind == ^kind or first_comment.body == ^body,
+          where: second_comment.kind == ^kind and second_comment.body == ^body
+        )
+
+      assert :ok = DuplicateJoins.validate(:all, query, [])
+    end
+
     test "detects duplicate joins with matching later predicates" do
       kind = "public"
 
@@ -555,6 +572,26 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: comment.post_id == post.id,
           join: other_comment in subquery(other_comments_query),
           on: other_comment.post_id == post.id
+        )
+
+      assert :ok = DuplicateJoins.validate(:all, query, [])
+    end
+
+    test "does not treat joins constrained by different later subqueries as duplicates" do
+      public_comments_query =
+        from(comment in Comment, where: comment.kind == "public", select: comment.id)
+
+      private_comments_query =
+        from(comment in Comment, where: comment.kind == "private", select: comment.id)
+
+      query =
+        from(post in Post,
+          join: public_comment in Comment,
+          on: public_comment.post_id == post.id,
+          join: private_comment in Comment,
+          on: private_comment.post_id == post.id,
+          where: public_comment.id in subquery(public_comments_query),
+          where: private_comment.id in subquery(private_comments_query)
         )
 
       assert :ok = DuplicateJoins.validate(:all, query, [])
