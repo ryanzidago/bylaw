@@ -236,6 +236,24 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
              ]
     end
 
+    test "returns an issue when enum in predicates use named root field expressions" do
+      query =
+        from(post in Post,
+          as: :post,
+          where: field(as(:post), :status) in [:draft],
+          where: post.status == :published
+        )
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :in, values: [:draft]},
+               %{operator: :==, values: [:published]}
+             ]
+    end
+
     test "returns an issue when an enum in predicate has no possible values" do
       query = from(post in Post, where: post.status in ^[])
 
@@ -275,6 +293,25 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
     end
 
+    test "normalizes string enum values inside in predicates" do
+      statuses = ["published", "draft", "draft"]
+
+      query =
+        from(post in Post,
+          where: post.status in ^statuses,
+          where: post.status == :archived
+        )
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :in, values: [:draft, :published]},
+               %{operator: :==, values: [:archived]}
+             ]
+    end
+
     test "normalizes integer enum dump values before comparing predicates" do
       query =
         from(post in Post,
@@ -286,6 +323,25 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
 
       assert issue.meta.field == :integer_status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
+    end
+
+    test "normalizes integer enum values inside in predicates" do
+      statuses = [2, 1, 1]
+
+      query =
+        from(post in Post,
+          where: post.integer_status in ^statuses,
+          where: post.integer_status == :archived
+        )
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :integer_status
+
+      assert issue.meta.predicates == [
+               %{operator: :in, values: [:draft, :published]},
+               %{operator: :==, values: [:archived]}
+             ]
     end
 
     test "ignores invalid enum values because Ecto will reject them separately" do
