@@ -14,6 +14,8 @@ defmodule Bylaw.MixProject do
       usage_rules: usage_rules(),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw",
+      description: description(),
+      package: package(),
       docs: docs(),
       start_permanent: Mix.env() == :prod,
       aliases: aliases(),
@@ -78,6 +80,20 @@ defmodule Bylaw.MixProject do
     [
       file: "AGENTS.md",
       usage_rules: [{:usage_rules, sub_rules: ["otp"]}]
+    ]
+  end
+
+  defp description do
+    "Validation helpers for code, database, query, schema, and workflow constraints."
+  end
+
+  defp package do
+    [
+      files:
+        Path.wildcard("lib/**/*.ex") ++
+          ~w(guides .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      licenses: ["MIT"],
+      links: %{"GitHub" => @source_url}
     ]
   end
 
