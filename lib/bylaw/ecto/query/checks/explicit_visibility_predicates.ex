@@ -58,7 +58,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   bare field predicates, comparisons against values or parameters, and `in`
   predicates whose right side has no field references. Field-to-field
   comparisons are not treated as explicit constraints. It cannot prove visibility
-  fields hidden inside raw SQL fragments or subqueries.
+  fields hidden inside raw SQL fragments or subqueries. Combination queries such
+  as `union`, `union_all`, `except`, and `intersect` validate the parent query
+  and every combination branch independently.
 
   When the root query schema is not configured, the check returns `:ok`.
   Configured fields that do not exist on the root schema are ignored. If no
@@ -148,27 +150,62 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp validate_enabled(operation, query, check_opts) do
     schema_configs = fetch_schema_configs!(check_opts)
 
+    query
+    |> query_branches()
+    |> Enum.flat_map(&issues_for_branch(operation, &1, schema_configs))
+    |> result()
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, schema_configs) do
     with {:ok, schema} <- root_schema(query),
          {:ok, configured_fields} <- configured_fields(schema_configs, schema),
          applicable_fields = applicable_fields(schema, configured_fields),
          false <- Enum.empty?(applicable_fields) do
-      validate_applicable_fields(operation, query, schema, configured_fields, applicable_fields)
+      issues_for_applicable_branch(
+        operation,
+        query,
+        schema,
+        configured_fields,
+        applicable_fields,
+        branch_path
+      )
     else
-      _not_applicable -> :ok
+      _not_applicable -> []
     end
   end
 
-  defp validate_applicable_fields(operation, query, schema, configured_fields, applicable_fields) do
+  defp issues_for_applicable_branch(
+         operation,
+         query,
+         schema,
+         configured_fields,
+         applicable_fields,
+         branch_path
+       ) do
     field_branches = where_field_branches(query)
     fields = guaranteed_fields(field_branches)
     missing = missing_fields(applicable_fields, field_branches)
 
     if Enum.empty?(missing) do
-      :ok
+      []
     else
-      {:error, issue(operation, schema, configured_fields, applicable_fields, fields, missing)}
+      [
+        issue(
+          operation,
+          schema,
+          configured_fields,
+          applicable_fields,
+          fields,
+          missing,
+          branch_path
+        )
+      ]
     end
   end
+
+  defp result([]), do: :ok
+  defp result([issue]), do: {:error, issue}
+  defp result(issues), do: {:error, issues}
 
   defp fetch_schema_configs!(opts) do
     opts
@@ -256,6 +293,28 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp root_schema(_query), do: :unknown
+
+  defp query_branches(query), do: query_branches(query, [])
+
+  defp query_branches(query, branch_path) do
+    [{branch_path, query} | combination_branches(query, branch_path)]
+  end
+
+  defp combination_branches(%{combinations: combinations}, branch_path)
+       when is_list(combinations) do
+    combinations
+    |> Enum.with_index()
+    |> Enum.flat_map(fn
+      {{combination_operation, combination_query}, combination_index} ->
+        combination_path = [{combination_operation, combination_index} | branch_path]
+        query_branches(combination_query, combination_path)
+
+      {_combination, _combination_index} ->
+        []
+    end)
+  end
+
+  defp combination_branches(_query, _branch_path), do: []
 
   defp configured_fields(schema_configs, schema) do
     case Enum.find(schema_configs, fn {configured_schema, _opts} ->
@@ -425,20 +484,45 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     end)
   end
 
-  defp issue(operation, schema, configured_fields, applicable_fields, found_fields, missing) do
+  defp issue(
+         operation,
+         schema,
+         configured_fields,
+         applicable_fields,
+         found_fields,
+         missing,
+         branch_path
+       ) do
     %Issue{
       check: __MODULE__,
       message: message(missing),
-      meta: %{
-        operation: operation,
-        root_schema: schema,
-        configured_fields: configured_fields,
-        applicable_fields: applicable_fields,
-        missing_fields: missing,
-        found_visibility_fields: found_visibility_fields(found_fields, applicable_fields)
-      }
+      meta:
+        Map.merge(
+          %{
+            operation: operation,
+            root_schema: schema,
+            configured_fields: configured_fields,
+            applicable_fields: applicable_fields,
+            missing_fields: missing,
+            found_visibility_fields: found_visibility_fields(found_fields, applicable_fields)
+          },
+          branch_meta(branch_path)
+        )
     }
   end
+
+  defp branch_meta([]), do: %{}
+
+  defp branch_meta(branch_path) do
+    combination_path =
+      branch_path
+      |> Enum.reverse()
+      |> Enum.map(&combination_path_entry/1)
+
+    %{combination_path: combination_path}
+  end
+
+  defp combination_path_entry({operation, index}), do: %{operation: operation, index: index}
 
   defp found_visibility_fields(found_fields, applicable_fields) do
     applicable_fields
