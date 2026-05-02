@@ -54,10 +54,11 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   The check is static. It inspects direct field-to-field comparisons in `where`,
   `having`, and direct join `on` predicates, reflecting field types from the
-  root schema and direct explicit join schemas. It detects dot field access,
-  `field/2`, named bindings, dynamic predicates, and `type(field, :date)`
-  wrappers used as explicit truncation. It ignores values, schema-less sources,
-  association-derived joins, fragments that hide field access, and subqueries.
+  root schema, direct explicit join schemas, and association join schemas when
+  the owner binding schema is known. It detects dot field access, `field/2`,
+  named bindings, dynamic predicates, and `type(field, :date)` wrappers used as
+  explicit truncation. It ignores values, schema-less sources, fragments that
+  hide field access, and subqueries.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -171,7 +172,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
     joins
     |> Enum.with_index(1)
     |> Enum.reduce(schemas, fn {join, binding_index}, schemas ->
-      case Introspection.explicit_join_schema(join) do
+      case join_schema(join, schemas) do
         {:ok, schema} -> Map.put(schemas, binding_index, schema)
         :skip -> schemas
       end
@@ -179,6 +180,32 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   end
 
   defp put_join_schemas(schemas, _query), do: schemas
+
+  defp join_schema(join, schemas) do
+    case Introspection.explicit_join_schema(join) do
+      {:ok, schema} -> {:ok, schema}
+      :skip -> association_join_schema(join, schemas)
+    end
+  end
+
+  defp association_join_schema(%{assoc: {owner_binding_index, assoc_name}}, schemas)
+       when is_integer(owner_binding_index) and owner_binding_index >= 0 and is_atom(assoc_name) do
+    with {:ok, owner_schema} <- Map.fetch(schemas, owner_binding_index),
+         %{related: related_schema} <- owner_schema.__schema__(:association, assoc_name),
+         true <- schema?(related_schema) do
+      {:ok, related_schema}
+    else
+      _other -> :skip
+    end
+  end
+
+  defp association_join_schema(_join, _schemas), do: :skip
+
+  defp schema?(schema) when is_atom(schema) and not is_nil(schema) do
+    function_exported?(schema, :__schema__, 1)
+  end
+
+  defp schema?(_schema), do: false
 
   defp predicate_exprs(query) do
     boolean_exprs(Map.get(query, :wheres, [])) ++
