@@ -37,6 +37,15 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     end
   end
 
+  defmodule StringDeletedPost do
+    use Ecto.Schema
+
+    schema "string_deleted_posts" do
+      field(:deleted_at, :string)
+      field(:status, :string)
+    end
+  end
+
   defmodule PlainPost do
     use Ecto.Schema
 
@@ -100,6 +109,16 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       assert issue.meta.soft_delete_fields == [:deleted_at, :archived_at]
     end
 
+    test "returns an issue based on field presence regardless of field type" do
+      query = from(post in StringDeletedPost)
+
+      assert {:error, %Issue{} = issue} =
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+
+      assert issue.meta.root_schema == StringDeletedPost
+      assert issue.meta.soft_delete_fields == [:deleted_at]
+    end
+
     test "returns an issue even when delete_all has root where predicates" do
       query =
         from(post in DeletedPost,
@@ -123,6 +142,22 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
         from(post in PlainPost,
           join: comment in Comment,
           on: comment.post_id == post.id and is_nil(comment.deleted_at)
+        )
+
+      assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+    end
+
+    test "passes when soft-delete schemas only appear inside join subqueries" do
+      deleted_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in PlainPost,
+          join: deleted_post in subquery(deleted_posts),
+          on: deleted_post.id == post.id
         )
 
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
@@ -152,6 +187,23 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
     end
 
+    test "passes when soft-delete schemas only appear inside CTE queries" do
+      deleted_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: %{id: post.id}
+        )
+
+      query =
+        PlainPost
+        |> with_cte("deleted_posts", as: ^deleted_posts)
+        |> join(:inner, [post], deleted_post in "deleted_posts",
+          on: field(deleted_post, :id) == post.id
+        )
+
+      assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+    end
+
     test "passes for non-query values" do
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, :not_a_query, [])
     end
@@ -160,6 +212,16 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       query = %{from: nil, wheres: [%{expr: true, op: :and, params: []}]}
 
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+    end
+
+    test "returns an issue for supported raw query maps with soft-delete root schemas" do
+      query = %{from: %{source: {"deleted_posts", DeletedPost}}}
+
+      assert {:error, %Issue{} = issue} =
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+
+      assert issue.meta.root_schema == DeletedPost
+      assert issue.meta.soft_delete_fields == [:deleted_at]
     end
 
     test "passes for non-delete operations on soft-delete schemas" do
