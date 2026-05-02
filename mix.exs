@@ -72,7 +72,6 @@ defmodule Bylaw.MixProject do
       source_ref: "v#{@version}",
       skip_code_autolink_to: [
         "Bylaw.Credo",
-        "Bylaw.Db",
         "Bylaw.Ecto.Query",
         "Bylaw.Ecto.Query.Checks"
       ],
@@ -91,10 +90,20 @@ defmodule Bylaw.MixProject do
           Bylaw.Ecto.Query.Issue
         ],
         "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./,
+        "Bylaw.Db": [
+          Bylaw.Db,
+          Bylaw.Db.Adapter,
+          Bylaw.Db.Check,
+          Bylaw.Db.Issue,
+          Bylaw.Db.Target
+        ],
+        "Bylaw.Db adapters": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\./,
+        "Bylaw.Db checks": ~r/^(Elixir\.)?Bylaw\.Db\.Postgres\.Checks\./,
         "Mix tasks": ~r/^Elixir\.Mix\.Tasks\./
       ],
       nest_modules_by_prefix: [
-        Bylaw.Ecto.Query.Checks
+        Bylaw.Ecto.Query.Checks,
+        Bylaw.Db.Postgres.Checks
       ]
     ]
   end
