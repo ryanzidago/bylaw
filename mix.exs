@@ -69,7 +69,7 @@ defmodule Bylaw.MixProject do
   defp docs do
     [
       main: "checks",
-      source_ref: "main",
+      source_ref: "v#{@version}",
       extras: [
         "README.md",
         "guides/checks.md": [title: "Checks"]
