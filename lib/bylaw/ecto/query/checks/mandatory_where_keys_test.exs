@@ -156,6 +156,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert issue.meta.missing_keys == [:organisation_id]
     end
 
+    test "accepts mandatory keys in schema-less source field predicates" do
+      query = from(post in "posts", where: field(post, :organisation_id) == ^123)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+    end
+
     test "returns an issue when there is no where clause" do
       query = from(post in Post)
 
