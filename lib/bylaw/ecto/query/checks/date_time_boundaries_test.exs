@@ -549,6 +549,37 @@ defmodule Bylaw.Ecto.Query.Checks.DateTimeBoundariesTest do
              ]
     end
 
+    test "detects invalid boundaries when configured fields are wrapped in type/2" do
+      end_at = end_at()
+
+      query =
+        from(event in "events",
+          where: type(field(event, :occurred_at), :utc_datetime) <= ^end_at
+        )
+
+      assert {:error, %Issue{} = issue} =
+               DateTimeBoundaries.validate(:all, query,
+                 date_time_boundaries: [fields: [:occurred_at]]
+               )
+
+      assert issue.meta.field == :occurred_at
+
+      assert issue.meta.violations == [
+               %{boundary: :upper, operator: :<=, expected_operator: :<}
+             ]
+    end
+
+    test "ignores field-to-field comparisons when the other field uses a string name" do
+      query =
+        from(event in Event,
+          join: calendar in Calendar,
+          on: true,
+          where: event.occurred_at <= field(calendar, "occurred_at")
+        )
+
+      assert :ok = DateTimeBoundaries.validate(:all, query, [])
+    end
+
     test "ignores malformed raw where entries" do
       query = %{aliases: %{}, wheres: [%{op: :and}]}
 
