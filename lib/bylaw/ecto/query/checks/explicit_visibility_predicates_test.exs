@@ -102,6 +102,16 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
+    test "passes when configured fields appear as negated bare predicates" do
+      query =
+        from(post in Post,
+          where: not post.deleted_at,
+          where: not post.status
+        )
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
+    end
+
     test "passes when configured fields are on the right side of equality predicates" do
       deleted_at = ~U[2026-01-01 00:00:00Z]
 
@@ -431,6 +441,26 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
+    test "does not require configured joined schemas" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: is_nil(post.deleted_at),
+          where: post.status == ^:published
+        )
+
+      assert :ok =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 explicit_visibility_predicates: [
+                   schemas: [
+                     {Post, fields: [:deleted_at, :status]},
+                     {Comment, fields: [:deleted_at, :status]}
+                   ]
+                 ]
+               )
+    end
+
     test "does not accept visibility fields from non-root bindings" do
       query =
         from(post in Post,
@@ -570,6 +600,15 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
         from(post in Post,
           where: is_nil(post.deleted_at) and post.status == ^:published,
           or_where: not is_nil(post.deleted_at) and post.status == ^:hidden
+        )
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
+    end
+
+    test "passes when an initial or_where branch constrains visibility fields" do
+      query =
+        from(post in Post,
+          or_where: is_nil(post.deleted_at) and post.status == ^:published
         )
 
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
