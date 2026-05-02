@@ -12,7 +12,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     use Ecto.Schema
 
     schema "posts" do
+      field(:active, :boolean)
       field(:integer_status, Ecto.Enum, values: [draft: 1, published: 2, archived: 3])
+      field(:published_at, :utc_datetime)
+      field(:sequence, :integer)
       field(:status, Ecto.Enum, values: [:draft, :published, :archived])
       field(:title, :string)
     end
@@ -75,7 +78,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.check == ConflictingWherePredicates
-      assert issue.message == "expected enum where predicates on :status to agree on a value"
+      assert issue.message == "expected where predicates on :status to agree on a value"
       assert issue.meta.operation == :all
       assert issue.meta.field == :status
       assert issue.meta.enum_values == [:draft, :published, :archived]
@@ -353,20 +356,101 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
-    test "ignores non enum fields" do
+    test "returns an issue when string equality predicates conflict" do
       query = from(post in Post, where: post.title == "draft", where: post.title == "published")
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :title
+      refute Map.has_key?(issue.meta, :enum_values)
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: ["draft"]},
+               %{operator: :==, values: ["published"]}
+             ]
+    end
+
+    test "returns an issue when integer equality predicates conflict" do
+      sequence = 1
+      query = from(post in Post, where: post.sequence == ^sequence, where: post.sequence == 2)
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :sequence
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [1]},
+               %{operator: :==, values: [2]}
+             ]
+    end
+
+    test "passes when repeated non enum equality predicates agree" do
+      sequence = 1
+      query = from(post in Post, where: post.sequence == ^sequence, where: post.sequence == 1)
 
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
-    test "ignores schemas without enum fields" do
+    test "returns an issue when boolean equality predicates conflict" do
+      query = from(post in Post, where: post.active == true, where: post.active == ^false)
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :active
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [true]},
+               %{operator: :==, values: [false]}
+             ]
+    end
+
+    test "returns an issue when an in predicate has no possible values" do
+      query = from(post in Post, where: post.sequence in [])
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :sequence
+      assert issue.meta.predicates == [%{operator: :in, values: []}]
+    end
+
+    test "returns an issue when integer in and equality predicates are disjoint" do
+      query =
+        from(post in Post,
+          where: post.sequence in [1, 2],
+          where: post.sequence == ^3
+        )
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :sequence
+
+      assert issue.meta.predicates == [
+               %{operator: :in, values: [1, 2]},
+               %{operator: :==, values: [3]}
+             ]
+    end
+
+    test "passes when non enum in and equality predicates overlap" do
+      query =
+        from(post in Post,
+          where: post.sequence in [1, 2],
+          where: post.sequence == ^2
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "returns an issue for conflicting fields on schemas without enum fields" do
       query =
         from(post in PlainPost,
           where: post.status == "draft",
           where: post.status == "published"
         )
 
-      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+      refute Map.has_key?(issue.meta, :enum_values)
     end
 
     test "ignores enum comparisons to another field" do
@@ -399,10 +483,30 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
-    test "ignores null checks" do
+    test "returns an issue when is_nil conflicts with an enum equality predicate" do
       query = from(post in Post, where: is_nil(post.status), where: post.status == :draft)
 
-      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :is_nil, values: [nil]},
+               %{operator: :==, values: [:draft]}
+             ]
+    end
+
+    test "returns an issue when is_nil conflicts with a non enum equality predicate" do
+      query = from(post in Post, where: is_nil(post.title), where: post.title == "draft")
+
+      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :title
+
+      assert issue.meta.predicates == [
+               %{operator: :is_nil, values: [nil]},
+               %{operator: :==, values: ["draft"]}
+             ]
     end
 
     test "ignores not equal predicates" do
@@ -598,6 +702,32 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
+    end
+
+    test "ignores non enum values that do not already match the schema field type" do
+      query =
+        query_with_expr(
+          {:and, [],
+           [
+             {:==, [], [root_field(:sequence), "1"]},
+             {:==, [], [root_field(:sequence), 2]}
+           ]}
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "ignores non enum values for unsupported schema field types" do
+      query =
+        query_with_expr(
+          {:and, [],
+           [
+             {:==, [], [root_field(:published_at), "2026-05-02T00:00:00Z"]},
+             {:==, [], [root_field(:published_at), "2026-05-03T00:00:00Z"]}
+           ]}
+        )
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
     test "ignores malformed pinned parameter references" do
