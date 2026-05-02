@@ -1,6 +1,6 @@
 defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   @moduledoc """
-  Validates that `update_all` queries include at least one `where` clause.
+  Validates that `update_all` queries are bounded.
 
   This check is useful as a guard against accidentally updating every row in a
   table:
@@ -39,8 +39,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
   The check only applies to the `:update_all` operation reported by
-  `c:Ecto.Repo.prepare_query/3`. It checks for the presence of `where` clauses;
-  checks that need specific predicates should use a more targeted rule such as
+  `c:Ecto.Repo.prepare_query/3`. It accepts update queries with a restricting
+  `where` clause or a filtered subquery joined back to the updated rows. Checks
+  that need specific predicates should use a more targeted rule such as
   `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`.
   """
 
@@ -61,7 +62,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   def name, do: :unbounded_updates
 
   @doc """
-  Validates that `update_all` queries include at least one `where` clause.
+  Validates that `update_all` queries are bounded.
 
   Operations other than `:update_all` are ignored.
   """
@@ -83,8 +84,12 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp unbounded_update?(:update_all, query), do: not where_clause?(query)
+  defp unbounded_update?(:update_all, query), do: not bounded_query?(query)
   defp unbounded_update?(_operation, _query), do: false
+
+  defp bounded_query?(query) do
+    where_clause?(query) or filtered_subquery_join?(query)
+  end
 
   defp where_clause?(%{wheres: wheres}) when is_list(wheres) do
     Enum.any?(wheres, &restricting_where?/1)
@@ -95,11 +100,54 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   defp restricting_where?(%{expr: true}), do: false
   defp restricting_where?(_where), do: true
 
+  defp filtered_subquery_join?(%{joins: joins}) when is_list(joins) do
+    Enum.any?(joins, &filtered_subquery_join_entry?/1)
+  end
+
+  defp filtered_subquery_join?(_query), do: false
+
+  defp filtered_subquery_join_entry?(%{
+         source: %{__struct__: Ecto.SubQuery, query: subquery},
+         on: %{expr: join_expr}
+       }) do
+    where_clause?(subquery) and root_join_predicate?(join_expr)
+  end
+
+  defp filtered_subquery_join_entry?(_join), do: false
+
+  defp root_join_predicate?(true), do: false
+
+  defp root_join_predicate?(expr) do
+    binding_indexes = binding_indexes(expr)
+
+    MapSet.member?(binding_indexes, 0) and Enum.any?(binding_indexes, &(&1 > 0))
+  end
+
+  defp binding_indexes({:&, _meta, [binding_index]})
+       when is_integer(binding_index) and binding_index >= 0 do
+    MapSet.new([binding_index])
+  end
+
+  defp binding_indexes(expr) when is_tuple(expr) do
+    expr
+    |> Tuple.to_list()
+    |> binding_indexes()
+  end
+
+  defp binding_indexes(expr) when is_list(expr) do
+    Enum.reduce(expr, MapSet.new(), fn item, indexes ->
+      MapSet.union(indexes, binding_indexes(item))
+    end)
+  end
+
+  defp binding_indexes(_expr), do: MapSet.new()
+
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
     %Issue{
       check: __MODULE__,
-      message: "expected update_all query to include at least one where clause",
+      message:
+        "expected update_all query to be bounded by a where clause or filtered subquery join",
       meta: %{operation: operation}
     }
   end

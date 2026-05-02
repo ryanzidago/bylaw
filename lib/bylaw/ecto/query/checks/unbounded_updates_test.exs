@@ -90,13 +90,53 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
+    test "passes when an update_all query is bounded by a filtered subquery join" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: unpublished_post.id == post.id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
+    test "returns an issue when a filtered subquery join does not constrain the update target" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: true,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
     test "returns an issue when an update_all query has no where clause" do
       query = from(post in Post)
 
       assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
 
       assert issue.check == UnboundedUpdates
-      assert issue.message == "expected update_all query to include at least one where clause"
+
+      assert issue.message ==
+               "expected update_all query to be bounded by a where clause or filtered subquery join"
+
       assert issue.meta.operation == :update_all
     end
 
