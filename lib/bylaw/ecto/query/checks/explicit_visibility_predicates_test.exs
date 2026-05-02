@@ -441,6 +441,123 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
+    test "passes when every combination branch constrains visibility fields" do
+      scoped_posts =
+        from(post in Post,
+          where: is_nil(post.deleted_at) and post.status == ^:published,
+          select: post.id
+        )
+
+      hidden_posts =
+        from(post in Post,
+          where: not is_nil(post.deleted_at) and post.status == ^:hidden,
+          select: post.id
+        )
+
+      query = union_all(scoped_posts, ^hidden_posts)
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
+    end
+
+    test "returns an issue when a combination branch is missing visibility fields" do
+      scoped_posts =
+        from(post in Post,
+          where: is_nil(post.deleted_at) and post.status == ^:published,
+          select: post.id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      Enum.each(combination_queries(scoped_posts, unscoped_posts), fn {operation, query} ->
+        assert {:error, %Issue{} = issue} =
+                 ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+        assert issue.meta.root_schema == Post
+        assert issue.meta.missing_fields == [:deleted_at, :status]
+        assert Enum.empty?(issue.meta.found_visibility_fields)
+        assert issue.meta.combination_path == [%{operation: operation, index: 0}]
+      end)
+    end
+
+    test "validates configured combination branches when the parent schema is not configured" do
+      comments =
+        from(comment in Comment,
+          where: comment.post_id == ^123,
+          select: comment.post_id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      query = union_all(comments, ^unscoped_posts)
+
+      assert {:error, %Issue{} = issue} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      assert issue.meta.root_schema == Post
+      assert issue.meta.missing_fields == [:deleted_at, :status]
+      assert issue.meta.combination_path == [%{operation: :union_all, index: 0}]
+    end
+
+    test "returns every issue when the root and a combination branch miss visibility fields" do
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      other_unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"private",
+          select: post.id
+        )
+
+      query = union_all(unscoped_posts, ^other_unscoped_posts)
+
+      assert {:error, [%Issue{} = root_issue, %Issue{} = combination_issue]} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      refute Map.has_key?(root_issue.meta, :combination_path)
+      assert root_issue.meta.missing_fields == [:deleted_at, :status]
+
+      assert combination_issue.meta.missing_fields == [:deleted_at, :status]
+      assert combination_issue.meta.combination_path == [%{operation: :union_all, index: 0}]
+    end
+
+    test "tracks nested combination branches missing visibility fields" do
+      scoped_posts =
+        from(post in Post,
+          where: is_nil(post.deleted_at) and post.status == ^:published,
+          select: post.id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      nested_query = union_all(scoped_posts, ^unscoped_posts)
+      query = union(scoped_posts, ^nested_query)
+
+      assert {:error, %Issue{} = issue} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      assert issue.meta.missing_fields == [:deleted_at, :status]
+
+      assert issue.meta.combination_path == [
+               %{operation: :union, index: 0},
+               %{operation: :union_all, index: 0}
+             ]
+    end
+
     test "does not require configured joined schemas" do
       query =
         from(post in Post,
@@ -900,6 +1017,17 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
           {Post, fields: [:deleted_at, :status]}
         ]
       ]
+    ]
+  end
+
+  defp combination_queries(left_query, right_query) do
+    [
+      {:union, union(left_query, ^right_query)},
+      {:union_all, union_all(left_query, ^right_query)},
+      {:except, except(left_query, ^right_query)},
+      {:except_all, except_all(left_query, ^right_query)},
+      {:intersect, intersect(left_query, ^right_query)},
+      {:intersect_all, intersect_all(left_query, ^right_query)}
     ]
   end
 end
