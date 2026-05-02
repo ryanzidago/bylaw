@@ -208,6 +208,50 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
                "expected join 0 not to be cartesian; found cross_lateral_join"
     end
 
+    test "returns an issue when an inner lateral join only projects a parent binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(parent_projecting_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when a left lateral join only projects a parent binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          left_lateral_join: comment in subquery(parent_projecting_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :left_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when a cross_lateral_join only projects a parent binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          cross_lateral_join: comment_id in subquery(parent_projecting_comment_id_subquery()),
+          select: {post.id, comment_id.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :cross_lateral
+      assert issue.meta.reason == :cross_lateral_join
+    end
+
     test "passes when a correlated inner lateral join uses a literal true on expression" do
       query =
         from(post in Post,
@@ -445,6 +489,14 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
     test "raises when top-level opts are not a keyword list" do
       query = from(post in Post)
 
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: :bad", fn ->
+        CartesianJoins.validate(:all, query, :bad)
+      end
+    end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post)
+
       assert_raise ArgumentError, "expected opts to be a keyword list, got: [:bad]", fn ->
         CartesianJoins.validate(:all, query, [:bad])
       end
@@ -461,6 +513,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
   defp uncorrelated_comment_id_subquery do
     from(comment in Comment,
       select: %{id: comment.id}
+    )
+  end
+
+  defp parent_projecting_comment_id_subquery do
+    from(comment in Comment,
+      select: %{id: comment.id, parent_post_id: parent_as(:post).id}
     )
   end
 end
