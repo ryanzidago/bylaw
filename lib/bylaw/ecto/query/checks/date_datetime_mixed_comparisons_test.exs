@@ -228,6 +228,67 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
              ]
     end
 
+    test "detects in predicates with datetime fields in the candidate list" do
+      query =
+        from(event in Event,
+          where: event.event_date in [event.inserted_at, event.scheduled_at]
+        )
+
+      assert {:error, %Issue{} = issue} =
+               DateDatetimeMixedComparisons.validate(:all, query, [])
+
+      assert issue.meta.date_field == :event_date
+
+      assert issue.meta.violations == [
+               %{
+                 operator: :in,
+                 datetime_schema: Event,
+                 datetime_binding_index: 0,
+                 datetime_field: :inserted_at,
+                 datetime_type: :utc_datetime
+               },
+               %{
+                 operator: :in,
+                 datetime_schema: Event,
+                 datetime_binding_index: 0,
+                 datetime_field: :scheduled_at,
+                 datetime_type: :naive_datetime
+               }
+             ]
+    end
+
+    test "detects in predicates with date fields in the candidate list" do
+      query =
+        from(event in Event,
+          where: event.inserted_at in [event.event_date]
+        )
+
+      assert {:error, %Issue{} = issue} =
+               DateDatetimeMixedComparisons.validate(:all, query, [])
+
+      assert issue.meta.date_field == :event_date
+
+      assert issue.meta.violations == [
+               %{
+                 operator: :in,
+                 datetime_schema: Event,
+                 datetime_binding_index: 0,
+                 datetime_field: :inserted_at,
+                 datetime_type: :utc_datetime
+               }
+             ]
+    end
+
+    test "passes in predicates when datetime fields are explicitly truncated to date" do
+      query =
+        from(event in Event,
+          where: event.event_date in [type(event.inserted_at, :date)],
+          where: type(event.scheduled_at, :date) in [event.event_date]
+        )
+
+      assert :ok = DateDatetimeMixedComparisons.validate(:all, query, [])
+    end
+
     test "detects comparisons across direct explicit joins" do
       query =
         from(event in Event,
