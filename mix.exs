@@ -45,6 +45,25 @@ defmodule Bylaw.MixProject do
     ]
   end
 
+  defp aliases do
+    [
+      qa: &run_qa/1,
+      "test.postgres": [
+        "ecto.drop --quiet --force",
+        "ecto.create --quiet",
+        "test --include postgres"
+      ]
+    ]
+  end
+
+  defp run_qa(args) do
+    "scripts/qa.exs"
+    |> Path.expand(__DIR__)
+    |> Code.require_file()
+
+    Bylaw.Dev.Qa.run(args)
+  end
+
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
@@ -57,16 +76,6 @@ defmodule Bylaw.MixProject do
       {:postgrex, "~> 0.22.0", only: :test},
       {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
-    ]
-  end
-
-  defp aliases do
-    [
-      "test.postgres": [
-        "ecto.drop --quiet --force",
-        "ecto.create --quiet",
-        "test --include postgres"
-      ]
     ]
   end
 
@@ -116,8 +125,7 @@ defmodule Bylaw.MixProject do
           Bylaw.Db.Target
         ],
         "Bylaw.Db adapters": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\./,
-        "Bylaw.Db checks": ~r/^(Elixir\.)?Bylaw\.Db\.Postgres\.Checks\./,
-        "Mix tasks": ~r/^Elixir\.Mix\.Tasks\./
+        "Bylaw.Db checks": ~r/^(Elixir\.)?Bylaw\.Db\.Postgres\.Checks\./
       ],
       nest_modules_by_prefix: [
         Bylaw.Ecto.Query.Checks,

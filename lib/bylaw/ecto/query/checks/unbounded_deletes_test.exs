@@ -45,6 +45,19 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       assert issue.meta.operation == :delete_all
     end
 
+    test "returns an issue when delete_all has a composed tautological or_where clause" do
+      query =
+        from(post in Post,
+          where: post.status == ^"archived",
+          or_where: true
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
     test "returns an issue when delete_all has an empty keyword where clause" do
       query = from(Post, where: [])
 
