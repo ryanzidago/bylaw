@@ -118,8 +118,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp issues(_operation, _query), do: []
 
   defp repo_lookup_query?(:all, query) do
-    # Repo.get_by/3 reaches prepare_query/3 as a normal :all query. Keep the
-    # exemption tied to the generated lookup shape Ecto leaves behind.
+    # Repo lookup helpers reach prepare_query/3 as normal :all queries. Keep
+    # the exemption tied to the generated lookup shapes Ecto leaves behind.
     aliases_empty? =
       query
       |> Introspection.aliases()
@@ -179,6 +179,10 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp repo_lookup_expr?({:==, _meta, [left, right]}) do
+    root_field_access?(left) and pinned_param?(right)
+  end
+
+  defp repo_lookup_expr?({:in, _meta, [left, right]}) do
     root_field_access?(left) and pinned_param?(right)
   end
 
