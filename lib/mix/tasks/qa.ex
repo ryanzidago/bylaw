@@ -65,7 +65,7 @@ defmodule Mix.Tasks.Qa do
       shell_executable: find_shell_executable!()
     }
 
-    prep_result = run_stage(@prep_stage, context)
+    prep_result = run_stage(prep_stage(), context)
     print_stage_result(prep_result, options)
     raise_on_failure!([prep_result])
 
@@ -91,8 +91,19 @@ defmodule Mix.Tasks.Qa do
     :ok
   end
 
+  @doc """
+  Returns the ordered preparation stage run before parallel QA checks.
+  """
+  @spec prep_stage() :: stage()
+  def prep_stage, do: @prep_stage
+
+  @doc """
+  Parses `mix qa` command-line arguments.
+
+  Raises `Mix.Error` when unsupported positional arguments are present.
+  """
   @spec parse_args!(args :: list(String.t())) :: qa_options()
-  defp parse_args!(args) do
+  def parse_args!(args) do
     {parsed, positional} =
       OptionParser.parse!(args, strict: [coverage: :boolean, failures_only: :boolean])
 
@@ -108,8 +119,11 @@ defmodule Mix.Tasks.Qa do
     end
   end
 
+  @doc """
+  Returns the QA stages that run after preparation completes.
+  """
   @spec parallel_stages(options :: qa_options()) :: list(stage())
-  defp parallel_stages(options) do
+  def parallel_stages(options) do
     [
       %{
         label: "credo",
@@ -227,13 +241,30 @@ defmodule Mix.Tasks.Qa do
         threshold = coverage_threshold()
 
         coverage_rows
-        |> Enum.filter(&poor_coverage_row?(&1, threshold))
+        |> filtered_coverage_rows(threshold)
         |> print_coverage_rows(threshold)
     end
   end
 
+  @doc """
+  Returns the coverage rows that should be printed for a coverage summary.
+
+  Module rows below the threshold are returned. The total row is always returned
+  when present so callers can see the final coverage result.
+  """
+  @spec filtered_coverage_rows(
+          rows :: list(coverage_row()),
+          threshold_hundredths :: non_neg_integer()
+        ) :: list(coverage_row())
+  def filtered_coverage_rows(rows, threshold_hundredths) do
+    Enum.filter(rows, &poor_coverage_row?(&1, threshold_hundredths))
+  end
+
+  @doc """
+  Extracts coverage table rows from command output.
+  """
   @spec extract_coverage_rows(results :: list(command_result())) :: list(coverage_row())
-  defp extract_coverage_rows(results) do
+  def extract_coverage_rows(results) do
     results
     |> Enum.flat_map(fn result ->
       output = result.output
