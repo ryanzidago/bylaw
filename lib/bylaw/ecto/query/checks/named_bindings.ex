@@ -140,14 +140,14 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
       |> expression_sources()
       |> Enum.all?(&repo_lookup_expression_source?/1)
 
-    aliases_empty? and unaliased_root?(query) and joins_empty? and repo_lookup_wheres? and
+    aliases_empty? and generated_unaliased_root?(query) and joins_empty? and repo_lookup_wheres? and
       repo_lookup_expression_sources?
   end
 
   defp repo_lookup_query?(_operation, _query), do: false
 
-  defp unaliased_root?(%{from: %{as: nil}}), do: true
-  defp unaliased_root?(_query), do: false
+  defp generated_unaliased_root?(%{from: %{as: nil, file: nil}}), do: true
+  defp generated_unaliased_root?(_query), do: false
 
   defp repo_lookup_wheres?([_where | _rest] = wheres) do
     Enum.all?(wheres, &repo_lookup_where?/1)
