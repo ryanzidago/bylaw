@@ -112,6 +112,12 @@ defmodule Mix.Tasks.Qa do
   defp parallel_stages(options) do
     [
       %{
+        label: "credo",
+        commands: [
+          ["credo", "suggest", "--strict", "--verbose"]
+        ]
+      },
+      %{
         label: "dialyzer",
         commands: [
           ["dialyzer", "--no-compile", "--quiet-with-result"]
