@@ -8,11 +8,10 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   expression. Named bindings are intentionally ignored, because a different
   binding name does not change the rows produced by the join.
 
-      @bylaw [
-        duplicate_joins: [
-          validate: true
-        ]
-      ]
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
+      @bylaw []
 
       def prepare_query(operation, query, opts) do
         bylaw_opts =
@@ -34,9 +33,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   Supported options:
 
       [
-        duplicate_joins: [
-          validate: true
-        ]
+        duplicate_joins: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.

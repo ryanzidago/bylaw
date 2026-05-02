@@ -14,11 +14,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   intentionally ordered by another unique database key, use the explicit escape
   hatch until a DB-aware check can verify those constraints directly.
 
-      @bylaw [
-        deterministic_order: [
-          validate: true
-        ]
-      ]
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
+      @bylaw []
 
       def prepare_query(operation, query, opts) do
         bylaw_opts =
@@ -40,17 +39,15 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   Supported options:
 
       [
-        deterministic_order: [
-          validate: true
-        ]
+        deterministic_order: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
-  The check is static. It infers root schema primary keys with
-  `c:Ecto.Schema.__schema__/1`. Schema-less queries and schemas without primary
-  keys cannot be proven deterministic by this check, so ordered queries in those
-  cases return an issue unless validation is explicitly disabled.
+  The check is static. It infers root schema primary keys with Ecto schema
+  reflection. Schema-less queries and schemas without primary keys cannot be
+  proven deterministic by this check, so ordered queries in those cases return
+  an issue unless validation is explicitly disabled.
   """
 
   @behaviour Bylaw.Ecto.Query.Check

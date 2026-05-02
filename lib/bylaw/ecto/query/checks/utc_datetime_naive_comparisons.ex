@@ -14,6 +14,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   timezone the value meant. Callers should convert the value to a `DateTime`
   before building the query so the timezone decision is explicit.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         utc_datetime_naive_comparisons: []
       ]
@@ -43,7 +46,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
       [
         utc_datetime_naive_comparisons: [
-          validate: true,
           fields: [:inserted_at]
         ]
       ]

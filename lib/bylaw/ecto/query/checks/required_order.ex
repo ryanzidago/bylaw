@@ -6,11 +6,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   It intentionally does not decide whether the existing order is deterministic;
   use `Bylaw.Ecto.Query.Checks.DeterministicOrder` for that separate question.
 
-      @bylaw [
-        required_order: [
-          validate: true
-        ]
-      ]
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
+      @bylaw []
 
       def prepare_query(operation, query, opts) do
         bylaw_opts =
@@ -32,9 +31,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   Supported options:
 
       [
-        required_order: [
-          validate: true
-        ]
+        required_order: []
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
