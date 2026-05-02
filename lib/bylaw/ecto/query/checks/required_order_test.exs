@@ -119,6 +119,39 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert :ok = RequiredOrder.validate(:stream, query, [])
     end
 
+    test "passes for Ecto exists query rewrites" do
+      query =
+        Post
+        |> exclude(:select)
+        |> exclude(:preload)
+        |> exclude(:order_by)
+        |> exclude(:distinct)
+        |> select(1)
+        |> limit(1)
+
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
+
+    test "returns an issue when a source subquery has limit and no order_by" do
+      limited_posts = from(post in Post, limit: 10)
+      query = from(post in subquery(limited_posts), select: count())
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with limit to include order_by"
+      assert issue.meta.required_by == [:limit]
+    end
+
+    test "returns an issue when a source subquery has offset and no order_by" do
+      offset_posts = from(post in Post, offset: 10)
+      query = from(post in subquery(offset_posts), select: count())
+
+      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+
+      assert issue.message == "expected query with offset to include order_by"
+      assert issue.meta.required_by == [:offset]
+    end
+
     test "passes when Ecto.Query.first/2 and last/2 provide order_by" do
       assert :ok = RequiredOrder.validate(:all, first(Post), [])
       assert :ok = RequiredOrder.validate(:all, last(Post), [])
