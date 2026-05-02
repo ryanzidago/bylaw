@@ -61,7 +61,8 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   @type normalize_context :: %{
           aliases: map(),
           binding_index: pos_integer() | nil,
-          params: map()
+          params: map(),
+          subqueries: map()
         }
 
   @doc """
@@ -209,12 +210,13 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     |> Enum.flat_map(fn {name, predicate_expression} ->
       predicate_context = %{
         context
-        | params: normalize_on_params(Map.get(predicate_expression, :params, []), context)
+        | params: normalize_on_params(Map.get(predicate_expression, :params, []), context),
+          subqueries: normalize_subqueries(Map.get(predicate_expression, :subqueries, []))
       }
 
       predicate_expression
       |> Map.get(:expr)
-      |> predicate_terms()
+      |> predicate_terms(Map.get(predicate_expression, :op, :and))
       |> Enum.filter(&binding_referenced?(&1, binding_index, aliases))
       |> Enum.map(fn term ->
         {name, Map.get(predicate_expression, :op, :and),
@@ -224,15 +226,16 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     |> Enum.sort_by(&:erlang.term_to_binary/1)
   end
 
-  defp predicate_terms({operator, _meta, [left, right]}) when operator in [:and, :or] do
-    predicate_terms(left) ++ predicate_terms(right)
+  defp predicate_terms({operator, _meta, [left, right]}, operator)
+       when operator in [:and, :or] do
+    predicate_terms(left, operator) ++ predicate_terms(right, operator)
   end
 
-  defp predicate_terms(nil), do: []
-  defp predicate_terms(expr), do: [expr]
+  defp predicate_terms(nil, _operator), do: []
+  defp predicate_terms(expr, _operator), do: [expr]
 
-  defp normalize_context(binding_index \\ nil, aliases \\ %{}, params \\ %{}) do
-    %{aliases: aliases, binding_index: binding_index, params: params}
+  defp normalize_context(binding_index \\ nil, aliases \\ %{}, params \\ %{}, subqueries \\ %{}) do
+    %{aliases: aliases, binding_index: binding_index, params: params, subqueries: subqueries}
   end
 
   @spec join_summary(non_neg_integer(), pos_integer()) :: join_summary()
@@ -269,6 +272,14 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     %{0 => normalize_join_term(params, %{context | params: %{}})}
   end
 
+  defp normalize_subqueries(subqueries) when is_list(subqueries) do
+    subqueries
+    |> Enum.with_index()
+    |> Map.new(fn {subquery, index} -> {index, normalize_static_term(subquery)} end)
+  end
+
+  defp normalize_subqueries(_subqueries), do: %{}
+
   defp normalize_param_type({source_binding_index, field}, context)
        when is_integer(source_binding_index) and is_atom(field) do
     {normalize_binding_index(source_binding_index, context), field}
@@ -294,6 +305,13 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     case Map.fetch(context.params, index) do
       {:ok, param} -> {:^, [], [param]}
       :error -> {:^, [], [index]}
+    end
+  end
+
+  defp normalize_join_term({:subquery, index}, context) when is_integer(index) do
+    case Map.fetch(context.subqueries, index) do
+      {:ok, subquery} -> {:subquery, subquery}
+      :error -> {:subquery, index}
     end
   end
 
