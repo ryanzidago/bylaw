@@ -2,9 +2,8 @@ defmodule Bylaw.Db.Target do
   @moduledoc """
   A single database validation target.
 
-  A target intentionally represents one adapter/database/schema combination.
-  Multi-database and multi-schema validation is modeled as a list of explicit
-  targets.
+  A target intentionally represents one adapter/database query source. Checks
+  own any schema, table, or other scope filtering they support.
   """
 
   @typedoc """
@@ -18,7 +17,6 @@ defmodule Bylaw.Db.Target do
           adapter: module(),
           repo: module() | nil,
           dynamic_repo: atom() | pid() | nil,
-          schema: String.t(),
           query: query_fun() | nil,
           meta: map()
         }
@@ -26,7 +24,6 @@ defmodule Bylaw.Db.Target do
   defstruct adapter: nil,
             repo: nil,
             dynamic_repo: nil,
-            schema: nil,
             query: nil,
             meta: %{}
 end

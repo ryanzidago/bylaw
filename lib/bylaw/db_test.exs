@@ -120,7 +120,6 @@ defmodule Bylaw.DbTest do
   defp target(label) do
     %Target{
       adapter: __MODULE__,
-      schema: "public",
       meta: %{label: label}
     }
   end

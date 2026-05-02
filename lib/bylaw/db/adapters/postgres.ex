@@ -2,13 +2,12 @@ defmodule Bylaw.Db.Adapters.Postgres do
   @moduledoc """
   Postgres database adapter entrypoint.
 
-  This adapter validates explicit targets. Each target represents one
-  adapter/database/schema combination:
+  This adapter validates explicit targets. Each target represents one Postgres
+  query source:
 
       target =
         Bylaw.Db.Adapters.Postgres.target(
-          repo: MyApp.Repo,
-          schema: "public"
+          repo: MyApp.Repo
         )
 
       Bylaw.Db.Adapters.Postgres.validate(target, [
@@ -35,7 +34,6 @@ defmodule Bylaw.Db.Adapters.Postgres do
           list(
             {:repo, module()}
             | {:dynamic_repo, atom() | pid() | nil}
-            | {:schema, String.t()}
             | {:query, Target.query_fun()}
             | {:meta, map()}
           )
@@ -44,7 +42,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   Builds a single Postgres validation target.
 
   Pass either `:repo` for an Ecto SQL-backed target or `:query` for a custom
-  query callback used by tests or custom integrations. `:schema` is required.
+  query callback used by tests or custom integrations.
   """
 
   @impl Bylaw.Db.Adapter
@@ -57,7 +55,6 @@ defmodule Bylaw.Db.Adapters.Postgres do
       adapter: __MODULE__,
       repo: Keyword.get(opts, :repo),
       dynamic_repo: Keyword.get(opts, :dynamic_repo),
-      schema: fetch_schema!(opts),
       query: Keyword.get(opts, :query),
       meta: Keyword.get(opts, :meta, %{})
     }
@@ -121,7 +118,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   defp validate_target_opts!(opts) do
-    allowed_keys = [:repo, :dynamic_repo, :schema, :query, :meta]
+    allowed_keys = [:repo, :dynamic_repo, :query, :meta]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
@@ -144,26 +141,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
     end
   end
 
-  defp fetch_schema!(opts) do
-    case Keyword.fetch(opts, :schema) do
-      {:ok, schema} ->
-        schema!(schema)
-
-      :error ->
-        raise ArgumentError, "missing required Postgres target option: :schema"
-    end
-  end
-
-  defp schema!(schema) when is_binary(schema) and byte_size(schema) > 0, do: schema
-
-  defp schema!(schema) do
-    raise ArgumentError,
-          "expected Postgres target :schema to be a non-empty string, got: #{inspect(schema)}"
-  end
-
-  defp validate_postgres_target!(%Target{adapter: __MODULE__, schema: schema} = target) do
-    schema!(schema)
-
+  defp validate_postgres_target!(%Target{adapter: __MODULE__} = target) do
     unless valid_query_source?(target.repo, target.query) do
       raise ArgumentError, "expected Postgres target to include :repo or a four-arity :query"
     end

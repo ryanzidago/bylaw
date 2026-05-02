@@ -2,9 +2,10 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 
-  The check inspects one target schema. A foreign key passes when the referencing
-  table has a valid, non-partial index whose leading columns contain the foreign
-  key columns.
+  By default the check inspects all non-system schemas in a Postgres target.
+  Pass `:schemas` or `:tables` options to narrow the scope. A foreign key passes
+  when the referencing table has a valid, non-partial index whose leading
+  columns contain the foreign key columns.
   """
 
   @behaviour Bylaw.Db.Check
@@ -41,7 +42,10 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
     JOIN pg_catalog.pg_namespace AS namespace
       ON namespace.oid = table_class.relnamespace
     WHERE constraint_record.contype = 'f'
-      AND namespace.nspname = $1
+      AND namespace.nspname <> 'information_schema'
+      AND namespace.nspname NOT LIKE 'pg_%'
+      AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
+      AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ) AS foreign_key
   WHERE NOT EXISTS (
     SELECT 1
@@ -55,7 +59,12 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   ORDER BY schema_name, table_name, constraint_name
   """
 
-  @type check_opts :: list({:validate, boolean()})
+  @type check_opts ::
+          list(
+            {:validate, boolean()}
+            | {:schemas, list(String.t())}
+            | {:tables, list(String.t())}
+          )
   @type result_row :: %{
           optional(String.t()) => term(),
           optional(atom()) => term()
@@ -63,6 +72,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   @row_keys %{
     "column_names" => :column_names,
     "constraint_name" => :constraint_name,
+    "schema_name" => :schema_name,
     "table_name" => :table_name
   }
 
@@ -75,9 +85,10 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   def name, do: :foreign_key_indexes
 
   @doc """
-  Validates that foreign keys in the target schema have supporting indexes.
+  Validates that foreign keys in the target scope have supporting indexes.
 
-  The check is enabled by default. Pass `validate: false` to skip it.
+  The check is enabled by default. Pass `validate: false` to skip it. Use
+  `schemas: [...]` or `tables: [...]` to narrow the default all-schema scope.
   """
 
   @impl Bylaw.Db.Check
@@ -88,7 +99,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
     if Keyword.get(opts, :validate, true) == false do
       :ok
     else
-      validate_foreign_key_indexes(target)
+      validate_foreign_key_indexes(target, opts)
     end
   end
 
@@ -105,8 +116,11 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
     raise ArgumentError, "expected a database target, got: #{inspect(target)}"
   end
 
-  defp validate_foreign_key_indexes(target) do
-    case Postgres.query(target, @query, [target.schema], []) do
+  defp validate_foreign_key_indexes(target, opts) do
+    schemas = filter(opts, :schemas)
+    tables = filter(opts, :tables)
+
+    case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
         |> rows()
@@ -114,7 +128,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
         |> result()
 
       {:error, reason} ->
-        {:error, query_error_issue(target, reason)}
+        {:error, query_error_issue(target, schemas, tables, reason)}
     end
   end
 
@@ -138,17 +152,74 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
             "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
     end
 
+    allowed_keys = [:validate, :schemas, :tables]
+
     Enum.each(opts, fn {key, _value} ->
-      if key != :validate do
+      if key not in allowed_keys do
         raise ArgumentError, "unknown foreign_key_indexes option: #{inspect(key)}"
       end
     end)
 
+    validate_boolean_option!(opts, :validate)
+    validate_filter_option!(opts, :schemas)
+    validate_filter_option!(opts, :tables)
+
     opts
+  end
+
+  defp validate_boolean_option!(opts, key) do
+    case Keyword.fetch(opts, key) do
+      {:ok, value} when is_boolean(value) ->
+        :ok
+
+      {:ok, value} ->
+        raise ArgumentError,
+              "expected foreign_key_indexes #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+
+      :error ->
+        :ok
+    end
+  end
+
+  defp validate_filter_option!(opts, key) do
+    case Keyword.fetch(opts, key) do
+      {:ok, values} ->
+        filter!(key, values)
+        :ok
+
+      :error ->
+        :ok
+    end
+  end
+
+  defp filter(opts, key) do
+    opts
+    |> Keyword.get(key)
+    |> then(&filter!(key, &1))
+  end
+
+  defp filter!(_key, nil), do: nil
+
+  defp filter!(key, values) when is_list(values) do
+    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
+      raise_filter_error!(key)
+    end
+
+    values
+  end
+
+  defp filter!(key, _values), do: raise_filter_error!(key)
+
+  defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
+
+  defp raise_filter_error!(key) do
+    raise ArgumentError,
+          "expected foreign_key_indexes #{inspect(key)} to be a non-empty list of strings"
   end
 
   @spec issue(Target.t(), result_row()) :: Issue.t()
   defp issue(target, row) do
+    schema_name = value(row, "schema_name")
     table_name = value(row, "table_name")
     constraint_name = value(row, "constraint_name")
     column_names = value(row, "column_names")
@@ -157,11 +228,11 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
       check: __MODULE__,
       target: target,
       message:
-        "expected foreign key #{constraint_name} on #{target.schema}.#{table_name} to have a supporting index",
+        "expected foreign key #{constraint_name} on #{schema_name}.#{table_name} to have a supporting index",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schema: target.schema,
+        schema: schema_name,
         table: table_name,
         constraint: constraint_name,
         columns: column_names
@@ -169,16 +240,18 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
     }
   end
 
-  @spec query_error_issue(Target.t(), term()) :: Issue.t()
-  defp query_error_issue(target, reason) do
+  @spec query_error_issue(Target.t(), list(String.t()) | nil, list(String.t()) | nil, term()) ::
+          Issue.t()
+  defp query_error_issue(target, schemas, tables, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
-      message: "could not inspect Postgres foreign keys for #{target.schema}",
+      message: "could not inspect Postgres foreign keys",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schema: target.schema,
+        schemas: schemas,
+        tables: tables,
         reason: reason
       }
     }

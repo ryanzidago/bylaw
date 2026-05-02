@@ -12,7 +12,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
 
       assert :ok = ForeignKeyIndexes.validate(target, [])
 
-      assert_received {:query, sql, ["public"], []}
+      assert_received {:query, sql, [nil, nil], []}
       assert sql =~ "pg_catalog.pg_constraint"
       assert sql =~ "pg_catalog.pg_index"
     end
@@ -42,6 +42,18 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
                constraint: "orders_user_id_fkey",
                columns: ["user_id"]
              }
+    end
+
+    test "passes schema and table filters as check scope" do
+      target = target({:ok, result([])})
+
+      assert :ok =
+               ForeignKeyIndexes.validate(target,
+                 schemas: ["public", "billing"],
+                 tables: ["orders", "line_items"]
+               )
+
+      assert_received {:query, _sql, [["public", "billing"], ["orders", "line_items"]], []}
     end
 
     test "returns every missing foreign key index issue" do
@@ -85,7 +97,6 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
     test "skips validation when disabled" do
       target =
         Postgres.target(
-          schema: "public",
           query: fn _target, _sql, _params, _opts -> flunk("query should not run") end
         )
 
@@ -120,23 +131,56 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
                    end
     end
 
+    test "requires schema filters to be non-empty lists of strings" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes :schemas to be a non-empty list of strings/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, schemas: [])
+                   end
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes :schemas to be a non-empty list of strings/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, schemas: [:public])
+                   end
+    end
+
+    test "requires table filters to be non-empty lists of strings" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes :tables to be a non-empty list of strings/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, tables: [])
+                   end
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_indexes :tables to be a non-empty list of strings/,
+                   fn ->
+                     ForeignKeyIndexes.validate(target, tables: [""])
+                   end
+    end
+
     test "returns an issue when introspection fails" do
       target = target({:error, :connection_closed})
 
       assert {:error, %Issue{} = issue} = ForeignKeyIndexes.validate(target, [])
 
-      assert issue.message == "could not inspect Postgres foreign keys for public"
+      assert issue.message == "could not inspect Postgres foreign keys"
 
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schema: "public",
+               schemas: nil,
+               tables: nil,
                reason: :connection_closed
              }
     end
 
     test "requires a Postgres target" do
-      target = %Target{adapter: OtherAdapter, schema: "public"}
+      target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
         ForeignKeyIndexes.validate(target, [])
@@ -148,7 +192,6 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
     parent = self()
 
     Postgres.target(
-      schema: "public",
       query: fn _target, sql, params, opts ->
         send(parent, {:query, sql, params, opts})
         query_result
