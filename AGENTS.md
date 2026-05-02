@@ -25,13 +25,16 @@ Bylaw is an Elixir library for validating code, database, query, schema, and wor
 
 ## Validation
 
-Before opening or updating a PR, run:
+Run `mix qa` before committing, before pushing, and before opening or updating a PR:
 
 ```sh
-mix format
-mix test
-mix compile --warnings-as-errors
-mix dialyzer
+mix qa
+```
+
+This repository keeps commit-ready Git hooks in `.githooks/` for `pre-commit`, `pre-push`, `post-merge`, and rebase `post-rewrite` checks. Enable them once per worktree:
+
+```sh
+git config core.hooksPath .githooks
 ```
 
 If a command cannot run, include the reason in the PR notes.
