@@ -220,7 +220,6 @@
           {Credo.Check.Warning.WrongTestFilename, []},
           {Bylaw.Credo.Check.Warning.FloatUsage, []},
           {Bylaw.Credo.Check.Warning.UseVerifiedRoutes, []},
-          {Bylaw.Credo.Check.Warning.NoRawUUIDPathParams, []},
           {Bylaw.Credo.Check.Warning.PreferDateTimeOverDate, false},
           {Bylaw.Credo.Check.Warning.EctoNamedBinding,
            [excluded_paths: ["test/", "_test.exs"]]},
