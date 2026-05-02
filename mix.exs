@@ -7,6 +7,7 @@ defmodule Bylaw.MixProject do
       version: "0.1.0",
       elixir: "~> 1.19",
       test_paths: test_paths(Mix.env()),
+      test_ignore_filters: test_ignore_filters(Mix.env()),
       dialyzer: dialyzer(),
       usage_rules: usage_rules(),
       start_permanent: Mix.env() == :prod,
@@ -21,8 +22,11 @@ defmodule Bylaw.MixProject do
     ]
   end
 
-  defp test_paths(:test), do: ["lib"]
+  defp test_paths(:test), do: ["lib", ".credo/checks"]
   defp test_paths(_env), do: ["test"]
+
+  defp test_ignore_filters(:test), do: [~r/^\.credo\/checks\/.*\.ex$/]
+  defp test_ignore_filters(_env), do: []
 
   def cli do
     [

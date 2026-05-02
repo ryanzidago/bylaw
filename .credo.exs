@@ -22,6 +22,7 @@
         # In the latter case `**/*.{ex,exs}` will be used.
         #
         included: [
+          ".credo/checks/",
           "lib/",
           "src/",
           "test/",
@@ -41,7 +42,7 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: [],
+      requires: [".credo/checks/*.ex"],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -93,6 +94,11 @@
           #
           {Credo.Check.Design.TagTODO, [exit_status: 2]},
           {Credo.Check.Design.SkipTestWithoutComment, []},
+          {Bylaw.Credo.Check.Design.NoRaise, false},
+          {Bylaw.Credo.Check.Design.NoPassthroughWrapper, false},
+          {Bylaw.Credo.Check.Design.ContextFunctionNaming, false},
+          {Bylaw.Credo.Check.Design.UseBylawSchema, false},
+          {Bylaw.Credo.Check.Design.OwnContextForSchema, []},
 
           #
           ## Readability Checks
@@ -101,12 +107,15 @@
           {Credo.Check.Readability.AliasOrder, []},
           {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Readability.FunctionNames, []},
+          {Bylaw.Credo.Check.Readability.ExplicitUnitNames, []},
+          {Bylaw.Credo.Check.Readability.UseMaybeInFunctionName, []},
           {Credo.Check.Readability.ImplTrue, []},
           {Credo.Check.Readability.LargeNumbers, []},
           {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},
           {Credo.Check.Readability.ModuleAttributeNames, []},
           {Credo.Check.Readability.ModuleDoc, []},
           {Credo.Check.Readability.ModuleNames, []},
+          {Bylaw.Credo.Check.Readability.AppModuleAcronymCasing, []},
           {Credo.Check.Readability.MultiAlias, []},
           {Credo.Check.Readability.NestedFunctionCalls, []},
           {Credo.Check.Readability.OneArityFunctionInPipe, []},
@@ -131,6 +140,27 @@
           {Credo.Check.Readability.VariableNames, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Readability.WithSingleClause, []},
+          {Bylaw.Credo.Check.Readability.NoThen, []},
+          {Bylaw.Credo.Check.Readability.PipeBasedEctoQueries, false},
+          {Bylaw.Credo.Check.Readability.PreferEmptyListChecks, false},
+          {Bylaw.Credo.Check.Readability.PreferEnumCount, []},
+          {Bylaw.Credo.Check.Readability.PreferEnumUniqBy, []},
+          {Bylaw.Credo.Check.Readability.PreferListTypeSyntax, []},
+          {Bylaw.Credo.Check.Readability.DocBeforeSpec, []},
+          {Bylaw.Credo.Check.Readability.PreferRepoAggregateCount, []},
+          {Bylaw.Credo.Check.Readability.PreferSelectOverRepoAllEnumMap, []},
+          {Bylaw.Credo.Check.Readability.NoParamExtractionInFunctionHead, false},
+          {Bylaw.Credo.Check.Readability.NamedSpecParams, false},
+          {Bylaw.Credo.Check.Readability.FullyTypedOpts,
+           [
+             excluded_paths: [
+               "lib/bylaw/repo.ex",
+               "lib/bylaw_web/auth/require_api_key.ex"
+             ]
+           ]},
+          {Bylaw.Credo.Check.Readability.WithElseClause, []},
+          {Bylaw.Credo.Check.Readability.NoCatchAllInWithElse, false},
+          {Bylaw.Credo.Check.Readability.NoFunctionCallInWithBody, []},
 
           #
           ## Refactoring Opportunities
@@ -161,6 +191,10 @@
           {Credo.Check.Refactor.UnlessWithElse, []},
           {Credo.Check.Refactor.UtcNowTruncate, []},
           {Credo.Check.Refactor.WithClauses, []},
+          {Bylaw.Credo.Check.Refactor.CaseToWith, false},
+          {Bylaw.Credo.Check.Refactor.FilterRejectFirst, []},
+          {Bylaw.Credo.Check.Refactor.NoNestedCase, false},
+          {Bylaw.Credo.Check.Refactor.RejectCount, []},
 
           #
           ## Warnings
@@ -187,7 +221,31 @@
           {Credo.Check.Warning.UnusedRegexOperation, []},
           {Credo.Check.Warning.UnusedStringOperation, []},
           {Credo.Check.Warning.UnusedTupleOperation, []},
-          {Credo.Check.Warning.WrongTestFilename, []}
+          {Credo.Check.Warning.WrongTestFilename, []},
+          {Bylaw.Credo.Check.Warning.FloatUsage, []},
+          {Bylaw.Credo.Check.Warning.UseVerifiedRoutes, []},
+          {Bylaw.Credo.Check.Warning.NoRawUUIDPathParams, []},
+          {Bylaw.Credo.Check.Warning.PreferDateTimeOverDate, false},
+          {Bylaw.Credo.Check.Warning.EctoNamedBinding,
+           [excluded_paths: ["test/", "_test.exs"]]},
+          {Bylaw.Credo.Check.Warning.ErrorChangesetPatternMatch, []},
+          {Bylaw.Credo.Check.Warning.FullySpecifiedStructTypes, []},
+          {Bylaw.Credo.Check.Warning.NoAndInEctoWhere, false},
+          {Bylaw.Credo.Check.Warning.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
+          {Bylaw.Credo.Check.Warning.NoInlineAssignInReturnTuple, []},
+          {Bylaw.Credo.Check.Warning.NoResultTupleArgument,
+           [excluded_paths: [~r{^\.credo/checks/}]]},
+          {Bylaw.Credo.Check.Warning.NoRepoInController, []},
+          {Bylaw.Credo.Check.Warning.NoRepoPreloadAfterQuery, []},
+          {Bylaw.Credo.Check.Warning.ComposablePreloadQueries, []},
+          {Bylaw.Credo.Check.Warning.NoRepoMutationInLoop, []},
+          {Bylaw.Credo.Check.Warning.NoRepoTransaction, []},
+          {Bylaw.Credo.Check.Warning.NoGlobalStateInTests, []},
+          {Bylaw.Credo.Check.Warning.NoSetupInTests, [excluded_paths: ["test/support/"]]},
+          {Bylaw.Credo.Check.Warning.NoTryRescue, []},
+          {Bylaw.Credo.Check.Warning.SafeDateTimeComparison, false},
+          {Bylaw.Credo.Check.Warning.NoLowLevelProcessPrimitives, []},
+          {Bylaw.Credo.Check.Warning.URIDecodeQuery, []}
         ],
         disabled: [
           #
@@ -199,7 +257,8 @@
           {Credo.Check.Refactor.ModuleDependencies, []},
           {Credo.Check.Refactor.VariableRebinding, []},
           {Credo.Check.Warning.LazyLogging, []},
-          {Credo.Check.Warning.LeakyEnvironment, []}
+          {Credo.Check.Warning.LeakyEnvironment, []},
+          {Bylaw.Credo.Check.Warning.NoTestsInTestDir, []}
           # {Credo.Check.Warning.UnusedOperation, [{MyMagicModule, [:fun1, :fun2]}]}
 
           # {Credo.Check.Refactor.MapInto, []},
