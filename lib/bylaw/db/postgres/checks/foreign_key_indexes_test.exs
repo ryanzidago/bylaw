@@ -35,7 +35,8 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
                "expected foreign key orders_user_id_fkey on public.orders to have a supporting index"
 
       assert issue.meta == %{
-               target: :primary_public,
+               repo: nil,
+               dynamic_repo: nil,
                schema: "public",
                table: "orders",
                constraint: "orders_user_id_fkey",
@@ -83,7 +84,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
 
     test "skips validation when disabled" do
       target =
-        Postgres.target(:primary_public,
+        Postgres.target(
           schema: "public",
           query: fn _target, _sql, _params, _opts -> flunk("query should not run") end
         )
@@ -127,14 +128,15 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
       assert issue.message == "could not inspect Postgres foreign keys for public"
 
       assert issue.meta == %{
-               target: :primary_public,
+               repo: nil,
+               dynamic_repo: nil,
                schema: "public",
                reason: :connection_closed
              }
     end
 
     test "requires a Postgres target" do
-      target = %Target{adapter: OtherAdapter, name: :other, schema: "public"}
+      target = %Target{adapter: OtherAdapter, schema: "public"}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
         ForeignKeyIndexes.validate(target, [])
@@ -145,7 +147,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
   defp target(query_result) do
     parent = self()
 
-    Postgres.target(:primary_public,
+    Postgres.target(
       schema: "public",
       query: fn _target, sql, params, opts ->
         send(parent, {:query, sql, params, opts})

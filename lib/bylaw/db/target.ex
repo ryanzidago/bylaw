@@ -16,7 +16,6 @@ defmodule Bylaw.Db.Target do
 
   @type t :: %__MODULE__{
           adapter: module(),
-          name: atom(),
           repo: module() | nil,
           dynamic_repo: atom() | pid() | nil,
           schema: String.t(),
@@ -25,7 +24,6 @@ defmodule Bylaw.Db.Target do
         }
 
   defstruct adapter: nil,
-            name: nil,
             repo: nil,
             dynamic_repo: nil,
             schema: nil,

@@ -17,12 +17,12 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     end
   end
 
-  describe "target/2" do
+  describe "target/1" do
     test "builds a single adapter/database/schema target" do
       query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
 
       target =
-        Postgres.target(:primary_public,
+        Postgres.target(
           query: query,
           schema: "public",
           dynamic_repo: :tenant_foo,
@@ -30,7 +30,6 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
         )
 
       assert target.adapter == Postgres
-      assert target.name == :primary_public
       assert target.schema == "public"
       assert target.dynamic_repo == :tenant_foo
       assert target.query == query
@@ -39,39 +38,39 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
 
     test "requires a schema" do
       assert_raise ArgumentError, ~r/missing required Postgres target option: :schema/, fn ->
-        Postgres.target(:primary_public, query: query_fun())
+        Postgres.target(query: query_fun())
       end
     end
 
     test "requires keyword options" do
       assert_raise ArgumentError, ~r/expected Postgres target opts to be a keyword list/, fn ->
-        Postgres.target(:primary_public, [:not_keyword])
+        Postgres.target([:not_keyword])
       end
     end
 
     test "requires a repo or query source" do
       assert_raise ArgumentError, ~r/expected Postgres target to include :repo/, fn ->
-        Postgres.target(:primary_public, schema: "public")
+        Postgres.target(schema: "public")
       end
     end
 
     test "rejects unknown options" do
       assert_raise ArgumentError, ~r/unknown Postgres target option: :unknown/, fn ->
-        Postgres.target(:primary_public, schema: "public", query: query_fun(), unknown: true)
+        Postgres.target(schema: "public", query: query_fun(), unknown: true)
       end
     end
   end
 
   describe "validate/2" do
     test "delegates check execution for Postgres targets" do
-      target = Postgres.target(:primary_public, schema: "public", query: query_fun())
+      target = Postgres.target(schema: "public", query: query_fun())
 
       assert {:error, %Issue{} = issue} = Postgres.validate(target, [FailingCheck])
       assert issue.target == target
     end
 
     test "rejects targets from other adapters" do
-      target = %Target{adapter: OtherAdapter, name: :other, schema: "public"}
+      target = %Target{adapter: OtherAdapter, schema: "public"}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
         Postgres.validate(target, [FailingCheck])
@@ -84,6 +83,24 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       end
     end
 
+    test "rejects manually built targets without a schema" do
+      target = %Target{adapter: Postgres, query: query_fun()}
+
+      assert_raise ArgumentError,
+                   ~r/expected Postgres target :schema to be a non-empty string/,
+                   fn ->
+                     Postgres.validate(target, [FailingCheck])
+                   end
+    end
+
+    test "rejects manually built targets without a query source" do
+      target = %Target{adapter: Postgres, schema: "public"}
+
+      assert_raise ArgumentError, ~r/expected Postgres target to include :repo/, fn ->
+        Postgres.validate(target, [FailingCheck])
+      end
+    end
+
     test "rejects empty target lists" do
       assert_raise ArgumentError, ~r/expected at least one Postgres target/, fn ->
         Postgres.validate([], [FailingCheck])
@@ -91,7 +108,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     end
 
     test "rejects malformed check lists" do
-      target = Postgres.target(:primary_public, schema: "public", query: query_fun())
+      target = Postgres.target(schema: "public", query: query_fun())
 
       assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
         Postgres.validate(target, FailingCheck)
@@ -104,24 +121,30 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       parent = self()
 
       target =
-        Postgres.target(:primary_public,
+        Postgres.target(
           schema: "public",
           query: fn target, sql, params, opts ->
-            send(parent, {:query, target.name, sql, params, opts})
+            send(parent, {:query, target.schema, sql, params, opts})
             {:ok, %{columns: [], rows: []}}
           end
         )
 
       assert {:ok, %{rows: []}} = Postgres.query(target, "select 1", [], timeout: 1_000)
 
-      assert_received {:query, :primary_public, "select 1", [], [timeout: 1_000]}
+      assert_received {:query, "public", "select 1", [], [timeout: 1_000]}
     end
 
     test "returns an error when a repo target cannot load ecto_sql" do
-      target = Postgres.target(:primary_public, repo: __MODULE__, schema: "public")
+      target = Postgres.target(repo: __MODULE__, schema: "public")
 
       assert {:error, {:missing_dependency, :ecto_sql}} =
                Postgres.query(target, "select 1", [], [])
+    end
+
+    test "returns an error when a manually built target has no query source" do
+      target = %Target{adapter: Postgres, schema: "public"}
+
+      assert {:error, :missing_query_source} = Postgres.query(target, "select 1", [], [])
     end
   end
 

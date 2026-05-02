@@ -28,7 +28,7 @@ defmodule Bylaw.DbTest do
          check: __MODULE__,
          target: target,
          message: "failed",
-         meta: %{opts: opts, target: target.name}
+         meta: %{opts: opts, target: target.meta.label}
        }}
     end
   end
@@ -117,11 +117,11 @@ defmodule Bylaw.DbTest do
     end
   end
 
-  defp target(name) do
+  defp target(label) do
     %Target{
       adapter: __MODULE__,
-      name: name,
-      schema: "public"
+      schema: "public",
+      meta: %{label: label}
     }
   end
 end

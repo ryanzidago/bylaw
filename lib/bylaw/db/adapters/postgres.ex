@@ -6,7 +6,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   adapter/database/schema combination:
 
       target =
-        Bylaw.Db.Adapters.Postgres.target(:primary_public,
+        Bylaw.Db.Adapters.Postgres.target(
           repo: MyApp.Repo,
           schema: "public"
         )
@@ -29,7 +29,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   @ecto_sql Module.concat([Ecto, Adapters, SQL])
 
   @typedoc """
-  Options accepted by `target/2`.
+  Options accepted by `target/1`.
   """
   @type target_opts ::
           list(
@@ -48,14 +48,13 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec target(atom(), target_opts()) :: Target.t()
-  def target(name, opts) when is_atom(name) and is_list(opts) do
+  @spec target(target_opts()) :: Target.t()
+  def target(opts) when is_list(opts) do
     keyword_list!(opts, "Postgres target opts")
     validate_target_opts!(opts)
 
     %Target{
       adapter: __MODULE__,
-      name: name,
       repo: Keyword.get(opts, :repo),
       dynamic_repo: Keyword.get(opts, :dynamic_repo),
       schema: fetch_schema!(opts),
@@ -64,7 +63,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
     }
   end
 
-  def target(_name, opts) do
+  def target(opts) do
     raise ArgumentError,
           "expected Postgres target opts to be a keyword list, got: #{inspect(opts)}"
   end
@@ -103,7 +102,8 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   def query(%Target{adapter: __MODULE__, repo: repo} = target, sql, params, opts)
-      when is_atom(repo) and is_binary(sql) and is_list(params) and is_list(opts) do
+      when is_atom(repo) and not is_nil(repo) and is_binary(sql) and is_list(params) and
+             is_list(opts) do
     with {:module, _module} <- Code.ensure_loaded(@ecto_sql),
          :ok <- ensure_dynamic_repo_support(target) do
       with_dynamic_repo(target, fn ->
@@ -129,9 +129,13 @@ defmodule Bylaw.Db.Adapters.Postgres do
       end
     end)
 
-    if is_nil(Keyword.get(opts, :repo)) and not is_function(Keyword.get(opts, :query), 4) do
+    if not valid_query_source?(Keyword.get(opts, :repo), Keyword.get(opts, :query)) do
       raise ArgumentError, "expected Postgres target to include :repo or a four-arity :query"
     end
+  end
+
+  defp valid_query_source?(repo, query) do
+    (is_atom(repo) and not is_nil(repo)) or is_function(query, 4)
   end
 
   defp keyword_list!(opts, label) do
@@ -142,19 +146,30 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   defp fetch_schema!(opts) do
     case Keyword.fetch(opts, :schema) do
-      {:ok, schema} when is_binary(schema) and byte_size(schema) > 0 ->
-        schema
-
       {:ok, schema} ->
-        raise ArgumentError,
-              "expected Postgres target :schema to be a non-empty string, got: #{inspect(schema)}"
+        schema!(schema)
 
       :error ->
         raise ArgumentError, "missing required Postgres target option: :schema"
     end
   end
 
-  defp validate_postgres_target!(%Target{adapter: __MODULE__}), do: :ok
+  defp schema!(schema) when is_binary(schema) and byte_size(schema) > 0, do: schema
+
+  defp schema!(schema) do
+    raise ArgumentError,
+          "expected Postgres target :schema to be a non-empty string, got: #{inspect(schema)}"
+  end
+
+  defp validate_postgres_target!(%Target{adapter: __MODULE__, schema: schema} = target) do
+    schema!(schema)
+
+    unless valid_query_source?(target.repo, target.query) do
+      raise ArgumentError, "expected Postgres target to include :repo or a four-arity :query"
+    end
+
+    :ok
+  end
 
   defp validate_postgres_target!(target) do
     raise ArgumentError, "expected a Postgres target, got: #{inspect(target)}"

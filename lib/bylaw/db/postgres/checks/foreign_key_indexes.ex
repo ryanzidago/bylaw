@@ -159,7 +159,8 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
       message:
         "expected foreign key #{constraint_name} on #{target.schema}.#{table_name} to have a supporting index",
       meta: %{
-        target: target.name,
+        repo: target.repo,
+        dynamic_repo: target.dynamic_repo,
         schema: target.schema,
         table: table_name,
         constraint: constraint_name,
@@ -175,7 +176,8 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
       target: target,
       message: "could not inspect Postgres foreign keys for #{target.schema}",
       meta: %{
-        target: target.name,
+        repo: target.repo,
+        dynamic_repo: target.dynamic_repo,
         schema: target.schema,
         reason: reason
       }

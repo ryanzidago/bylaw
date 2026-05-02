@@ -17,7 +17,7 @@ defmodule Bylaw.Db.Adapter do
   @doc """
   Builds a single validation target for this adapter.
   """
-  @callback target(name :: atom(), opts :: keyword()) :: Target.t()
+  @callback target(opts :: keyword()) :: Target.t()
 
   @doc """
   Runs `checks` against one target or a list of targets.
