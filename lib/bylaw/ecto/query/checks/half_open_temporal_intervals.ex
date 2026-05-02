@@ -42,7 +42,6 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
       [
         half_open_temporal_intervals: [
-          validate: true,
           fields: [:occurred_at]
         ]
       ]

@@ -29,12 +29,7 @@ defmodule MyApp.Repo do
     Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
   ]
 
-  @bylaw [
-    required_order: [validate: true],
-    deterministic_order: [validate: true],
-    left_join_where_predicates: [validate: true],
-    conflicting_where_predicates: [validate: true]
-  ]
+  @bylaw []
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
@@ -60,8 +55,10 @@ defmodule MyApp.Repo do
 end
 ```
 
-The repo-level `@bylaw` keyword list is the default configuration. Callers can
-override a check for a single query through the query options:
+Checks are enabled by default once they are included in `@checks`. The
+repo-level `@bylaw` keyword list is only needed for non-default options or
+default escape hatches. Callers can override a check for a single query through
+the query options:
 
 ```elixir
 Repo.all(query, bylaw: [required_order: [validate: false]])
@@ -165,14 +162,9 @@ Start with checks that do not require application-specific configuration:
   Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates,
   Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
 ]
-
-@bylaw [
-  required_order: [validate: true],
-  deterministic_order: [validate: true],
-  left_join_where_predicates: [validate: true],
-  conflicting_where_predicates: [validate: true]
-]
 ```
+
+No `@bylaw` configuration is required for these checks.
 
 Then add configured checks where the application has clear invariants:
 

@@ -46,7 +46,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
       [
         utc_datetime_naive_comparisons: [
-          validate: true,
           fields: [:inserted_at]
         ]
       ]

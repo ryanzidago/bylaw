@@ -46,7 +46,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
       [
         explicit_visibility_predicates: [
-          validate: true,
           schemas: [
             {Post, fields: [:deleted_at, :status]}
           ]
