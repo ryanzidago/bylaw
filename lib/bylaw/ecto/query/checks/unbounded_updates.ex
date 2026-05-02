@@ -48,6 +48,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   @behaviour Bylaw.Ecto.Query.Check
 
   alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
@@ -100,47 +101,73 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   defp restricting_where?(%{expr: true}), do: false
   defp restricting_where?(_where), do: true
 
-  defp filtered_subquery_join?(%{joins: joins}) when is_list(joins) do
-    Enum.any?(joins, &filtered_subquery_join_entry?/1)
+  defp filtered_subquery_join?(%{joins: joins} = query) when is_list(joins) do
+    aliases = Introspection.aliases(query)
+
+    joins
+    |> Enum.with_index()
+    |> Enum.any?(fn {join, join_index} ->
+      filtered_subquery_join_entry?(join, join_index + 1, aliases)
+    end)
   end
 
   defp filtered_subquery_join?(_query), do: false
 
-  defp filtered_subquery_join_entry?(%{
-         source: %{__struct__: Ecto.SubQuery, query: subquery},
-         on: %{expr: join_expr}
-       }) do
-    where_clause?(subquery) and root_join_predicate?(join_expr)
+  defp filtered_subquery_join_entry?(
+         %{
+           source: %{__struct__: Ecto.SubQuery, query: subquery},
+           on: %{expr: join_expr}
+         },
+         binding_index,
+         aliases
+       ) do
+    where_clause?(subquery) and root_join_predicate?(join_expr, binding_index, aliases)
   end
 
-  defp filtered_subquery_join_entry?(_join), do: false
+  defp filtered_subquery_join_entry?(_join, _binding_index, _aliases), do: false
 
-  defp root_join_predicate?(true), do: false
+  defp root_join_predicate?(true, _binding_index, _aliases), do: false
 
-  defp root_join_predicate?(expr) do
-    binding_indexes = binding_indexes(expr)
-
-    MapSet.member?(binding_indexes, 0) and Enum.any?(binding_indexes, &(&1 > 0))
+  defp root_join_predicate?({:and, _meta, [left, right]}, binding_index, aliases) do
+    root_join_predicate?(left, binding_index, aliases) or
+      root_join_predicate?(right, binding_index, aliases)
   end
 
-  defp binding_indexes({:&, _meta, [binding_index]})
-       when is_integer(binding_index) and binding_index >= 0 do
-    MapSet.new([binding_index])
+  defp root_join_predicate?({:or, _meta, [left, right]}, binding_index, aliases) do
+    root_join_predicate?(left, binding_index, aliases) and
+      root_join_predicate?(right, binding_index, aliases)
   end
 
-  defp binding_indexes(expr) when is_tuple(expr) do
+  defp root_join_predicate?({:not, _meta, [expr]}, binding_index, aliases) do
+    root_join_predicate?(expr, binding_index, aliases)
+  end
+
+  defp root_join_predicate?(expr, binding_index, aliases) do
+    binding_indexes = binding_indexes(expr, aliases)
+
+    MapSet.member?(binding_indexes, 0) and MapSet.member?(binding_indexes, binding_index)
+  end
+
+  defp binding_indexes(expr, aliases) do
+    case Introspection.binding_index(expr, aliases) do
+      {:ok, binding_index} -> MapSet.new([binding_index])
+      :unknown -> nested_binding_indexes(expr, aliases)
+    end
+  end
+
+  defp nested_binding_indexes(expr, aliases) when is_tuple(expr) do
     expr
     |> Tuple.to_list()
-    |> binding_indexes()
+    |> nested_binding_indexes(aliases)
   end
 
-  defp binding_indexes(expr) when is_list(expr) do
+  defp nested_binding_indexes(expr, aliases) when is_list(expr) do
     Enum.reduce(expr, MapSet.new(), fn item, indexes ->
-      MapSet.union(indexes, binding_indexes(item))
+      MapSet.union(indexes, binding_indexes(item, aliases))
     end)
   end
 
-  defp binding_indexes(_expr), do: MapSet.new()
+  defp nested_binding_indexes(_expr, _aliases), do: MapSet.new()
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
