@@ -69,6 +69,16 @@ escape hatch.
 
 ## Available Query Checks
 
+- `Bylaw.Ecto.Query.Checks.CartesianJoins`
+
+  Option key: `:cartesian_joins`
+
+  Required config: none
+
+  Catches explicit cartesian joins, including `cross_join`, uncorrelated
+  `cross_lateral_join`, and non-association joins whose `on` expression is
+  literally `true`.
+
 - `Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`
 
   Option key: `:conflicting_where_predicates`
@@ -86,6 +96,14 @@ escape hatch.
 
   Catches ordered queries that do not include every root primary key field as a
   deterministic tie-breaker.
+
+- `Bylaw.Ecto.Query.Checks.DuplicateJoins`
+
+  Option key: `:duplicate_joins`
+
+  Required config: none
+
+  Catches repeated equivalent joins that can multiply result rows.
 
 - `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`
 
@@ -151,6 +169,14 @@ escape hatch.
   Catches queries with `limit`, `offset`, or stream operations that do not
   include `order_by`.
 
+- `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
+
+  Option key: `:utc_datetime_naive_comparisons`
+
+  Required config: optional `fields: fields`
+
+  Catches UTC datetime fields compared against `NaiveDateTime` values.
+
 ## Suggested Starting Set
 
 Start with checks that do not require application-specific configuration:
@@ -159,6 +185,7 @@ Start with checks that do not require application-specific configuration:
 @checks [
   Bylaw.Ecto.Query.Checks.RequiredOrder,
   Bylaw.Ecto.Query.Checks.DeterministicOrder,
+  Bylaw.Ecto.Query.Checks.CartesianJoins,
   Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates,
   Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
 ]
