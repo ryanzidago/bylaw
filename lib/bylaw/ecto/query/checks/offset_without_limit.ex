@@ -106,12 +106,26 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   defp direct_offset_without_limit?(query), do: offset?(query) and not limited?(query)
 
   defp offset?(%{offset: nil}), do: false
-  defp offset?(%{offset: _offset}), do: true
+  defp offset?(%{offset: offset}), do: expression_present?(offset)
   defp offset?(_query), do: false
 
   defp limited?(%{limit: nil}), do: false
-  defp limited?(%{limit: _limit}), do: true
+  defp limited?(%{limit: limit}), do: expression_present?(limit)
   defp limited?(_query), do: false
+
+  defp expression_present?(%{expr: {:^, _meta, [index]}, params: params})
+       when is_integer(index) and is_list(params) do
+    case Enum.fetch(params, index) do
+      {:ok, param} -> not nil_param?(param)
+      :error -> true
+    end
+  end
+
+  defp expression_present?(_expr), do: true
+
+  defp nil_param?({nil, _type}), do: true
+  defp nil_param?(nil), do: true
+  defp nil_param?(_param), do: false
 
   defp nested_queries(query) do
     source_queries(query) ++
