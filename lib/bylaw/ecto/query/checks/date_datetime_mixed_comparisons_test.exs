@@ -260,6 +260,21 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       assert issue.meta.date_field == :event_date
     end
 
+    test "detects comparisons in set operation branches" do
+      safe_query = from(event in Event, where: event.event_date == ^Date.new!(2026, 1, 1))
+      unsafe_query = from(event in Event, where: event.event_date <= event.inserted_at)
+      query = union_all(safe_query, ^unsafe_query)
+
+      assert {:error, %Issue{} = issue} =
+               DateDatetimeMixedComparisons.validate(:all, query, [])
+
+      assert issue.meta.date_field == :event_date
+
+      assert issue.meta.combination_path == [
+               %{operation: :union_all, index: 0}
+             ]
+    end
+
     test "detects comparisons that use named join bindings" do
       query =
         from(event in Event,
@@ -364,6 +379,64 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       assert :ok = DateDatetimeMixedComparisons.validate(:all, query, [])
     end
 
+    test "detects comparisons in supported raw query maps" do
+      query =
+        query_with_expr({:<=, [], [field_expr(0, :event_date), field_expr(0, :inserted_at)]})
+
+      assert {:error, %Issue{} = issue} =
+               DateDatetimeMixedComparisons.validate(:all, query, [])
+
+      assert issue.meta.date_schema == Event
+      assert issue.meta.date_binding_index == 0
+      assert issue.meta.date_field == :event_date
+
+      assert issue.meta.violations == [
+               %{
+                 operator: :<=,
+                 datetime_schema: Event,
+                 datetime_binding_index: 0,
+                 datetime_field: :inserted_at,
+                 datetime_type: :utc_datetime
+               }
+             ]
+    end
+
+    test "detects join comparisons in supported raw query maps" do
+      query =
+        query_with_expr(
+          {:<=, [], [field_expr(0, :event_date), field_expr(1, :starts_at)]},
+          joins: [%{source: {"calendars", Calendar}, on: %{expr: true}}]
+        )
+
+      assert {:error, %Issue{} = issue} =
+               DateDatetimeMixedComparisons.validate(:all, query, [])
+
+      assert issue.meta.date_schema == Event
+      assert issue.meta.date_binding_index == 0
+
+      assert issue.meta.violations == [
+               %{
+                 operator: :<=,
+                 datetime_schema: Calendar,
+                 datetime_binding_index: 1,
+                 datetime_field: :starts_at,
+                 datetime_type: :naive_datetime
+               }
+             ]
+    end
+
+    test "ignores malformed raw query predicate entries" do
+      query = query_with_expr(:not_a_comparison)
+
+      query =
+        Map.merge(query, %{
+          havings: [:malformed],
+          joins: [:malformed]
+        })
+
+      assert :ok = DateDatetimeMixedComparisons.validate(:all, query, [])
+    end
+
     test "passes when the query is not an Ecto query struct" do
       assert :ok = DateDatetimeMixedComparisons.validate(:stream, :not_a_query, [])
     end
@@ -449,4 +522,19 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
                    end
     end
   end
+
+  defp query_with_expr(expr, attrs \\ []) do
+    Map.merge(
+      %{
+        aliases: %{},
+        from: %{source: {"events", Event}},
+        joins: [],
+        wheres: [%{expr: expr}]
+      },
+      Map.new(attrs)
+    )
+  end
+
+  defp field_expr(binding_index, field),
+    do: {{:., [], [{:&, [], [binding_index]}, field]}, [], []}
 end
