@@ -363,5 +363,13 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
         RequiredOrder.validate(:all, query, :bad)
       end
     end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post, limit: 10)
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [:bad]", fn ->
+        RequiredOrder.validate(:all, query, [:bad])
+      end
+    end
   end
 end
