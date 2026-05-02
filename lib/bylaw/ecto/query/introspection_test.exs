@@ -185,8 +185,10 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     test "unwraps type wrappers around root fields" do
       root_aliases = MapSet.new([:post])
       status_field = type_wrapper(field_call({:as, [], [:post]}, :status), :string)
+      title_field = type_wrapper(field_call({:as, [], [:post]}, "title"), :string)
 
       assert Introspection.direct_root_field(status_field, root_aliases) == {:ok, :status}
+      assert Introspection.direct_root_field(title_field, root_aliases) == {:ok, "title"}
     end
 
     test "returns unknown for non-root fields and non-field expressions" do
