@@ -31,9 +31,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
           )
   @type opts :: list({:mandatory_join_keys, check_opts()})
 
+  @doc """
+  Returns the option namespace used by this check.
+  """
+
   @impl Bylaw.Ecto.Query.Check
   @spec name() :: :mandatory_join_keys
   def name, do: :mandatory_join_keys
+
+  @doc """
+  Validates mandatory join-key predicates for a prepared Ecto query.
+
+  The operation is kept as issue metadata. This check applies the same explicit
+  join validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  """
 
   @impl Bylaw.Ecto.Query.Check
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
