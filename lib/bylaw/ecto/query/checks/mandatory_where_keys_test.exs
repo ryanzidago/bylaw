@@ -63,6 +63,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "passes when duplicate configured keys are satisfied" do
+      query = from(post in Post, where: post.organisation_id == ^123)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id, :organisation_id]]
+               )
+    end
+
     test "passes when any configured key is referenced across multiple where clauses" do
       query =
         from(post in Post,
@@ -130,6 +139,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert issue.meta.match == :any
       assert issue.meta.missing_keys == [:organisation_id, :user_id]
       assert issue.meta.found_where_keys == [:title]
+
+      assert issue.message ==
+               "expected query to filter by at least one of: :organisation_id, :user_id"
     end
 
     test "passes when the root schema has none of the configured keys" do
@@ -355,8 +367,32 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "does not accept mandatory keys in not in predicates" do
+      query = from(post in Post, where: post.organisation_id not in ^[123, 456])
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
     test "does not accept mandatory keys in not equal predicates" do
       query = from(post in Post, where: post.organisation_id != ^123)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
+    test "does not accept mandatory keys in greater-than predicates" do
+      query = from(post in Post, where: post.organisation_id > ^123)
 
       assert {:error, %Issue{} = issue} =
                MandatoryWhereKeys.validate(:all, query,
@@ -435,6 +471,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.meta.missing_keys == [:user_id]
+      assert issue.message == "expected query to filter by all mandatory keys; missing: :user_id"
     end
 
     test "respects the explicit query-level escape hatch" do
@@ -442,6 +479,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [validate: false])
+    end
+
+    test "validates when validate is explicitly true" do
+      query = from(post in Post)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [
+                   keys: [:organisation_id],
+                   validate: true
+                 ]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
     end
 
     test "requires an explicit false escape hatch" do
