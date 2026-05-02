@@ -94,8 +94,8 @@ escape hatch.
 
   Required config: none
 
-  Catches date fields compared directly to datetime fields without explicit
-  truncation.
+  Catches direct comparisons between `:date` fields and datetime fields without
+  an explicit date truncation or cast.
 
 - `Bylaw.Ecto.Query.Checks.DeterministicOrder`
 
@@ -140,7 +140,7 @@ escape hatch.
   Required config: none
 
   Catches `delete_all` operations against root schemas that declare persisted
-  soft-delete fields.
+  soft-delete fields such as `:deleted_at` or `:archived_at`.
 
 - `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
 
@@ -175,8 +175,8 @@ escape hatch.
 
   Required config: none
 
-  Catches direct schema joins that should use an association declared on the
-  root schema.
+  Catches explicit schema joins that duplicate a relationship already declared
+  as an association on the query root schema.
 
 - `Bylaw.Ecto.Query.Checks.NamedBindings`
 
@@ -193,8 +193,8 @@ escape hatch.
 
   Required config: none
 
-  Catches queries that skip rows with `offset` but do not bound the result with
-  `limit`.
+  Catches queries that use `offset` without `limit`, including nested subqueries
+  and combination branches.
 
 - `Bylaw.Ecto.Query.Checks.RequiredOrder`
 
@@ -211,8 +211,8 @@ escape hatch.
 
   Required config: none
 
-  Catches `delete_all` operations whose root query does not include a
-  restricting `where` branch.
+  Catches `delete_all` queries where any possible root branch has no
+  non-literal-true `where` predicate.
 
 - `Bylaw.Ecto.Query.Checks.UnboundedUpdates`
 
@@ -220,8 +220,8 @@ escape hatch.
 
   Required config: none
 
-  Catches `update_all` operations whose root query does not include a
-  restricting `where` branch.
+  Catches `update_all` queries that do not include at least one non-literal-true
+  root `where` predicate.
 
 - `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
 
@@ -233,7 +233,7 @@ escape hatch.
 
 ## Suggested Starting Set
 
-Start with checks that do not require application-specific configuration:
+One conservative starting set is:
 
 ```elixir
 @checks [
@@ -246,6 +246,21 @@ Start with checks that do not require application-specific configuration:
 ```
 
 No `@bylaw` configuration is required for these checks.
+
+Other zero-config checks can be added when the matching risk matters for the
+application:
+
+```elixir
+@checks [
+  Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
+  Bylaw.Ecto.Query.Checks.DuplicateJoins,
+  Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema,
+  Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc,
+  Bylaw.Ecto.Query.Checks.OffsetWithoutLimit,
+  Bylaw.Ecto.Query.Checks.UnboundedDeletes,
+  Bylaw.Ecto.Query.Checks.UnboundedUpdates
+]
+```
 
 Then add configured checks where the application has clear invariants:
 

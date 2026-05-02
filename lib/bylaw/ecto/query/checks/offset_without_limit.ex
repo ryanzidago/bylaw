@@ -51,12 +51,13 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
   The check applies to the root query and nested source subqueries, join
-  subqueries, CTE queries, and combination branches.
+  subqueries, CTE queries, combination branches, and expression subqueries.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
 
   alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
@@ -97,7 +98,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   defp offset_without_limit?(query) when is_map(query) do
     direct_offset_without_limit?(query) or
       query
-      |> nested_queries()
+      |> Introspection.nested_queries()
       |> Enum.any?(&offset_without_limit?/1)
   end
 
@@ -141,68 +142,6 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   defp nil_param?({nil, _type}), do: true
   defp nil_param?(nil), do: true
   defp nil_param?(_param), do: false
-
-  defp nested_queries(query) do
-    source_queries(query) ++
-      join_queries(query) ++
-      cte_queries(query) ++ combination_queries(query) ++ expression_subquery_queries(query)
-  end
-
-  defp source_queries(%{from: %{source: source}}), do: subquery_source_queries(source)
-  defp source_queries(_query), do: []
-
-  defp join_queries(%{joins: joins}) when is_list(joins) do
-    Enum.flat_map(joins, fn
-      %{source: source} -> subquery_source_queries(source)
-      _join -> []
-    end)
-  end
-
-  defp join_queries(_query), do: []
-
-  defp cte_queries(%{with_ctes: %{queries: queries}}) when is_list(queries) do
-    Enum.flat_map(queries, fn
-      {_name, _opts, query} -> [query]
-      _cte -> []
-    end)
-  end
-
-  defp cte_queries(_query), do: []
-
-  defp combination_queries(%{combinations: combinations}) when is_list(combinations) do
-    Enum.flat_map(combinations, fn
-      {_operation, query} -> [query]
-      _combination -> []
-    end)
-  end
-
-  defp combination_queries(_query), do: []
-
-  defp expression_subquery_queries(query) do
-    Enum.flat_map(
-      [:distinct, :select, :wheres, :havings, :order_bys, :group_bys, :windows],
-      fn field ->
-        query
-        |> Map.get(field)
-        |> expression_subqueries()
-      end
-    )
-  end
-
-  defp expression_subqueries(expressions) when is_list(expressions) do
-    Enum.flat_map(expressions, &expression_subqueries/1)
-  end
-
-  defp expression_subqueries({_name, expression}), do: expression_subqueries(expression)
-
-  defp expression_subqueries(%{subqueries: subqueries}) when is_list(subqueries) do
-    Enum.flat_map(subqueries, &subquery_source_queries/1)
-  end
-
-  defp expression_subqueries(_expression), do: []
-
-  defp subquery_source_queries(%{__struct__: Ecto.SubQuery, query: query}), do: [query]
-  defp subquery_source_queries(_source), do: []
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
