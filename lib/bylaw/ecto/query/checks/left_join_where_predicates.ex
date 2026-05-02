@@ -185,8 +185,32 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
     rejection_branches_in_expr(left, aliases) ++ rejection_branches_in_expr(right, aliases)
   end
 
+  defp rejection_branches_in_expr({:not, _meta, [expr]}, aliases) do
+    rejection_branches_in_negated_expr(expr, aliases)
+  end
+
   defp rejection_branches_in_expr(expr, aliases) do
     [rejecting_fields_in_predicate(expr, aliases)]
+  end
+
+  defp rejection_branches_in_negated_expr({:and, _meta, [left, right]}, aliases) do
+    rejection_branches_in_negated_expr(left, aliases) ++
+      rejection_branches_in_negated_expr(right, aliases)
+  end
+
+  defp rejection_branches_in_negated_expr({:or, _meta, [left, right]}, aliases) do
+    merge_branch_rejections(
+      rejection_branches_in_negated_expr(left, aliases),
+      rejection_branches_in_negated_expr(right, aliases)
+    )
+  end
+
+  defp rejection_branches_in_negated_expr({:not, _meta, [expr]}, aliases) do
+    rejection_branches_in_expr(expr, aliases)
+  end
+
+  defp rejection_branches_in_negated_expr(expr, aliases) do
+    [rejecting_fields_in_negated_predicate(expr, aliases)]
   end
 
   defp merge_branch_rejections(nil, branches), do: branches
@@ -202,12 +226,12 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   defp rejecting_fields_in_predicate({:is_nil, _meta, [_expr]}, _aliases), do: %{}
 
-  defp rejecting_fields_in_predicate({:not, _meta, [{:is_nil, _is_nil_meta, [expr]}]}, aliases) do
-    direct_fields(expr, aliases)
-  end
-
-  defp rejecting_fields_in_predicate({:not, _meta, [expr]}, aliases) do
-    referenced_direct_fields(expr, aliases)
+  defp rejecting_fields_in_predicate({op, _meta, [left, right]}, aliases)
+       when op in [:==, :!=] do
+    left
+    |> direct_fields(aliases)
+    |> merge_rejection_maps(direct_fields(right, aliases))
+    |> merge_rejection_maps(false_is_nil_comparison_fields(op, left, right, aliases))
   end
 
   defp rejecting_fields_in_predicate({op, _meta, [left, right]}, aliases)
@@ -220,6 +244,60 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp rejecting_fields_in_predicate(expr, aliases) do
     direct_fields(expr, aliases)
   end
+
+  defp rejecting_fields_in_negated_predicate({op, _meta, [left, right]}, aliases)
+       when op in [:==, :!=] do
+    left
+    |> direct_fields(aliases)
+    |> merge_rejection_maps(direct_fields(right, aliases))
+    |> merge_rejection_maps(true_is_nil_comparison_fields(op, left, right, aliases))
+  end
+
+  defp rejecting_fields_in_negated_predicate({op, _meta, [left, right]}, aliases)
+       when op in @comparison_ops or op == :in do
+    left
+    |> direct_fields(aliases)
+    |> merge_rejection_maps(direct_fields(right, aliases))
+  end
+
+  defp rejecting_fields_in_negated_predicate({:is_nil, _meta, [expr]}, aliases) do
+    direct_fields(expr, aliases)
+  end
+
+  defp rejecting_fields_in_negated_predicate(expr, aliases) do
+    direct_fields(expr, aliases)
+  end
+
+  defp false_is_nil_comparison_fields(:==, left, false, aliases),
+    do: nil_check_fields(left, aliases)
+
+  defp false_is_nil_comparison_fields(:==, false, right, aliases),
+    do: nil_check_fields(right, aliases)
+
+  defp false_is_nil_comparison_fields(:!=, left, true, aliases),
+    do: nil_check_fields(left, aliases)
+
+  defp false_is_nil_comparison_fields(:!=, true, right, aliases),
+    do: nil_check_fields(right, aliases)
+
+  defp false_is_nil_comparison_fields(_op, _left, _right, _aliases), do: %{}
+
+  defp true_is_nil_comparison_fields(:==, left, true, aliases),
+    do: nil_check_fields(left, aliases)
+
+  defp true_is_nil_comparison_fields(:==, true, right, aliases),
+    do: nil_check_fields(right, aliases)
+
+  defp true_is_nil_comparison_fields(:!=, left, false, aliases),
+    do: nil_check_fields(left, aliases)
+
+  defp true_is_nil_comparison_fields(:!=, false, right, aliases),
+    do: nil_check_fields(right, aliases)
+
+  defp true_is_nil_comparison_fields(_op, _left, _right, _aliases), do: %{}
+
+  defp nil_check_fields({:is_nil, _meta, [expr]}, aliases), do: direct_fields(expr, aliases)
+  defp nil_check_fields(_expr, _aliases), do: %{}
 
   defp direct_fields({{:., _meta, [source, field]}, _call_meta, []}, aliases)
        when is_atom(field) do
@@ -235,28 +313,6 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   end
 
   defp direct_fields(_expr, _aliases), do: %{}
-
-  defp referenced_direct_fields({:fragment, _meta, _args}, _aliases), do: %{}
-
-  defp referenced_direct_fields(expr, aliases) do
-    expr
-    |> direct_fields(aliases)
-    |> merge_rejection_maps(referenced_child_fields(expr, aliases))
-  end
-
-  defp referenced_child_fields(expr, aliases) when is_tuple(expr) do
-    expr
-    |> Tuple.to_list()
-    |> referenced_child_fields(aliases)
-  end
-
-  defp referenced_child_fields(expr, aliases) when is_list(expr) do
-    Enum.reduce(expr, %{}, fn child, fields ->
-      merge_rejection_maps(fields, referenced_direct_fields(child, aliases))
-    end)
-  end
-
-  defp referenced_child_fields(_expr, _aliases), do: %{}
 
   defp source_binding_index({:&, _meta, [binding_index]}, _aliases)
        when is_integer(binding_index) do
