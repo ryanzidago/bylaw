@@ -190,7 +190,6 @@
           {Credo.Check.Refactor.UtcNowTruncate, []},
           {Credo.Check.Refactor.WithClauses, []},
           {Bylaw.Credo.Check.Refactor.FilterRejectFirst, []},
-          {Bylaw.Credo.Check.Refactor.NoNestedCase, false},
           {Bylaw.Credo.Check.Refactor.RejectCount, []},
 
           #
