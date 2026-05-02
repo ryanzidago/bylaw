@@ -86,6 +86,26 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       assert issue.check == UnboundedDeletes
     end
 
+    test "does not count source subquery predicates as a root where clause" do
+      scoped_posts = from(post in Post, where: post.status == ^"archived")
+      query = from(post in subquery(scoped_posts), select: post.id)
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
+    test "does not count CTE predicates as a root where clause" do
+      scoped_posts = from(post in Post, where: post.status == ^"archived")
+      query = with_cte(Post, "scoped_posts", as: ^scoped_posts)
+
+      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+
+      assert issue.check == UnboundedDeletes
+      assert issue.meta.operation == :delete_all
+    end
+
     test "passes for non-delete operations without where clauses" do
       query = from(post in Post)
 
