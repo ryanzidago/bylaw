@@ -12,6 +12,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   Association joins, subqueries, fragments, and schema-less joins are not
   validated by this check.
+
+  Like Bylaw's other Ecto query checks, this reads Ecto query structs directly.
+  Ecto treats those structs as opaque, so this check intentionally supports a
+  small, tested subset of Ecto's query AST.
   """
 
   @behaviour Bylaw.Ecto.Query.Check

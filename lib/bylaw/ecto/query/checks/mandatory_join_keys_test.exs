@@ -102,6 +102,37 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                )
     end
 
+    test "passes when keyword join predicates match mandatory keys" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: [organisation_id: post.organisation_id],
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "returns an issue when keyword join predicates omit mandatory keys" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: [post_id: post.id],
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
     test "validates only configured keys that exist on the joined schema" do
       query =
         from(post in Post,
@@ -218,6 +249,40 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert second_issue.meta.join_schema == Reaction
     end
 
+    test "validates explicit left joins" do
+      query =
+        from(post in Post,
+          left_join: comment in Comment,
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.join_schema == Comment
+      assert issue.meta.missing_keys == [:organisation_id]
+    end
+
+    test "returns an issue when an explicit schema join uses on true" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: true,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
     test "passes when the joined schema has none of the configured keys" do
       query =
         from(post in Post,
@@ -269,6 +334,25 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       query =
         from(post in Post,
           join: comment in fragment("select * from comments"),
+          on: comment.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not validate interpolated query joins" do
+      comments_query =
+        from(comment in Comment,
+          where: comment.body == ^"hello"
+        )
+
+      query =
+        from(post in Post,
+          join: comment in ^comments_query,
           on: comment.post_id == post.id,
           where: post.organisation_id == ^123
         )
