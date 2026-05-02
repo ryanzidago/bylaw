@@ -216,6 +216,34 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       assert Enum.empty?(issue.meta.found_order_keys)
     end
 
+    test "accepts primary keys from named root bindings" do
+      query = from(post in Post, as: :post, order_by: [asc: as(:post).id])
+
+      assert :ok = DeterministicOrder.validate(:all, query, [])
+    end
+
+    test "accepts primary keys referenced with field/2 from named root bindings" do
+      query = from(post in Post, as: :post, order_by: [asc: field(as(:post), :id)])
+
+      assert :ok = DeterministicOrder.validate(:all, query, [])
+    end
+
+    test "does not accept primary keys from named non-root bindings" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: organisation in Organisation,
+          as: :organisation,
+          on: true,
+          order_by: [asc: as(:organisation).id]
+        )
+
+      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+
+      assert issue.meta.primary_key == [:id]
+      assert Enum.empty?(issue.meta.found_order_keys)
+    end
+
     test "accepts primary keys from the root binding when joins are present" do
       query =
         from(post in Post,

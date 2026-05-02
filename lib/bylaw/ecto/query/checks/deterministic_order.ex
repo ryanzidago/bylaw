@@ -164,44 +164,64 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   @spec order_fields(term()) :: field_set()
   defp order_fields(query) when is_map(query) do
+    root_aliases = root_aliases(query)
+
     query
     |> Map.get(:order_bys, [])
-    |> Enum.flat_map(fn order_by -> order_by |> Map.get(:expr, []) |> fields_in_order_expr() end)
+    |> Enum.flat_map(fn order_by ->
+      order_by |> Map.get(:expr, []) |> fields_in_order_expr(root_aliases)
+    end)
     |> Enum.uniq()
     |> Enum.sort()
   end
 
   defp order_fields(_query), do: []
 
-  defp fields_in_order_expr(exprs) when is_list(exprs) do
+  defp root_aliases(query) do
+    query
+    |> Map.get(:aliases, %{})
+    |> Enum.flat_map(fn
+      {alias_name, 0} -> [alias_name]
+      _alias -> []
+    end)
+    |> MapSet.new()
+  end
+
+  defp fields_in_order_expr(exprs, root_aliases) when is_list(exprs) do
     Enum.flat_map(exprs, fn
-      {_direction, expr} -> direct_root_fields(expr)
-      expr -> direct_root_fields(expr)
+      {_direction, expr} -> direct_root_fields(expr, root_aliases)
+      expr -> direct_root_fields(expr, root_aliases)
     end)
   end
 
-  defp fields_in_order_expr(_expr), do: []
+  defp fields_in_order_expr(_expr, _root_aliases), do: []
 
-  defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}) when is_atom(field) do
-    if root_binding?(source) do
+  defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
+       when is_atom(field) do
+    if root_binding?(source, root_aliases) do
       [field]
     else
       []
     end
   end
 
-  defp direct_root_fields({:field, _meta, [source, field]}) when is_atom(field) do
-    if root_binding?(source) do
+  defp direct_root_fields({:field, _meta, [source, field]}, root_aliases) when is_atom(field) do
+    if root_binding?(source, root_aliases) do
       [field]
     else
       []
     end
   end
 
-  defp direct_root_fields(_expr), do: []
+  defp direct_root_fields(_expr, _root_aliases), do: []
 
-  defp root_binding?({:&, _meta, [0]}), do: true
-  defp root_binding?(_expr), do: false
+  defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
+
+  defp root_binding?({:as, _meta, [alias_name]}, root_aliases) when is_atom(alias_name) do
+    MapSet.member?(root_aliases, alias_name)
+  end
+
+  defp root_binding?(_expr, _root_aliases), do: false
 
   @spec deterministic?(field_set(), field_set()) :: boolean()
   defp deterministic?(_fields, []), do: false
