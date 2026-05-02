@@ -14,8 +14,7 @@ hatches.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bylaw` to your list of dependencies in `mix.exs`:
+Add `bylaw` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
