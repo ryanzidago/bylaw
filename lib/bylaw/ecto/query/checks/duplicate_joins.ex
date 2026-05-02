@@ -41,13 +41,15 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
-  The check is static and reads the Ecto query struct directly. Ecto treats
-  query structs as opaque, so this check intentionally supports the tested join
-  shapes exposed by Ecto's query macros.
+  The check is static and intentionally inspects the query structure produced by
+  Ecto's query macros. It supports the tested join shapes exposed by the Ecto
+  query API.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @metadata_keys [:file, :line, :cache]
@@ -84,9 +86,9 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
 
-    if enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
     else
       :ok
@@ -97,39 +99,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp check_opts!(opts) do
-    if Keyword.keyword?(opts) do
-      opts
-      |> Keyword.get(name(), [])
-      |> normalize_check_opts!()
-    else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
-
   defp validate_enabled(operation, query) do
     case duplicate_issues(operation, query) do
       [] -> :ok
@@ -139,7 +108,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   end
 
   defp duplicate_issues(operation, %{joins: joins} = query) when is_list(joins) do
-    aliases = query_aliases(query)
+    aliases = Introspection.aliases(query)
     predicate_usages = predicate_usages_by_binding(query, joins, aliases)
 
     {_seen, issues} =
@@ -163,9 +132,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   end
 
   defp duplicate_issues(_operation, _query), do: []
-
-  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
-  defp query_aliases(_query), do: %{}
 
   defp join_signature(join, binding_index, aliases, predicate_usages) do
     context = normalize_context(binding_index, aliases)

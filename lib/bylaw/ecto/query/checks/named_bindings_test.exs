@@ -335,7 +335,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
                    end
     end
 
-    test "raises when a check option is unknown" do
+    test "raises for unknown check options" do
       query = from(post in Post)
 
       assert_raise ArgumentError, "unknown :named_bindings option: :unknown", fn ->

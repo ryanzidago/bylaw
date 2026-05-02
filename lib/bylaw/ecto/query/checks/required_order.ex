@@ -51,6 +51,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   @behaviour Bylaw.Ecto.Query.Check
 
+  alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
 
   @type reason :: :limit | :offset | :stream
@@ -77,10 +78,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = check_opts!(opts)
+    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
     required_by = missing_order_reasons(operation, query)
 
-    if enabled?(check_opts) and not Enum.empty?(required_by) do
+    if CheckOptions.enabled?(check_opts) and not Enum.empty?(required_by) do
       {:error, issue(operation, required_by)}
     else
       :ok
@@ -90,39 +91,6 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
-
-  defp check_opts!(opts) do
-    if Keyword.keyword?(opts) do
-      opts
-      |> Keyword.get(name(), [])
-      |> normalize_check_opts!()
-    else
-      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      Enum.each(opts, &validate_check_opt!/1)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts) do
-    raise ArgumentError,
-          "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_check_opt!({:validate, _value}), do: :ok
-
-  defp validate_check_opt!({key, _value}) do
-    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
-  end
-
-  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   @spec missing_order_reasons(Bylaw.Ecto.Query.Check.operation(), term()) :: list(reason())
   defp missing_order_reasons(operation, query) do
