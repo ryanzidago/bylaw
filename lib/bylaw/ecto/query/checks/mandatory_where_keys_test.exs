@@ -13,6 +13,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
     schema "posts" do
       field(:organisation_id, :integer)
+      field(:allowed_organisation_ids, {:array, :integer})
       field(:user_id, :integer)
       field(:title, :string)
     end
@@ -40,6 +41,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
     schema "organisations" do
       field(:organisation_id, :integer)
+      field(:allowed_organisation_ids, {:array, :integer})
       field(:name, :string)
     end
   end
@@ -397,6 +399,35 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                MandatoryWhereKeys.validate(:all, query,
                  mandatory_where_keys: [keys: [:organisation_id]]
                )
+    end
+
+    test "does not accept mandatory keys in in predicates compared to another root field" do
+      query = from(post in Post, where: post.organisation_id in post.allowed_organisation_ids)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
+    test "does not accept mandatory keys in in predicates compared to joined fields" do
+      query =
+        from(post in Post,
+          join: organisation in Organisation,
+          on: true,
+          where: post.organisation_id in organisation.allowed_organisation_ids
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
     end
 
     test "does not accept mandatory keys in not in predicates" do
