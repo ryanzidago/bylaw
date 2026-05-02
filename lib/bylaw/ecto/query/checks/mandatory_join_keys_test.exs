@@ -6,6 +6,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
   alias Bylaw.Ecto.Query.Checks.MandatoryJoinKeys
   alias Bylaw.Ecto.Query.Issue
 
+  @prepare_query_operations [:all, :update_all, :delete_all, :stream, :insert_all]
+
   defmodule Post do
     use Ecto.Schema
 
@@ -88,6 +90,39 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                )
     end
 
+    test "passes for every Ecto prepare_query operation when the join key equality is present" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id
+        )
+
+      Enum.each(@prepare_query_operations, fn operation ->
+        assert :ok =
+                 MandatoryJoinKeys.validate(operation, query,
+                   mandatory_join_keys: [keys: [:organisation_id]]
+                 )
+      end)
+    end
+
+    test "returns an issue for every Ecto prepare_query operation when the join key equality is missing" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      Enum.each(@prepare_query_operations, fn operation ->
+        assert {:error, %Issue{} = issue} =
+                 MandatoryJoinKeys.validate(operation, query,
+                   mandatory_join_keys: [keys: [:organisation_id]]
+                 )
+
+        assert issue.meta.operation == operation
+        assert issue.meta.missing_keys == [:organisation_id]
+      end)
+    end
+
     test "passes when the mandatory key equality is written with the joined binding on the right" do
       query =
         from(post in Post,
@@ -107,6 +142,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         from(post in Post,
           join: comment in Comment,
           on: [organisation_id: post.organisation_id],
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when field join predicates match mandatory keys" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            field(comment, :post_id) == post.id and
+              field(comment, :organisation_id) == field(post, :organisation_id),
           where: post.organisation_id == ^123
         )
 
@@ -394,6 +445,61 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert issue.meta.found_join_keys == []
     end
 
+    test "does not accept mandatory keys when an or expression branch can match without them" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            comment.organisation_id == post.organisation_id or
+              comment.body == post.title,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
+    test "does not accept mandatory keys in joined self comparisons" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == comment.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
+    test "does not accept mandatory keys hidden inside fragments" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            comment.post_id == post.id and
+              fragment("? = ?", comment.organisation_id, post.organisation_id),
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.found_join_keys == []
+    end
+
     test "does not accept joined keys compared only to query parameters" do
       query =
         from(post in Post,
@@ -422,6 +528,40 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [validate: false])
     end
 
+    test "validates when validate is explicitly true" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [
+                   keys: [:organisation_id],
+                   validate: true
+                 ]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+    end
+
+    test "requires an explicit false escape hatch" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert {:error, %Issue{}} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [
+                   keys: [:organisation_id],
+                   validate: nil
+                 ]
+               )
+    end
+
     test "raises when keys are missing" do
       query =
         from(post in Post,
@@ -444,6 +584,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert_raise ArgumentError, "expected :keys to be a non-empty list of atoms, got: []", fn ->
         MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [keys: []])
       end
+    end
+
+    test "raises when keys are not a list" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError,
+                   "expected :keys to be a non-empty list of atoms, got: :organisation_id",
+                   fn ->
+                     MandatoryJoinKeys.validate(:all, query,
+                       mandatory_join_keys: [keys: :organisation_id]
+                     )
+                   end
     end
 
     test "raises when keys contain non-atoms" do
