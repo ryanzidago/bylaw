@@ -1,40 +1,28 @@
-defmodule Mix.Tasks.Qa do
-  @shortdoc "Run staged QA checks with a single `mix qa` entrypoint"
-  @moduledoc """
-  Run the project's QA checks.
-
-  `mix qa` keeps a single public entrypoint while running independent checks in
-  parallel after the mutating preparation stage completes.
-
-  Pass `--coverage` to run the test stage with builtin Mix coverage.
-  Pass `--failures-only` to print stage headers for successful stages while
-  keeping full output for any failing stage.
-  """
-
-  use Mix.Task
+defmodule Bylaw.Dev.Qa do
+  @moduledoc false
 
   @qa_env "test"
 
-  @type command_args :: list(String.t())
-  @type command_result :: %{
-          exit_code: integer(),
-          output: String.t(),
-          stage: String.t()
-        }
-  @type command_context :: %{
-          cwd: String.t(),
-          env: list({String.t(), String.t()}),
-          elixir_executable: String.t(),
-          shell_executable: String.t()
-        }
-  @type stage :: %{label: String.t(), commands: list(command_args())}
-  @type stage_result :: %{
-          label: String.t(),
-          results: list(command_result()),
-          status: :ok | :error
-        }
-  @type qa_options :: %{coverage: boolean(), failures_only: boolean()}
-  @type coverage_row :: {percentage_hundredths :: non_neg_integer(), module_name :: String.t()}
+  @typep command_args :: list(String.t())
+  @typep command_result :: %{
+           exit_code: integer(),
+           output: String.t(),
+           stage: String.t()
+         }
+  @typep command_context :: %{
+           cwd: String.t(),
+           env: list({String.t(), String.t()}),
+           elixir_executable: String.t(),
+           shell_executable: String.t()
+         }
+  @typep stage :: %{label: String.t(), commands: list(command_args())}
+  @typep stage_result :: %{
+           label: String.t(),
+           results: list(command_result()),
+           status: :ok | :error
+         }
+  @typep qa_options :: %{coverage: boolean(), failures_only: boolean()}
+  @typep coverage_row :: {percentage_hundredths :: non_neg_integer(), module_name :: String.t()}
   @mix_runner_prefix ["--erl", "-elixir ansi_enabled true", "-S", "mix"]
   @coverage_open_file_limit 2048
   @default_coverage_threshold_hundredths 9000
@@ -53,7 +41,7 @@ defmodule Mix.Tasks.Qa do
     ]
   }
 
-  @impl Mix.Task
+  @doc false
   @spec run(args :: list(String.t())) :: :ok
   def run(args) do
     options = parse_args!(args)
