@@ -35,6 +35,15 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
 
+    test "passes when offset is bounded by limit through query composition" do
+      query =
+        Post
+        |> offset(50)
+        |> limit(10)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
     test "returns an issue when offset has no limit" do
       query = from(post in Post, offset: 50)
 
@@ -43,6 +52,15 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert issue.check == OffsetWithoutLimit
       assert issue.message == "expected query with offset to include limit"
       assert issue.meta.operation == :all
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "returns an issue when offset is added through query composition" do
+      query = offset(Post, 50)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
     end
 
@@ -69,6 +87,44 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
 
     test "passes when the query is not an Ecto query struct" do
       assert :ok = OffsetWithoutLimit.validate(:all, :not_a_query, [])
+    end
+
+    test "returns an issue when a schema-less query has offset and no limit" do
+      query = from(post in "posts", offset: 50)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "passes for Ecto exists query rewrites that preserve offset" do
+      query =
+        Post
+        |> offset(50)
+        |> exclude(:select)
+        |> exclude(:preload)
+        |> exclude(:order_by)
+        |> exclude(:distinct)
+        |> select(1)
+        |> limit(1)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "passes supported raw query maps with offset bounded by limit" do
+      query = %{offset: %{expr: 50}, limit: %{expr: 10}}
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "returns an issue for supported raw query maps with offset and no limit" do
+      query = %{offset: %{expr: 50}}
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
     end
 
     test "returns an issue when a source subquery has offset and no limit" do
