@@ -5,6 +5,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   This is useful for tenant boundaries where every query should include a
   predicate for fields such as `:organisation_id` or `:user_id`.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         mandatory_where_keys: [
           keys: [:organisation_id, :user_id]
@@ -32,7 +35,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
       [
         mandatory_where_keys: [
-          validate: true,
           keys: [:organisation_id, :user_id],
           match: :any
         ]
