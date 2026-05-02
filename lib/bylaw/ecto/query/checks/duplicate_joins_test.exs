@@ -304,6 +304,42 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       assert issue.meta.original_join_index == 0
     end
 
+    test "passes when repeated joins have different later predicates" do
+      public_kind = "public"
+      private_kind = "private"
+
+      query =
+        from(post in Post,
+          join: public_comment in Comment,
+          on: public_comment.post_id == post.id,
+          join: private_comment in Comment,
+          on: private_comment.post_id == post.id,
+          where: public_comment.kind == ^public_kind,
+          where: private_comment.kind == ^private_kind
+        )
+
+      assert :ok = DuplicateJoins.validate(:all, query, [])
+    end
+
+    test "detects duplicate joins with matching later predicates" do
+      kind = "public"
+
+      query =
+        from(post in Post,
+          join: first_comment in Comment,
+          on: first_comment.post_id == post.id,
+          join: second_comment in Comment,
+          on: second_comment.post_id == post.id,
+          where: first_comment.kind == ^kind,
+          where: second_comment.kind == ^kind
+        )
+
+      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+
+      assert issue.meta.join_index == 1
+      assert issue.meta.original_join_index == 0
+    end
+
     test "detects duplicate joins with root parameter types in the on expression" do
       title = "hello"
 
