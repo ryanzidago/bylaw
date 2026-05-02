@@ -45,6 +45,25 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert issue.meta.reason == :offset_without_limit
     end
 
+    test "returns an issue when offset has a typed interpolated nil limit" do
+      limit = nil
+      query = from(post in Post, limit: type(^limit, :integer), offset: 50)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "returns an issue when offset has a literal nil limit" do
+      query = from(post in Post, limit: nil, offset: 50)
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.check == OffsetWithoutLimit
+      assert issue.meta.reason == :offset_without_limit
+    end
+
     test "passes when offset has an interpolated integer limit" do
       limit = 10
       query = from(post in Post, limit: ^limit, offset: 50)
@@ -55,6 +74,19 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "passes when interpolated nil offset has no limit" do
       offset = nil
       query = from(post in Post, offset: ^offset)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "passes when typed interpolated nil offset has no limit" do
+      offset = nil
+      query = from(post in Post, offset: type(^offset, :integer))
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "passes when literal nil offset has no limit" do
+      query = from(post in Post, offset: nil)
 
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
@@ -215,6 +247,40 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
           join: offset_post in subquery(offset_posts),
           on: offset_post.id == post.id
         )
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "returns an issue when a where subquery has offset and no limit" do
+      offset_posts = from(post in Post, select: post.id, offset: 10)
+      query = from(post in Post, where: post.id in subquery(offset_posts))
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.message == "expected query with offset to include limit"
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "passes when a where subquery has offset bounded by limit" do
+      offset_posts = from(post in Post, select: post.id, limit: 10, offset: 10)
+      query = from(post in Post, where: post.id in subquery(offset_posts))
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
+    test "returns an issue when a select subquery has offset and no limit" do
+      offset_posts = from(post in Post, select: count(), offset: 10)
+      query = from(post in Post, select: %{id: post.id, offset_count: subquery(offset_posts)})
+
+      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+
+      assert issue.message == "expected query with offset to include limit"
+      assert issue.meta.reason == :offset_without_limit
+    end
+
+    test "passes when a select subquery has offset bounded by limit" do
+      offset_posts = from(post in Post, select: count(), limit: 10, offset: 10)
+      query = from(post in Post, select: %{id: post.id, offset_count: subquery(offset_posts)})
 
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
