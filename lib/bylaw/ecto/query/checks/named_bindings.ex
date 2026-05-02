@@ -3,19 +3,22 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   Validates that an `Ecto.Query` uses named binding aliases in query expressions.
 
   This check reads the prepared Ecto query struct. It requires the root binding
-  and every join to declare an `:as` alias, then rejects positional field
-  references such as `post.id` or `field(post, :id)` after Ecto has expanded
-  them to `&0.id` or `field(&0, :id)`.
+  and every join to declare an `:as` alias, then rejects field references that
+  target bindings without a declared alias.
+
+  Ecto expands named binding lists such as `[post: post]` to the same prepared
+  query shape as local binding variables such as `post`. Because that source
+  syntax is no longer distinguishable from the prepared query struct, this
+  check accepts both forms as long as the referenced binding has an alias.
 
   Association join sources, joined preloads, and whole-binding selects are not
   rejected because Ecto either requires binding variables for those forms or
   erases the source syntax before this check runs.
 
       query =
-        from(post in Post,
-          as: :post,
-          where: as(:post).organisation_id == ^organisation_id
-        )
+        Post
+        |> from(as: :post)
+        |> where([post: post], post.organisation_id == ^organisation_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
 
@@ -157,7 +160,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     |> Enum.flat_map(fn source ->
       source.expr
       |> positional_references()
-      |> Enum.map(&positional_reference_issue(operation, source, &1, aliases_by_index))
+      |> Enum.reject(&Map.has_key?(aliases_by_index, &1.binding_index))
+      |> Enum.map(&unaliased_reference_issue(operation, source, &1))
     end)
   end
 
@@ -313,31 +317,26 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp subquery_query(%{__struct__: Ecto.SubQuery, query: query}) when is_map(query), do: [query]
   defp subquery_query(_source), do: []
 
-  defp positional_reference_issue(operation, source, reference, aliases_by_index) do
+  defp unaliased_reference_issue(operation, source, reference) do
     binding_index = reference.binding_index
-    binding_alias = Map.get(aliases_by_index, binding_index)
 
     issue(
-      positional_reference_message(source.macro, binding_index, binding_alias),
+      unaliased_reference_message(source.macro, binding_index),
       :positional_binding_reference,
       operation,
       source,
       Map.merge(source.meta, %{
         macro: source.macro,
         binding_index: binding_index,
-        binding_alias: binding_alias,
+        binding_alias: nil,
         field: reference.field,
         reference: reference.reference
       })
     )
   end
 
-  defp positional_reference_message(macro, binding_index, nil) do
-    "expected Ecto query #{macro} field reference on binding #{binding_index} to use as(:name) or parent_as(:name)"
-  end
-
-  defp positional_reference_message(macro, _binding_index, binding_alias) do
-    "expected Ecto query #{macro} field reference on binding #{inspect(binding_alias)} to use as(:name) or parent_as(:name)"
+  defp unaliased_reference_message(macro, binding_index) do
+    "expected Ecto query #{macro} field reference on binding #{binding_index} to target a binding with an :as alias"
   end
 
   defp issue(message, reason, operation, meta_source, extra_meta) do

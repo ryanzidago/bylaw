@@ -293,11 +293,10 @@ Then add configured checks where the application has clear invariants:
 ]
 ```
 
-`Bylaw.Ecto.Query.Checks.NamedBindings` is useful for teams that want every
-query expression to use Ecto named bindings. It is stricter than the other
-checks because it is a style and maintainability rule as much as a correctness
-rule, so it is often easiest to enable after existing query code has been
-cleaned up.
+`Bylaw.Ecto.Query.Checks.NamedBindings` is useful for teams that want query
+roots and joins to declare Ecto named binding aliases. It accepts normal Ecto
+named binding list usage such as `[post: post]`, and does not require field
+references to be written with `as(:post)`.
 
 ## Option Reference
 
