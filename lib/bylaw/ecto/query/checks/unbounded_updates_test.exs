@@ -289,6 +289,38 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert issue.meta.operation == :update_all
     end
 
+    test "returns an issue when an update_all query only has a typed true where clause" do
+      always_true = true
+      query = from(post in Post, where: type(^always_true, :boolean))
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a filtered subquery join only has a typed true filter" do
+      always_true = true
+
+      all_posts =
+        from(post in Post,
+          where: type(^always_true, :boolean),
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: all_post in subquery(all_posts),
+          on: all_post.id == post.id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
     test "returns an issue when a restricting where clause is widened by literal true or_where" do
       query = from(post in Post, where: post.published == false, or_where: true)
 

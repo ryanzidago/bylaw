@@ -128,6 +128,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   end
 
   defp filter_type(%Ecto.Query.Tagged{value: value}, _params), do: filter_type(value, [])
+  defp filter_type({:type, _meta, [expr, _type]}, params), do: filter_type(expr, params)
 
   defp filter_type({:and, _meta, [left, right]}, params) do
     left
