@@ -852,6 +852,32 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                    end
     end
 
+    test "raises when check opts are a non-keyword list" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError,
+                   "expected :mandatory_join_keys opts to be a keyword list, got: [true]",
+                   fn ->
+                     MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [true])
+                   end
+    end
+
+    test "raises when a check option is unknown" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, "unknown :mandatory_join_keys option: :unknown", fn ->
+        MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [unknown: true])
+      end
+    end
+
     test "raises when top-level opts are not a keyword list" do
       query =
         from(post in Post,
@@ -861,6 +887,18 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       assert_raise ArgumentError, "expected opts to be a keyword list, got: true", fn ->
         MandatoryJoinKeys.validate(:all, query, true)
+      end
+    end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [true]", fn ->
+        MandatoryJoinKeys.validate(:all, query, [true])
       end
     end
   end

@@ -53,7 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), :any)
+    check_opts = CheckOptions.fetch!(opts, name(), [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)

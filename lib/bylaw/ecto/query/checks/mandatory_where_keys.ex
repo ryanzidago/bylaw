@@ -89,7 +89,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), :any)
+    check_opts = CheckOptions.fetch!(opts, name(), [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
