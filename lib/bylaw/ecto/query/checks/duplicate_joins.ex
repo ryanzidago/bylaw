@@ -50,11 +50,18 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   alias Bylaw.Ecto.Query.Issue
 
+  @metadata_keys [:file, :line, :cache]
+
   @type check_opts :: list({:validate, boolean()})
   @type opts :: list({:duplicate_joins, check_opts()})
   @type join_summary :: %{
           binding_index: pos_integer(),
           join_index: non_neg_integer()
+        }
+  @type normalize_context :: %{
+          aliases: map(),
+          binding_index: pos_integer() | nil,
+          params: map()
         }
 
   @doc """
@@ -126,13 +133,15 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     end
   end
 
-  defp duplicate_issues(operation, %{joins: joins}) when is_list(joins) do
+  defp duplicate_issues(operation, %{joins: joins} = query) when is_list(joins) do
+    aliases = query_aliases(query)
+
     {_seen, issues} =
       joins
       |> Enum.with_index()
       |> Enum.reduce({%{}, []}, fn {join, join_index}, {seen, issues} ->
         binding_index = join_index + 1
-        signature = join_signature(join, binding_index)
+        signature = join_signature(join, binding_index, aliases)
 
         case Map.fetch(seen, signature) do
           {:ok, original} ->
@@ -149,16 +158,25 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   defp duplicate_issues(_operation, _query), do: []
 
-  defp join_signature(join, binding_index) do
+  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
+  defp query_aliases(_query), do: %{}
+
+  defp join_signature(join, binding_index, aliases) do
+    context = normalize_context(binding_index, aliases)
+
     {
       Map.get(join, :qual),
       normalize_static_term(Map.get(join, :source)),
-      normalize_join_term(Map.get(join, :assoc), binding_index),
+      normalize_join_term(Map.get(join, :assoc), context),
       normalize_static_term(Map.get(join, :prefix)),
       normalize_static_term(Map.get(join, :hints, [])),
-      normalize_query_expr(Map.get(join, :on), binding_index),
+      normalize_query_expr(Map.get(join, :on), context),
       normalize_static_term(Map.get(join, :params, []))
     }
+  end
+
+  defp normalize_context(binding_index \\ nil, aliases \\ %{}, params \\ %{}) do
+    %{aliases: aliases, binding_index: binding_index, params: params}
   end
 
   @spec join_summary(non_neg_integer(), pos_integer()) :: join_summary()
@@ -169,94 +187,136 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     }
   end
 
-  defp normalize_query_expr(%{expr: expr, params: params}, binding_index) do
-    {
-      normalize_join_term(expr, binding_index),
-      normalize_on_params(params, binding_index)
-    }
+  defp normalize_query_expr(%{expr: expr, params: params}, context) do
+    context = %{context | params: normalize_on_params(params, context)}
+
+    normalize_join_term(expr, context)
   end
 
-  defp normalize_query_expr(expr, binding_index) do
-    normalize_join_term(expr, binding_index)
+  defp normalize_query_expr(expr, context) do
+    normalize_join_term(expr, context)
   end
 
-  defp normalize_on_params(params, binding_index) when is_list(params) do
-    Enum.map(params, fn
-      {value, type} ->
-        {normalize_static_term(value), normalize_param_type(type, binding_index)}
+  defp normalize_on_params(params, context) when is_list(params) do
+    params
+    |> Enum.with_index()
+    |> Map.new(fn
+      {{value, type}, index} ->
+        {index, {:param, value, normalize_param_type(type, %{context | params: %{}})}}
 
-      param ->
-        normalize_join_term(param, binding_index)
+      {param, index} ->
+        {index, normalize_join_term(param, %{context | params: %{}})}
     end)
   end
 
-  defp normalize_on_params(params, binding_index) do
-    normalize_join_term(params, binding_index)
+  defp normalize_on_params(params, context) do
+    %{0 => normalize_join_term(params, %{context | params: %{}})}
   end
 
-  defp normalize_param_type({source_binding_index, field}, binding_index)
-       when source_binding_index == binding_index and is_atom(field) do
-    {:join, field}
+  defp normalize_param_type({source_binding_index, field}, context)
+       when is_integer(source_binding_index) and is_atom(field) do
+    {normalize_binding_index(source_binding_index, context), field}
   end
 
-  defp normalize_param_type(type, binding_index) do
-    normalize_join_term(type, binding_index)
+  defp normalize_param_type(type, context) do
+    normalize_join_term(type, context)
   end
 
-  defp normalize_join_term({:&, _meta, [binding_index]}, binding_index) do
-    {:&, [], [:join]}
+  defp normalize_join_term({:&, _meta, [binding_index]}, context)
+       when is_integer(binding_index) do
+    normalize_binding_index(binding_index, context)
   end
 
-  defp normalize_join_term({operator, meta, [left, right]}, binding_index)
-       when operator in [:==, :and, :or] do
+  defp normalize_join_term({:as, _meta, [alias_name]}, context) when is_atom(alias_name) do
+    case Map.fetch(context.aliases, alias_name) do
+      {:ok, binding_index} -> normalize_binding_index(binding_index, context)
+      :error -> {:as, [], [alias_name]}
+    end
+  end
+
+  defp normalize_join_term({:^, _meta, [index]}, context) when is_integer(index) do
+    case Map.fetch(context.params, index) do
+      {:ok, param} -> {:^, [], [param]}
+      :error -> {:^, [], [index]}
+    end
+  end
+
+  defp normalize_join_term({operator, meta, [left, right]}, context)
+       when operator in [:and, :or] do
     operands =
-      [normalize_join_term(left, binding_index), normalize_join_term(right, binding_index)]
+      [left, right]
+      |> Enum.flat_map(&normalize_boolean_operand(&1, operator, context))
       |> Enum.sort_by(&:erlang.term_to_binary/1)
 
     {operator, normalize_ast_meta(meta), operands}
   end
 
-  defp normalize_join_term({left, right}, binding_index) do
+  defp normalize_join_term({operator, meta, [left, right]}, context) when operator == :== do
+    operands =
+      [normalize_join_term(left, context), normalize_join_term(right, context)]
+      |> Enum.sort_by(&:erlang.term_to_binary/1)
+
+    {operator, normalize_ast_meta(meta), operands}
+  end
+
+  defp normalize_join_term({left, right}, context) do
     {
-      normalize_join_term(left, binding_index),
-      normalize_join_term(right, binding_index)
+      normalize_join_term(left, context),
+      normalize_join_term(right, context)
     }
   end
 
-  defp normalize_join_term({left, middle, right}, binding_index) do
+  defp normalize_join_term({left, middle, right}, context)
+       when is_list(middle) and is_list(right) do
     {
-      normalize_join_term(left, binding_index),
+      normalize_join_term(left, context),
       normalize_ast_meta(middle),
-      normalize_join_term(right, binding_index)
+      normalize_join_term(right, context)
     }
   end
 
-  defp normalize_join_term(tuple, binding_index) when is_tuple(tuple) do
+  defp normalize_join_term(tuple, context) when is_tuple(tuple) do
     tuple
     |> Tuple.to_list()
-    |> Enum.map(&normalize_join_term(&1, binding_index))
+    |> Enum.map(&normalize_join_term(&1, context))
     |> List.to_tuple()
   end
 
-  defp normalize_join_term(list, binding_index) when is_list(list) do
-    Enum.map(list, &normalize_join_term(&1, binding_index))
+  defp normalize_join_term(list, context) when is_list(list) do
+    Enum.map(list, &normalize_join_term(&1, context))
   end
 
-  defp normalize_join_term(%struct{} = term, binding_index) do
-    {struct, term |> Map.from_struct() |> normalize_map(binding_index, :join)}
+  defp normalize_join_term(%struct{} = term, context) do
+    {struct, term |> Map.from_struct() |> normalize_map(context, :join, metadata_keys(struct))}
   end
 
-  defp normalize_join_term(map, binding_index) when is_map(map) do
-    normalize_map(map, binding_index, :join)
+  defp normalize_join_term(map, context) when is_map(map) do
+    normalize_map(map, context, :join, [])
   end
 
-  defp normalize_join_term(term, _binding_index), do: term
+  defp normalize_join_term(term, _context), do: term
+
+  defp normalize_boolean_operand({operator, _meta, [left, right]}, operator, context) do
+    normalize_boolean_operand(left, operator, context) ++
+      normalize_boolean_operand(right, operator, context)
+  end
+
+  defp normalize_boolean_operand(expr, _operator, context),
+    do: [normalize_join_term(expr, context)]
+
+  defp normalize_binding_index(binding_index, %{binding_index: binding_index}) do
+    {:&, [], [:join]}
+  end
+
+  defp normalize_binding_index(binding_index, _context) do
+    {:&, [], [binding_index]}
+  end
 
   defp normalize_static_term({left, right}) do
     {normalize_static_term(left), normalize_static_term(right)}
   end
 
-  defp normalize_static_term({left, middle, right}) do
+  defp normalize_static_term({left, middle, right}) when is_list(middle) and is_list(right) do
     {normalize_static_term(left), normalize_ast_meta(middle), normalize_static_term(right)}
   end
 
@@ -271,19 +331,24 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
     do: Enum.map(list, &normalize_static_term/1)
 
   defp normalize_static_term(%struct{} = term) do
-    {struct, term |> Map.from_struct() |> normalize_map(nil, :static)}
+    {struct,
+     term
+     |> Map.from_struct()
+     |> normalize_map(normalize_context(), :static, metadata_keys(struct))}
   end
 
-  defp normalize_static_term(map) when is_map(map), do: normalize_map(map, nil, :static)
+  defp normalize_static_term(map) when is_map(map),
+    do: normalize_map(map, normalize_context(), :static, [])
+
   defp normalize_static_term(term), do: term
 
-  defp normalize_map(map, binding_index, mode) do
+  defp normalize_map(map, context, mode, drop_keys) do
     map
-    |> Map.drop([:file, :line, :cache])
+    |> Map.drop(drop_keys)
     |> Map.new(fn {key, value} ->
       normalized_value =
         case mode do
-          :join -> normalize_join_term(value, binding_index)
+          :join -> normalize_join_term(value, context)
           :static -> normalize_static_term(value)
         end
 
@@ -293,6 +358,18 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   defp normalize_ast_meta(meta) when is_list(meta), do: []
   defp normalize_ast_meta(term), do: normalize_static_term(term)
+
+  defp metadata_keys(struct) do
+    if ecto_query_struct?(struct), do: @metadata_keys, else: []
+  end
+
+  defp ecto_query_struct?(struct) when struct in [Ecto.Query, Ecto.SubQuery], do: true
+
+  defp ecto_query_struct?(struct) do
+    struct
+    |> Atom.to_string()
+    |> String.starts_with?("Elixir.Ecto.Query.")
+  end
 
   @spec issue(
           Bylaw.Ecto.Query.Check.operation(),

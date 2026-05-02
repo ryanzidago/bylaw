@@ -155,6 +155,22 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       assert issue.meta.original_join_index == 0
     end
 
+    test "detects duplicate joins when root binding and named root binding are mixed" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          join: other_comment in Comment,
+          on: other_comment.post_id == as(:post).id
+        )
+
+      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+
+      assert issue.meta.join_index == 1
+      assert issue.meta.original_join_index == 0
+    end
+
     test "passes when the same schema is joined with different predicates" do
       query =
         from(post in Post,
@@ -252,6 +268,25 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       assert :ok = DuplicateJoins.validate(:all, query, [])
     end
 
+    test "passes when repeated source joins have different structured parameter values" do
+      first_value = {"marker", [1], "same"}
+      second_value = {"marker", [2], "same"}
+
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on:
+            comment.post_id == post.id and
+              fragment("? = ?", comment.body, ^first_value),
+          join: other_comment in Comment,
+          on:
+            other_comment.post_id == post.id and
+              fragment("? = ?", other_comment.body, ^second_value)
+        )
+
+      assert :ok = DuplicateJoins.validate(:all, query, [])
+    end
+
     test "detects duplicate joins with matching parameter values" do
       kind = "public"
 
@@ -310,6 +345,26 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: comment.post_id == post.id and comment.kind == ^kind,
           join: other_comment in Comment,
           on: other_comment.kind == ^kind and other_comment.post_id == post.id
+        )
+
+      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+
+      assert issue.meta.join_index == 1
+      assert issue.meta.original_join_index == 0
+    end
+
+    test "detects duplicate joins when parameterized and expression terms are reordered" do
+      kind = "public"
+      body = "hello"
+
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.kind == ^kind and comment.body == ^body,
+          join: other_comment in Comment,
+          on:
+            other_comment.body == ^body and other_comment.post_id == post.id and
+              other_comment.kind == ^kind
         )
 
       assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
