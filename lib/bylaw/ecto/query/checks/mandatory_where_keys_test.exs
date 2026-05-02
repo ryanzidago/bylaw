@@ -654,6 +654,35 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert combination_issue.meta.combination_path == [%{operation: :union_all, index: 0}]
     end
 
+    test "tracks nested combination branches missing mandatory keys" do
+      scoped_posts =
+        from(post in Post,
+          where: post.organisation_id == ^123,
+          select: post.id
+        )
+
+      unscoped_posts =
+        from(post in Post,
+          where: post.title == ^"public",
+          select: post.id
+        )
+
+      nested_query = union_all(scoped_posts, ^unscoped_posts)
+      query = union(scoped_posts, ^nested_query)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+
+      assert issue.meta.combination_path == [
+               %{operation: :union, index: 0},
+               %{operation: :union_all, index: 0}
+             ]
+    end
+
     test "returns the missing keys when match is all" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
