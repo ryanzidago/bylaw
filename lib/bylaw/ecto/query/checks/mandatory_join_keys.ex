@@ -122,6 +122,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   end
 
   defp issues(operation, query, keys, match) when is_map(query) do
+    aliases = query_aliases(query)
+
     query
     |> Map.get(:joins, [])
     |> Enum.with_index()
@@ -130,7 +132,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
       with {:ok, schema} <- explicit_join_schema(join),
            applicable_keys when applicable_keys != [] <- applicable_keys(schema, keys),
-           found_keys <- join_keys(join, binding_index),
+           found_keys <- join_keys(join, binding_index, aliases),
            missing_keys <- missing_keys(applicable_keys, found_keys, match),
            false <- Enum.empty?(missing_keys) do
         [
@@ -153,6 +155,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   defp issues(_operation, _query, _keys, _match), do: []
 
+  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
+  defp query_aliases(_query), do: %{}
+
   defp explicit_join_schema(%{assoc: assoc}) when not is_nil(assoc), do: :skip
 
   defp explicit_join_schema(%{source: {_source, schema}})
@@ -171,21 +176,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
     Enum.filter(keys, &MapSet.member?(schema_fields, &1))
   end
 
-  @spec join_keys(term(), pos_integer()) :: field_set()
-  defp join_keys(%{on: %{expr: expr}}, binding_index) do
+  @spec join_keys(term(), pos_integer(), map()) :: field_set()
+  defp join_keys(%{on: %{expr: expr}}, binding_index, aliases) do
     expr
-    |> keys_in_join_expr(binding_index)
+    |> keys_in_join_expr(binding_index, aliases)
     |> Enum.uniq()
   end
 
-  defp join_keys(_join, _binding_index), do: []
+  defp join_keys(_join, _binding_index, _aliases), do: []
 
-  defp keys_in_join_expr({:and, _meta, [left, right]}, binding_index) do
-    keys_in_join_expr(left, binding_index) ++ keys_in_join_expr(right, binding_index)
+  defp keys_in_join_expr({:and, _meta, [left, right]}, binding_index, aliases) do
+    keys_in_join_expr(left, binding_index, aliases) ++
+      keys_in_join_expr(right, binding_index, aliases)
   end
 
-  defp keys_in_join_expr({:==, _meta, [left, right]}, binding_index) do
-    case {direct_field(left), direct_field(right)} do
+  defp keys_in_join_expr({:==, _meta, [left, right]}, binding_index, aliases) do
+    case {direct_field(left, aliases), direct_field(right, aliases)} do
       {{^binding_index, field}, {other_index, field}}
       when is_integer(other_index) and other_index < binding_index ->
         [field]
@@ -199,19 +205,36 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
     end
   end
 
-  defp keys_in_join_expr(_expr, _binding_index), do: []
+  defp keys_in_join_expr(_expr, _binding_index, _aliases), do: []
 
-  defp direct_field({{:., _meta, [{:&, _source_meta, [binding_index]}, field]}, _call_meta, []})
-       when is_integer(binding_index) and is_atom(field) do
-    {binding_index, field}
+  defp direct_field({{:., _meta, [source, field]}, _call_meta, []}, aliases)
+       when is_atom(field) do
+    direct_field(source, field, aliases)
   end
 
-  defp direct_field({:field, _meta, [{:&, _source_meta, [binding_index]}, field]})
-       when is_integer(binding_index) and is_atom(field) do
-    {binding_index, field}
+  defp direct_field({:field, _meta, [source, field]}, aliases) when is_atom(field) do
+    direct_field(source, field, aliases)
   end
 
-  defp direct_field(_expr), do: :unknown
+  defp direct_field(_expr, _aliases), do: :unknown
+
+  defp direct_field(source, field, aliases) do
+    case source_binding_index(source, aliases) do
+      binding_index when is_integer(binding_index) -> {binding_index, field}
+      :unknown -> :unknown
+    end
+  end
+
+  defp source_binding_index({:&, _meta, [binding_index]}, _aliases)
+       when is_integer(binding_index) do
+    binding_index
+  end
+
+  defp source_binding_index({:as, _meta, [name]}, aliases) when is_atom(name) do
+    Map.get(aliases, name, :unknown)
+  end
+
+  defp source_binding_index(_source, _aliases), do: :unknown
 
   @spec missing_keys(list(atom()), field_set(), match()) :: list(atom())
   defp missing_keys(keys, found_keys, :any) do
