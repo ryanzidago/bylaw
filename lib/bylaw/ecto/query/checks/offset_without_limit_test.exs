@@ -44,6 +44,21 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
 
+    test "passes for every Ecto prepare_query operation when offset is bounded by limit" do
+      query = from(post in Post, limit: 10, offset: 50)
+
+      Enum.each(@prepare_query_operations, fn operation ->
+        assert :ok = OffsetWithoutLimit.validate(operation, query, [])
+      end)
+    end
+
+    test "passes when Ecto.Query.first/2 and last/2 add a limit to an offset query" do
+      query = from(post in Post, offset: 50)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, first(query), [])
+      assert :ok = OffsetWithoutLimit.validate(:all, last(query), [])
+    end
+
     test "returns an issue when offset has no limit" do
       query = from(post in Post, offset: 50)
 
@@ -158,6 +173,18 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert issue.message == "expected query with offset to include limit"
     end
 
+    test "passes when a join subquery has offset bounded by limit" do
+      offset_posts = from(post in Post, limit: 10, offset: 10)
+
+      query =
+        from(post in Post,
+          join: offset_post in subquery(offset_posts),
+          on: offset_post.id == post.id
+        )
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
     test "returns an issue when a CTE query has offset and no limit" do
       offset_posts = from(post in Post, offset: 10)
 
@@ -173,6 +200,19 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert issue.message == "expected query with offset to include limit"
     end
 
+    test "passes when a CTE query has offset bounded by limit" do
+      offset_posts = from(post in Post, limit: 10, offset: 10)
+
+      query =
+        Post
+        |> with_cte("offset_posts", as: ^offset_posts)
+        |> join(:inner, [post], offset_post in "offset_posts",
+          on: field(offset_post, :id) == post.id
+        )
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
+    end
+
     test "returns an issue when a combination query has offset and no limit" do
       offset_posts = from(post in Post, select: post.id, offset: 10)
 
@@ -184,6 +224,17 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
+    end
+
+    test "passes when a combination query has offset bounded by limit" do
+      offset_posts = from(post in Post, select: post.id, limit: 10, offset: 10)
+
+      query =
+        Post
+        |> select([post], post.id)
+        |> union_all(^offset_posts)
+
+      assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
 
     test "respects the explicit query-level escape hatch" do
