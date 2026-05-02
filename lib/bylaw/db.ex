@@ -42,6 +42,7 @@ defmodule Bylaw.Db do
   end
 
   defp targets!(%Target{} = target), do: [target]
+  defp targets!([]), do: raise(ArgumentError, "expected at least one database target")
   defp targets!(targets) when is_list(targets), do: targets
 
   defp targets!(target) do

@@ -84,6 +84,12 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       end
     end
 
+    test "rejects empty target lists" do
+      assert_raise ArgumentError, ~r/expected at least one Postgres target/, fn ->
+        Postgres.validate([], [FailingCheck])
+      end
+    end
+
     test "rejects malformed check lists" do
       target = Postgres.target(:primary_public, schema: "public", query: query_fun())
 
