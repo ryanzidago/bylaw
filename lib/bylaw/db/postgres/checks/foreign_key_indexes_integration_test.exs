@@ -8,16 +8,10 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   @moduletag :postgres
   @moduletag timeout: 30_000
 
-  setup_all do
-    url =
-      System.get_env("BYLAW_POSTGRES_URL") ||
-        System.get_env("DATABASE_URL") ||
-        raise """
-        set BYLAW_POSTGRES_URL to run Postgres integration tests
+  @default_postgres_url "postgres://localhost:5432/bylaw_test"
 
-            BYLAW_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/bylaw_test \
-            mix test --include postgres
-        """
+  setup_all do
+    url = System.get_env("BYLAW_POSTGRES_URL", @default_postgres_url)
 
     {:ok, conn} =
       url
