@@ -336,11 +336,22 @@ Query checks return `:ok` or `{:error, issue_or_issues}`. Issues are
 Some checks can return multiple issues when a query violates the same rule in
 multiple places.
 
-## Static Analysis Boundaries
+## Ecto Query Opacity
 
 Bylaw query checks inspect prepared Ecto query structs. Ecto treats those
-structs as opaque, so each check supports a small, tested subset of Ecto's
-query AST.
+structs as opaque, so this is an intentional tradeoff rather than a public Ecto
+API guarantee.
+
+The tradeoff is useful in practice:
+
+- Ecto's query structure has been fairly stable across releases.
+- If Ecto changes a query shape that Bylaw depends on, the affected code is
+  isolated in small checks and introspection helpers.
+- Bylaw is mostly meant to run in test and development environments, so a
+  breaking Ecto change should usually fail early instead of affecting
+  production traffic.
+- The checks catch real query problems that are difficult to enforce from
+  public query APIs alone.
 
 In general, query checks trust direct root or join field references in
 supported Ecto query expressions. They intentionally avoid proving behavior
