@@ -140,8 +140,26 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
     end
 
+    test "passes source subqueries because only branch root schemas are reflected" do
+      scoped_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: post.id
+        )
+
+      query = from(post in subquery(scoped_posts), select: post.id)
+
+      assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+    end
+
     test "passes for non-query values" do
       assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, :not_a_query, [])
+    end
+
+    test "passes supported raw query maps without root schema sources" do
+      query = %{from: nil, wheres: [%{expr: true, op: :and, params: []}]}
+
+      assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
     end
 
     test "passes for non-delete operations on soft-delete schemas" do
@@ -150,6 +168,110 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       Enum.each(@prepare_query_operations -- [:delete_all], fn operation ->
         assert :ok = HardDeleteOnSoftDeleteSchema.validate(operation, query, [])
       end)
+    end
+
+    test "passes when every combination branch root schema lacks soft-delete fields" do
+      scoped_posts =
+        from(post in PlainPost,
+          where: post.status == ^"published",
+          select: post.id
+        )
+
+      other_scoped_posts =
+        from(post in PlainPost,
+          where: post.status == ^"archived",
+          select: post.id
+        )
+
+      query = union_all(scoped_posts, ^other_scoped_posts)
+
+      assert :ok = HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+    end
+
+    test "returns an issue when a combination branch root schema has soft-delete fields" do
+      plain_posts =
+        from(post in PlainPost,
+          where: post.status == ^"published",
+          select: post.id
+        )
+
+      deleted_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: post.id
+        )
+
+      plain_posts
+      |> combination_queries(deleted_posts)
+      |> Enum.each(fn {operation, query} ->
+        assert {:error, %Issue{} = issue} =
+                 HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+
+        assert issue.meta.root_schema == DeletedPost
+        assert issue.meta.soft_delete_fields == [:deleted_at]
+        assert issue.meta.combination_path == [%{operation: operation, index: 0}]
+      end)
+    end
+
+    test "returns every issue when the root and a combination branch have soft-delete fields" do
+      deleted_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: post.id
+        )
+
+      archived_posts =
+        from(post in ArchivedPost,
+          where: is_nil(post.archived_at),
+          select: post.id
+        )
+
+      query = union_all(deleted_posts, ^archived_posts)
+
+      assert {:error, [%Issue{} = root_issue, %Issue{} = combination_issue]} =
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+
+      assert root_issue.meta.root_schema == DeletedPost
+      assert root_issue.meta.soft_delete_fields == [:deleted_at]
+      refute Map.has_key?(root_issue.meta, :combination_path)
+
+      assert combination_issue.meta.root_schema == ArchivedPost
+      assert combination_issue.meta.soft_delete_fields == [:archived_at]
+      assert combination_issue.meta.combination_path == [%{operation: :union_all, index: 0}]
+    end
+
+    test "tracks nested combination branches with soft-delete root schemas" do
+      plain_posts =
+        from(post in PlainPost,
+          where: post.status == ^"published",
+          select: post.id
+        )
+
+      other_plain_posts =
+        from(post in PlainPost,
+          where: post.status == ^"archived",
+          select: post.id
+        )
+
+      deleted_posts =
+        from(post in DeletedPost,
+          where: is_nil(post.deleted_at),
+          select: post.id
+        )
+
+      nested_query = union_all(other_plain_posts, ^deleted_posts)
+      query = union(plain_posts, ^nested_query)
+
+      assert {:error, %Issue{} = issue} =
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
+
+      assert issue.meta.root_schema == DeletedPost
+      assert issue.meta.soft_delete_fields == [:deleted_at]
+
+      assert issue.meta.combination_path == [
+               %{operation: :union, index: 0},
+               %{operation: :union_all, index: 0}
+             ]
     end
 
     test "respects the explicit query-level escape hatch" do
@@ -230,5 +352,16 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
         HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [:bad])
       end
     end
+  end
+
+  defp combination_queries(left_query, right_query) do
+    [
+      {:union, union(left_query, ^right_query)},
+      {:union_all, union_all(left_query, ^right_query)},
+      {:except, except(left_query, ^right_query)},
+      {:except_all, except_all(left_query, ^right_query)},
+      {:intersect, intersect(left_query, ^right_query)},
+      {:intersect_all, intersect_all(left_query, ^right_query)}
+    ]
   end
 end
