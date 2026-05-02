@@ -1,22 +1,5 @@
 defmodule Bylaw.Ecto.Query.CheckOptions do
-  @moduledoc """
-  Option parsing helpers for Ecto query checks.
-
-  Query checks usually receive one top-level Bylaw keyword list and then read
-  their own namespaced options from it:
-
-      [
-        mandatory_where_keys: [
-          validate: true,
-          keys: [:organisation_id]
-        ]
-      ]
-
-  This module keeps the validation rules consistent across built-in and custom
-  checks. Helpers fail with `ArgumentError` when options are malformed, because
-  invalid check configuration is a caller error and should be caught before a
-  query is allowed to run.
-  """
+  @moduledoc false
 
   @doc """
   Returns `opts` when it is a keyword list, otherwise raises `ArgumentError`.

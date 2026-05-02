@@ -1,25 +1,5 @@
 defmodule Bylaw.Ecto.Query.Introspection do
-  @moduledoc """
-  Read helpers for Ecto query structures used by query checks.
-
-  Bylaw checks run from `c:Ecto.Repo.prepare_query/3`, after the caller has
-  built an `Ecto.Query` through the Ecto query API and before the adapter sends
-  SQL to the database. This module collects the small pieces of query structure
-  that checks commonly need: root schemas, explicit join schemas, aliases,
-  combination branches, nested queries, binding references, field references,
-  and schema field metadata.
-
-  The helpers intentionally inspect the query and expression data produced by
-  Ecto. That inspectability is what lets Bylaw enforce application-specific
-  query rules before runtime SQL execution. The supported shapes are covered by
-  these helper tests and by the checks that use them; when Ecto changes those
-  shapes, this module is the narrow place to update.
-
-  Unknown, schema-less, association-derived, or unsupported shapes return
-  `:unknown`, `:skip`, `%{}`, `MapSet.new()`, or `false` depending on the
-  helper. Query checks should treat those values as "not statically proven"
-  rather than trying to guess.
-  """
+  @moduledoc false
 
   @typedoc """
   A path from the root query into nested Ecto combination queries.
