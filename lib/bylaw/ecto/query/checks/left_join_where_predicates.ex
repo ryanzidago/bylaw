@@ -155,17 +155,19 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp where_rejection_branches(query) do
     aliases = query_aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = rejection_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = rejection_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> concat_branches(branches, expr_branches)
-        _op -> merge_branch_rejections(branches, expr_branches)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> concat_branches(branches, expr_branches)
+          _op -> merge_branch_rejections(branches, expr_branches)
+        end
+      end)
+
+    case branches do
       nil -> [%{}]
       branches -> branches
     end
