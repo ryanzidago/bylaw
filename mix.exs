@@ -16,6 +16,7 @@ defmodule Bylaw.MixProject do
       homepage_url: "https://hexdocs.pm/bylaw",
       docs: docs(),
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -37,6 +38,20 @@ defmodule Bylaw.MixProject do
         dialyzer: :test
       ]
     ]
+  end
+
+  defp aliases do
+    [
+      qa: &run_qa/1
+    ]
+  end
+
+  defp run_qa(args) do
+    "scripts/qa.exs"
+    |> Path.expand(__DIR__)
+    |> Code.require_file()
+
+    Bylaw.Dev.Qa.run(args)
   end
 
   # Run "mix help deps" to learn about dependencies.
@@ -90,8 +105,7 @@ defmodule Bylaw.MixProject do
           Bylaw.Ecto.Query.Check,
           Bylaw.Ecto.Query.Issue
         ],
-        "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./,
-        "Mix tasks": ~r/^Elixir\.Mix\.Tasks\./
+        "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./
       ],
       nest_modules_by_prefix: [
         Bylaw.Ecto.Query.Checks
