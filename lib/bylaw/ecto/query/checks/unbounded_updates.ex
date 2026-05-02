@@ -86,8 +86,14 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   defp unbounded_update?(:update_all, query), do: not where_clause?(query)
   defp unbounded_update?(_operation, _query), do: false
 
-  defp where_clause?(%{wheres: wheres}) when is_list(wheres), do: Enum.any?(wheres)
+  defp where_clause?(%{wheres: wheres}) when is_list(wheres) do
+    Enum.any?(wheres, &restricting_where?/1)
+  end
+
   defp where_clause?(_query), do: false
+
+  defp restricting_where?(%{expr: true}), do: false
+  defp restricting_where?(_where), do: true
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do

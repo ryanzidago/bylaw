@@ -109,6 +109,24 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert issue.meta.operation == :update_all
     end
 
+    test "returns an issue when an update_all query only has a literal true where clause" do
+      query = from(post in Post, where: true)
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when an update_all query has an empty keyword where clause" do
+      query = from(Post, where: [])
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
     test "returns an issue when an update_all query only has join predicates" do
       query =
         from(post in Post,
@@ -132,9 +150,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
     end
 
     test "passes supported raw query maps with where entries" do
-      query = %{wheres: [%{expr: true, op: :and, params: []}]}
+      query = %{wheres: [%{expr: {:==, [], [1, 1]}, op: :and, params: []}]}
 
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
+    test "returns an issue for supported raw query maps with literal true where entries" do
+      query = %{wheres: [%{expr: true, op: :and, params: []}]}
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
     end
 
     test "returns an issue for supported raw query maps without where entries" do
