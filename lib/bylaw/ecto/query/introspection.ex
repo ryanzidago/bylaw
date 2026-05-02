@@ -31,6 +31,11 @@ defmodule Bylaw.Ecto.Query.Introspection do
   """
   @type query_branch :: {branch_path(), term()}
 
+  @typedoc """
+  A field name extracted from an Ecto field expression.
+  """
+  @type field_name :: atom() | String.t()
+
   @expression_subquery_fields [
     :distinct,
     :select,
@@ -250,6 +255,43 @@ defmodule Bylaw.Ecto.Query.Introspection do
       :unknown -> []
     end
   end
+
+  @doc """
+  Resolves a direct root field expression and unwraps `type/2` wrappers.
+
+  This helper accepts dot-field expressions such as `&0.status`, dynamic field
+  expressions such as `field(&0, :status)`, and the same expressions wrapped by
+  Ecto's `type/2`. Unlike `root_field/2`, it returns binary field names too, so
+  callers that compare against atom field configuration can decide how to
+  normalize those names.
+  """
+  @spec direct_root_field(term(), map() | MapSet.t(atom())) :: {:ok, field_name()} | :unknown
+  def direct_root_field({:type, _meta, [expr, _type]}, aliases_or_root_aliases) do
+    direct_root_field(expr, aliases_or_root_aliases)
+  end
+
+  def direct_root_field(
+        {{:., _meta, [source, field]}, _call_meta, []},
+        aliases_or_root_aliases
+      )
+      when is_atom(field) or is_binary(field) do
+    if root_binding?(source, aliases_or_root_aliases) do
+      {:ok, field}
+    else
+      :unknown
+    end
+  end
+
+  def direct_root_field({:field, _meta, [source, field]}, aliases_or_root_aliases)
+      when is_atom(field) or is_binary(field) do
+    if root_binding?(source, aliases_or_root_aliases) do
+      {:ok, field}
+    else
+      :unknown
+    end
+  end
+
+  def direct_root_field(_expr, _aliases_or_root_aliases), do: :unknown
 
   @doc """
   Returns whether an expression contains any direct field reference.

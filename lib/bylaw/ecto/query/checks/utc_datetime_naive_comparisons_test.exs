@@ -261,6 +261,22 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       assert issue.meta.field == :inserted_at
     end
 
+    test "matches configured fields referenced with binary field names" do
+      naive_datetime = naive_datetime()
+      query = from(event in "events", where: field(event, "inserted_at") >= ^naive_datetime)
+
+      assert {:error, %Issue{} = issue} =
+               UtcDatetimeNaiveComparisons.validate(:all, query,
+                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
+               )
+
+      assert issue.meta.field == :inserted_at
+
+      assert issue.meta.violations == [
+               %{operator: :>=, value_type: :naive_datetime, value_source: :parameter}
+             ]
+    end
+
     test "validates only explicitly configured fields when fields are configured" do
       naive_datetime = naive_datetime()
 

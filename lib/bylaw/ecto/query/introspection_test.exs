@@ -216,6 +216,33 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
   end
 
+  describe "direct_root_field/2" do
+    test "accepts atom and binary root field names" do
+      status_field = dot_field({:&, [], [0]}, :status)
+      title_field = field_call({:&, [], [0]}, "title")
+
+      assert Introspection.direct_root_field(status_field, %{}) == {:ok, :status}
+      assert Introspection.direct_root_field(title_field, %{}) == {:ok, "title"}
+    end
+
+    test "unwraps type wrappers around root fields" do
+      root_aliases = MapSet.new([:post])
+      status_field = type_wrapper(field_call({:as, [], [:post]}, :status), :string)
+      title_field = type_wrapper(field_call({:as, [], [:post]}, "title"), :string)
+
+      assert Introspection.direct_root_field(status_field, root_aliases) == {:ok, :status}
+      assert Introspection.direct_root_field(title_field, root_aliases) == {:ok, "title"}
+    end
+
+    test "returns unknown for non-root fields and non-field expressions" do
+      aliases = %{post: 0, comment: 1}
+      comment_status = type_wrapper(field_call({:as, [], [:comment]}, "status"), :string)
+
+      assert Introspection.direct_root_field(comment_status, aliases) == :unknown
+      assert Introspection.direct_root_field(:status, aliases) == :unknown
+    end
+  end
+
   describe "field_reference?/1" do
     test "detects direct and nested field references" do
       status_field = dot_field({:&, [], [0]}, :status)
@@ -244,6 +271,7 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
   defp dot_field(source, field), do: {{:., [], [source, field]}, [], []}
   defp field_call(source, field), do: {:field, [], [source, field]}
+  defp type_wrapper(expr, type), do: {:type, [], [expr, type]}
   defp limit_value(%{limit: %{expr: value}}), do: value
   defp offset_value(%{offset: %{expr: value}}), do: value
 end
