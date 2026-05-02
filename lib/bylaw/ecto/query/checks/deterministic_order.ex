@@ -3,9 +3,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   Validates that ordered queries include the root schema primary key.
 
   This is useful when callers page through ordered rows or use helpers such as
-  `Repo.one/2`, `Repo.first/2`, or `Repo.last/2`. Ordering by a non-unique field
-  such as `:inserted_at` or `:name` leaves rows with the same value free to move
-  between executions unless the query also orders by a deterministic tie-breaker.
+  `Repo.one/2` with `Ecto.Query.first/2` or `Ecto.Query.last/2`. Ordering by a
+  non-unique field such as `:inserted_at` or `:name` leaves rows with the same
+  value free to move between executions unless the query also orders by a
+  deterministic tie-breaker.
 
   For now, this check only trusts the root Ecto schema primary key. Ecto schemas
   do not expose arbitrary database unique indexes, and this check should not ask
