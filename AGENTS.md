@@ -10,6 +10,7 @@ Bylaw is an Elixir library for validating code, database, query, schema, and wor
 
 - Do all task work in a linked git worktree under `.worktrees/`.
 - Use a separate linked worktree and branch for each independent task.
+- When doing code review for a PR, use the PR's linked worktree when one exists and applies.
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
