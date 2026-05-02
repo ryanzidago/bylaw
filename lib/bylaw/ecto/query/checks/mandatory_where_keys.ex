@@ -86,10 +86,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
 
-    if disabled?(check_opts) do
-      :ok
-    else
+    if enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
+    else
+      :ok
     end
   end
 
@@ -110,7 +110,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
           "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp disabled?(opts), do: Keyword.get(opts, :validate, true) == false
+  defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
   defp validate_enabled(operation, query, check_opts) do
     keys = fetch_keys!(check_opts)
@@ -329,7 +329,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp issue(operation, keys, fields, missing, match) do
     %Issue{
       check: __MODULE__,
-      code: :missing_mandatory_where_key,
       message: message(keys, missing, match),
       meta: %{
         operation: operation,
