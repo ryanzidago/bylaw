@@ -132,11 +132,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :literal_true_on
     end
 
-    test "returns an issue when an inner lateral join uses a literal true on expression" do
+    test "returns an issue when an uncorrelated inner lateral join uses a literal true on expression" do
       query =
         from(post in Post,
           as: :post,
-          inner_lateral_join: comment in subquery(comment_id_subquery()),
+          inner_lateral_join: comment in subquery(uncorrelated_comment_id_subquery()),
           on: true,
           select: {post.id, comment.id}
         )
@@ -147,11 +147,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :literal_true_on
     end
 
-    test "returns an issue when a left lateral join uses a literal true on expression" do
+    test "returns an issue when an uncorrelated left lateral join uses a literal true on expression" do
       query =
         from(post in Post,
           as: :post,
-          left_lateral_join: comment in subquery(comment_id_subquery()),
+          left_lateral_join: comment in subquery(uncorrelated_comment_id_subquery()),
           on: true,
           select: {post.id, comment.id}
         )
@@ -191,11 +191,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :cross_join
     end
 
-    test "returns an issue when a query uses cross_lateral_join" do
+    test "returns an issue when a query uses uncorrelated cross_lateral_join" do
       query =
         from(post in Post,
           as: :post,
-          cross_lateral_join: comment_id in subquery(comment_id_subquery()),
+          cross_lateral_join: comment_id in subquery(uncorrelated_comment_id_subquery()),
           select: {post.id, comment_id.id}
         )
 
@@ -206,6 +206,41 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
 
       assert issue.message ==
                "expected join 0 not to be cartesian; found cross_lateral_join"
+    end
+
+    test "passes when a correlated inner lateral join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated left lateral join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          as: :post,
+          left_lateral_join: comment in subquery(comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated cross_lateral_join references a parent binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          cross_lateral_join: comment_id in subquery(comment_id_subquery()),
+          select: {post.id, comment_id.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
     end
 
     test "returns all issues when several joins are cartesian" do
@@ -419,6 +454,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
   defp comment_id_subquery do
     from(comment in Comment,
       where: comment.post_id == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp uncorrelated_comment_id_subquery do
+    from(comment in Comment,
       select: %{id: comment.id}
     )
   end
