@@ -39,8 +39,8 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
   The check only validates the root query prepared for the `:delete_all`
-  operation. It requires at least one root `where` expression and does not try to
-  prove whether that predicate is selective.
+  operation. It requires at least one non-literal-true root `where` expression
+  and does not try to prove whether that predicate is selective.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -63,7 +63,8 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   Validates that `:delete_all` operations include at least one root `where`.
 
   Non-delete operations always pass. For delete operations, any root `where` or
-  `or_where` clause is accepted as the explicit bound.
+  `or_where` clause other than a literal `true` expression is accepted as the
+  explicit bound.
   """
 
   @impl Bylaw.Ecto.Query.Check
@@ -83,11 +84,17 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp unbounded_delete?(:delete_all, query), do: not where?(query)
+  defp unbounded_delete?(:delete_all, query), do: not where_clause?(query)
   defp unbounded_delete?(_operation, _query), do: false
 
-  defp where?(%{wheres: wheres}) when is_list(wheres), do: Enum.any?(wheres)
-  defp where?(_query), do: false
+  defp where_clause?(%{wheres: wheres}) when is_list(wheres) do
+    Enum.any?(wheres, &restricting_where?/1)
+  end
+
+  defp where_clause?(_query), do: false
+
+  defp restricting_where?(%{expr: true}), do: false
+  defp restricting_where?(_where), do: true
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
