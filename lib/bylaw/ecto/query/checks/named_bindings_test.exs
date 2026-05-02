@@ -316,9 +316,29 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
                      NamedBindings.validate(:all, query, named_bindings: :invalid)
                    end
     end
+
+    test "raises when check opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "expected :named_bindings opts to be a keyword list, got: [:invalid]",
+                   fn ->
+                     NamedBindings.validate(:all, query, named_bindings: [:invalid])
+                   end
+    end
+
+    test "raises for unknown check options" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "unknown :named_bindings option: :unknown", fn ->
+        NamedBindings.validate(:all, query, named_bindings: [unknown: true])
+      end
+    end
   end
 
   defp assert_reasons(issues, reasons) do
-    assert Enum.map(List.wrap(issues), & &1.meta.reason) == reasons
+    assert issues
+           |> List.wrap()
+           |> Enum.map(& &1.meta.reason) == reasons
   end
 end

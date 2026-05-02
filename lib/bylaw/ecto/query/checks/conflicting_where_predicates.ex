@@ -60,7 +60,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.{Branches, CheckOptions, Introspection, Issue}
+  alias Bylaw.Ecto.Query.Branches
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
+  alias Bylaw.Ecto.Query.Issue
 
   @type comparable_value :: atom() | integer() | String.t()
   @type operator :: :== | :in | :is_nil
@@ -120,17 +123,19 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp where_predicate_branches(query, schema, root_aliases) when is_map(query) do
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      where_branches = predicate_branches_in_where(where, schema, root_aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        where_branches = predicate_branches_in_where(where, schema, root_aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> Branches.concat(branches, where_branches)
-        _op -> Branches.merge(branches, where_branches, &append_predicate_branches/2)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> Branches.concat(branches, where_branches)
+          _op -> Branches.merge(branches, where_branches, &append_predicate_branches/2)
+        end
+      end)
+
+    case branches do
       nil -> [[]]
       branches -> branches
     end
@@ -143,11 +148,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp predicate_branches_in_where(_where, _schema, _root_aliases), do: [[]]
 
   defp predicate_branches_in_expr({:and, _meta, [left, right]}, params, schema, root_aliases) do
-    Branches.merge(
-      predicate_branches_in_expr(left, params, schema, root_aliases),
-      predicate_branches_in_expr(right, params, schema, root_aliases),
-      &append_predicate_branches/2
-    )
+    left_branches = predicate_branches_in_expr(left, params, schema, root_aliases)
+    right_branches = predicate_branches_in_expr(right, params, schema, root_aliases)
+
+    Branches.merge(left_branches, right_branches, &append_predicate_branches/2)
   end
 
   defp predicate_branches_in_expr({:or, _meta, [left, right]}, params, schema, root_aliases) do
@@ -264,18 +268,25 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp normalize_comparable_values(_schema, _field, []), do: {:ok, []}
 
   defp normalize_comparable_values(schema, field, values) do
-    values
-    |> Enum.reduce_while([], fn value, acc ->
-      case normalize_comparable_value(schema, field, value) do
-        {:ok, nil} -> {:cont, acc}
-        {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
-        :error -> {:halt, :error}
-      end
-    end)
-    |> case do
+    comparable_values =
+      Enum.reduce_while(values, [], fn value, acc ->
+        case normalize_comparable_value(schema, field, value) do
+          {:ok, nil} -> {:cont, acc}
+          {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
+          :error -> {:halt, :error}
+        end
+      end)
+
+    case comparable_values do
       :error -> :error
-      comparable_values -> {:ok, comparable_values |> Enum.uniq() |> Enum.sort()}
+      comparable_values -> {:ok, dedupe_comparable_values(comparable_values)}
     end
+  end
+
+  defp dedupe_comparable_values(values) do
+    values
+    |> Enum.uniq()
+    |> Enum.sort()
   end
 
   defp comparable_value_for_type?(type, value) when type in [:id, :integer], do: is_integer(value)
@@ -312,14 +323,15 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp values(values, params) when is_list(values) do
-    values
-    |> Enum.reduce_while([], fn expr, acc ->
-      case value(expr, params) do
-        {:ok, value} -> {:cont, [value | acc]}
-        :error -> {:halt, :error}
-      end
-    end)
-    |> case do
+    parsed_values =
+      Enum.reduce_while(values, [], fn expr, acc ->
+        case value(expr, params) do
+          {:ok, value} -> {:cont, [value | acc]}
+          :error -> {:halt, :error}
+        end
+      end)
+
+    case parsed_values do
       :error -> :error
       values -> {:ok, Enum.reverse(values)}
     end

@@ -1,21 +1,21 @@
-defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
+defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @moduledoc """
-  Validates that root temporal interval predicates are half-open.
+  Validates that root UTC datetime fields are not compared to `NaiveDateTime` values.
 
-  Half-open temporal intervals include the start boundary and exclude the end
-  boundary:
+  This catches queries where a field backed by `:utc_datetime` or
+  `:utc_datetime_usec` is compared to a `NaiveDateTime` value:
+
+      naive_datetime = ~N[2026-01-01 00:00:00]
 
       from event in Event,
-        where: event.occurred_at >= ^start_at,
-        where: event.occurred_at < ^end_at
+        where: event.inserted_at >= ^naive_datetime
 
-  This catches the common off-by-one interval boundary shapes `>` for a lower
-  bound and `<=` for an upper bound on root temporal fields.
+  Ecto may be able to cast many values, but a naive datetime does not say what
+  timezone the value meant. Callers should convert the value to a `DateTime`
+  before building the query so the timezone decision is explicit.
 
       @bylaw [
-        half_open_temporal_intervals: [
-          fields: [:occurred_at]
-        ]
+        utc_datetime_naive_comparisons: []
       ]
 
       def prepare_query(operation, query, opts) do
@@ -24,7 +24,11 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
             Keyword.merge(default, override)
           end)
 
-        case Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals.validate(operation, query, bylaw_opts) do
+        case Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons.validate(
+               operation,
+               query,
+               bylaw_opts
+             ) do
           :ok -> {query, opts}
           {:error, issue} -> raise inspect(issue)
         end
@@ -33,26 +37,28 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [half_open_temporal_intervals: [validate: false]])
+      Repo.all(query, bylaw: [utc_datetime_naive_comparisons: [validate: false]])
 
   Supported options:
 
       [
-        half_open_temporal_intervals: [
+        utc_datetime_naive_comparisons: [
           validate: true,
-          fields: [:occurred_at]
+          fields: [:inserted_at]
         ]
       ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:fields` - optional non-empty list of root fields to validate. When
-      omitted, the check validates temporal fields reflected from the root Ecto
-      schema.
+      omitted, the check validates UTC datetime fields reflected from the root
+      Ecto schema.
 
-  The check is static. It inspects direct root field comparisons in `where`
-  expressions and ignores field-to-field comparisons, non-root bindings,
-  fragments that hide field access, and schema-less queries without configured
-  fields.
+  The check inspects direct root field comparisons and `in` predicates in
+  `where` expressions. It detects visible `NaiveDateTime` values in pinned
+  parameters, pinned lists, `type(^param, type)` wrappers, and supported raw
+  query maps. It ignores field-to-field comparisons, non-root bindings,
+  fragments that hide field access, subqueries, and schema-less queries without
+  configured fields.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -61,41 +67,32 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
-  @comparison_operators [:<, :<=, :>, :>=]
-  @temporal_types [
-    :date,
-    :time,
-    :time_usec,
-    :naive_datetime,
-    :naive_datetime_usec,
-    :utc_datetime,
-    :utc_datetime_usec
-  ]
+  @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
+  @utc_datetime_types [:utc_datetime, :utc_datetime_usec]
 
-  @type boundary :: :lower | :upper
-  @type boundary_violation :: %{
-          boundary: boundary(),
+  @type value_source :: :literal | :parameter | :tagged
+  @type violation :: %{
           field: atom(),
           operator: atom(),
-          expected_operator: atom()
+          value_source: value_source()
         }
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:fields, list(atom())}
           )
-  @type opts :: list({:half_open_temporal_intervals, check_opts()})
+  @type opts :: list({:utc_datetime_naive_comparisons, check_opts()})
 
   @doc """
   Returns the option namespace used by this check.
   """
 
   @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :half_open_temporal_intervals
-  def name, do: :half_open_temporal_intervals
+  @spec name() :: :utc_datetime_naive_comparisons
+  def name, do: :utc_datetime_naive_comparisons
 
   @doc """
-  Validates half-open temporal intervals for a prepared Ecto query.
+  Validates UTC datetime comparisons for a prepared Ecto query.
 
   The operation is kept as issue metadata. This check applies the same static
   validation to all `c:Ecto.Repo.prepare_query/3` operations.
@@ -140,7 +137,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
         fields
 
       {:infer, {:ok, schema}} ->
-        temporal_schema_fields(schema)
+        utc_datetime_schema_fields(schema)
 
       {:infer, :unknown} ->
         []
@@ -165,75 +162,88 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
           "expected :fields to be a non-empty list of atoms, got: #{inspect(fields)}"
   end
 
-  defp temporal_schema_fields(schema) do
+  defp utc_datetime_schema_fields(schema) do
     schema.__schema__(:fields)
-    |> Enum.filter(&temporal_schema_field?(schema, &1))
+    |> Enum.filter(&utc_datetime_schema_field?(schema, &1))
     |> Enum.sort()
   end
 
-  defp temporal_schema_field?(schema, field) do
+  defp utc_datetime_schema_field?(schema, field) do
     schema
     |> schema_type(field)
-    |> temporal_type?()
+    |> utc_datetime_type?()
   end
 
   defp schema_type(schema, field), do: schema.__schema__(:type, field)
 
-  defp temporal_type?(type), do: type in @temporal_types
+  defp utc_datetime_type?(type), do: type in @utc_datetime_types
 
   defp issues(operation, query, fields) do
     query
-    |> boundary_violations(fields)
+    |> naive_comparison_violations(fields)
     |> Enum.group_by(& &1.field)
     |> Enum.map(fn {field, violations} -> issue(operation, field, violations) end)
     |> Enum.sort_by(& &1.meta.field)
   end
 
-  defp boundary_violations(query, fields) when is_map(query) do
+  defp naive_comparison_violations(query, fields) when is_map(query) do
     fields = MapSet.new(fields)
     root_aliases = Introspection.root_aliases(query)
 
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(&boundary_violations_in_where(&1, fields, root_aliases))
+    |> Enum.flat_map(&violations_in_where(&1, fields, root_aliases))
   end
 
-  defp boundary_violations(_query, _fields), do: []
+  defp naive_comparison_violations(_query, _fields), do: []
 
-  defp boundary_violations_in_where(%{expr: expr}, fields, root_aliases) do
-    boundary_violations_in_expr(expr, fields, root_aliases)
+  defp violations_in_where(%{expr: expr} = where, fields, root_aliases) do
+    params = Map.get(where, :params, [])
+
+    violations_in_expr(expr, params, fields, root_aliases)
   end
 
-  defp boundary_violations_in_where(_where, _fields, _root_aliases), do: []
+  defp violations_in_where(_where, _fields, _root_aliases), do: []
 
-  defp boundary_violations_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
+  defp violations_in_expr({operator, _meta, [left, right]}, params, fields, root_aliases)
        when operator in [:and, :or] do
-    boundary_violations_in_expr(left, fields, root_aliases) ++
-      boundary_violations_in_expr(right, fields, root_aliases)
+    violations_in_expr(left, params, fields, root_aliases) ++
+      violations_in_expr(right, params, fields, root_aliases)
   end
 
-  defp boundary_violations_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
+  defp violations_in_expr({:not, _meta, [expr]}, params, fields, root_aliases) do
+    violations_in_expr(expr, params, fields, root_aliases)
+  end
+
+  defp violations_in_expr({operator, _meta, [left, right]}, params, fields, root_aliases)
        when operator in @comparison_operators do
-    comparison_violation(left, right, operator, fields, root_aliases)
+    comparison_violations(left, right, operator, params, fields, root_aliases)
   end
 
-  defp boundary_violations_in_expr(_expr, _fields, _root_aliases), do: []
+  defp violations_in_expr({:in, _meta, [left, right]}, params, fields, root_aliases) do
+    in_violations(left, right, params, fields, root_aliases)
+  end
 
-  defp comparison_violation(left, right, operator, fields, root_aliases) do
+  defp violations_in_expr(_expr, _params, _fields, _root_aliases), do: []
+
+  defp comparison_violations(left, right, operator, params, fields, root_aliases) do
     case {checked_root_field(left, fields, root_aliases),
           checked_root_field(right, fields, root_aliases)} do
       {{:ok, field}, _right_field} ->
-        field
-        |> field_violation(right, operator)
-        |> List.wrap()
+        value_violations(field, operator, right, params)
 
       {:error, {:ok, field}} ->
-        field
-        |> field_violation(left, reverse_operator(operator))
-        |> List.wrap()
+        value_violations(field, reverse_operator(operator), left, params)
 
       {:error, :error} ->
         []
+    end
+  end
+
+  defp in_violations(left, right, params, fields, root_aliases) do
+    case checked_root_field(left, fields, root_aliases) do
+      {:ok, field} -> value_violations(field, :in, right, params)
+      :error -> []
     end
   end
 
@@ -255,34 +265,71 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
     end
   end
 
-  defp field_violation(field, other_expr, operator) do
-    if Introspection.field_reference?(other_expr) do
-      nil
+  defp value_violations(field, operator, expr, params) do
+    if Introspection.field_reference?(expr) do
+      []
     else
-      violation(field, operator)
+      case naive_datetime_source(expr, params) do
+        {:ok, source} ->
+          [
+            %{
+              field: field,
+              operator: operator,
+              value_source: source
+            }
+          ]
+
+        :error ->
+          []
+      end
     end
   end
 
-  defp violation(field, :>) do
-    %{
-      boundary: :lower,
-      field: field,
-      operator: :>,
-      expected_operator: :>=
-    }
+  defp naive_datetime_source(%NaiveDateTime{}, _params), do: {:ok, :literal}
+
+  defp naive_datetime_source(%Ecto.Query.Tagged{value: value}, _params) do
+    if contains_naive_datetime?(value), do: {:ok, :tagged}, else: :error
   end
 
-  defp violation(field, :<=) do
-    %{
-      boundary: :upper,
-      field: field,
-      operator: :<=,
-      expected_operator: :<
-    }
+  defp naive_datetime_source({:^, _meta, [index]}, params) when is_integer(index) do
+    case Enum.fetch(params, index) do
+      {:ok, {value, _type}} ->
+        if contains_naive_datetime?(value), do: {:ok, :parameter}, else: :error
+
+      :error ->
+        :error
+    end
   end
 
-  defp violation(_field, _operator), do: nil
+  defp naive_datetime_source({:type, _meta, [expr, _type]}, params) do
+    naive_datetime_source(expr, params)
+  end
 
+  defp naive_datetime_source(values, params) when is_list(values) do
+    Enum.find_value(values, :error, fn value ->
+      case naive_datetime_source(value, params) do
+        {:ok, source} -> {:ok, source}
+        :error -> false
+      end
+    end)
+  end
+
+  defp naive_datetime_source(_expr, _params), do: :error
+
+  defp contains_naive_datetime?(%NaiveDateTime{}), do: true
+
+  defp contains_naive_datetime?(%Ecto.Query.Tagged{value: value}) do
+    contains_naive_datetime?(value)
+  end
+
+  defp contains_naive_datetime?(values) when is_list(values) do
+    Enum.any?(values, &contains_naive_datetime?/1)
+  end
+
+  defp contains_naive_datetime?(_value), do: false
+
+  defp reverse_operator(:==), do: :==
+  defp reverse_operator(:!=), do: :!=
   defp reverse_operator(:<), do: :>
   defp reverse_operator(:<=), do: :>=
   defp reverse_operator(:>), do: :<
@@ -325,10 +372,15 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   defp result(issues), do: {:error, issues}
 
   defp issue(operation, field, violations) do
+    violations =
+      violations
+      |> Enum.uniq_by(&{&1.operator, &1.value_source})
+      |> Enum.sort_by(&{&1.operator, &1.value_source})
+
     %Issue{
       check: __MODULE__,
       message:
-        "expected half-open temporal interval predicates on #{inspect(field)} to use >= for starts and < for ends",
+        "expected UTC datetime field #{inspect(field)} to be compared with DateTime values, got NaiveDateTime",
       meta: %{
         operation: operation,
         field: field,
@@ -339,9 +391,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   defp violation_meta(violation) do
     %{
-      boundary: violation.boundary,
       operator: violation.operator,
-      expected_operator: violation.expected_operator
+      value_type: :naive_datetime,
+      value_source: violation.value_source
     }
   end
 end

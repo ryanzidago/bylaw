@@ -44,7 +44,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   The check is static. It accepts configured root fields directly in `==` and `in`
   predicates inside `where` expressions, but it cannot prove fields hidden
-  inside raw SQL fragments.
+  inside raw SQL fragments. Combination queries such as `union`, `union_all`,
+  `except`, and `intersect` validate the parent query and every combination
+  branch independently.
 
   When the root query uses an Ecto schema, the configured keys are first narrowed
   to fields that exist on that schema. If none of the configured keys exist, the
@@ -54,7 +56,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.{Branches, CheckOptions, Introspection, Issue}
+  alias Bylaw.Ecto.Query.Branches
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
+  alias Bylaw.Ecto.Query.Issue
 
   @type match :: :any | :all
   @type check_opts ::
@@ -100,24 +105,38 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp validate_enabled(operation, query, check_opts) do
     keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
 
+    query
+    |> Introspection.query_branches()
+    |> Enum.flat_map(&issues_for_branch(operation, &1, check_opts, keys))
+    |> result()
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, check_opts, keys) do
     case applicable_keys(query, keys) do
-      [] -> :ok
-      applicable_keys -> validate_applicable_keys(operation, query, check_opts, applicable_keys)
+      [] ->
+        []
+
+      applicable_keys ->
+        issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path)
     end
   end
 
-  defp validate_applicable_keys(operation, query, check_opts, applicable_keys) do
+  defp issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path) do
     match = CheckOptions.match!(check_opts)
     field_branches = where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
     missing = missing_keys(applicable_keys, field_branches, match)
 
     if Enum.empty?(missing) do
-      :ok
+      []
     else
-      {:error, issue(operation, applicable_keys, fields, missing, match)}
+      [issue(operation, applicable_keys, fields, missing, match, branch_path)]
     end
   end
+
+  defp result([]), do: :ok
+  defp result([issue]), do: {:error, issue}
+  defp result(issues), do: {:error, issues}
 
   defp applicable_keys(query, keys) do
     case Introspection.root_schema(query) do
@@ -133,17 +152,19 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp where_field_branches(query) when is_map(query) do
     aliases = Introspection.aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> Branches.concat(branches, expr_branches)
-        _op -> Branches.merge(branches, expr_branches, &MapSet.union/2)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> Branches.concat(branches, expr_branches)
+          _op -> Branches.merge(branches, expr_branches, &MapSet.union/2)
+        end
+      end)
+
+    case branches do
       nil -> [MapSet.new()]
       branches -> branches
     end
@@ -152,11 +173,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   defp where_field_branches(_query), do: [MapSet.new()]
 
   defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
-    Branches.merge(
-      field_branches_in_expr(left, aliases),
-      field_branches_in_expr(right, aliases),
-      &MapSet.union/2
-    )
+    left_branches = field_branches_in_expr(left, aliases)
+    right_branches = field_branches_in_expr(right, aliases)
+
+    Branches.merge(left_branches, right_branches, &MapSet.union/2)
   end
 
   defp field_branches_in_expr({:or, _meta, [left, right]}, aliases) do
@@ -164,18 +184,28 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp field_branches_in_expr({:==, _meta, [left, right]}, aliases) do
-    [MapSet.new(equality_root_fields(left, right, aliases))]
+    fields = equality_root_fields(left, right, aliases)
+
+    [root_field_set(fields)]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
     if Introspection.field_reference?(right) do
       [MapSet.new()]
     else
-      [MapSet.new(Introspection.root_fields(left, aliases))]
+      [root_field_set(left, aliases)]
     end
   end
 
   defp field_branches_in_expr(_expr, _aliases), do: [MapSet.new()]
+
+  defp root_field_set(expr, aliases) do
+    expr
+    |> Introspection.root_fields(aliases)
+    |> MapSet.new()
+  end
+
+  defp root_field_set(fields), do: MapSet.new(fields)
 
   defp equality_root_fields(left, right, aliases) do
     cond do
@@ -205,17 +235,26 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp branch_has_any_key?(fields, keys), do: Enum.any?(keys, &MapSet.member?(fields, &1))
 
-  defp issue(operation, keys, fields, missing, match) do
+  defp issue(operation, keys, fields, missing, match, branch_path) do
+    found_where_keys =
+      fields
+      |> MapSet.to_list()
+      |> Enum.sort()
+
     %Issue{
       check: __MODULE__,
       message: message(keys, missing, match),
-      meta: %{
-        operation: operation,
-        keys: keys,
-        match: match,
-        missing_keys: missing,
-        found_where_keys: fields |> MapSet.to_list() |> Enum.sort()
-      }
+      meta:
+        Map.merge(
+          %{
+            operation: operation,
+            keys: keys,
+            match: match,
+            missing_keys: missing,
+            found_where_keys: found_where_keys
+          },
+          Introspection.combination_path_meta(branch_path)
+        )
     }
   end
 

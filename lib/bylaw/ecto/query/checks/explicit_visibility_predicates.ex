@@ -58,7 +58,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   bare field predicates, comparisons against values or parameters, and `in`
   predicates whose right side has no field references. Field-to-field
   comparisons are not treated as explicit constraints. It cannot prove visibility
-  fields hidden inside raw SQL fragments or subqueries.
+  fields hidden inside raw SQL fragments or subqueries. Combination queries such
+  as `union`, `union_all`, `except`, and `intersect` validate the parent query
+  and every combination branch independently.
 
   When the root query schema is not configured, the check returns `:ok`.
   Configured fields that do not exist on the root schema are ignored. If no
@@ -67,7 +69,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.{Branches, CheckOptions, Introspection, Issue}
+  alias Bylaw.Ecto.Query.Branches
+  alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Introspection
+  alias Bylaw.Ecto.Query.Issue
 
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
 
@@ -115,27 +120,62 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp validate_enabled(operation, query, check_opts) do
     schema_configs = fetch_schema_configs!(check_opts)
 
+    query
+    |> Introspection.query_branches()
+    |> Enum.flat_map(&issues_for_branch(operation, &1, schema_configs))
+    |> result()
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, schema_configs) do
     with {:ok, schema} <- Introspection.root_schema(query),
          {:ok, configured_fields} <- configured_fields(schema_configs, schema),
          applicable_fields = applicable_fields(schema, configured_fields),
          false <- Enum.empty?(applicable_fields) do
-      validate_applicable_fields(operation, query, schema, configured_fields, applicable_fields)
+      issues_for_applicable_branch(
+        operation,
+        query,
+        schema,
+        configured_fields,
+        applicable_fields,
+        branch_path
+      )
     else
-      _not_applicable -> :ok
+      _not_applicable -> []
     end
   end
 
-  defp validate_applicable_fields(operation, query, schema, configured_fields, applicable_fields) do
+  defp issues_for_applicable_branch(
+         operation,
+         query,
+         schema,
+         configured_fields,
+         applicable_fields,
+         branch_path
+       ) do
     field_branches = where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
     missing = missing_fields(applicable_fields, field_branches)
 
     if Enum.empty?(missing) do
-      :ok
+      []
     else
-      {:error, issue(operation, schema, configured_fields, applicable_fields, fields, missing)}
+      [
+        issue(
+          operation,
+          schema,
+          configured_fields,
+          applicable_fields,
+          fields,
+          missing,
+          branch_path
+        )
+      ]
     end
   end
+
+  defp result([]), do: :ok
+  defp result([issue]), do: {:error, issue}
+  defp result(issues), do: {:error, issues}
 
   defp fetch_schema_configs!(opts) do
     opts
@@ -223,17 +263,19 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp where_field_branches(query) when is_map(query) do
     aliases = Introspection.aliases(query)
 
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        expr_branches = field_branches_in_expr(Map.get(where, :expr), aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> Branches.concat(branches, expr_branches)
-        _op -> Branches.merge(branches, expr_branches, &MapSet.union/2)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> Branches.concat(branches, expr_branches)
+          _op -> Branches.merge(branches, expr_branches, &MapSet.union/2)
+        end
+      end)
+
+    case branches do
       nil -> [MapSet.new()]
       branches -> branches
     end
@@ -242,11 +284,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp where_field_branches(_query), do: [MapSet.new()]
 
   defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
-    Branches.merge(
-      field_branches_in_expr(left, aliases),
-      field_branches_in_expr(right, aliases),
-      &MapSet.union/2
-    )
+    left_branches = field_branches_in_expr(left, aliases)
+    right_branches = field_branches_in_expr(right, aliases)
+
+    Branches.merge(left_branches, right_branches, &MapSet.union/2)
   end
 
   defp field_branches_in_expr({:or, _meta, [left, right]}, aliases) do
@@ -254,7 +295,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp field_branches_in_expr({:not, _meta, [{:is_nil, _is_nil_meta, [expr]}]}, aliases) do
-    [MapSet.new(Introspection.root_fields(expr, aliases))]
+    [root_field_set(expr, aliases)]
   end
 
   defp field_branches_in_expr({:not, _meta, [{op, _op_meta, [_left, _right]} = expr]}, aliases)
@@ -263,27 +304,35 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp field_branches_in_expr({:not, _meta, [expr]}, aliases) do
-    [MapSet.new(Introspection.root_fields(expr, aliases))]
+    [root_field_set(expr, aliases)]
   end
 
   defp field_branches_in_expr({:is_nil, _meta, [expr]}, aliases) do
-    [MapSet.new(Introspection.root_fields(expr, aliases))]
+    [root_field_set(expr, aliases)]
   end
 
   defp field_branches_in_expr({op, _meta, [left, right]}, aliases) when op in @comparison_ops do
-    [MapSet.new(comparison_root_fields(left, right, aliases))]
+    fields = comparison_root_fields(left, right, aliases)
+
+    [MapSet.new(fields)]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, right]}, aliases) do
     if Introspection.field_reference?(right) do
       [MapSet.new()]
     else
-      [MapSet.new(Introspection.root_fields(left, aliases))]
+      [root_field_set(left, aliases)]
     end
   end
 
   defp field_branches_in_expr(expr, aliases) do
-    [MapSet.new(Introspection.root_fields(expr, aliases))]
+    [root_field_set(expr, aliases)]
+  end
+
+  defp root_field_set(expr, aliases) do
+    expr
+    |> Introspection.root_fields(aliases)
+    |> MapSet.new()
   end
 
   defp comparison_root_fields(left, right, aliases) do
@@ -308,18 +357,30 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     end)
   end
 
-  defp issue(operation, schema, configured_fields, applicable_fields, found_fields, missing) do
+  defp issue(
+         operation,
+         schema,
+         configured_fields,
+         applicable_fields,
+         found_fields,
+         missing,
+         branch_path
+       ) do
     %Issue{
       check: __MODULE__,
       message: message(missing),
-      meta: %{
-        operation: operation,
-        root_schema: schema,
-        configured_fields: configured_fields,
-        applicable_fields: applicable_fields,
-        missing_fields: missing,
-        found_visibility_fields: found_visibility_fields(found_fields, applicable_fields)
-      }
+      meta:
+        Map.merge(
+          %{
+            operation: operation,
+            root_schema: schema,
+            configured_fields: configured_fields,
+            applicable_fields: applicable_fields,
+            missing_fields: missing,
+            found_visibility_fields: found_visibility_fields(found_fields, applicable_fields)
+          },
+          Introspection.combination_path_meta(branch_path)
+        )
     }
   end
 
