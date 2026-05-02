@@ -53,6 +53,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
     WHERE index_record.indrelid = foreign_key.table_oid
       AND index_record.indisvalid
       AND index_record.indpred IS NULL
+      AND index_record.indnkeyatts >= array_length(foreign_key.key_attnums, 1)
       AND foreign_key.key_attnums <@
         index_record.indkey[0:array_length(foreign_key.key_attnums, 1) - 1]
   )
