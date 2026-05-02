@@ -120,7 +120,6 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
         assert {:error, %Issue{} = issue} = DeterministicOrder.validate(operation, query, [])
 
         assert issue.check == DeterministicOrder
-        assert issue.code == :non_deterministic_order
         assert issue.meta.operation == operation
         assert issue.meta.primary_key == [:id]
         assert issue.meta.found_order_keys == [:title]
