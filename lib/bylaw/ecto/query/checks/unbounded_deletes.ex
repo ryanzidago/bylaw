@@ -1,9 +1,9 @@
 defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   @moduledoc """
-  Validates that `delete_all` queries include at least one root `where` clause.
+  Validates that `delete_all` queries are bounded.
 
   This check prevents accidental table-wide deletes by requiring callers to add
-  an explicit `where` or `or_where` before `Repo.delete_all/2` runs:
+  a restricting root `where` or `or_where` before `Repo.delete_all/2` runs:
 
       @bylaw [
         unbounded_deletes: [
@@ -46,7 +46,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
   @behaviour Bylaw.Ecto.Query.Check
 
-  alias Bylaw.Ecto.Query.Branches
+  alias Bylaw.Ecto.Query.Boundedness
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
 
@@ -62,10 +62,10 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   def name, do: :unbounded_deletes
 
   @doc """
-  Validates that `:delete_all` operations include at least one root `where`.
+  Validates that `:delete_all` operations are bounded.
 
   Non-delete operations always pass. For delete operations, every possible root
-  `where` or `or_where` branch must include a clause other than a literal `true`
+  `where` or `or_where` branch must include a clause other than a `true`
   expression.
   """
 
@@ -86,60 +86,14 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp unbounded_delete?(:delete_all, query), do: not where_clause?(query)
+  defp unbounded_delete?(:delete_all, query), do: not Boundedness.root_where_bounded?(query)
   defp unbounded_delete?(_operation, _query), do: false
-
-  defp where_clause?(%{wheres: wheres}) when is_list(wheres) do
-    wheres
-    |> where_branches()
-    |> Enum.all?()
-  end
-
-  defp where_clause?(_query), do: false
-
-  defp where_branches(wheres) do
-    branches =
-      Enum.reduce(wheres, nil, fn where, branches ->
-        where_branches = restricting_where_branches(where)
-
-        case Map.get(where, :op, :and) do
-          :or -> Branches.concat(branches, where_branches)
-          _op -> Branches.merge(branches, where_branches, &combine_restricting_branches/2)
-        end
-      end)
-
-    case branches do
-      nil -> [false]
-      branches -> branches
-    end
-  end
-
-  defp restricting_where_branches(%{expr: expr}), do: restricting_expr_branches(expr)
-  defp restricting_where_branches(_where), do: [true]
-
-  defp restricting_expr_branches({:and, _meta, [left, right]}) do
-    left_branches = restricting_expr_branches(left)
-    right_branches = restricting_expr_branches(right)
-
-    Branches.merge(left_branches, right_branches, &combine_restricting_branches/2)
-  end
-
-  defp restricting_expr_branches({:or, _meta, [left, right]}) do
-    restricting_expr_branches(left) ++ restricting_expr_branches(right)
-  end
-
-  defp restricting_expr_branches(true), do: [false]
-  defp restricting_expr_branches(_expr), do: [true]
-
-  defp combine_restricting_branches(left_restricting?, right_restricting?) do
-    left_restricting? or right_restricting?
-  end
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
     %Issue{
       check: __MODULE__,
-      message: "expected delete_all query to include at least one where clause",
+      message: "expected delete_all query to include at least one non-true root where clause",
       meta: %{
         operation: operation
       }
