@@ -145,6 +145,66 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert issue.meta.operation == :update_all
     end
 
+    test "returns an issue when a filtered subquery is left joined" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          left_join: unpublished_post in subquery(unpublished_posts),
+          on: unpublished_post.id == post.id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a filtered subquery join uses a non-equality predicate" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: unpublished_post.id != post.id,
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
+    test "returns an issue when a filtered subquery join negates the root equality" do
+      unpublished_posts =
+        from(post in Post,
+          where: post.published == false,
+          select: %{id: post.id}
+        )
+
+      query =
+        from(post in Post,
+          join: unpublished_post in subquery(unpublished_posts),
+          on: not (unpublished_post.id == post.id),
+          update: [set: [title: ^"Archived"]]
+        )
+
+      assert {:error, %Issue{} = issue} = UnboundedUpdates.validate(:update_all, query, [])
+
+      assert issue.check == UnboundedUpdates
+      assert issue.meta.operation == :update_all
+    end
+
     test "returns an issue when a filtered subquery join only constrains earlier bindings" do
       comments_with_body =
         from(comment in Comment,

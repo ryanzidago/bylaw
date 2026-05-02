@@ -40,8 +40,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   The check only applies to the `:update_all` operation reported by
   `c:Ecto.Repo.prepare_query/3`. It accepts update queries with a restricting
-  `where` clause or a filtered subquery joined back to the updated rows. Checks
-  that need specific predicates should use a more targeted rule such as
+  `where` clause or an inner filtered subquery joined back to the updated rows
+  with a positive equality predicate. Checks that need specific predicates
+  should use a more targeted rule such as
   `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`.
   """
 
@@ -115,7 +116,8 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   defp filtered_subquery_join_entry?(
          %{
-           source: %{__struct__: Ecto.SubQuery, query: subquery},
+           qual: :inner,
+           source: %Ecto.SubQuery{query: subquery},
            on: %{expr: join_expr}
          },
          binding_index,
@@ -138,36 +140,25 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
       root_join_predicate?(right, binding_index, aliases)
   end
 
-  defp root_join_predicate?({:not, _meta, [expr]}, binding_index, aliases) do
-    root_join_predicate?(expr, binding_index, aliases)
+  defp root_join_predicate?({:==, _meta, [left, right]}, binding_index, aliases) do
+    root_join_equality?(left, right, binding_index, aliases)
   end
 
-  defp root_join_predicate?(expr, binding_index, aliases) do
-    binding_indexes = binding_indexes(expr, aliases)
+  defp root_join_predicate?(_expr, _binding_index, _aliases), do: false
 
-    MapSet.member?(binding_indexes, 0) and MapSet.member?(binding_indexes, binding_index)
+  defp root_join_equality?(left, right, binding_index, aliases) do
+    (field_binding_index(left, aliases) == {:ok, 0} and
+       field_binding_index(right, aliases) == {:ok, binding_index}) or
+      (field_binding_index(left, aliases) == {:ok, binding_index} and
+         field_binding_index(right, aliases) == {:ok, 0})
   end
 
-  defp binding_indexes(expr, aliases) do
-    case Introspection.binding_index(expr, aliases) do
-      {:ok, binding_index} -> MapSet.new([binding_index])
-      :unknown -> nested_binding_indexes(expr, aliases)
+  defp field_binding_index(expr, aliases) do
+    case Introspection.field(expr, aliases) do
+      {:ok, {binding_index, _field}} -> {:ok, binding_index}
+      :unknown -> :unknown
     end
   end
-
-  defp nested_binding_indexes(expr, aliases) when is_tuple(expr) do
-    expr
-    |> Tuple.to_list()
-    |> nested_binding_indexes(aliases)
-  end
-
-  defp nested_binding_indexes(expr, aliases) when is_list(expr) do
-    Enum.reduce(expr, MapSet.new(), fn item, indexes ->
-      MapSet.union(indexes, binding_indexes(item, aliases))
-    end)
-  end
-
-  defp nested_binding_indexes(_expr, _aliases), do: MapSet.new()
 
   @spec issue(Bylaw.Ecto.Query.Check.operation()) :: Issue.t()
   defp issue(operation) do
