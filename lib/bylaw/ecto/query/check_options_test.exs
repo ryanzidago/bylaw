@@ -32,6 +32,12 @@ defmodule Bylaw.Ecto.Query.CheckOptionsTest do
       assert CheckOptions.fetch!([], :sample_check, [:validate]) == []
     end
 
+    test "raises when top-level options are not a keyword list" do
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [:invalid]", fn ->
+        CheckOptions.fetch!([:invalid], :sample_check, [:validate])
+      end
+    end
+
     test "raises when namespaced check options are not a keyword list" do
       assert_raise ArgumentError,
                    "expected :sample_check opts to be a keyword list, got: :invalid",

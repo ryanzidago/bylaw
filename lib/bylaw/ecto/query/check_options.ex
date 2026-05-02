@@ -18,6 +18,8 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   @doc false
   @spec fetch!(list(), atom(), :any | list(atom())) :: list()
   def fetch!(opts, check_name, allowed_keys) when is_list(opts) do
+    keyword_list!(opts, "opts")
+
     opts
     |> Keyword.get(check_name, [])
     |> normalize_check_opts!(check_name, allowed_keys)
