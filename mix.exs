@@ -9,7 +9,9 @@ defmodule Bylaw.MixProject do
       app: :bylaw,
       version: @version,
       elixir: "~> 1.19",
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_paths: test_paths(Mix.env()),
+      aliases: aliases(),
       dialyzer: dialyzer(),
       usage_rules: usage_rules(),
       source_url: @source_url,
@@ -27,6 +29,9 @@ defmodule Bylaw.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_env), do: ["lib"]
+
   defp test_paths(:test), do: ["lib"]
   defp test_paths(_env), do: ["test"]
 
@@ -34,7 +39,8 @@ defmodule Bylaw.MixProject do
     [
       preferred_envs: [
         qa: :test,
-        dialyzer: :test
+        dialyzer: :test,
+        "test.postgres": :test
       ]
     ]
   end
@@ -45,11 +51,22 @@ defmodule Bylaw.MixProject do
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
+      {:ecto_sql, "~> 3.13", only: :test},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:postgrex, "~> 0.22.0", only: :test},
       {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
+    ]
+  end
+
+  defp aliases do
+    [
+      "test.postgres": [
+        "ecto.drop --quiet --force",
+        "ecto.create --quiet",
+        "test --include postgres"
+      ]
     ]
   end
 

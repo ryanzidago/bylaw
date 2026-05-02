@@ -33,13 +33,14 @@ Postgres integration tests are tagged with `:postgres` and excluded by default.
 Run them against a disposable `bylaw_test` database with:
 
 ```sh
-createdb bylaw_test
-mix test --include postgres
+mix test.postgres
 ```
 
-If your local Postgres needs explicit credentials, set `BYLAW_POSTGRES_URL`:
+The `test.postgres` alias drops and recreates the configured test database
+before running the tagged tests. If your local Postgres needs explicit
+credentials, set `BYLAW_POSTGRES_URL`:
 
 ```sh
 BYLAW_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/bylaw_test \
-  mix test --include postgres
+  mix test.postgres
 ```
