@@ -65,6 +65,17 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "passes when any configured key is referenced in a dynamic where expression" do
+      organisation_id = 123
+      predicate = dynamic([post], post.organisation_id == ^organisation_id)
+      query = from(post in Post, where: ^predicate)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
+               )
+    end
+
     test "passes when duplicate configured keys are satisfied" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
@@ -201,6 +212,39 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "accepts mandatory keys from a named schema-less root binding" do
+      query =
+        from(post in "posts",
+          as: :post,
+          where: field(as(:post), :organisation_id) == ^123
+        )
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not accept mandatory keys from a named schema-less non-root binding" do
+      query =
+        from(post in "posts",
+          as: :post,
+          join: comment in "comments",
+          as: :comment,
+          on: true,
+          where: field(as(:comment), :organisation_id) == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+      assert issue.message == "expected query to filter by at least one of: :organisation_id"
+    end
+
     test "returns an issue when there is no where clause" do
       query = from(post in Post)
 
@@ -257,6 +301,19 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "accepts mandatory keys from a named root binding in field predicates" do
+      query =
+        from(post in Post,
+          as: :post,
+          where: field(as(:post), :organisation_id) == ^123
+        )
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+    end
+
     test "does not accept mandatory keys from a named non-root binding" do
       query =
         from(post in Post,
@@ -274,6 +331,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
+      assert issue.message == "expected query to filter by at least one of: :organisation_id"
     end
 
     test "does not accept mandatory keys that only appear in an or_where branch" do
@@ -411,6 +469,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
+      assert issue.message == "expected query to filter by at least one of: :organisation_id"
     end
 
     test "does not accept mandatory keys in in predicates compared to joined fields" do
@@ -428,6 +487,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
+      assert issue.message == "expected query to filter by at least one of: :organisation_id"
     end
 
     test "does not accept mandatory keys in not in predicates" do
