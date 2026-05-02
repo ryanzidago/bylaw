@@ -242,6 +242,38 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "accepts mandatory keys from a named root binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          where: as(:post).organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "does not accept mandatory keys from a named non-root binding" do
+      query =
+        from(post in Post,
+          as: :post,
+          join: organisation in Organisation,
+          as: :organisation,
+          on: true,
+          where: as(:organisation).organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
     test "does not accept mandatory keys that only appear in an or_where branch" do
       query =
         from(post in Post,
