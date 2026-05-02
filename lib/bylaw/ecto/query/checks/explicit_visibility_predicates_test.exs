@@ -447,6 +447,22 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert Enum.empty?(issue.meta.found_visibility_fields)
     end
 
+    test "does not accept visibility fields from non-root field expressions" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: true,
+          where: is_nil(field(comment, :deleted_at)),
+          where: field(comment, :status) == ^:published
+        )
+
+      assert {:error, %Issue{} = issue} =
+               ExplicitVisibilityPredicates.validate(:all, query, opts())
+
+      assert issue.meta.missing_fields == [:deleted_at, :status]
+      assert Enum.empty?(issue.meta.found_visibility_fields)
+    end
+
     test "accepts visibility fields from the root binding when joins are present" do
       query =
         from(post in Post,
@@ -549,6 +565,16 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert Enum.empty?(issue.meta.found_visibility_fields)
     end
 
+    test "passes when every or_where branch constrains visibility fields" do
+      query =
+        from(post in Post,
+          where: is_nil(post.deleted_at) and post.status == ^:published,
+          or_where: not is_nil(post.deleted_at) and post.status == ^:hidden
+        )
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
+    end
+
     test "does not accept visibility fields when an or expression branch can match without them" do
       query =
         from(post in Post,
@@ -574,6 +600,17 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert issue.meta.missing_fields == [:deleted_at, :status]
       assert Enum.empty?(issue.meta.found_visibility_fields)
+    end
+
+    test "passes when every or expression branch constrains visibility fields" do
+      query =
+        from(post in Post,
+          where:
+            (is_nil(post.deleted_at) and post.status == ^:published) or
+              (not is_nil(post.deleted_at) and post.status == ^:hidden)
+        )
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
     test "does not accept visibility fields hidden inside fragments" do
