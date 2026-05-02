@@ -9,8 +9,10 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
         join: comment in Comment,
         on: true
 
-  It rejects `cross_join`, `cross_lateral_join`, and non-association joins whose
-  `on` expression is literally `true`.
+  It rejects `cross_join`, uncorrelated `cross_lateral_join`, and
+  non-association joins whose `on` expression is literally `true`. Correlated
+  lateral subqueries that use `parent_as/1` are treated as constrained by their
+  subquery predicate.
 
       @bylaw [
         cartesian_joins: [
@@ -59,6 +61,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   @type reason :: :cross_join | :cross_lateral_join | :literal_true_on
   @type check_opts :: list({:validate, boolean()})
   @type opts :: list({:cartesian_joins, check_opts()})
+  @lateral_quals [:cross_lateral, :inner_lateral, :left_lateral]
 
   @doc """
   Returns the option namespace used by this check.
@@ -134,11 +137,15 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   end
 
   defp issues(operation, query) when is_map(query) do
+    aliases = query_aliases(query)
+
     query
     |> Map.get(:joins, [])
     |> Enum.with_index()
     |> Enum.flat_map(fn {join, join_index} ->
-      case cartesian_reason(join) do
+      binding_index = join_index + 1
+
+      case cartesian_reason(join, aliases, binding_index) do
         nil -> []
         reason -> [issue(operation, join, join_index, reason)]
       end
@@ -147,19 +154,68 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   defp issues(_operation, _query), do: []
 
-  defp cartesian_reason(%{qual: :cross}), do: :cross_join
-  defp cartesian_reason(%{qual: :cross_lateral}), do: :cross_lateral_join
+  defp query_aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
+  defp query_aliases(_query), do: %{}
 
-  defp cartesian_reason(join) do
-    if association_join?(join) do
-      nil
-    else
-      literal_true_on_reason(join)
+  defp cartesian_reason(join, aliases, binding_index) do
+    cond do
+      correlated_lateral_join?(join, aliases, binding_index) -> nil
+      match?(%{qual: :cross}, join) -> :cross_join
+      match?(%{qual: :cross_lateral}, join) -> :cross_lateral_join
+      association_join?(join) -> nil
+      true -> literal_true_on_reason(join)
     end
   end
 
   defp association_join?(%{assoc: assoc}) when not is_nil(assoc), do: true
   defp association_join?(_join), do: false
+
+  defp correlated_lateral_join?(
+         %{qual: qual, source: %Ecto.SubQuery{query: query}},
+         aliases,
+         binding_index
+       )
+       when qual in @lateral_quals do
+    query
+    |> parent_binding_references()
+    |> Enum.any?(&previous_parent_binding?(&1, aliases, binding_index))
+  end
+
+  defp correlated_lateral_join?(_join, _aliases, _binding_index), do: false
+
+  defp previous_parent_binding?(name, aliases, binding_index) do
+    case Map.get(aliases, name) do
+      index when is_integer(index) and index < binding_index -> true
+      _index -> false
+    end
+  end
+
+  defp parent_binding_references({:parent_as, _meta, [name]}) when is_atom(name), do: [name]
+  defp parent_binding_references({:parent_as, _meta, [_name]}), do: []
+
+  defp parent_binding_references(tuple) when is_tuple(tuple) do
+    tuple
+    |> Tuple.to_list()
+    |> Enum.flat_map(&parent_binding_references/1)
+  end
+
+  defp parent_binding_references(list) when is_list(list) do
+    Enum.flat_map(list, &parent_binding_references/1)
+  end
+
+  defp parent_binding_references(%_struct{} = struct) do
+    struct
+    |> Map.from_struct()
+    |> parent_binding_references()
+  end
+
+  defp parent_binding_references(map) when is_map(map) do
+    map
+    |> Map.values()
+    |> Enum.flat_map(&parent_binding_references/1)
+  end
+
+  defp parent_binding_references(_term), do: []
 
   defp literal_true_on_reason(%{on: %{expr: true}}), do: :literal_true_on
   defp literal_true_on_reason(_join), do: nil
