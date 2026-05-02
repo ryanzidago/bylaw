@@ -223,7 +223,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp field_branches_in_expr({:==, _meta, [left, right]}) do
-    [MapSet.new(direct_root_fields(left) ++ direct_root_fields(right))]
+    [MapSet.new(equality_root_fields(left, right))]
   end
 
   defp field_branches_in_expr({:in, _meta, [left, _right]}) do
@@ -249,6 +249,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp guaranteed_fields([]), do: MapSet.new()
 
+  defp equality_root_fields(left, right) do
+    cond do
+      field_reference?(left) and field_reference?(right) ->
+        []
+
+      field_reference?(left) ->
+        direct_root_fields(left)
+
+      field_reference?(right) ->
+        direct_root_fields(right)
+
+      true ->
+        []
+    end
+  end
+
   defp direct_root_fields({{:., _meta, [source, field]}, _call_meta, []}) when is_atom(field) do
     if root_binding?(source) do
       [field]
@@ -266,6 +282,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp direct_root_fields(_expr), do: []
+
+  defp field_reference?({{:., _meta, [_source, field]}, _call_meta, []}) when is_atom(field),
+    do: true
+
+  defp field_reference?({:field, _meta, [_source, field]}) when is_atom(field), do: true
+
+  defp field_reference?(expr) when is_tuple(expr) do
+    expr
+    |> Tuple.to_list()
+    |> field_reference?()
+  end
+
+  defp field_reference?(expr) when is_list(expr), do: Enum.any?(expr, &field_reference?/1)
+  defp field_reference?(_expr), do: false
 
   defp root_binding?({:&, _meta, [0]}), do: true
   defp root_binding?(_expr), do: false

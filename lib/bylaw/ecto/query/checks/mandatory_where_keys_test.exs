@@ -259,6 +259,47 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "does not accept mandatory keys in self comparisons" do
+      query = from(post in Post, where: post.organisation_id == post.organisation_id)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
+    test "does not accept mandatory keys compared to another root field" do
+      query = from(post in Post, where: post.organisation_id == post.user_id)
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
+    test "does not accept mandatory keys compared to joined fields" do
+      query =
+        from(post in Post,
+          join: organisation in Organisation,
+          on: true,
+          where: post.organisation_id == organisation.organisation_id
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryWhereKeys.validate(:all, query,
+                 mandatory_where_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.missing_keys == [:organisation_id]
+      assert Enum.empty?(issue.meta.found_where_keys)
+    end
+
     test "accepts mandatory keys in root in predicates" do
       query = from(post in Post, where: post.organisation_id in ^[123, 456])
 
