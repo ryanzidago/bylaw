@@ -73,9 +73,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
     check_opts = check_opts!(opts)
-    required_by = required_by(operation, query)
+    required_by = missing_order_reasons(operation, query)
 
-    if enabled?(check_opts) and not Enum.empty?(required_by) and not ordered?(query) do
+    if enabled?(check_opts) and not Enum.empty?(required_by) do
       {:error, issue(operation, required_by)}
     else
       :ok
@@ -115,6 +115,24 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
+  @spec missing_order_reasons(Bylaw.Ecto.Query.Check.operation(), term()) :: list(reason())
+  defp missing_order_reasons(operation, query) do
+    direct_missing_order_reasons(operation, query)
+    |> Enum.concat(nested_missing_order_reasons(query))
+    |> Enum.uniq()
+  end
+
+  defp direct_missing_order_reasons(operation, query) do
+    required_by = required_by(operation, query)
+
+    cond do
+      Enum.empty?(required_by) -> []
+      exists_query?(operation, query) -> []
+      ordered?(query) -> []
+      true -> required_by
+    end
+  end
+
   @spec required_by(Bylaw.Ecto.Query.Check.operation(), term()) :: list(reason())
   defp required_by(operation, query) do
     [
@@ -138,6 +156,64 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   defp ordered?(%{order_bys: order_bys}) when is_list(order_bys), do: not Enum.empty?(order_bys)
   defp ordered?(_query), do: false
+
+  defp exists_query?(:all, query) do
+    literal_select?(query, 1) and literal_limit?(query, 1)
+  end
+
+  defp exists_query?(_operation, _query), do: false
+
+  defp literal_select?(%{select: %{expr: value}}, value), do: true
+  defp literal_select?(_query, _value), do: false
+
+  defp literal_limit?(%{limit: %{expr: value}}, value), do: true
+  defp literal_limit?(_query, _value), do: false
+
+  defp nested_missing_order_reasons(query) when is_map(query) do
+    query
+    |> nested_queries()
+    |> Enum.flat_map(&missing_order_reasons(:all, &1))
+  end
+
+  defp nested_missing_order_reasons(_query), do: []
+
+  defp nested_queries(query) do
+    source_queries(query) ++
+      join_queries(query) ++ cte_queries(query) ++ combination_queries(query)
+  end
+
+  defp source_queries(%{from: %{source: source}}), do: subquery_source_queries(source)
+  defp source_queries(_query), do: []
+
+  defp join_queries(%{joins: joins}) when is_list(joins) do
+    Enum.flat_map(joins, fn
+      %{source: source} -> subquery_source_queries(source)
+      _join -> []
+    end)
+  end
+
+  defp join_queries(_query), do: []
+
+  defp cte_queries(%{with_ctes: %{queries: queries}}) when is_list(queries) do
+    Enum.flat_map(queries, fn
+      {_name, _opts, query} -> [query]
+      _cte -> []
+    end)
+  end
+
+  defp cte_queries(_query), do: []
+
+  defp combination_queries(%{combinations: combinations}) when is_list(combinations) do
+    Enum.flat_map(combinations, fn
+      {_operation, query} -> [query]
+      _combination -> []
+    end)
+  end
+
+  defp combination_queries(_query), do: []
+
+  defp subquery_source_queries(%{__struct__: Ecto.SubQuery, query: query}), do: [query]
+  defp subquery_source_queries(_source), do: []
 
   @spec issue(Bylaw.Ecto.Query.Check.operation(), list(reason())) :: Issue.t()
   defp issue(operation, required_by) do
