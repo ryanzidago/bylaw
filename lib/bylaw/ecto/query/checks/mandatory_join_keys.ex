@@ -17,6 +17,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   Ecto treats those structs as opaque, so this check intentionally supports a
   small, tested subset of Ecto's query AST.
 
+  For repo-wide enforcement, call this check from Ecto's
+  `c:Ecto.Repo.prepare_query/3` callback:
+
       @bylaw [
         mandatory_join_keys: [
           keys: [:organisation_id],

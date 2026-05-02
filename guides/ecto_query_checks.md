@@ -9,8 +9,12 @@ examples, accepted query shapes, limitations, and issue metadata.
 
 ## Running Query Checks
 
-Query checks implement `Bylaw.Ecto.Query.Check` and are usually called from
-`c:Ecto.Repo.prepare_query/3`.
+Query checks implement `Bylaw.Ecto.Query.Check`. For repo-wide enforcement,
+call them from Ecto's `c:Ecto.Repo.prepare_query/3` callback.
+
+Read the `c:Ecto.Repo.prepare_query/3` docs before copying this into a repo.
+Ecto invokes the callback for query APIs, including association and preload
+queries, so configure query-level escape hatches deliberately.
 
 ```elixir
 defmodule MyApp.Repo do
