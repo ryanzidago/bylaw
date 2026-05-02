@@ -195,10 +195,28 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   defp related_schema(schema, association) do
     case schema.__schema__(:association, association) do
       nil -> :skip
-      reflection -> reflection_related_schema(schema, reflection)
+      reflection -> related_schema_from_reflection(schema, reflection)
     end
   rescue
     UndefinedFunctionError -> :skip
+  end
+
+  defp related_schema_from_reflection(schema, reflection) do
+    if filtered_association?(reflection) do
+      :skip
+    else
+      reflection_related_schema(schema, reflection)
+    end
+  end
+
+  defp filtered_association?(reflection) do
+    non_empty_filter?(reflection, :where) or non_empty_filter?(reflection, :join_where)
+  end
+
+  defp non_empty_filter?(reflection, key) do
+    filter = Map.get(reflection, key, [])
+
+    not Enum.empty?(filter)
   end
 
   defp reflection_related_schema(_schema, %{related: related_schema})

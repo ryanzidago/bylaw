@@ -28,6 +28,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
 
     schema "comments" do
       field(:body, :string)
+      field(:public, :boolean)
 
       belongs_to(:post, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Post)
       belongs_to(:author, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Author)
@@ -60,6 +61,45 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
 
       has_many(:public_comments, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Comment,
         foreign_key: :post_id
+      )
+    end
+  end
+
+  defmodule FilteredAssociationPost do
+    use Ecto.Schema
+
+    schema "filtered_association_posts" do
+      has_many(:public_comments, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Comment,
+        foreign_key: :post_id,
+        where: [public: true]
+      )
+
+      has_many(:public_comment_authors, through: [:public_comments, :author])
+    end
+  end
+
+  defmodule MixedFilteredAssociationPost do
+    use Ecto.Schema
+
+    schema "mixed_filtered_association_posts" do
+      has_many(:comments, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Comment,
+        foreign_key: :post_id
+      )
+
+      has_many(:public_comments, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Comment,
+        foreign_key: :post_id,
+        where: [public: true]
+      )
+    end
+  end
+
+  defmodule JoinFilteredManyToManyPost do
+    use Ecto.Schema
+
+    schema "join_filtered_many_to_many_posts" do
+      many_to_many(:published_tags, Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest.Tag,
+        join_through: "posts_tags",
+        join_where: [published: true]
       )
     end
   end
@@ -222,6 +262,55 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
 
       assert issue.message ==
                "expected join 0 to use assoc/2 for one of existing associations :comments, :public_comments from #{inspect(MultiAssociationPost)} to #{inspect(Comment)}"
+    end
+
+    test "passes when the only matching root association has a where filter" do
+      query =
+        from(post in FilteredAssociationPost,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.public == false,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+    end
+
+    test "does not suggest filtered associations when an unfiltered association also matches" do
+      query =
+        from(post in MixedFilteredAssociationPost,
+          join: comment in Comment,
+          on: comment.post_id == post.id,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+
+      assert issue.meta.associations == [:comments]
+
+      assert issue.message ==
+               "expected join 0 to use assoc/2 for existing association :comments from #{inspect(MixedFilteredAssociationPost)} to #{inspect(Comment)}"
+    end
+
+    test "passes when a matching through association depends on a filtered step" do
+      query =
+        from(post in FilteredAssociationPost,
+          join: author in Author,
+          on: true,
+          select: {post.id, author.id}
+        )
+
+      assert :ok = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+    end
+
+    test "passes when the only matching many_to_many association has a join_where filter" do
+      query =
+        from(post in JoinFilteredManyToManyPost,
+          join: tag in Tag,
+          on: true,
+          select: {post.id, tag.id}
+        )
+
+      assert :ok = ManualJoinInsteadOfAssoc.validate(:all, query, [])
     end
 
     test "passes when the root schema has no association to the joined schema" do
