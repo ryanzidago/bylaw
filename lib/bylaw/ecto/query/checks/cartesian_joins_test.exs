@@ -29,6 +29,16 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
   end
 
   describe "validate/3" do
+    test "passes when there are no joins" do
+      query = from(post in Post)
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when the query is not an Ecto query struct" do
+      assert :ok = CartesianJoins.validate(:all, :not_a_query, [])
+    end
+
     test "returns an issue when a join uses a literal true on expression" do
       query =
         from(post in Post,
@@ -64,6 +74,64 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert issue.meta.reason == :literal_true_on
     end
 
+    test "returns an issue when a right join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          right_join: comment in Comment,
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :right
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when a full join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          full_join: comment in Comment,
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :full
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when an inner lateral join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "returns an issue when a left lateral join uses a literal true on expression" do
+      query =
+        from(post in Post,
+          as: :post,
+          left_lateral_join: comment in subquery(comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :left_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
     test "returns an issue when a query uses cross_join" do
       query =
         from(post in Post,
@@ -80,17 +148,24 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
                "expected join 0 not to be cartesian; found cross_join"
     end
 
-    test "returns an issue when a query uses cross_lateral_join" do
-      comment_ids =
-        from(comment in Comment,
-          where: comment.post_id == parent_as(:post).id,
-          select: comment.id
+    test "returns an issue when a cross_join uses an association source" do
+      query =
+        from(post in Post,
+          cross_join: comment in assoc(post, :comments),
+          select: {post.id, comment.id}
         )
 
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :cross
+      assert issue.meta.reason == :cross_join
+    end
+
+    test "returns an issue when a query uses cross_lateral_join" do
       query =
         from(post in Post,
           as: :post,
-          cross_lateral_join: comment_id in subquery(comment_ids),
+          cross_lateral_join: comment_id in subquery(comment_id_subquery()),
           select: {post.id, comment_id.id}
         )
 
@@ -119,6 +194,24 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert first.meta.reason == :literal_true_on
       assert second.meta.join_index == 1
       assert second.meta.reason == :cross_join
+    end
+
+    test "detects literal true joins in supported raw query maps" do
+      query = %{
+        joins: [
+          %{
+            qual: :inner,
+            on: %{expr: true}
+          }
+        ]
+      }
+
+      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_index == 0
+      assert issue.meta.binding_index == 1
+      assert issue.meta.join_qual == :inner
+      assert issue.meta.reason == :literal_true_on
     end
 
     test "passes when joins have restricting on predicates" do
@@ -182,6 +275,20 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       assert :ok = CartesianJoins.validate(:all, query, cartesian_joins: [validate: false])
     end
 
+    test "validates when validate is explicitly true" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, %Issue{} = issue} =
+               CartesianJoins.validate(:all, query, cartesian_joins: [validate: true])
+
+      assert issue.meta.reason == :literal_true_on
+    end
+
     test "requires an explicit false escape hatch" do
       query =
         from(post in Post,
@@ -212,6 +319,16 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
                    end
     end
 
+    test "raises when check opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "expected :cartesian_joins opts to be a keyword list, got: [:bad]",
+                   fn ->
+                     CartesianJoins.validate(:all, query, cartesian_joins: [:bad])
+                   end
+    end
+
     test "raises when top-level opts are not a keyword list" do
       query = from(post in Post)
 
@@ -219,5 +336,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         CartesianJoins.validate(:all, query, [:bad])
       end
     end
+  end
+
+  defp comment_id_subquery do
+    from(comment in Comment,
+      where: comment.post_id == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
   end
 end
