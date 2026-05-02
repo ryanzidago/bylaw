@@ -65,6 +65,14 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
 
   The check is enabled by default. Set `named_bindings: [validate: false]` to
   skip validation for a caller-managed exception.
+
+  Supported options:
+
+      [
+        named_bindings: [
+          validate: true
+        ]
+      ]
   """
   @spec validate(String.t(), opts()) :: result()
   def validate(source, opts \\ [])
@@ -95,11 +103,25 @@ defmodule Bylaw.Ecto.Query.SourceChecks.NamedBindings do
     |> normalize_check_opts!()
   end
 
-  defp normalize_check_opts!(opts) when is_list(opts), do: opts
+  defp normalize_check_opts!(opts) when is_list(opts) do
+    if Keyword.keyword?(opts) do
+      Enum.each(opts, &validate_check_opt!/1)
+      opts
+    else
+      raise ArgumentError,
+            "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
+    end
+  end
 
   defp normalize_check_opts!(opts) do
     raise ArgumentError,
           "expected #{inspect(name())} opts to be a keyword list, got: #{inspect(opts)}"
+  end
+
+  defp validate_check_opt!({:validate, _value}), do: :ok
+
+  defp validate_check_opt!({key, _value}) do
+    raise ArgumentError, "unknown #{inspect(name())} option: #{inspect(key)}"
   end
 
   defp enabled?(opts), do: Keyword.get(opts, :validate, true) != false
