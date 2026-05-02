@@ -209,7 +209,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp select_expression_sources(nil), do: []
 
   defp select_expression_sources(select) do
-    List.wrap(expression_source(select, :select, %{}))
+    source = expression_source(select, :select, %{})
+    List.wrap(source)
   end
 
   defp by_expression_sources(name, expressions) do
@@ -219,7 +220,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp distinct_expression_sources(nil), do: []
 
   defp distinct_expression_sources(distinct) do
-    List.wrap(expression_source(distinct, :distinct, %{}))
+    source = expression_source(distinct, :distinct, %{})
+    List.wrap(source)
   end
 
   defp query_expression_sources(name, expressions) do
@@ -320,9 +322,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp from_source_subqueries(query) do
-    query
-    |> Map.get(:from)
-    |> case do
+    case Map.get(query, :from) do
       %{source: source} -> subquery_query(source)
       _from -> []
     end
@@ -363,13 +363,15 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
       check: __MODULE__,
       message: message,
       meta:
-        %{
-          operation: operation,
-          reason: reason,
-          line: line(meta_source),
-          file: file(meta_source)
-        }
-        |> Map.merge(extra_meta)
+        Map.merge(
+          %{
+            operation: operation,
+            reason: reason,
+            line: line(meta_source),
+            file: file(meta_source)
+          },
+          extra_meta
+        )
     }
   end
 

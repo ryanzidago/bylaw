@@ -472,7 +472,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
           select: post.id
         )
 
-      Enum.each(combination_queries(scoped_posts, unscoped_posts), fn {operation, query} ->
+      scoped_posts
+      |> combination_queries(unscoped_posts)
+      |> Enum.each(fn {operation, query} ->
         assert {:error, %Issue{} = issue} =
                  ExplicitVisibilityPredicates.validate(:all, query, opts())
 

@@ -146,15 +146,17 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   @spec required_by(Bylaw.Ecto.Query.Check.operation(), term()) :: list(reason())
   defp required_by(operation, query) do
-    [
-      {:limit, limited?(query)},
-      {:offset, offset?(query)},
-      {:stream, operation == :stream}
-    ]
-    |> Enum.flat_map(fn
-      {reason, true} -> [reason]
-      {_reason, false} -> []
-    end)
+    Enum.flat_map(
+      [
+        {:limit, limited?(query)},
+        {:offset, offset?(query)},
+        {:stream, operation == :stream}
+      ],
+      fn
+        {reason, true} -> [reason]
+        {_reason, false} -> []
+      end
+    )
   end
 
   defp limited?(%{limit: nil}), do: false

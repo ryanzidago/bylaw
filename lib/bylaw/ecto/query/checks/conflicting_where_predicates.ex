@@ -167,17 +167,19 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp where_predicate_branches(query, schema, root_aliases) when is_map(query) do
-    query
-    |> Map.get(:wheres, [])
-    |> Enum.reduce(nil, fn where, branches ->
-      where_branches = predicate_branches_in_where(where, schema, root_aliases)
+    branches =
+      query
+      |> Map.get(:wheres, [])
+      |> Enum.reduce(nil, fn where, branches ->
+        where_branches = predicate_branches_in_where(where, schema, root_aliases)
 
-      case Map.get(where, :op, :and) do
-        :or -> concat_predicate_branches(branches, where_branches)
-        _op -> merge_predicate_branches(branches, where_branches)
-      end
-    end)
-    |> case do
+        case Map.get(where, :op, :and) do
+          :or -> concat_predicate_branches(branches, where_branches)
+          _op -> merge_predicate_branches(branches, where_branches)
+        end
+      end)
+
+    case branches do
       nil -> [[]]
       branches -> branches
     end
@@ -321,17 +323,26 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   defp normalize_comparable_values(_schema, _field, []), do: {:ok, []}
 
   defp normalize_comparable_values(schema, field, values) do
-    values
-    |> Enum.reduce_while([], fn value, acc ->
-      case normalize_comparable_value(schema, field, value) do
-        {:ok, nil} -> {:cont, acc}
-        {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
-        :error -> {:halt, :error}
-      end
-    end)
-    |> case do
-      :error -> :error
-      comparable_values -> {:ok, comparable_values |> Enum.uniq() |> Enum.sort()}
+    comparable_values =
+      Enum.reduce_while(values, [], fn value, acc ->
+        case normalize_comparable_value(schema, field, value) do
+          {:ok, nil} -> {:cont, acc}
+          {:ok, comparable_value} -> {:cont, [comparable_value | acc]}
+          :error -> {:halt, :error}
+        end
+      end)
+
+    case comparable_values do
+      :error ->
+        :error
+
+      comparable_values ->
+        sorted_values =
+          comparable_values
+          |> Enum.uniq()
+          |> Enum.sort()
+
+        {:ok, sorted_values}
     end
   end
 
@@ -369,14 +380,15 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp values(values, params) when is_list(values) do
-    values
-    |> Enum.reduce_while([], fn expr, acc ->
-      case value(expr, params) do
-        {:ok, value} -> {:cont, [value | acc]}
-        :error -> {:halt, :error}
-      end
-    end)
-    |> case do
+    values =
+      Enum.reduce_while(values, [], fn expr, acc ->
+        case value(expr, params) do
+          {:ok, value} -> {:cont, [value | acc]}
+          :error -> {:halt, :error}
+        end
+      end)
+
+    case values do
       :error -> :error
       values -> {:ok, Enum.reverse(values)}
     end

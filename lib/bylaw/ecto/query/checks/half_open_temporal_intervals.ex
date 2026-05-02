@@ -165,7 +165,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   defp checked_fields(query, opts) do
     case {configured_fields(opts), root_schema(query)} do
       {{:ok, fields}, {:ok, schema}} ->
-        schema_fields = MapSet.new(schema.__schema__(:fields))
+        schema_field_names = schema.__schema__(:fields)
+        schema_fields = MapSet.new(schema_field_names)
+
         Enum.filter(fields, &MapSet.member?(schema_fields, &1))
 
       {{:ok, fields}, :unknown} ->
