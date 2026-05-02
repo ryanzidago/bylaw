@@ -74,6 +74,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert issue.meta.keys == [:organisation_id]
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
+
+      assert issue.message ==
+               "expected explicit join to #{inspect(Comment)} to match at least one mandatory key with an earlier binding: :organisation_id"
     end
 
     test "passes when an explicit schema join matches the mandatory key to an earlier binding" do
@@ -87,6 +90,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert :ok =
                MandatoryJoinKeys.validate(:all, query,
                  mandatory_join_keys: [keys: [:organisation_id]]
+               )
+    end
+
+    test "passes when duplicate configured keys are satisfied" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          where: post.organisation_id == ^123
+        )
+
+      assert :ok =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id, :organisation_id]]
                )
     end
 
@@ -255,6 +272,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert issue.meta.keys == [:organisation_id, :user_id]
       assert issue.meta.found_join_keys == [:organisation_id]
       assert issue.meta.missing_keys == [:user_id]
+
+      assert issue.message ==
+               "expected explicit join to #{inspect(Comment)} to match all mandatory keys with an earlier binding; missing: :user_id"
     end
 
     test "passes when any configured key is matched and match is any" do
@@ -279,6 +299,27 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         from(post in Post,
           join: comment in Comment,
           on: comment.post_id == post.id and comment.organisation_id == post.organisation_id,
+          join: reaction in Reaction,
+          on: reaction.post_id == post.id,
+          where: post.organisation_id == ^123
+        )
+
+      assert {:error, %Issue{} = issue} =
+               MandatoryJoinKeys.validate(:all, query,
+                 mandatory_join_keys: [keys: [:organisation_id]]
+               )
+
+      assert issue.meta.join_index == 1
+      assert issue.meta.binding_index == 2
+      assert issue.meta.join_schema == Reaction
+      assert issue.meta.missing_keys == [:organisation_id]
+    end
+
+    test "uses the actual binding index when skipped joins appear before explicit schema joins" do
+      query =
+        from(post in Post,
+          join: comment in "comments",
+          on: field(comment, :post_id) == post.id,
           join: reaction in Reaction,
           on: reaction.post_id == post.id,
           where: post.organisation_id == ^123
