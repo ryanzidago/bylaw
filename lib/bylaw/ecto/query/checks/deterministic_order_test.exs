@@ -60,6 +60,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       assert :ok = DeterministicOrder.validate(:all, query, [])
     end
 
+    test "passes when the query is not an Ecto query struct" do
+      assert :ok = DeterministicOrder.validate(:stream, :not_a_query, [])
+    end
+
     test "passes when order_by includes the root schema primary key" do
       query = from(post in Post, order_by: [asc: post.title, asc: post.id])
 
@@ -278,6 +282,36 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       assert :ok = DeterministicOrder.validate(:all, query, [])
     end
 
+    test "accepts primary keys from raw order expressions without direction tuples" do
+      query = raw_order_query([root_field(:id)])
+
+      assert :ok = DeterministicOrder.validate(:all, query, [])
+    end
+
+    test "accepts primary keys from raw field expressions" do
+      query = raw_order_query([root_field_call(:id)])
+
+      assert :ok = DeterministicOrder.validate(:all, query, [])
+    end
+
+    test "does not accept raw field expressions from non-root bindings" do
+      query = raw_order_query(asc: non_root_field_call(:id))
+
+      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+
+      assert issue.meta.primary_key == [:id]
+      assert Enum.empty?(issue.meta.found_order_keys)
+    end
+
+    test "ignores malformed raw order expressions" do
+      query = raw_order_query(:invalid)
+
+      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+
+      assert issue.meta.primary_key == [:id]
+      assert Enum.empty?(issue.meta.found_order_keys)
+    end
+
     test "respects the explicit query-level escape hatch" do
       query = from(post in Post, order_by: [asc: post.title])
 
@@ -312,6 +346,16 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
                    end
     end
 
+    test "raises when check opts are a non-keyword list" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError,
+                   "expected :deterministic_order opts to be a keyword list, got: [:bad]",
+                   fn ->
+                     DeterministicOrder.validate(:all, query, deterministic_order: [:bad])
+                   end
+    end
+
     test "raises when top-level opts are not a keyword list" do
       query = from(post in Post, order_by: [asc: post.title])
 
@@ -319,5 +363,25 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
         DeterministicOrder.validate(:all, query, :bad)
       end
     end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [:bad]", fn ->
+        DeterministicOrder.validate(:all, query, [:bad])
+      end
+    end
   end
+
+  defp raw_order_query(expr) do
+    %{
+      aliases: %{},
+      from: %{source: {"posts", Post}},
+      order_bys: [%{expr: expr}]
+    }
+  end
+
+  defp root_field(field), do: {{:., [], [{:&, [], [0]}, field]}, [], []}
+  defp root_field_call(field), do: {:field, [], [{:&, [], [0]}, field]}
+  defp non_root_field_call(field), do: {:field, [], [{:&, [], [1]}, field]}
 end

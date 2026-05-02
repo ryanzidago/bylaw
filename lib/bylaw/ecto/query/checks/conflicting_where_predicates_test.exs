@@ -851,6 +851,14 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
         ConflictingWherePredicates.validate(:all, query, true)
       end
     end
+
+    test "raises when top-level opts are a non-keyword list" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: [true]", fn ->
+        ConflictingWherePredicates.validate(:all, query, [true])
+      end
+    end
   end
 
   defp query_with_expr(expr, params \\ []) do
