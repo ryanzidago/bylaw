@@ -7,15 +7,30 @@ Each check is intentionally small, directly callable, and documented as its own
 module under `Bylaw.Ecto.Query.Checks`. Use each module page for rule-specific
 examples, accepted query shapes, limitations, and issue metadata.
 
-## Running Query Checks
+## Repo Integration
 
 Query checks implement `Bylaw.Ecto.Query.Check`. For repo-wide enforcement,
 run them with `Bylaw.Ecto.Query.validate/3` from Ecto's
 `c:Ecto.Repo.prepare_query/3` callback.
 
-Read the `c:Ecto.Repo.prepare_query/3` docs before copying this into a repo.
-Ecto invokes the callback for query APIs, including association and preload
-queries, so choose the final check list deliberately.
+Recommended dependency:
+
+```elixir
+{:bylaw, "~> 0.1.0", runtime: false}
+```
+
+Enable validation in the environments where you want checks to run:
+
+```elixir
+# config/dev.exs and config/test.exs
+config :my_app, :bylaw, validate_ecto_queries?: true
+
+# config/prod.exs
+config :my_app, :bylaw, validate_ecto_queries?: false
+```
+
+Start with the checks you want to enforce. When validation is enabled, pass
+that list to `Bylaw.Ecto.Query.validate/3`.
 
 ```elixir
 defmodule MyApp.Repo do
@@ -23,29 +38,44 @@ defmodule MyApp.Repo do
     otp_app: :my_app,
     adapter: Ecto.Adapters.Postgres
 
-  @bylaw [
-    Bylaw.Ecto.Query.Checks.RequiredOrder,
-    Bylaw.Ecto.Query.Checks.DeterministicOrder,
-    Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates,
-    Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
+  @query_checks [
+    Bylaw.Ecto.Query.Checks.RequiredOrder
   ]
+
+  @validate_ecto_queries? Application.compile_env(
+                            :my_app,
+                            [:bylaw, :validate_ecto_queries?],
+                            false
+                          )
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
-      :ok -> {query, opts}
+    if @validate_ecto_queries? do
+      validate_query!(operation, query)
+    end
+
+    {query, opts}
+  end
+
+  defp validate_query!(operation, query) do
+    case Bylaw.Ecto.Query.validate(operation, query, @query_checks) do
+      :ok -> :ok
       {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
     end
   end
 end
 ```
 
-Checks are enabled by default once they are included in `@bylaw`. A check spec
-is either a check module or `{check_module, opts}`. Each check module may appear
-at most once; duplicate modules raise `ArgumentError`.
+Bylaw returns structured issues, so production users can choose a different
+failure mode. For example, set `:validate_ecto_queries?` to `true` in
+production and replace the `raise` branch with logging or telemetry.
+
+Checks are enabled by default once they are included in the check list. A check
+spec is either a check module or `{check_module, opts}`. Each check module may
+appear at most once; duplicate modules raise `ArgumentError`.
 
 ```elixir
-@bylaw [
+[
   Bylaw.Ecto.Query.Checks.RequiredOrder,
   {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organisation_id]}
 ]
@@ -54,66 +84,15 @@ at most once; duplicate modules raise `ArgumentError`.
 If callers need per-query behavior, build a duplicate-free final check list
 before calling `Bylaw.Ecto.Query.validate/3`.
 
-## Dev/Test-Only Integration
+Ecto invokes `prepare_query/3` for association and preload queries. Start
+without special handling. If generated preload queries create noise, keep that
+coupling isolated; Ecto currently tags them with the internal option
+`Keyword.get(opts, :ecto_query) == :preload`.
 
-If Bylaw is declared only for `:dev` and `:test`, production-compiled modules
-must not reference Bylaw modules or structs outside a compile-time guard:
-
-```elixir
-{:bylaw, "~> 0.1.0", only: [:dev, :test], runtime: false}
-```
-
-Enable query validation from your app config in environments where Bylaw is
-available:
-
-```elixir
-config :my_app, :bylaw, validate_queries?: true
-```
-
-Keep every Bylaw reference inside the guarded branch:
-
-```elixir
-defmodule MyApp.Repo do
-  use Ecto.Repo,
-    otp_app: :my_app,
-    adapter: Ecto.Adapters.Postgres
-
-  @impl Ecto.Repo
-  def prepare_query(operation, query, opts) do
-    case maybe_validate_query(operation, query) do
-      :ok -> {query, opts}
-      {:error, reason} -> raise reason
-    end
-  end
-
-  validate_queries? =
-    Application.compile_env(:my_app, [:bylaw, :validate_queries?], false) and
-      Code.ensure_loaded?(Bylaw.Ecto.Query)
-
-  if validate_queries? do
-    @bylaw [
-      Bylaw.Ecto.Query.Checks.RequiredOrder,
-      Bylaw.Ecto.Query.Checks.DeterministicOrder
-    ]
-
-    defp maybe_validate_query(operation, query) do
-      case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
-        :ok -> :ok
-        {:error, issues} -> {:error, Bylaw.Ecto.Query.Issue.format_many(issues)}
-      end
-    end
-  else
-    defp maybe_validate_query(_operation, _query), do: :ok
-  end
-end
-```
-
-Do not put `alias Bylaw...`, `%Bylaw...{}` struct expansion, module attributes
-containing Bylaw modules, or direct Bylaw calls outside that guard when the
-dependency is absent in production.
-
-The `:validate_queries?` config is read while compiling `MyApp.Repo`, not as a
-release runtime toggle.
+If production builds must not compile Bylaw at all, declare the dependency with
+`only: [:dev, :test], runtime: false`. In that stricter setup, every Bylaw
+reference in production-compiled modules must live behind a compile-time branch
+so production compiles a no-op path.
 
 ## Available Query Checks
 
@@ -248,7 +227,7 @@ release runtime toggle.
 One conservative starting set is:
 
 ```elixir
-@bylaw [
+[
   Bylaw.Ecto.Query.Checks.RequiredOrder,
   Bylaw.Ecto.Query.Checks.DeterministicOrder,
   Bylaw.Ecto.Query.Checks.CartesianJoins,
@@ -263,7 +242,7 @@ Other zero-config checks can be added when the matching risk matters for the
 application:
 
 ```elixir
-@bylaw [
+[
   Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
   Bylaw.Ecto.Query.Checks.DuplicateJoins,
   Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema,
@@ -277,7 +256,7 @@ application:
 Then add configured checks where the application has clear invariants:
 
 ```elixir
-@bylaw [
+[
   {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
     keys: [:organisation_id],
     match: :any
@@ -312,6 +291,8 @@ All built-in query checks accept:
 | Option | Default | Meaning |
 | --- | --- | --- |
 | `:validate` | `true` | Set to `false` to skip this check spec in the final check list. |
+
+This is a check-spec option, not a repo option passed by callers.
 
 ### Configured checks
 
