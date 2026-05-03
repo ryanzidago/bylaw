@@ -102,7 +102,10 @@ so production compiles a no-op path.
 
   Catches explicit cartesian joins, including `cross_join`, uncorrelated
   `cross_lateral_join`, and non-association joins whose `on` expression is
-  literally `true`.
+  literally `true`. The check treats lateral joins as constrained when the
+  right side has an Ecto-visible dependency on a prior binding. It does not
+  parse SQL fragments; a parent reference inside a lateral fragment is
+  dependency evidence, not proof of exact SQL cardinality.
 
 - `Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`
 
@@ -347,3 +350,11 @@ In general, query checks trust direct root or join field references in
 supported Ecto query expressions. They intentionally avoid proving behavior
 hidden inside raw SQL fragments, arbitrary functions, dynamic expressions, or
 subqueries unless a specific check documents that support.
+
+For example, `Bylaw.Ecto.Query.Checks.CartesianJoins` uses the Ecto-visible
+dependency graph to detect obvious cartesian joins. A lateral fragment that
+receives a previous binding as an argument is treated as correlated, but Bylaw
+does not inspect the raw SQL to prove whether that fragment returns one row,
+many rows, or only rows related to the parent. Very opaque query shapes should
+still be reviewed at the application boundary or excluded from repo-wide
+enforcement when the local SQL intent is clearer than the Ecto structure.
