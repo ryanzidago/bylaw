@@ -110,7 +110,8 @@ coupling isolated; Ecto currently tags them with the internal option
   Required config: none
 
   Catches impossible root predicates such as `status == :draft` and
-  `status == :published` in the same satisfiable branch.
+  `status == :published` in the same satisfiable branch. Empty `in` predicates
+  are handled separately by `Bylaw.Ecto.Query.Checks.EmptyInPredicates`.
 
 - `Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons`
 
@@ -131,6 +132,14 @@ coupling isolated; Ecto currently tags them with the internal option
   Required config: none
 
   Catches repeated equivalent joins that can multiply result rows.
+
+- `Bylaw.Ecto.Query.Checks.EmptyInPredicates`
+
+  Required config: none
+
+  Catches root `where` predicates such as `id in ^[]` where every possible
+  branch has an empty `in` candidate list and the caller could return `[]`
+  before querying the database.
 
 - `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`
 
@@ -246,6 +255,7 @@ application:
 [
   Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
   Bylaw.Ecto.Query.Checks.DuplicateJoins,
+  Bylaw.Ecto.Query.Checks.EmptyInPredicates,
   Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema,
   Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc,
   Bylaw.Ecto.Query.Checks.OffsetWithoutLimit,
