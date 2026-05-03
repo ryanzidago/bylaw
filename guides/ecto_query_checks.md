@@ -153,6 +153,15 @@ so production compiles a no-op path.
   Catches `delete_all` operations against root schemas that declare persisted
   soft-delete fields such as `:deleted_at` or `:archived_at`.
 
+- `Bylaw.Ecto.Query.Checks.HasManyJoinWithoutDistinct`
+
+  Required config: none
+
+  Catches top-level root-row read queries that directly join `has_many` or
+  `many_to_many` associations without an obvious `distinct`, `group_by`, or
+  preload assembly. It is intentionally an educational guardrail and does not
+  analyze nested subqueries, CTEs, or set operations.
+
 - `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
 
   Required config: none
