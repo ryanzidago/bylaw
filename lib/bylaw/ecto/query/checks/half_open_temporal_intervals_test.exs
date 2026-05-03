@@ -157,7 +157,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.check == HalfOpenTemporalIntervals
 
@@ -182,7 +182,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: event.occurred_at < ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -196,7 +196,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       predicate = dynamic([event], event.occurred_at <= ^end_at)
       query = from(event in Event, where: ^predicate)
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -209,7 +209,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       end_at = end_at()
       query = from(event in Event, where: field(event, :occurred_at) <= ^end_at)
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -228,7 +228,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: ^end_at >= event.occurred_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.violations == [
                %{boundary: :lower, operator: :>, expected_operator: :>=},
@@ -241,7 +241,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} =
+        assert {:error, [%Issue{} = issue]} =
                  HalfOpenTemporalIntervals.validate(operation, query, [])
 
         assert issue.meta.operation == operation
@@ -258,7 +258,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           or_where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
 
@@ -275,7 +275,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: event.title == ^"public" or event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
@@ -330,7 +330,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
     test "validates configured fields even when the schema type is not date/time" do
       query = from(event in StringEvent, where: event.occurred_at <= ^"2026-02-01")
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -340,7 +340,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       end_at = end_at()
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query,
                  fields: [:occurred_at, :occurred_at]
                )
@@ -369,7 +369,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       end_at = end_at()
       query = from(event in "events", where: field(event, :occurred_at) <= ^end_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -379,7 +379,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       end_at = end_at()
       query = from(event in "events", where: field(event, "occurred_at") <= ^end_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -398,7 +398,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: field(as(:event), :occurred_at) <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -413,7 +413,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: as(:event).occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
@@ -460,7 +460,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: event.occurred_at <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} = HalfOpenTemporalIntervals.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = HalfOpenTemporalIntervals.validate(:all, query, [])
 
       assert issue.meta.field == :occurred_at
     end
@@ -524,7 +524,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       query =
         query_with_expr({:<=, [], [root_field(:occurred_at), pinned_param(0)]})
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -538,7 +538,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       query =
         query_with_expr({:>, [], [root_field_call(:occurred_at), pinned_param(0)]})
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -556,7 +556,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
           where: type(field(event, :occurred_at), :utc_datetime) <= ^end_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
 
       assert issue.meta.field == :occurred_at
@@ -584,7 +584,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
                HalfOpenTemporalIntervals.validate(:all, query, fields: [:occurred_at])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       end_at = end_at()
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
@@ -596,7 +596,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       end_at = end_at()
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HalfOpenTemporalIntervals.validate(:all, query,
                  fields: [:occurred_at],
                  validate: true
@@ -605,11 +605,11 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervalsTest do
       assert issue.meta.field == :occurred_at
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       end_at = end_at()
       query = from(event in Event, where: event.occurred_at <= ^end_at)
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                HalfOpenTemporalIntervals.validate(:all, query,
                  fields: [:occurred_at],
                  validate: nil

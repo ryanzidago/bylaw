@@ -92,7 +92,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           on: true
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = NamedBindings.validate(:all, query, [])
       assert issue.check == NamedBindings
       assert issue.meta.reason == :missing_root_as
       assert issue.meta.binding == :root
@@ -106,7 +106,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           on: as(:comment).post_id == as(:post).id
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = NamedBindings.validate(:all, query, [])
       assert issue.meta.reason == :missing_join_as
       assert issue.meta.join_index == 0
       assert issue.meta.binding_index == 1
@@ -424,7 +424,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert :ok = NamedBindings.validate(:all, query, validate: false)
@@ -437,7 +437,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
                NamedBindings.validate(:all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert {:error, [%Issue{} | _issues]} =

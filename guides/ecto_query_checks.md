@@ -15,7 +15,7 @@ run them with `Bylaw.Ecto.Query.validate/3` from Ecto's
 
 Read the `c:Ecto.Repo.prepare_query/3` docs before copying this into a repo.
 Ecto invokes the callback for query APIs, including association and preload
-queries, so configure query-level escape hatches deliberately.
+queries, so choose the final check list deliberately.
 
 ```elixir
 defmodule MyApp.Repo do
@@ -32,9 +32,7 @@ defmodule MyApp.Repo do
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    checks = @bylaw ++ Keyword.get(opts, :bylaw, [])
-
-    case Bylaw.Ecto.Query.validate(operation, query, checks) do
+    case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
       :ok -> {query, opts}
       {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
     end
@@ -43,21 +41,18 @@ end
 ```
 
 Checks are enabled by default once they are included in `@bylaw`. A check spec
-is either a check module or `{check_module, opts}`. When the same module appears
-more than once, the later spec replaces the earlier spec's options without
-changing the original check order, so callers can append query-level overrides
-to repo defaults:
+is either a check module or `{check_module, opts}`. Each check module may appear
+at most once; duplicate modules raise `ArgumentError`.
 
 ```elixir
-Repo.all(query,
-  bylaw: [
-    {Bylaw.Ecto.Query.Checks.RequiredOrder, validate: false}
-  ]
-)
+@bylaw [
+  Bylaw.Ecto.Query.Checks.RequiredOrder,
+  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organisation_id]}
+]
 ```
 
-Every built-in query check treats `validate: false` as an explicit query-level
-escape hatch.
+If callers need per-query behavior, build a duplicate-free final check list
+before calling `Bylaw.Ecto.Query.validate/3`.
 
 ## Dev/Test-Only Integration
 
@@ -78,24 +73,25 @@ defmodule MyApp.Repo do
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    validate_bylaw_query!(operation, query, Keyword.get(opts, :bylaw, []))
+    validate_bylaw_query!(operation, query)
     {query, opts}
   end
 
-  if Mix.env() in [:dev, :test] and Code.ensure_loaded?(Bylaw.Ecto.Query) do
+  if System.get_env("BYLAW_VALIDATE_QUERIES") in ["1", "true"] and
+       Code.ensure_loaded?(Bylaw.Ecto.Query) do
     @bylaw [
       Bylaw.Ecto.Query.Checks.RequiredOrder,
       Bylaw.Ecto.Query.Checks.DeterministicOrder
     ]
 
-    defp validate_bylaw_query!(operation, query, query_checks) do
-      case Bylaw.Ecto.Query.validate(operation, query, @bylaw ++ query_checks) do
+    defp validate_bylaw_query!(operation, query) do
+      case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
         :ok -> :ok
         {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
       end
     end
   else
-    defp validate_bylaw_query!(_operation, _query, _query_checks), do: :ok
+    defp validate_bylaw_query!(_operation, _query), do: :ok
   end
 end
 ```
@@ -103,6 +99,9 @@ end
 Do not put `alias Bylaw...`, `%Bylaw...{}` struct expansion, module attributes
 containing Bylaw modules, or direct Bylaw calls outside that guard when the
 dependency is absent in production.
+
+The `BYLAW_VALIDATE_QUERIES` variable is read while compiling `MyApp.Repo`, not
+as a release runtime toggle.
 
 ## Available Query Checks
 
@@ -300,7 +299,7 @@ All built-in query checks accept:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `:validate` | `true` | Set to `false` to skip the check for a specific repo default or query call. |
+| `:validate` | `true` | Set to `false` to skip this check spec in the final check list. |
 
 ### Configured checks
 
@@ -318,9 +317,9 @@ useful:
 
 ## Issue Results
 
-`Bylaw.Ecto.Query.validate/3` returns `:ok` or `{:error, issues}` where
-`issues` is always a list. Individual checks return `:ok` or
-`{:error, issue_or_issues}`. Issues are `Bylaw.Ecto.Query.Issue` structs with:
+`Bylaw.Ecto.Query.validate/3` returns `:ok` or `{:error, issues}`. Individual
+checks use the same return shape. `issues` is a non-empty list of
+`Bylaw.Ecto.Query.Issue` structs with:
 
 | Field | Meaning |
 | --- | --- |

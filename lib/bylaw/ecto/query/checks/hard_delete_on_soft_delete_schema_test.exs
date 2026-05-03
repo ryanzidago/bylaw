@@ -77,7 +77,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "returns an issue when delete_all targets a schema with deleted_at" do
       query = from(post in DeletedPost)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.check == HardDeleteOnSoftDeleteSchema
@@ -93,7 +93,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "returns an issue when delete_all targets a schema with archived_at" do
       query = from(post in ArchivedPost)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.root_schema == ArchivedPost
@@ -103,7 +103,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "reports every reflected soft-delete field on the root schema" do
       query = from(post in LifecyclePost)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.soft_delete_fields == [:deleted_at, :archived_at]
@@ -112,7 +112,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "returns an issue based on field presence regardless of field type" do
       query = from(post in StringDeletedPost)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.root_schema == StringDeletedPost
@@ -125,7 +125,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
           where: is_nil(post.deleted_at) and post.status == ^"archived"
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.soft_delete_fields == [:deleted_at]
@@ -217,7 +217,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "returns an issue for supported raw query maps with soft-delete root schemas" do
       query = %{from: %{source: {"deleted_posts", DeletedPost}}}
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.root_schema == DeletedPost
@@ -266,7 +266,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       plain_posts
       |> combination_queries(deleted_posts)
       |> Enum.each(fn {operation, query} ->
-        assert {:error, %Issue{} = issue} =
+        assert {:error, [%Issue{} = issue]} =
                  HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
         assert issue.meta.root_schema == DeletedPost
@@ -324,7 +324,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       nested_query = union_all(other_plain_posts, ^deleted_posts)
       query = union(plain_posts, ^nested_query)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [])
 
       assert issue.meta.root_schema == DeletedPost
@@ -336,7 +336,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
              ]
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in DeletedPost)
 
       assert :ok =
@@ -346,14 +346,14 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
     test "validates when validate is explicitly true" do
       query = from(post in DeletedPost)
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in DeletedPost)
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, validate: nil)
     end
 

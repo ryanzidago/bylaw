@@ -20,11 +20,13 @@ defmodule Bylaw.Ecto.QueryTest do
     @impl Bylaw.Ecto.Query.Check
     def validate(operation, _query, opts) do
       {:error,
-       %Issue{
-         check: __MODULE__,
-         message: "failed",
-         meta: %{operation: operation, opts: opts}
-       }}
+       [
+         %Issue{
+           check: __MODULE__,
+           message: "failed",
+           meta: %{operation: operation, opts: opts}
+         }
+       ]}
     end
   end
 
@@ -47,11 +49,25 @@ defmodule Bylaw.Ecto.QueryTest do
     @impl Bylaw.Ecto.Query.Check
     def validate(_operation, _query, opts) do
       if Keyword.get(opts, :fail, false) do
-        {:error, %Issue{check: __MODULE__, message: "failed"}}
+        {:error, [%Issue{check: __MODULE__, message: "failed"}]}
       else
         :ok
       end
     end
+  end
+
+  defmodule EmptyIssueCheck do
+    @behaviour Bylaw.Ecto.Query.Check
+
+    @impl Bylaw.Ecto.Query.Check
+    def validate(_operation, _query, _opts), do: {:error, []}
+  end
+
+  defmodule InvalidIssueCheck do
+    @behaviour Bylaw.Ecto.Query.Check
+
+    @impl Bylaw.Ecto.Query.Check
+    def validate(_operation, _query, _opts), do: {:error, [:bad]}
   end
 
   defmodule InvalidReturnCheck do
@@ -72,7 +88,7 @@ defmodule Bylaw.Ecto.QueryTest do
       end
     end
 
-    test "normalizes single and multiple issues" do
+    test "collects check issue lists" do
       assert {:error, issues} =
                Query.validate(:all, :query, [
                  PassingCheck,
@@ -87,27 +103,13 @@ defmodule Bylaw.Ecto.QueryTest do
              ] = issues
     end
 
-    test "uses the last spec opts for a repeated check module" do
-      assert :ok =
-               Query.validate(:all, :query, [
-                 {OptionCheck, fail: true},
-                 {OptionCheck, fail: false}
-               ])
-    end
-
-    test "keeps the first check position when later specs override opts" do
-      assert {:error, issues} =
-               Query.validate(:all, :query, [
-                 {FailingCheck, sample: :default},
-                 MultiIssueCheck,
-                 {FailingCheck, sample: :override}
-               ])
-
-      assert [
-               %Issue{check: FailingCheck, meta: %{opts: [sample: :override]}},
-               %Issue{check: MultiIssueCheck, message: "first"},
-               %Issue{check: MultiIssueCheck, message: "second"}
-             ] = issues
+    test "raises for duplicate check modules" do
+      assert_raise ArgumentError, "duplicate query check: #{inspect(OptionCheck)}", fn ->
+        Query.validate(:all, :query, [
+          {OptionCheck, fail: true},
+          {OptionCheck, fail: false}
+        ])
+      end
     end
 
     test "runs built-in checks from module specs" do
@@ -117,14 +119,10 @@ defmodule Bylaw.Ecto.QueryTest do
                Query.validate(:all, query, [RequiredOrder])
     end
 
-    test "applies query-level overrides to built-in checks" do
+    test "passes check-specific opts to built-in checks" do
       query = from(post in "posts", limit: 1)
 
-      assert :ok =
-               Query.validate(:all, query, [
-                 RequiredOrder,
-                 {RequiredOrder, validate: false}
-               ])
+      assert :ok = Query.validate(:all, query, [{RequiredOrder, validate: false}])
     end
 
     test "raises for malformed checks" do
@@ -151,9 +149,21 @@ defmodule Bylaw.Ecto.QueryTest do
 
     test "raises for malformed check results" do
       assert_raise ArgumentError,
-                   "expected #{inspect(InvalidReturnCheck)}.validate/3 to return :ok or {:error, issue_or_issues}, got: :error",
+                   "expected #{inspect(InvalidReturnCheck)}.validate/3 to return :ok or {:error, non_empty_issue_list}, got: :error",
                    fn ->
                      Query.validate(:all, :query, [InvalidReturnCheck])
+                   end
+
+      assert_raise ArgumentError,
+                   "expected #{inspect(EmptyIssueCheck)}.validate/3 to return :ok or {:error, non_empty_issue_list}, got: {:error, []}",
+                   fn ->
+                     Query.validate(:all, :query, [EmptyIssueCheck])
+                   end
+
+      assert_raise ArgumentError,
+                   "expected #{inspect(InvalidIssueCheck)}.validate/3 to return :ok or {:error, non_empty_issue_list}, got: {:error, [:bad]}",
+                   fn ->
+                     Query.validate(:all, :query, [InvalidIssueCheck])
                    end
     end
   end

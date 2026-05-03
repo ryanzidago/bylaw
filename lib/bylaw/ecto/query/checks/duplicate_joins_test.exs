@@ -67,7 +67,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.check == DuplicateJoins
 
@@ -95,7 +95,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -121,7 +121,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         ]
       }
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -133,7 +133,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         |> join(:inner, [post], comment in Comment, on: comment.post_id == post.id)
         |> join(:inner, [post], other_comment in Comment, on: other_comment.post_id == post.id)
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -149,7 +149,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == as(:post).id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -165,7 +165,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == as(:post).id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -218,7 +218,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :left
       assert issue.meta.join_index == 1
@@ -298,7 +298,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id and other_comment.kind == ^kind
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -351,7 +351,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           where: second_comment.kind == ^kind
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -368,7 +368,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id and post.title == ^title
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -383,7 +383,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: post.id == other_comment.post_id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -400,7 +400,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.kind == ^kind and other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -420,7 +420,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
               other_comment.kind == ^kind
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -435,7 +435,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: [post_id: post.id]
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -450,7 +450,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: field(other_comment, :post_id) == field(post, :id)
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -465,7 +465,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: true
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -482,7 +482,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == reaction.post_id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 2
       assert issue.meta.original_join_index == 1
@@ -497,7 +497,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: field(other_comment, :post_id) == field(post, :id)
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_source == {"comments", nil}
     end
@@ -510,7 +510,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           select: {comment.id, other_comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_source == nil
       assert issue.meta.join_assoc == {0, :comments}
@@ -525,7 +525,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: field(other_comment, :post_id) == field(post, :id)
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
     end
@@ -541,7 +541,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
     end
@@ -557,7 +557,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
     end
@@ -618,7 +618,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = DuplicateJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 1
       assert issue.meta.original_join_index == 0
@@ -671,14 +671,14 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         )
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = DuplicateJoins.validate(operation, query, [])
+        assert {:error, [%Issue{} = issue]} = DuplicateJoins.validate(operation, query, [])
 
         assert issue.meta.operation == operation
         assert issue.meta.join_index == 1
       end)
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -699,13 +699,13 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DuplicateJoins.validate(:all, query, validate: true)
 
       assert issue.meta.join_index == 1
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -714,7 +714,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                DuplicateJoins.validate(:all, query, validate: nil)
     end
 

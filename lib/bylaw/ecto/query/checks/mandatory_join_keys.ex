@@ -20,11 +20,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.MandatoryJoinKeys, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -72,7 +67,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
       case issues(operation, query, keys, match) do
         [] -> :ok
-        [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
     else

@@ -110,9 +110,9 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   @doc """
   Raises when `opts` contains keys outside `allowed_keys`.
 
-  Returns `:ok` when every option key is allowed.
+  Returns `:ok` when every option key is allowed. Pass `:any` to allow all keys.
   """
-  @spec validate_allowed_keys!(keyword(), list(atom())) :: :ok
+  @spec validate_allowed_keys!(keyword(), :any | list(atom())) :: :ok
   def validate_allowed_keys!(_opts, :any), do: :ok
 
   def validate_allowed_keys!(opts, allowed_keys) do

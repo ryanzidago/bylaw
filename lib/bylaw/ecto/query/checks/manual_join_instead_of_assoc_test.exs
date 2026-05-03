@@ -134,7 +134,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.check == ManualJoinInsteadOfAssoc
 
@@ -159,7 +159,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {comment.id, author.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.message ==
                "expected join 0 to use assoc/2 for existing association :author from #{inspect(Comment)} to #{inspect(Author)}"
@@ -177,7 +177,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, tag.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.root_schema == Post
       assert issue.meta.join_schema == Tag
@@ -192,7 +192,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, author.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.root_schema == Post
       assert issue.meta.join_schema == Author
@@ -215,7 +215,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
         |> join(:inner, [post], comment in Comment, on: comment.post_id == post.id)
         |> select([post, comment], {post.id, comment.id})
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.join_index == 0
       assert issue.meta.associations == [:comments]
@@ -224,7 +224,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
     test "returns an issue for supported raw query maps with manual associated joins" do
       query = query_with_join(%{assoc: nil, source: {nil, Comment}, qual: :inner})
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.root_schema == Post
       assert issue.meta.join_schema == Comment
@@ -235,7 +235,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
     test "returns an issue for supported raw join maps without an assoc key" do
       query = query_with_join(%{source: {nil, Comment}, qual: :inner})
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.root_schema == Post
       assert issue.meta.join_schema == Comment
@@ -256,7 +256,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.associations == [:comments, :public_comments]
 
@@ -283,7 +283,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.associations == [:comments]
 
@@ -401,7 +401,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
 
       query = union_all(safe_query, ^manual_join_query)
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.join_index == 0
       assert issue.meta.associations == [:comments]
@@ -453,7 +453,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
       nested_query = union_all(safe_query, ^manual_join_query)
       query = union(safe_query, ^nested_query)
 
-      assert {:error, %Issue{} = issue} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ManualJoinInsteadOfAssoc.validate(:all, query, [])
 
       assert issue.meta.join_index == 0
       assert issue.meta.associations == [:comments]
@@ -485,7 +485,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
         )
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} =
+        assert {:error, [%Issue{} = issue]} =
                  ManualJoinInsteadOfAssoc.validate(operation, query, [])
 
         assert issue.meta.operation == operation
@@ -513,11 +513,11 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                ManualJoinInsteadOfAssoc.validate(:all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -525,7 +525,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                ManualJoinInsteadOfAssoc.validate(:all, query, validate: nil)
     end
 

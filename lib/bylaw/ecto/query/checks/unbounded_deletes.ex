@@ -8,11 +8,6 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.delete_all(query, bylaw: [{Bylaw.Ecto.Query.Checks.UnboundedDeletes, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -47,7 +42,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
     check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) and unbounded_delete?(operation, query) do
-      {:error, issue(operation)}
+      {:error, [issue(operation)]}
     else
       :ok
     end

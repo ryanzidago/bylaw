@@ -29,11 +29,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.NamedBindings, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -77,7 +72,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     if CheckOptions.enabled?(check_opts) do
       case issues(operation, query) do
         [] -> :ok
-        [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
     else

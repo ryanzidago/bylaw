@@ -13,10 +13,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   `Repo.delete_all/2` when this check reports an issue.
 
   The check is zero-config. Field presence in `__schema__(:fields)` is the
-  signal. It is enabled by default, and a caller must explicitly set the
-  query-level escape hatch to `false` to skip it:
-
-      Repo.delete_all(query, bylaw: [{Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema, validate: false}])
+  signal.
 
   Supported options:
 
@@ -82,7 +79,6 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   end
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp soft_delete_fields(schema) do
