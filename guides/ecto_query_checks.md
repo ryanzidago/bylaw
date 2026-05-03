@@ -63,6 +63,13 @@ must not reference Bylaw modules or structs outside a compile-time guard:
 {:bylaw, "~> 0.1.0", only: [:dev, :test], runtime: false}
 ```
 
+Enable query validation from your app config in environments where Bylaw is
+available:
+
+```elixir
+config :my_app, :bylaw, validate_queries?: true
+```
+
 Keep every Bylaw reference inside the guarded branch:
 
 ```elixir
@@ -73,25 +80,30 @@ defmodule MyApp.Repo do
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    validate_bylaw_query!(operation, query)
-    {query, opts}
+    case maybe_validate_query(operation, query) do
+      :ok -> {query, opts}
+      {:error, reason} -> raise reason
+    end
   end
 
-  if System.get_env("BYLAW_VALIDATE_QUERIES") in ["1", "true"] and
-       Code.ensure_loaded?(Bylaw.Ecto.Query) do
+  validate_queries? =
+    Application.compile_env(:my_app, [:bylaw, :validate_queries?], false) and
+      Code.ensure_loaded?(Bylaw.Ecto.Query)
+
+  if validate_queries? do
     @bylaw [
       Bylaw.Ecto.Query.Checks.RequiredOrder,
       Bylaw.Ecto.Query.Checks.DeterministicOrder
     ]
 
-    defp validate_bylaw_query!(operation, query) do
+    defp maybe_validate_query(operation, query) do
       case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
         :ok -> :ok
-        {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
+        {:error, issues} -> {:error, Bylaw.Ecto.Query.Issue.format_many(issues)}
       end
     end
   else
-    defp validate_bylaw_query!(_operation, _query), do: :ok
+    defp maybe_validate_query(_operation, _query), do: :ok
   end
 end
 ```
@@ -100,8 +112,8 @@ Do not put `alias Bylaw...`, `%Bylaw...{}` struct expansion, module attributes
 containing Bylaw modules, or direct Bylaw calls outside that guard when the
 dependency is absent in production.
 
-The `BYLAW_VALIDATE_QUERIES` variable is read while compiling `MyApp.Repo`, not
-as a release runtime toggle.
+The `:validate_queries?` config is read while compiling `MyApp.Repo`, not as a
+release runtime toggle.
 
 ## Available Query Checks
 
