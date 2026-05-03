@@ -18,6 +18,10 @@ defmodule Bylaw.Ecto.Query.IssueTest do
   end
 
   describe "format_many/1" do
+    test "formats an empty issue list" do
+      assert Issue.format_many([]) == ""
+    end
+
     test "joins formatted issues with newlines" do
       issues = [
         %Issue{check: FirstCheck, message: "first"},

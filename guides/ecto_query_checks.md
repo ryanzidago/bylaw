@@ -44,8 +44,9 @@ end
 
 Checks are enabled by default once they are included in `@bylaw`. A check spec
 is either a check module or `{check_module, opts}`. When the same module appears
-more than once, the later spec replaces the earlier spec, so callers can append
-query-level overrides to repo defaults:
+more than once, the later spec replaces the earlier spec's options without
+changing the original check order, so callers can append query-level overrides
+to repo defaults:
 
 ```elixir
 Repo.all(query,
