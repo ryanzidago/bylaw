@@ -256,22 +256,32 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
              ]
     end
 
-    test "returns an issue when an enum in predicate has no possible values" do
+    test "passes when an enum in predicate has no possible values" do
       query = from(post in Post, where: post.status in ^[])
 
-      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
-
-      assert issue.meta.field == :status
-      assert issue.meta.predicates == [%{operator: :in, values: []}]
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
-    test "returns an issue when an enum in predicate only contains nil values" do
+    test "passes when an enum in predicate only contains nil values" do
       query = from(post in Post, where: post.status in ^[nil])
+
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
+    end
+
+    test "keeps empty in predicates out of unrelated conflict metadata" do
+      query =
+        from(post in Post,
+          where: post.status in ^[],
+          where: post.status == :draft,
+          where: post.status == :published
+        )
 
       assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
-      assert issue.meta.field == :status
-      assert issue.meta.predicates == [%{operator: :in, values: []}]
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [:draft]},
+               %{operator: :==, values: [:published]}
+             ]
     end
 
     test "ignores enum in predicates with invalid enum values" do
@@ -413,13 +423,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
              ]
     end
 
-    test "returns an issue when an in predicate has no possible values" do
+    test "passes when an in predicate has no possible values" do
       query = from(post in Post, where: post.sequence in [])
 
-      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
-
-      assert issue.meta.field == :sequence
-      assert issue.meta.predicates == [%{operator: :in, values: []}]
+      assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
     test "returns an issue when integer in and equality predicates are disjoint" do
@@ -647,6 +654,23 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
 
       assert first_issue.meta.field == :sequence
       assert second_issue.meta.field == :status
+    end
+
+    test "returns an issue when every branch is unsatisfiable through conflicts or empty in" do
+      query =
+        from(post in Post,
+          where: post.status == :draft and post.status == :published,
+          or_where: post.id in ^[]
+        )
+
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [:draft]},
+               %{operator: :==, values: [:published]}
+             ]
     end
 
     test "ignores predicates inside or expressions" do
