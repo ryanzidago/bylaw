@@ -17,36 +17,15 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
         limit: 50,
         offset: 10_000
 
-      @bylaw [
-        offset_without_limit: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.OffsetWithoutLimit.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [offset_without_limit: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.OffsetWithoutLimit, validate: false}])
 
   Supported options:
-
-      [
-        offset_without_limit: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -61,15 +40,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:offset_without_limit, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :offset_without_limit
-  def name, do: :offset_without_limit
+  @type opts :: check_opts()
 
   @doc """
   Validates that a prepared Ecto query does not use `offset` without `limit`.
@@ -82,7 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) and offset_without_limit?(query) do
       {:error, issue(operation)}

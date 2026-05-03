@@ -20,37 +20,15 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   only rejected when every branch conflicts. Fragments, subqueries, and
   non-root bindings are ignored.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw []
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.ConflictingWherePredicates.validate(
-               operation,
-               query,
-               bylaw_opts
-             ) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [conflicting_where_predicates: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.ConflictingWherePredicates, validate: false}])
 
   Supported options:
-
-      [
-        conflicting_where_predicates: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
   """
@@ -70,15 +48,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
           values: list(comparable_value())
         }
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:conflicting_where_predicates, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :conflicting_where_predicates
-  def name, do: :conflicting_where_predicates
+  @type opts :: check_opts()
 
   @doc """
   Validates that root `where` predicates are mutually satisfiable.
@@ -91,7 +61,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)

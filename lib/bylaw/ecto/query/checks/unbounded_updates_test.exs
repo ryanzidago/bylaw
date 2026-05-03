@@ -276,28 +276,28 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       query = from(post in Post)
 
       assert :ok =
-               UnboundedUpdates.validate(:update_all, query, unbounded_updates: [validate: false])
+               UnboundedUpdates.validate(:update_all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post)
 
       assert {:error, %Issue{}} =
-               UnboundedUpdates.validate(:update_all, query, unbounded_updates: [validate: true])
+               UnboundedUpdates.validate(:update_all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in Post)
 
       assert {:error, %Issue{}} =
-               UnboundedUpdates.validate(:update_all, query, unbounded_updates: [validate: nil])
+               UnboundedUpdates.validate(:update_all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :unbounded_updates option: :fields", fn ->
-        UnboundedUpdates.validate(:update_all, query, unbounded_updates: [fields: [:id]])
+      assert_raise ArgumentError, "unknown option: :fields", fn ->
+        UnboundedUpdates.validate(:update_all, query, fields: [:id])
       end
     end
 
@@ -305,9 +305,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_updates opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     UnboundedUpdates.validate(:update_all, query, unbounded_updates: :bad)
+                     UnboundedUpdates.validate(:update_all, query, :bad)
                    end
     end
 
@@ -315,9 +315,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_updates opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     UnboundedUpdates.validate(:update_all, query, unbounded_updates: [:bad])
+                     UnboundedUpdates.validate(:update_all, query, [:bad])
                    end
     end
 

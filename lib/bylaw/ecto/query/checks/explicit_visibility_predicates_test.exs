@@ -338,9 +338,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       query = from(post in Post)
 
       assert :ok =
-               ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [schemas: []]
-               )
+               ExplicitVisibilityPredicates.validate(:all, query, schemas: [])
     end
 
     test "passes when check options are omitted" do
@@ -354,11 +352,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [
-                     {Post, fields: [:deleted_at, :status]},
-                     {Comment, fields: [:deleted_at]}
-                   ]
+                 schemas: [
+                   {Post, fields: [:deleted_at, :status]},
+                   {Comment, fields: [:deleted_at]}
                  ]
                )
     end
@@ -368,11 +364,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert {:error, %Issue{} = issue} =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [
-                     {Post, fields: [:deleted_at, :status]},
-                     {Comment, fields: [:deleted_at]}
-                   ]
+                 schemas: [
+                   {Post, fields: [:deleted_at, :status]},
+                   {Comment, fields: [:deleted_at]}
                  ]
                )
 
@@ -387,9 +381,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [{GlobalPost, fields: [:deleted_at, :status]}]
-                 ]
+                 schemas: [{GlobalPost, fields: [:deleted_at, :status]}]
                )
     end
 
@@ -398,9 +390,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [{PublishedPost, fields: [:deleted_at, :published_at]}]
-                 ]
+                 schemas: [{PublishedPost, fields: [:deleted_at, :published_at]}]
                )
     end
 
@@ -409,9 +399,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert {:error, %Issue{} = issue} =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [{PublishedPost, fields: [:deleted_at, :published_at]}]
-                 ]
+                 schemas: [{PublishedPost, fields: [:deleted_at, :published_at]}]
                )
 
       assert issue.meta.configured_fields == [:deleted_at, :published_at]
@@ -571,11 +559,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [
-                     {Post, fields: [:deleted_at, :status]},
-                     {Comment, fields: [:deleted_at, :status]}
-                   ]
+                 schemas: [
+                   {Post, fields: [:deleted_at, :status]},
+                   {Comment, fields: [:deleted_at, :status]}
                  ]
                )
     end
@@ -807,9 +793,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       query = from(post in Post)
 
       assert :ok =
-               ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [validate: false]
-               )
+               ExplicitVisibilityPredicates.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -817,10 +801,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert {:error, %Issue{} = issue} =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   validate: true,
-                   schemas: [{Post, fields: [:deleted_at, :status]}]
-                 ]
+                 validate: true,
+                 schemas: [{Post, fields: [:deleted_at, :status]}]
                )
 
       assert issue.meta.missing_fields == [:deleted_at, :status]
@@ -831,10 +813,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert {:error, %Issue{}} =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   validate: nil,
-                   schemas: [{Post, fields: [:deleted_at, :status]}]
-                 ]
+                 validate: nil,
+                 schemas: [{Post, fields: [:deleted_at, :status]}]
                )
     end
 
@@ -843,9 +823,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 explicit_visibility_predicates: [
-                   schemas: [{Post, fields: [:deleted_at, :deleted_at]}]
-                 ]
+                 schemas: [{Post, fields: [:deleted_at, :deleted_at]}]
                )
     end
 
@@ -869,11 +847,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :explicit_visibility_predicates opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: :invalid
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, :invalid)
                    end
     end
 
@@ -881,11 +857,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :explicit_visibility_predicates opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [:invalid]
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, [:invalid])
                    end
     end
 
@@ -893,11 +867,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "unknown :explicit_visibility_predicates option: :fields",
+                   "unknown option: :fields",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [fields: [:deleted_at]]
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, fields: [:deleted_at])
                    end
     end
 
@@ -907,9 +879,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert_raise ArgumentError,
                    "expected :schemas to be a list of {schema, fields: fields} tuples, got: Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.Post",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: Post]
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, schemas: Post)
                    end
     end
 
@@ -919,9 +889,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert_raise ArgumentError,
                    "expected :schemas to contain {schema, fields: fields} tuples, got: Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.Post",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [Post]]
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, schemas: [Post])
                    end
     end
 
@@ -932,7 +900,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    "expected configured schema to be an Ecto schema, got: Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.NotSchema",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{NotSchema, fields: [:status]}]]
+                       schemas: [{NotSchema, fields: [:status]}]
                      )
                    end
     end
@@ -944,7 +912,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    "expected schema options for Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.Post to be a keyword list, got: [:invalid]",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{Post, [:invalid]}]]
+                       schemas: [{Post, [:invalid]}]
                      )
                    end
     end
@@ -956,9 +924,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    "unknown option for schema Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.Post: :match",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [
-                         schemas: [{Post, fields: [:deleted_at], match: :all}]
-                       ]
+                       schemas: [{Post, fields: [:deleted_at], match: :all}]
                      )
                    end
     end
@@ -969,9 +935,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert_raise ArgumentError,
                    "missing required :fields option for schema Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest.Post",
                    fn ->
-                     ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{Post, []}]]
-                     )
+                     ExplicitVisibilityPredicates.validate(:all, query, schemas: [{Post, []}])
                    end
     end
 
@@ -982,7 +946,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    "expected :fields to be a non-empty list of atoms, got: []",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{Post, fields: []}]]
+                       schemas: [{Post, fields: []}]
                      )
                    end
     end
@@ -994,7 +958,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    "expected :fields to be a non-empty list of atoms, got: :deleted_at",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{Post, fields: :deleted_at}]]
+                       schemas: [{Post, fields: :deleted_at}]
                      )
                    end
     end
@@ -1006,7 +970,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                    ~s(expected :fields to contain only atoms, got: "deleted_at"),
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       explicit_visibility_predicates: [schemas: [{Post, fields: ["deleted_at"]}]]
+                       schemas: [{Post, fields: ["deleted_at"]}]
                      )
                    end
     end
@@ -1014,10 +978,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
   defp opts do
     [
-      explicit_visibility_predicates: [
-        schemas: [
-          {Post, fields: [:deleted_at, :status]}
-        ]
+      schemas: [
+        {Post, fields: [:deleted_at, :status]}
       ]
     ]
   end

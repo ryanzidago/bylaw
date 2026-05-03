@@ -17,38 +17,15 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
       from event in Event,
         where: event.event_date <= type(event.inserted_at, :date)
 
-      @bylaw [
-        date_datetime_mixed_comparisons: []
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons.validate(
-               operation,
-               query,
-               bylaw_opts
-             ) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [date_datetime_mixed_comparisons: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons, validate: false}])
 
   Supported options:
-
-      [
-        date_datetime_mixed_comparisons: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -90,15 +67,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
           operator: atom()
         }
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:date_datetime_mixed_comparisons, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :date_datetime_mixed_comparisons
-  def name, do: :date_datetime_mixed_comparisons
+  @type opts :: check_opts()
 
   @doc """
   Validates date/datetime field comparisons for a prepared Ecto query.
@@ -111,7 +80,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       operation

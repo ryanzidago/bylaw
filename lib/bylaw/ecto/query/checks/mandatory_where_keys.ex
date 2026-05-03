@@ -5,40 +5,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   This is useful for tenant boundaries where every query should include a
   predicate for fields such as `:organisation_id` or `:user_id`.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw [
-        mandatory_where_keys: [
-          keys: [:organisation_id, :user_id]
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.MandatoryWhereKeys.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [mandatory_where_keys: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, validate: false}])
 
   Supported options:
-
-      [
-        mandatory_where_keys: [
-          keys: [:organisation_id, :user_id],
-          match: :any
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:keys` - required non-empty list of field names when the check runs.
@@ -70,15 +45,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
             | {:keys, list(atom())}
             | {:match, match()}
           )
-  @type opts :: list({:mandatory_where_keys, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :mandatory_where_keys
-  def name, do: :mandatory_where_keys
+  @type opts :: check_opts()
 
   @doc """
   Validates mandatory root `where` predicates for a prepared Ecto query.
@@ -91,7 +58,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:keys, :match, :validate])
+    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)

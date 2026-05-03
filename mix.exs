@@ -103,7 +103,6 @@ defmodule Bylaw.MixProject do
       skip_code_autolink_to: [
         "Bylaw.Credo",
         "Bylaw.Db",
-        "Bylaw.Ecto.Query",
         "Bylaw.Ecto.Query.Checks"
       ],
       extras: [
@@ -117,6 +116,7 @@ defmodule Bylaw.MixProject do
       groups_for_modules: [
         Core: [Bylaw],
         "Bylaw.Ecto.Query": [
+          Bylaw.Ecto.Query,
           Bylaw.Ecto.Query.Check,
           Bylaw.Ecto.Query.Issue
         ],

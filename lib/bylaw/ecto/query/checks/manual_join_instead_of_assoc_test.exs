@@ -502,9 +502,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
         )
 
       assert :ok =
-               ManualJoinInsteadOfAssoc.validate(:all, query,
-                 manual_join_instead_of_assoc: [validate: false]
-               )
+               ManualJoinInsteadOfAssoc.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -516,9 +514,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
         )
 
       assert {:error, %Issue{}} =
-               ManualJoinInsteadOfAssoc.validate(:all, query,
-                 manual_join_instead_of_assoc: [validate: true]
-               )
+               ManualJoinInsteadOfAssoc.validate(:all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
@@ -530,9 +526,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
         )
 
       assert {:error, %Issue{}} =
-               ManualJoinInsteadOfAssoc.validate(:all, query,
-                 manual_join_instead_of_assoc: [validate: nil]
-               )
+               ManualJoinInsteadOfAssoc.validate(:all, query, validate: nil)
     end
 
     test "raises when opts are not a keyword list" do
@@ -549,30 +543,26 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssocTest do
 
     test "raises when check opts are not a keyword list" do
       assert_raise ArgumentError,
-                   "expected :manual_join_instead_of_assoc opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     ManualJoinInsteadOfAssoc.validate(:all, from(post in Post),
-                       manual_join_instead_of_assoc: :invalid
-                     )
+                     ManualJoinInsteadOfAssoc.validate(:all, from(post in Post), :invalid)
                    end
     end
 
     test "raises when check opts are a non-keyword list" do
       assert_raise ArgumentError,
-                   "expected :manual_join_instead_of_assoc opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     ManualJoinInsteadOfAssoc.validate(:all, from(post in Post),
-                       manual_join_instead_of_assoc: [:invalid]
-                     )
+                     ManualJoinInsteadOfAssoc.validate(:all, from(post in Post), [:invalid])
                    end
     end
 
-    test "raises when namespaced options contain unsupported keys" do
+    test "raises when check options contain unsupported keys" do
       assert_raise ArgumentError,
-                   "unknown :manual_join_instead_of_assoc option: :fields",
+                   "unknown option: :fields",
                    fn ->
                      ManualJoinInsteadOfAssoc.validate(:all, from(post in Post),
-                       manual_join_instead_of_assoc: [fields: [:comments]]
+                       fields: [:comments]
                      )
                    end
     end

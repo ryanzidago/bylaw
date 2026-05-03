@@ -620,18 +620,14 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
       assert :ok =
-               DateDatetimeMixedComparisons.validate(:all, query,
-                 date_datetime_mixed_comparisons: [validate: false]
-               )
+               DateDatetimeMixedComparisons.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
       assert {:error, %Issue{} = issue} =
-               DateDatetimeMixedComparisons.validate(:all, query,
-                 date_datetime_mixed_comparisons: [validate: true]
-               )
+               DateDatetimeMixedComparisons.validate(:all, query, validate: true)
 
       assert issue.meta.date_field == :event_date
     end
@@ -640,9 +636,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
       assert {:error, %Issue{}} =
-               DateDatetimeMixedComparisons.validate(:all, query,
-                 date_datetime_mixed_comparisons: [validate: nil]
-               )
+               DateDatetimeMixedComparisons.validate(:all, query, validate: nil)
     end
 
     test "raises when top-level opts are not a keyword list" do
@@ -665,11 +659,9 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :date_datetime_mixed_comparisons opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     DateDatetimeMixedComparisons.validate(:all, query,
-                       date_datetime_mixed_comparisons: :invalid
-                     )
+                     DateDatetimeMixedComparisons.validate(:all, query, :invalid)
                    end
     end
 
@@ -677,11 +669,9 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :date_datetime_mixed_comparisons opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     DateDatetimeMixedComparisons.validate(:all, query,
-                       date_datetime_mixed_comparisons: [:invalid]
-                     )
+                     DateDatetimeMixedComparisons.validate(:all, query, [:invalid])
                    end
     end
 
@@ -689,11 +679,9 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "unknown :date_datetime_mixed_comparisons option: :unknown",
+                   "unknown option: :unknown",
                    fn ->
-                     DateDatetimeMixedComparisons.validate(:all, query,
-                       date_datetime_mixed_comparisons: [unknown: true]
-                     )
+                     DateDatetimeMixedComparisons.validate(:all, query, unknown: true)
                    end
     end
   end

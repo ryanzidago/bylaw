@@ -8,33 +8,15 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   expression. Named bindings are intentionally ignored, because a different
   binding name does not change the rows produced by the join.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw []
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.DuplicateJoins.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [duplicate_joins: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.DuplicateJoins, validate: false}])
 
   Supported options:
-
-      [
-        duplicate_joins: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -52,7 +34,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   @metadata_keys [:file, :line, :cache]
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:duplicate_joins, check_opts()})
+  @type opts :: check_opts()
   @type join_summary :: %{
           binding_index: pos_integer(),
           join_index: non_neg_integer()
@@ -65,14 +47,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
         }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :duplicate_joins
-  def name, do: :duplicate_joins
-
-  @doc """
   Validates that prepared Ecto queries do not contain equivalent joins.
 
   Queries without joins are ignored. When several joins repeat an earlier join,
@@ -83,7 +57,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)

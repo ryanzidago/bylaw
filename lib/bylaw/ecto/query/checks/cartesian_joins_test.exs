@@ -546,7 +546,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert :ok = CartesianJoins.validate(:all, query, cartesian_joins: [validate: false])
+      assert :ok = CartesianJoins.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -558,7 +558,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               CartesianJoins.validate(:all, query, cartesian_joins: [validate: true])
+               CartesianJoins.validate(:all, query, validate: true)
 
       assert issue.meta.reason == :literal_true_on
     end
@@ -572,14 +572,14 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         )
 
       assert {:error, %Issue{}} =
-               CartesianJoins.validate(:all, query, cartesian_joins: [validate: nil])
+               CartesianJoins.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :cartesian_joins option: :allow", fn ->
-        CartesianJoins.validate(:all, query, cartesian_joins: [allow: true])
+      assert_raise ArgumentError, "unknown option: :allow", fn ->
+        CartesianJoins.validate(:all, query, allow: true)
       end
     end
 
@@ -587,9 +587,9 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :cartesian_joins opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     CartesianJoins.validate(:all, query, cartesian_joins: :bad)
+                     CartesianJoins.validate(:all, query, :bad)
                    end
     end
 
@@ -597,9 +597,9 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :cartesian_joins opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     CartesianJoins.validate(:all, query, cartesian_joins: [:bad])
+                     CartesianJoins.validate(:all, query, [:bad])
                    end
     end
 

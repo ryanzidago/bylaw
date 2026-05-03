@@ -340,37 +340,31 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       query = from(post in DeletedPost)
 
       assert :ok =
-               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                 hard_delete_on_soft_delete_schema: [validate: false]
-               )
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in DeletedPost)
 
       assert {:error, %Issue{}} =
-               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                 hard_delete_on_soft_delete_schema: [validate: true]
-               )
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in DeletedPost)
 
       assert {:error, %Issue{}} =
-               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                 hard_delete_on_soft_delete_schema: [validate: nil]
-               )
+               HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in DeletedPost)
 
       assert_raise ArgumentError,
-                   "unknown :hard_delete_on_soft_delete_schema option: :fields",
+                   "unknown option: :fields",
                    fn ->
                      HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                       hard_delete_on_soft_delete_schema: [fields: [:deleted_at]]
+                       fields: [:deleted_at]
                      )
                    end
     end
@@ -379,11 +373,9 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       query = from(post in DeletedPost)
 
       assert_raise ArgumentError,
-                   "expected :hard_delete_on_soft_delete_schema opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                       hard_delete_on_soft_delete_schema: :bad
-                     )
+                     HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, :bad)
                    end
     end
 
@@ -391,11 +383,9 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchemaTest do
       query = from(post in DeletedPost)
 
       assert_raise ArgumentError,
-                   "expected :hard_delete_on_soft_delete_schema opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     HardDeleteOnSoftDeleteSchema.validate(:delete_all, query,
-                       hard_delete_on_soft_delete_schema: [:bad]
-                     )
+                     HardDeleteOnSoftDeleteSchema.validate(:delete_all, query, [:bad])
                    end
     end
 

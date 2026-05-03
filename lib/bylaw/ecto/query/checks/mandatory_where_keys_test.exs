@@ -51,18 +51,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
     end
 
     test "passes when any configured key is referenced in keyword where syntax" do
       query = from(post in Post, where: [organisation_id: ^123])
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
     end
 
     test "passes when any configured key is referenced in a dynamic where expression" do
@@ -71,9 +67,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: ^predicate)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
     end
 
     test "passes when duplicate configured keys are satisfied" do
@@ -81,7 +75,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :organisation_id]]
+                 keys: [:organisation_id, :organisation_id]
                )
     end
 
@@ -93,9 +87,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes for every Ecto prepare_query operation when the root where predicate is present" do
@@ -103,9 +95,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       Enum.each(@prepare_query_operations, fn operation ->
         assert :ok =
-                 MandatoryWhereKeys.validate(operation, query,
-                   mandatory_where_keys: [keys: [:organisation_id]]
-                 )
+                 MandatoryWhereKeys.validate(operation, query, keys: [:organisation_id])
       end)
     end
 
@@ -114,9 +104,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       Enum.each(@prepare_query_operations, fn operation ->
         assert {:error, %Issue{} = issue} =
-                 MandatoryWhereKeys.validate(operation, query,
-                   mandatory_where_keys: [keys: [:organisation_id]]
-                 )
+                 MandatoryWhereKeys.validate(operation, query, keys: [:organisation_id])
 
         assert issue.meta.operation == operation
         assert issue.meta.missing_keys == [:organisation_id]
@@ -131,10 +119,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
     end
 
@@ -142,9 +128,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.title == ^"hello")
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
 
       assert issue.check == MandatoryWhereKeys
       assert issue.meta.keys == [:organisation_id, :user_id]
@@ -160,9 +144,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in GlobalPost, where: post.title == ^"hello")
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
     end
 
     test "validates only configured keys that exist on the root schema" do
@@ -170,10 +152,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
     end
 
@@ -181,9 +161,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in OrganisationPost, where: post.title == ^"hello")
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id, :user_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, :user_id])
 
       assert issue.meta.keys == [:organisation_id]
       assert issue.meta.missing_keys == [:organisation_id]
@@ -194,9 +172,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in "posts", where: field(post, :title) == ^"hello")
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.keys == [:organisation_id]
       assert issue.meta.missing_keys == [:organisation_id]
@@ -206,9 +182,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in "posts", where: field(post, :organisation_id) == ^123)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "accepts mandatory keys from a named schema-less root binding" do
@@ -219,9 +193,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not accept mandatory keys from a named schema-less non-root binding" do
@@ -235,9 +207,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -248,9 +218,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -265,9 +233,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -282,9 +248,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "accepts mandatory keys from a named root binding" do
@@ -295,9 +259,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "accepts mandatory keys from a named root binding in field predicates" do
@@ -308,9 +270,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not accept mandatory keys from a named non-root binding" do
@@ -324,9 +284,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -341,9 +299,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -357,9 +313,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -374,10 +328,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert {:error, %Issue{} = issue} =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
 
       assert issue.meta.missing_keys == [:organisation_id, :user_id]
@@ -391,9 +343,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -403,18 +353,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: ^123 == post.organisation_id)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not accept mandatory keys in self comparisons" do
       query = from(post in Post, where: post.organisation_id == post.organisation_id)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -424,9 +370,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id == post.user_id)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -441,9 +385,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -453,18 +395,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id in ^[123, 456])
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not accept mandatory keys in in predicates compared to another root field" do
       query = from(post in Post, where: post.organisation_id in post.allowed_organisation_ids)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -480,9 +418,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -493,9 +429,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id not in ^[123, 456])
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -505,9 +439,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id != ^123)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -517,9 +449,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: post.organisation_id > ^123)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -529,9 +459,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: not (post.organisation_id == ^123))
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -541,9 +469,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: is_nil(post.organisation_id))
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -553,9 +479,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post, where: fragment("? = ?", post.organisation_id, ^123))
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -573,9 +497,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert Enum.empty?(issue.meta.found_where_keys)
@@ -597,9 +519,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = union_all(scoped_posts, ^other_scoped_posts)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "returns an issue when a combination branch is missing a mandatory key" do
@@ -619,9 +539,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       |> combination_queries(unscoped_posts)
       |> Enum.each(fn {operation, query} ->
         assert {:error, %Issue{} = issue} =
-                 MandatoryWhereKeys.validate(:all, query,
-                   mandatory_where_keys: [keys: [:organisation_id]]
-                 )
+                 MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
         assert issue.meta.missing_keys == [:organisation_id]
         assert issue.meta.found_where_keys == [:title]
@@ -645,9 +563,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = union_all(unscoped_posts, ^other_unscoped_posts)
 
       assert {:error, [%Issue{} = root_issue, %Issue{} = combination_issue]} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       refute Map.has_key?(root_issue.meta, :combination_path)
       assert root_issue.meta.missing_keys == [:organisation_id]
@@ -673,9 +589,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = union(scoped_posts, ^nested_query)
 
       assert {:error, %Issue{} = issue} =
-               MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [keys: [:organisation_id]]
-               )
+               MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
 
@@ -690,10 +604,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert {:error, %Issue{} = issue} =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
 
       assert issue.meta.missing_keys == [:user_id]
@@ -704,7 +616,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert :ok =
-               MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [validate: false])
+               MandatoryWhereKeys.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -712,10 +624,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert {:error, %Issue{} = issue} =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id],
-                   validate: true
-                 ]
+                 keys: [:organisation_id],
+                 validate: true
                )
 
       assert issue.meta.missing_keys == [:organisation_id]
@@ -726,10 +636,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert {:error, %Issue{}} =
                MandatoryWhereKeys.validate(:all, query,
-                 mandatory_where_keys: [
-                   keys: [:organisation_id],
-                   validate: nil
-                 ]
+                 keys: [:organisation_id],
+                 validate: nil
                )
     end
 
@@ -761,9 +669,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :mandatory_where_keys opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: :invalid)
+                     MandatoryWhereKeys.validate(:all, query, :invalid)
                    end
     end
 
@@ -771,17 +679,17 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :mandatory_where_keys opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [:invalid])
+                     MandatoryWhereKeys.validate(:all, query, [:invalid])
                    end
     end
 
     test "raises when a check option is unknown" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :mandatory_where_keys option: :unknown", fn ->
-        MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [unknown: true])
+      assert_raise ArgumentError, "unknown option: :unknown", fn ->
+        MandatoryWhereKeys.validate(:all, query, unknown: true)
       end
     end
 
@@ -789,7 +697,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError, "expected :keys to be a non-empty list of atoms, got: []", fn ->
-        MandatoryWhereKeys.validate(:all, query, mandatory_where_keys: [keys: []])
+        MandatoryWhereKeys.validate(:all, query, keys: [])
       end
     end
 
@@ -799,9 +707,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert_raise ArgumentError,
                    "expected :keys to be a non-empty list of atoms, got: :organisation_id",
                    fn ->
-                     MandatoryWhereKeys.validate(:all, query,
-                       mandatory_where_keys: [keys: :organisation_id]
-                     )
+                     MandatoryWhereKeys.validate(:all, query, keys: :organisation_id)
                    end
     end
 
@@ -809,9 +715,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError, ~s(expected :keys to contain only atoms, got: "user_id"), fn ->
-        MandatoryWhereKeys.validate(:all, query,
-          mandatory_where_keys: [keys: [:organisation_id, "user_id"]]
-        )
+        MandatoryWhereKeys.validate(:all, query, keys: [:organisation_id, "user_id"])
       end
     end
 
@@ -820,10 +724,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert_raise ArgumentError, "expected :match to be :any or :all, got: :one", fn ->
         MandatoryWhereKeys.validate(:all, query,
-          mandatory_where_keys: [
-            keys: [:organisation_id],
-            match: :one
-          ]
+          keys: [:organisation_id],
+          match: :one
         )
       end
     end

@@ -341,28 +341,28 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 10)
 
       assert :ok =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: false])
+               OffsetWithoutLimit.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, offset: 10)
 
       assert {:error, %Issue{}} =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: true])
+               OffsetWithoutLimit.validate(:all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in Post, offset: 10)
 
       assert {:error, %Issue{}} =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: nil])
+               OffsetWithoutLimit.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, offset: 10)
 
-      assert_raise ArgumentError, "unknown :offset_without_limit option: :allow", fn ->
-        OffsetWithoutLimit.validate(:all, query, offset_without_limit: [allow: true])
+      assert_raise ArgumentError, "unknown option: :allow", fn ->
+        OffsetWithoutLimit.validate(:all, query, allow: true)
       end
     end
 
@@ -370,9 +370,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 10)
 
       assert_raise ArgumentError,
-                   "expected :offset_without_limit opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     OffsetWithoutLimit.validate(:all, query, offset_without_limit: :bad)
+                     OffsetWithoutLimit.validate(:all, query, :bad)
                    end
     end
 
@@ -380,9 +380,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 10)
 
       assert_raise ArgumentError,
-                   "expected :offset_without_limit opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     OffsetWithoutLimit.validate(:all, query, offset_without_limit: [:bad])
+                     OffsetWithoutLimit.validate(:all, query, [:bad])
                    end
     end
 

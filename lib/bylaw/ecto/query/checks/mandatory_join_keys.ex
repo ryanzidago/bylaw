@@ -17,41 +17,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   Ecto treats those structs as opaque, so this check intentionally supports a
   small, tested subset of Ecto's query AST.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw [
-        mandatory_join_keys: [
-          keys: [:organisation_id],
-          match: :all
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.MandatoryJoinKeys.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue_or_issues} -> raise inspect(issue_or_issues)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.all(query, bylaw: [mandatory_join_keys: [validate: false]])
+      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.MandatoryJoinKeys, validate: false}])
 
   Supported options:
-
-      [
-        mandatory_join_keys: [
-          keys: [:organisation_id],
-          match: :any
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:keys` - required non-empty list of field names when the check runs.
@@ -76,16 +50,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
             | {:keys, list(atom())}
             | {:match, match()}
           )
-  @type opts :: list({:mandatory_join_keys, check_opts()})
+  @type opts :: check_opts()
   @type field_set :: list(atom())
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :mandatory_join_keys
-  def name, do: :mandatory_join_keys
 
   @doc """
   Validates mandatory join-key predicates for a prepared Ecto query.
@@ -98,7 +64,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:keys, :match, :validate])
+    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
