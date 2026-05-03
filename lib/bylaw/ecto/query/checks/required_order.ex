@@ -9,11 +9,6 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.RequiredOrder, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -54,7 +49,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
     required_by = missing_order_reasons(operation, query)
 
     if CheckOptions.enabled?(check_opts) and not Enum.empty?(required_by) do
-      {:error, issue(operation, required_by)}
+      {:error, [issue(operation, required_by)]}
     else
       :ok
     end

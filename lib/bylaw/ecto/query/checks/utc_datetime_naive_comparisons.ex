@@ -17,11 +17,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -304,7 +299,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   defp reverse_operator(:>=), do: :<=
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp issue(operation, field, violations) do

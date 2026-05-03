@@ -11,11 +11,6 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
         left_join: comment in Comment,
         on: comment.post_id == post.id and comment.status == ^:published
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -74,7 +69,6 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp validate_enabled(operation, query) do
     case issues(operation, query) do
       [] -> :ok
-      [issue] -> {:error, issue}
       issues -> {:error, issues}
     end
   end

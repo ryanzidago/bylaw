@@ -33,17 +33,16 @@ defmodule Bylaw.Ecto.Query.Check do
   @typedoc """
   The result returned by a query check.
 
-  `:ok` means the query passed the check. `{:error, issue}` and
-  `{:error, issues}` let each check decide whether it reports one issue or
-  several issues.
+  `:ok` means the query passed the check. `{:error, issues}` reports one or
+  more query issues.
   """
-  @type result :: :ok | {:error, Issue.t() | list(Issue.t())}
+  @type result :: :ok | {:error, nonempty_list(Issue.t())}
 
   @doc """
   Validates a prepared Ecto query.
 
-  Return `:ok` when the query passes, or `{:error, issue}` /
-  `{:error, issues}` when the check rejects it.
+  Return `:ok` when the query passes, or `{:error, issues}` when the check
+  rejects it.
   """
   @callback validate(operation(), query(), opts()) :: result()
 end

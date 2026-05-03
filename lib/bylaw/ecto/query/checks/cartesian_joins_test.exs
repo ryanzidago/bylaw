@@ -47,7 +47,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.check == CartesianJoins
       assert issue.meta.operation == :all
@@ -68,7 +68,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {field(post, :id), field(comment, :id)}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner
       assert issue.meta.reason == :literal_true_on
@@ -84,7 +84,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner
       assert issue.meta.reason == :literal_true_on
@@ -98,7 +98,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :left
       assert issue.meta.reason == :literal_true_on
@@ -112,7 +112,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :right
       assert issue.meta.reason == :literal_true_on
@@ -126,7 +126,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :full
       assert issue.meta.reason == :literal_true_on
@@ -141,7 +141,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner_lateral
       assert issue.meta.reason == :literal_true_on
@@ -156,7 +156,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :left_lateral
       assert issue.meta.reason == :literal_true_on
@@ -169,7 +169,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :cross
       assert issue.meta.reason == :cross_join
@@ -185,7 +185,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :cross
       assert issue.meta.reason == :cross_join
@@ -199,7 +199,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment_id.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :cross_lateral
       assert issue.meta.reason == :cross_lateral_join
@@ -217,7 +217,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner_lateral
       assert issue.meta.reason == :literal_true_on
@@ -232,7 +232,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :left_lateral
       assert issue.meta.reason == :literal_true_on
@@ -246,7 +246,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment_id.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :cross_lateral
       assert issue.meta.reason == :cross_lateral_join
@@ -261,7 +261,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner_lateral
       assert issue.meta.reason == :literal_true_on
@@ -336,7 +336,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner_lateral
       assert issue.meta.reason == :literal_true_on
@@ -375,7 +375,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_qual == :inner_lateral
       assert issue.meta.reason == :literal_true_on
@@ -432,7 +432,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         ]
       }
 
-      assert {:error, %Issue{} = issue} = CartesianJoins.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
 
       assert issue.meta.join_index == 0
       assert issue.meta.binding_index == 1
@@ -531,14 +531,14 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         )
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = CartesianJoins.validate(operation, query, [])
+        assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(operation, query, [])
 
         assert issue.meta.operation == operation
         assert issue.meta.reason == :literal_true_on
       end)
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -557,13 +557,13 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                CartesianJoins.validate(:all, query, validate: true)
 
       assert issue.meta.reason == :literal_true_on
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -571,7 +571,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
           select: {post.id, comment.id}
         )
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                CartesianJoins.validate(:all, query, validate: nil)
     end
 

@@ -16,5 +16,4 @@ The current public family is `Bylaw.Ecto.Query`. Its built-in checks live under
 `Bylaw.Ecto.Query.Checks` and implement `Bylaw.Ecto.Query.Check`.
 
 Use the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
-current check list, `prepare_query/3` wiring, check specs, escape hatches, and
-issue metadata.
+current check list, `prepare_query/3` wiring, check specs, and issue metadata.

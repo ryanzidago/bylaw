@@ -19,10 +19,8 @@ defmodule Bylaw.Ecto.Query do
         end
       end
 
-  A check spec is either a check module or `{check_module, opts}`. When a module
-  appears more than once, the later spec replaces the earlier spec's options
-  without changing the original check order. This lets callers append query-level
-  overrides to repo defaults.
+  A check spec is either a check module or `{check_module, opts}`. Each check
+  module may appear at most once.
   """
 
   alias Bylaw.Ecto.Query.Check
@@ -36,12 +34,13 @@ defmodule Bylaw.Ecto.Query do
   Runs the configured query checks.
 
   Returns `:ok` when every enabled check passes. Returns `{:error, issues}`
-  with a normalized issue list when one or more checks fail.
+  when one or more checks fail.
 
-  `checks` accepts modules and `{module, opts}` tuples. Built-in checks treat
-  `validate: false` as an escape hatch.
+  `checks` accepts modules and `{module, opts}` tuples. Duplicate check modules
+  raise `ArgumentError`.
   """
-  @spec validate(Check.operation(), Check.query(), checks()) :: :ok | {:error, list(Issue.t())}
+  @spec validate(Check.operation(), Check.query(), checks()) ::
+          :ok | {:error, nonempty_list(Issue.t())}
   def validate(operation, query, checks) when is_list(checks) do
     checks
     |> normalize_checks!()
@@ -55,25 +54,22 @@ defmodule Bylaw.Ecto.Query do
 
   defp normalize_checks!(checks) do
     checks
-    |> Enum.reduce({[], %{}}, fn check_spec, {check_order, check_specs} ->
+    |> Enum.reduce({MapSet.new(), []}, fn check_spec, {seen_checks, check_specs} ->
       {check, opts} = normalize_check_spec!(check_spec)
-      check_order = maybe_add_check(check_order, check_specs, check)
+      seen_checks = put_unique_check!(seen_checks, check)
 
-      {check_order, Map.put(check_specs, check, opts)}
+      {seen_checks, [{check, opts} | check_specs]}
     end)
-    |> then(fn {check_order, check_specs} ->
-      check_order
-      |> Enum.reverse()
-      |> Enum.map(&{&1, Map.fetch!(check_specs, &1)})
-    end)
+    |> elem(1)
+    |> Enum.reverse()
   end
 
-  defp maybe_add_check(check_order, check_specs, check) do
-    if Map.has_key?(check_specs, check) do
-      check_order
-    else
-      [check | check_order]
+  defp put_unique_check!(seen_checks, check) do
+    if MapSet.member?(seen_checks, check) do
+      raise ArgumentError, "duplicate query check: #{inspect(check)}"
     end
+
+    MapSet.put(seen_checks, check)
   end
 
   defp normalize_check_spec!(check) when is_atom(check) do
@@ -106,15 +102,27 @@ defmodule Bylaw.Ecto.Query do
       :ok ->
         []
 
-      {:error, issue_or_issues} ->
-        List.wrap(issue_or_issues)
+      {:error, issues} = result when is_list(issues) ->
+        issue_list!(check, issues, result)
 
       result ->
-        raise ArgumentError,
-              "expected #{inspect(check)}.validate/3 to return :ok or {:error, issue_or_issues}, got: #{inspect(result)}"
+        invalid_check_result!(check, result)
     end
   end
 
   defp result([]), do: :ok
   defp result(issues), do: {:error, issues}
+
+  defp issue_list!(check, issues, result) do
+    if not Enum.empty?(issues) and Enum.all?(issues, &match?(%Issue{}, &1)) do
+      issues
+    else
+      invalid_check_result!(check, result)
+    end
+  end
+
+  defp invalid_check_result!(check, result) do
+    raise ArgumentError,
+          "expected #{inspect(check)}.validate/3 to return :ok or {:error, non_empty_issue_list}, got: #{inspect(result)}"
+  end
 end

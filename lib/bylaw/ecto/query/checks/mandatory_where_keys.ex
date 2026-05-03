@@ -8,11 +8,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [{Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, validate: false}])
-
   Supported options:
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
@@ -104,7 +99,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp applicable_keys(query, keys) do

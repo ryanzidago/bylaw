@@ -56,7 +56,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
     test "returns an issue when a date field is compared to a utc datetime field" do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.check == DateDatetimeMixedComparisons
@@ -83,7 +83,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
     test "returns an issue when a date field is compared to a naive datetime field" do
       query = from(event in Event, where: event.event_date > event.scheduled_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.violations == [
@@ -135,7 +135,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
     test "normalizes comparisons when the date field is on the right" do
       query = from(event in Event, where: event.inserted_at > event.event_date)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -155,7 +155,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} =
+        assert {:error, [%Issue{} = issue]} =
                  DateDatetimeMixedComparisons.validate(operation, query, [])
 
         assert issue.meta.operation == operation
@@ -167,7 +167,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       predicate = dynamic([event], event.event_date <= event.inserted_at)
       query = from(event in Event, where: ^predicate)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -180,7 +180,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           where: field(as(:event), :event_date) <= field(as(:event), :inserted_at)
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -193,7 +193,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           or_where: event.event_date != event.inserted_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -212,7 +212,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
     test "detects comparisons inside negated predicates" do
       query = from(event in Event, where: not (event.event_date < event.inserted_at))
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -234,7 +234,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           where: event.event_date in [event.inserted_at, event.scheduled_at]
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -263,7 +263,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           where: event.inserted_at in [event.event_date]
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -337,7 +337,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           where: event.event_date <= calendar.starts_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_schema == Event
@@ -362,7 +362,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           on: event.event_date <= calendar.starts_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_schema == Event
@@ -387,7 +387,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           having: event.event_date <= event.inserted_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -398,7 +398,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       unsafe_query = from(event in Event, where: event.event_date <= event.inserted_at)
       query = union_all(safe_query, ^unsafe_query)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -418,7 +418,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           where: as(:calendar).calendar_date >= as(:event).inserted_at
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_schema == Calendar
@@ -441,7 +441,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query =
         from(event in Event, where: type(event.event_date, :utc_datetime) <= event.inserted_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -451,7 +451,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query =
         from(event in Event, where: event.inserted_at >= type(event.event_date, :utc_datetime))
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_field == :event_date
@@ -558,7 +558,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       query =
         query_with_expr({:<=, [], [field_expr(0, :event_date), field_expr(0, :inserted_at)]})
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_schema == Event
@@ -583,7 +583,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
           joins: [%{source: {"calendars", Calendar}, on: %{expr: true}}]
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, [])
 
       assert issue.meta.date_schema == Event
@@ -616,7 +616,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
       assert :ok = DateDatetimeMixedComparisons.validate(:stream, :not_a_query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
       assert :ok =
@@ -626,16 +626,16 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisonsTest do
     test "validates when validate is explicitly true" do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                DateDatetimeMixedComparisons.validate(:all, query, validate: true)
 
       assert issue.meta.date_field == :event_date
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(event in Event, where: event.event_date <= event.inserted_at)
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                DateDatetimeMixedComparisons.validate(:all, query, validate: nil)
     end
 
