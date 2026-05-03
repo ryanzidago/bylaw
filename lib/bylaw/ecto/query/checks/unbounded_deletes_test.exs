@@ -204,28 +204,28 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       query = from(post in Post)
 
       assert :ok =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: false])
+               UnboundedDeletes.validate(:delete_all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post)
 
       assert {:error, %Issue{}} =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: true])
+               UnboundedDeletes.validate(:delete_all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in Post)
 
       assert {:error, %Issue{}} =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: nil])
+               UnboundedDeletes.validate(:delete_all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :unbounded_deletes option: :mode", fn ->
-        UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [mode: :strict])
+      assert_raise ArgumentError, "unknown option: :mode", fn ->
+        UnboundedDeletes.validate(:delete_all, query, mode: :strict)
       end
     end
 
@@ -233,9 +233,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_deletes opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: :bad)
+                     UnboundedDeletes.validate(:delete_all, query, :bad)
                    end
     end
 
@@ -243,9 +243,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_deletes opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [:bad])
+                     UnboundedDeletes.validate(:delete_all, query, [:bad])
                    end
     end
 

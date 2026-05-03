@@ -687,7 +687,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
           on: other_comment.post_id == post.id
         )
 
-      assert :ok = DuplicateJoins.validate(:all, query, duplicate_joins: [validate: false])
+      assert :ok = DuplicateJoins.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -700,7 +700,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               DuplicateJoins.validate(:all, query, duplicate_joins: [validate: true])
+               DuplicateJoins.validate(:all, query, validate: true)
 
       assert issue.meta.join_index == 1
     end
@@ -715,14 +715,14 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
         )
 
       assert {:error, %Issue{}} =
-               DuplicateJoins.validate(:all, query, duplicate_joins: [validate: nil])
+               DuplicateJoins.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :duplicate_joins option: :sources", fn ->
-        DuplicateJoins.validate(:all, query, duplicate_joins: [sources: [:comments]])
+      assert_raise ArgumentError, "unknown option: :sources", fn ->
+        DuplicateJoins.validate(:all, query, sources: [:comments])
       end
     end
 
@@ -730,9 +730,9 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :duplicate_joins opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     DuplicateJoins.validate(:all, query, duplicate_joins: :bad)
+                     DuplicateJoins.validate(:all, query, :bad)
                    end
     end
 
@@ -740,9 +740,9 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoinsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :duplicate_joins opts to be a keyword list, got: [true]",
+                   "expected opts to be a keyword list, got: [true]",
                    fn ->
-                     DuplicateJoins.validate(:all, query, duplicate_joins: [true])
+                     DuplicateJoins.validate(:all, query, [true])
                    end
     end
 

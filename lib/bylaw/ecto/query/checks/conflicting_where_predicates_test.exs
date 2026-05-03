@@ -785,18 +785,14 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
       assert :ok =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: false]
-               )
+               ConflictingWherePredicates.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
       assert {:error, %Issue{} = issue} =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: true]
-               )
+               ConflictingWherePredicates.validate(:all, query, validate: true)
 
       assert issue.meta.field == :status
     end
@@ -805,18 +801,14 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
       assert {:error, %Issue{}} =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: nil]
-               )
+               ConflictingWherePredicates.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :conflicting_where_predicates option: :fields", fn ->
-        ConflictingWherePredicates.validate(:all, query,
-          conflicting_where_predicates: [fields: [:status]]
-        )
+      assert_raise ArgumentError, "unknown option: :fields", fn ->
+        ConflictingWherePredicates.validate(:all, query, fields: [:status])
       end
     end
 
@@ -824,11 +816,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :conflicting_where_predicates opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     ConflictingWherePredicates.validate(:all, query,
-                       conflicting_where_predicates: :bad
-                     )
+                     ConflictingWherePredicates.validate(:all, query, :bad)
                    end
     end
 
@@ -836,11 +826,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :conflicting_where_predicates opts to be a keyword list, got: [true]",
+                   "expected opts to be a keyword list, got: [true]",
                    fn ->
-                     ConflictingWherePredicates.validate(:all, query,
-                       conflicting_where_predicates: [true]
-                     )
+                     ConflictingWherePredicates.validate(:all, query, [true])
                    end
     end
 

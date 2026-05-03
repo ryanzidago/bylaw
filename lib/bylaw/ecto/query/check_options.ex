@@ -21,27 +21,27 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   end
 
   @doc """
-  Fetches and validates the option list for `check_name`.
+  Returns validated check-specific options.
 
-  The function expects the top-level `opts` to be a keyword list. It returns the
-  nested option list stored under `check_name`, or an empty list when the check
-  has no configured options.
+  `allowed_keys` controls option validation:
 
-  `allowed_keys` controls nested option validation:
-
-    * pass a list of atoms to reject unknown nested option keys
+    * pass a list of atoms to reject unknown option keys
     * pass `:any` when the check performs more detailed option validation itself
 
-  A malformed top-level option list, malformed nested option list, or unknown
-  nested key raises `ArgumentError`.
+  A malformed option list or unknown key raises `ArgumentError`.
   """
-  @spec fetch!(list(), atom(), :any | list(atom())) :: list()
-  def fetch!(opts, check_name, allowed_keys) when is_list(opts) do
-    keyword_list!(opts, "opts")
+  @spec normalize!(term(), :any | list(atom())) :: keyword()
+  def normalize!(opts, allowed_keys) when is_list(opts) do
+    if Keyword.keyword?(opts) do
+      validate_allowed_keys!(opts, allowed_keys)
+      opts
+    else
+      raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+    end
+  end
 
-    opts
-    |> Keyword.get(check_name, [])
-    |> normalize_check_opts!(check_name, allowed_keys)
+  def normalize!(opts, _allowed_keys) do
+    raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   @doc """
@@ -110,33 +110,17 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   @doc """
   Raises when `opts` contains keys outside `allowed_keys`.
 
-  Returns `:ok` when every option key is allowed. The `check_name` is included in
-  the error message to point callers at the misconfigured check namespace.
+  Returns `:ok` when every option key is allowed.
   """
-  @spec validate_allowed_keys!(keyword(), atom(), list(atom())) :: :ok
-  def validate_allowed_keys!(opts, check_name, allowed_keys) do
+  @spec validate_allowed_keys!(keyword(), list(atom())) :: :ok
+  def validate_allowed_keys!(_opts, :any), do: :ok
+
+  def validate_allowed_keys!(opts, allowed_keys) do
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
-        raise ArgumentError, "unknown #{inspect(check_name)} option: #{inspect(key)}"
+        raise ArgumentError, "unknown option: #{inspect(key)}"
       end
     end)
-  end
-
-  defp normalize_check_opts!(opts, _check_name, :any) when is_list(opts), do: opts
-
-  defp normalize_check_opts!(opts, check_name, allowed_keys) when is_list(opts) do
-    if Keyword.keyword?(opts) do
-      validate_allowed_keys!(opts, check_name, allowed_keys)
-      opts
-    else
-      raise ArgumentError,
-            "expected #{inspect(check_name)} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-  end
-
-  defp normalize_check_opts!(opts, check_name, _allowed_keys) do
-    raise ArgumentError,
-          "expected #{inspect(check_name)} opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   defp atom!(value, _key) when is_atom(value), do: value

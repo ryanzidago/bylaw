@@ -316,23 +316,21 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert :ok =
-               DeterministicOrder.validate(:all, query, deterministic_order: [validate: false])
+               DeterministicOrder.validate(:all, query, validate: false)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert {:error, %Issue{}} =
-               DeterministicOrder.validate(:all, query, deterministic_order: [validate: nil])
+               DeterministicOrder.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, order_by: [asc: post.title])
 
-      assert_raise ArgumentError, "unknown :deterministic_order option: :unique_keys", fn ->
-        DeterministicOrder.validate(:all, query,
-          deterministic_order: [unique_keys: [[:external_id], :slug]]
-        )
+      assert_raise ArgumentError, "unknown option: :unique_keys", fn ->
+        DeterministicOrder.validate(:all, query, unique_keys: [[:external_id], :slug])
       end
     end
 
@@ -340,9 +338,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert_raise ArgumentError,
-                   "expected :deterministic_order opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     DeterministicOrder.validate(:all, query, deterministic_order: :bad)
+                     DeterministicOrder.validate(:all, query, :bad)
                    end
     end
 
@@ -350,9 +348,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert_raise ArgumentError,
-                   "expected :deterministic_order opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     DeterministicOrder.validate(:all, query, deterministic_order: [:bad])
+                     DeterministicOrder.validate(:all, query, [:bad])
                    end
     end
 

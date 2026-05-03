@@ -3,38 +3,17 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   Validates that `delete_all` queries are bounded.
 
   This check prevents accidental table-wide deletes by requiring callers to add
-  a restricting root `where` or `or_where` before `Repo.delete_all/2` runs:
+  a restricting root `where` or `or_where` before `Repo.delete_all/2` runs.
 
-      @bylaw [
-        unbounded_deletes: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.UnboundedDeletes.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   The check is enabled by default. A caller must explicitly set the query-level
   escape hatch to `false` to skip it:
 
-      Repo.delete_all(query, bylaw: [unbounded_deletes: [validate: false]])
+      Repo.delete_all(query, bylaw: [{Bylaw.Ecto.Query.Checks.UnboundedDeletes, validate: false}])
 
   Supported options:
-
-      [
-        unbounded_deletes: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -51,15 +30,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:unbounded_deletes, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :unbounded_deletes
-  def name, do: :unbounded_deletes
+  @type opts :: check_opts()
 
   @doc """
   Validates that `:delete_all` operations are bounded.
@@ -73,7 +44,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) and unbounded_delete?(operation, query) do
       {:error, issue(operation)}

@@ -222,9 +222,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = query_with_expr({:>=, [], [root_field(:inserted_at), naive_datetime()]})
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.violations == [
                %{operator: :>=, value_type: :naive_datetime, value_source: :literal}
@@ -236,9 +234,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = query_with_expr({:>=, [], [root_field(:inserted_at), tagged]})
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.violations == [
                %{operator: :>=, value_type: :naive_datetime, value_source: :tagged}
@@ -254,9 +250,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.field == :inserted_at
     end
@@ -266,9 +260,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in "events", where: field(event, "inserted_at") >= ^naive_datetime)
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.field == :inserted_at
 
@@ -287,9 +279,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.field == :inserted_at
     end
@@ -299,9 +289,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in StringEvent, where: event.inserted_at >= ^naive_datetime)
 
       assert {:error, %Issue{} = issue} =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
 
       assert issue.meta.field == :inserted_at
     end
@@ -310,9 +298,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in GlobalEvent, where: event.title >= ^"a")
 
       assert :ok =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, fields: [:inserted_at])
     end
 
     test "passes schema-less sources without configured fields" do
@@ -324,9 +310,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
 
     test "passes when the query is not an Ecto query struct" do
       assert :ok =
-               UtcDatetimeNaiveComparisons.validate(:stream, :not_a_query,
-                 utc_datetime_naive_comparisons: [fields: [:inserted_at]]
-               )
+               UtcDatetimeNaiveComparisons.validate(:stream, :not_a_query, fields: [:inserted_at])
     end
 
     test "does not accept utc datetime comparisons from non-root bindings" do
@@ -412,9 +396,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in Event, where: event.inserted_at >= ^naive_datetime)
 
       assert :ok =
-               UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [validate: false]
-               )
+               UtcDatetimeNaiveComparisons.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -423,10 +405,8 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
 
       assert {:error, %Issue{} = issue} =
                UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [
-                   fields: [:inserted_at],
-                   validate: true
-                 ]
+                 fields: [:inserted_at],
+                 validate: true
                )
 
       assert issue.meta.field == :inserted_at
@@ -438,10 +418,8 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
 
       assert {:error, %Issue{}} =
                UtcDatetimeNaiveComparisons.validate(:all, query,
-                 utc_datetime_naive_comparisons: [
-                   fields: [:inserted_at],
-                   validate: nil
-                 ]
+                 fields: [:inserted_at],
+                 validate: nil
                )
     end
 
@@ -465,11 +443,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :utc_datetime_naive_comparisons opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: :invalid
-                     )
+                     UtcDatetimeNaiveComparisons.validate(:all, query, :invalid)
                    end
     end
 
@@ -477,11 +453,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "expected :utc_datetime_naive_comparisons opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: [:invalid]
-                     )
+                     UtcDatetimeNaiveComparisons.validate(:all, query, [:invalid])
                    end
     end
 
@@ -489,11 +463,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       query = from(event in Event)
 
       assert_raise ArgumentError,
-                   "unknown :utc_datetime_naive_comparisons option: :unknown",
+                   "unknown option: :unknown",
                    fn ->
-                     UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: [unknown: true]
-                     )
+                     UtcDatetimeNaiveComparisons.validate(:all, query, unknown: true)
                    end
     end
 
@@ -503,9 +475,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: []",
                    fn ->
-                     UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: [fields: []]
-                     )
+                     UtcDatetimeNaiveComparisons.validate(:all, query, fields: [])
                    end
     end
 
@@ -515,9 +485,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: :inserted_at",
                    fn ->
-                     UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: [fields: :inserted_at]
-                     )
+                     UtcDatetimeNaiveComparisons.validate(:all, query, fields: :inserted_at)
                    end
     end
 
@@ -528,7 +496,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisonsTest do
                    ~s(expected :fields to contain only atoms, got: "inserted_at"),
                    fn ->
                      UtcDatetimeNaiveComparisons.validate(:all, query,
-                       utc_datetime_naive_comparisons: [fields: [:inserted_at, "inserted_at"]]
+                       fields: [:inserted_at, "inserted_at"]
                      )
                    end
     end

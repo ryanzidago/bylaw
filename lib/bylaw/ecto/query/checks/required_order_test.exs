@@ -345,28 +345,28 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "respects the explicit query-level escape hatch" do
       query = from(post in Post, limit: 10)
 
-      assert :ok = RequiredOrder.validate(:all, query, required_order: [validate: false])
+      assert :ok = RequiredOrder.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, limit: 10)
 
       assert {:error, %Issue{}} =
-               RequiredOrder.validate(:all, query, required_order: [validate: true])
+               RequiredOrder.validate(:all, query, validate: true)
     end
 
     test "requires an explicit false escape hatch" do
       query = from(post in Post, limit: 10)
 
       assert {:error, %Issue{}} =
-               RequiredOrder.validate(:all, query, required_order: [validate: nil])
+               RequiredOrder.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, limit: 10)
 
-      assert_raise ArgumentError, "unknown :required_order option: :reasons", fn ->
-        RequiredOrder.validate(:all, query, required_order: [reasons: [:limit]])
+      assert_raise ArgumentError, "unknown option: :reasons", fn ->
+        RequiredOrder.validate(:all, query, reasons: [:limit])
       end
     end
 
@@ -374,9 +374,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       query = from(post in Post, limit: 10)
 
       assert_raise ArgumentError,
-                   "expected :required_order opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     RequiredOrder.validate(:all, query, required_order: :bad)
+                     RequiredOrder.validate(:all, query, :bad)
                    end
     end
 
@@ -384,9 +384,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       query = from(post in Post, limit: 10)
 
       assert_raise ArgumentError,
-                   "expected :required_order opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     RequiredOrder.validate(:all, query, required_order: [:bad])
+                     RequiredOrder.validate(:all, query, [:bad])
                    end
     end
 

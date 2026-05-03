@@ -16,15 +16,9 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   signal. It is enabled by default, and a caller must explicitly set the
   query-level escape hatch to `false` to skip it:
 
-      Repo.delete_all(query, bylaw: [hard_delete_on_soft_delete_schema: [validate: false]])
+      Repo.delete_all(query, bylaw: [{Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema, validate: false}])
 
   Supported options:
-
-      [
-        hard_delete_on_soft_delete_schema: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -42,15 +36,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   @soft_delete_fields [:deleted_at, :archived_at]
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:hard_delete_on_soft_delete_schema, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :hard_delete_on_soft_delete_schema
-  def name, do: :hard_delete_on_soft_delete_schema
+  @type opts :: check_opts()
 
   @doc """
   Validates that `:delete_all` is not used for schemas with soft-delete fields.
@@ -63,7 +49,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)

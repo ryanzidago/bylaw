@@ -2,12 +2,11 @@ defmodule Bylaw.Ecto.Query.Check do
   @moduledoc """
   Behaviour for checks that validate an `Ecto.Query` before it runs.
 
-  Checks are intentionally small and directly callable so callers can decide how
-  to compose them in `c:Ecto.Repo.prepare_query/3`.
+  Checks are intentionally small and directly callable. `Bylaw.Ecto.Query`
+  composes them from module-based check specs for `c:Ecto.Repo.prepare_query/3`.
 
-  See `Bylaw.Ecto.Query.Checks` for the built-in check list and the
-  [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring and
-  option examples.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
+  built-in check list, repo wiring, and option examples.
   """
 
   alias Bylaw.Ecto.Query.Issue
@@ -27,10 +26,7 @@ defmodule Bylaw.Ecto.Query.Check do
   @type query :: Ecto.Query.t()
 
   @typedoc """
-  Bylaw options passed to the check.
-
-  Checks should read their own nested options from this keyword list using
-  their `name/0`.
+  Check-specific options passed to the check.
   """
   @type opts :: list({atom(), term()})
 
@@ -42,13 +38,6 @@ defmodule Bylaw.Ecto.Query.Check do
   several issues.
   """
   @type result :: :ok | {:error, Issue.t() | list(Issue.t())}
-
-  @doc """
-  Returns the option namespace used by this check.
-
-  The returned atom should match the key the check reads from `opts/0`.
-  """
-  @callback name() :: atom()
 
   @doc """
   Validates a prepared Ecto query.

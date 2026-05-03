@@ -588,9 +588,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
         )
 
       assert :ok =
-               LeftJoinWherePredicates.validate(:all, query,
-                 left_join_where_predicates: [validate: false]
-               )
+               LeftJoinWherePredicates.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -604,9 +602,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
         )
 
       assert {:error, %Issue{} = issue} =
-               LeftJoinWherePredicates.validate(:all, query,
-                 left_join_where_predicates: [validate: true]
-               )
+               LeftJoinWherePredicates.validate(:all, query, validate: true)
 
       assert issue.meta.rejecting_where_fields == [:status]
     end
@@ -622,20 +618,16 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
         )
 
       assert {:error, %Issue{}} =
-               LeftJoinWherePredicates.validate(:all, query,
-                 left_join_where_predicates: [validate: nil]
-               )
+               LeftJoinWherePredicates.validate(:all, query, validate: nil)
     end
 
     test "raises for unknown check options" do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "unknown :left_join_where_predicates option: :unknown",
+                   "unknown option: :unknown",
                    fn ->
-                     LeftJoinWherePredicates.validate(:all, query,
-                       left_join_where_predicates: [unknown: true]
-                     )
+                     LeftJoinWherePredicates.validate(:all, query, unknown: true)
                    end
     end
 
@@ -643,11 +635,9 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :left_join_where_predicates opts to be a keyword list, got: true",
+                   "expected opts to be a keyword list, got: true",
                    fn ->
-                     LeftJoinWherePredicates.validate(:all, query,
-                       left_join_where_predicates: true
-                     )
+                     LeftJoinWherePredicates.validate(:all, query, true)
                    end
     end
 
@@ -655,11 +645,9 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :left_join_where_predicates opts to be a keyword list, got: [true]",
+                   "expected opts to be a keyword list, got: [true]",
                    fn ->
-                     LeftJoinWherePredicates.validate(:all, query,
-                       left_join_where_predicates: [true]
-                     )
+                     LeftJoinWherePredicates.validate(:all, query, [true])
                    end
     end
 
