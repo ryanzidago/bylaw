@@ -17,9 +17,11 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   `Ecto.Enum` fields are normalized through the schema enum mapping. Non-enum
   fields only compare simple literal values that already match the schema field
   type. `or_where` and `or` expressions are handled as separate branches and
-  only rejected when every branch conflicts. Fragments, subqueries, and
-  non-root bindings are ignored. Empty `in` candidate lists are intentionally
-  left to `Bylaw.Ecto.Query.Checks.EmptyInPredicates`.
+  only rejected when every branch is statically unsatisfiable and at least one
+  branch has a true predicate conflict. Fragments, subqueries, and non-root
+  bindings are ignored. Empty `in` candidate lists can make a branch
+  unsatisfiable, but standalone empty `in` issues are intentionally left to
+  `Bylaw.Ecto.Query.Checks.EmptyInPredicates`.
 
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
@@ -83,16 +85,26 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   end
 
   defp issues(operation, schema, predicate_branches) do
-    branch_issues = Enum.map(predicate_branches, &issues_for_predicates(operation, schema, &1))
+    branch_results =
+      Enum.map(predicate_branches, &branch_result(operation, schema, &1))
 
-    if Enum.any?(branch_issues, &Enum.empty?/1) do
+    if Enum.any?(branch_results, & &1.satisfiable?) do
       []
     else
-      branch_issues
-      |> List.flatten()
+      branch_results
+      |> Enum.flat_map(& &1.issues)
       |> Enum.uniq_by(&issue_key/1)
       |> Enum.sort_by(&{&1.meta.field, inspect(&1.meta.predicates)})
     end
+  end
+
+  defp branch_result(operation, schema, predicates) do
+    issues = issues_for_predicates(operation, schema, predicates)
+
+    %{
+      issues: issues,
+      satisfiable?: Enum.empty?(issues) and not empty_in_predicate?(predicates)
+    }
   end
 
   defp issues_for_predicates(operation, schema, predicates) do
@@ -108,6 +120,12 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
       end
     end)
     |> Enum.sort_by(& &1.meta.field)
+  end
+
+  defp empty_in_predicate?(predicates) do
+    Enum.any?(predicates, fn predicate ->
+      predicate.operator == :in and Enum.empty?(predicate.values)
+    end)
   end
 
   defp issue_key(issue) do

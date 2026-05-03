@@ -656,6 +656,23 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert second_issue.meta.field == :status
     end
 
+    test "returns an issue when every branch is unsatisfiable through conflicts or empty in" do
+      query =
+        from(post in Post,
+          where: post.status == :draft and post.status == :published,
+          or_where: post.id in ^[]
+        )
+
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
+
+      assert issue.meta.field == :status
+
+      assert issue.meta.predicates == [
+               %{operator: :==, values: [:draft]},
+               %{operator: :==, values: [:published]}
+             ]
+    end
+
     test "ignores predicates inside or expressions" do
       query = from(post in Post, where: post.status == :draft or post.status == :published)
 
