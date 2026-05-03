@@ -27,6 +27,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   lateral subquery shapes exposed by the Ecto query API. Association joins are
   not considered literal `on: true` joins because Ecto stores their association
   predicate separately from the `on` expression.
+
+  This check is a guardrail for obvious cartesian joins, not a full SQL
+  cardinality proof. It does not parse fragment SQL. For lateral fragments, an
+  Ecto-visible reference to a previous binding is treated as dependency
+  evidence; opaque SQL that needs stricter review should be handled in the
+  application query or by disabling the check for that call site.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
