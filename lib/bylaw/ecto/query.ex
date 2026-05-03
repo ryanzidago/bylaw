@@ -11,9 +11,7 @@ defmodule Bylaw.Ecto.Query do
       ]
 
       def prepare_query(operation, query, opts) do
-        checks = @bylaw ++ Keyword.get(opts, :bylaw, [])
-
-        case Bylaw.Ecto.Query.validate(operation, query, checks) do
+        case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
           :ok -> {query, opts}
           {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
         end
