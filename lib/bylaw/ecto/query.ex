@@ -20,8 +20,9 @@ defmodule Bylaw.Ecto.Query do
       end
 
   A check spec is either a check module or `{check_module, opts}`. When a module
-  appears more than once, the later spec replaces the earlier spec, which lets
-  callers append query-level overrides to repo defaults.
+  appears more than once, the later spec replaces the earlier spec's options
+  without changing the original check order. This lets callers append query-level
+  overrides to repo defaults.
   """
 
   alias Bylaw.Ecto.Query.Check
@@ -54,14 +55,25 @@ defmodule Bylaw.Ecto.Query do
 
   defp normalize_checks!(checks) do
     checks
-    |> Enum.with_index()
-    |> Enum.reduce(%{}, fn {check_spec, index}, check_specs ->
+    |> Enum.reduce({[], %{}}, fn check_spec, {check_order, check_specs} ->
       {check, opts} = normalize_check_spec!(check_spec)
-      Map.put(check_specs, check, {index, check, opts})
+      check_order = maybe_add_check(check_order, check_specs, check)
+
+      {check_order, Map.put(check_specs, check, opts)}
     end)
-    |> Map.values()
-    |> Enum.sort_by(fn {index, _check, _opts} -> index end)
-    |> Enum.map(fn {_index, check, opts} -> {check, opts} end)
+    |> then(fn {check_order, check_specs} ->
+      check_order
+      |> Enum.reverse()
+      |> Enum.map(&{&1, Map.fetch!(check_specs, &1)})
+    end)
+  end
+
+  defp maybe_add_check(check_order, check_specs, check) do
+    if Map.has_key?(check_specs, check) do
+      check_order
+    else
+      [check | check_order]
+    end
   end
 
   defp normalize_check_spec!(check) when is_atom(check) do

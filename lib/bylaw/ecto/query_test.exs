@@ -1,7 +1,10 @@
 defmodule Bylaw.Ecto.QueryTest do
   use ExUnit.Case, async: true
 
+  import Ecto.Query
+
   alias Bylaw.Ecto.Query
+  alias Bylaw.Ecto.Query.Checks.RequiredOrder
   alias Bylaw.Ecto.Query.Issue
 
   defmodule PassingCheck do
@@ -63,6 +66,12 @@ defmodule Bylaw.Ecto.QueryTest do
       assert :ok = Query.validate(:all, :query, [PassingCheck])
     end
 
+    test "raises when checks are not a list" do
+      assert_raise ArgumentError, "expected checks to be a list, got: :bad", fn ->
+        Query.validate(:all, :query, :bad)
+      end
+    end
+
     test "normalizes single and multiple issues" do
       assert {:error, issues} =
                Query.validate(:all, :query, [
@@ -78,11 +87,43 @@ defmodule Bylaw.Ecto.QueryTest do
              ] = issues
     end
 
-    test "uses the last spec for a repeated check module" do
+    test "uses the last spec opts for a repeated check module" do
       assert :ok =
                Query.validate(:all, :query, [
                  {OptionCheck, fail: true},
                  {OptionCheck, fail: false}
+               ])
+    end
+
+    test "keeps the first check position when later specs override opts" do
+      assert {:error, issues} =
+               Query.validate(:all, :query, [
+                 {FailingCheck, sample: :default},
+                 MultiIssueCheck,
+                 {FailingCheck, sample: :override}
+               ])
+
+      assert [
+               %Issue{check: FailingCheck, meta: %{opts: [sample: :override]}},
+               %Issue{check: MultiIssueCheck, message: "first"},
+               %Issue{check: MultiIssueCheck, message: "second"}
+             ] = issues
+    end
+
+    test "runs built-in checks from module specs" do
+      query = from(post in "posts", limit: 1)
+
+      assert {:error, [%Issue{check: RequiredOrder}]} =
+               Query.validate(:all, query, [RequiredOrder])
+    end
+
+    test "applies query-level overrides to built-in checks" do
+      query = from(post in "posts", limit: 1)
+
+      assert :ok =
+               Query.validate(:all, query, [
+                 RequiredOrder,
+                 {RequiredOrder, validate: false}
                ])
     end
 
@@ -95,6 +136,10 @@ defmodule Bylaw.Ecto.QueryTest do
 
       assert_raise ArgumentError, "expected NotLoadedCheck to be a query check module", fn ->
         Query.validate(:all, :query, [NotLoadedCheck])
+      end
+
+      assert_raise ArgumentError, "expected String to be a query check module", fn ->
+        Query.validate(:all, :query, [String])
       end
     end
 
