@@ -11,16 +11,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
         left_join: comment in Comment,
         on: comment.post_id == post.id and comment.status == ^:published
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [left_join_where_predicates: [validate: false]])
-
   Supported options:
-
-      [
-        left_join_where_predicates: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -43,17 +34,9 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   @left_join_quals [:left, :left_lateral]
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:left_join_where_predicates, check_opts()})
+  @type opts :: check_opts()
   @type field_set :: list(atom())
   @type rejection_map :: %{optional(non_neg_integer()) => MapSet.t(atom())}
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :left_join_where_predicates
-  def name, do: :left_join_where_predicates
 
   @doc """
   Validates left-join `where` predicates for a prepared Ecto query.
@@ -66,7 +49,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     validate_query(operation, query, check_opts)
   end
@@ -86,7 +69,6 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   defp validate_enabled(operation, query) do
     case issues(operation, query) do
       [] -> :ok
-      [issue] -> {:error, issue}
       issues -> {:error, issues}
     end
   end

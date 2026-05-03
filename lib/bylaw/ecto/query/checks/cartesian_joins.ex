@@ -14,36 +14,10 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   lateral subqueries are treated as constrained when a supported subquery
   predicate compares a local subquery binding with a previous parent binding.
 
-      @bylaw [
-        cartesian_joins: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.CartesianJoins.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [cartesian_joins: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        cartesian_joins: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -62,17 +36,9 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   @type reason :: :cross_join | :cross_lateral_join | :literal_true_on
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:cartesian_joins, check_opts()})
+  @type opts :: check_opts()
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
   @lateral_quals [:cross_lateral, :inner_lateral, :left_lateral]
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :cartesian_joins
-  def name, do: :cartesian_joins
 
   @doc """
   Validates that a prepared Ecto query does not contain cartesian joins.
@@ -85,7 +51,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
@@ -101,7 +67,6 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   defp validate_enabled(operation, query) do
     case issues(operation, query) do
       [] -> :ok
-      [issue] -> {:error, issue}
       issues -> {:error, issues}
     end
   end

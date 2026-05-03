@@ -55,7 +55,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       next_status = :published
       query = from(post in Post, where: [status: :draft], where: [status: ^next_status])
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -75,7 +75,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == ^next_status
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.check == ConflictingWherePredicates
       assert issue.message == "expected where predicates on :status to agree on a value"
@@ -95,7 +95,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == ^:draft and post.status == ^:published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -110,7 +110,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       predicate = dynamic([post], post.status == ^status and post.status == ^:published)
       query = from(post in Post, where: ^predicate)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -124,7 +124,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} =
+        assert {:error, [%Issue{} = issue]} =
                  ConflictingWherePredicates.validate(operation, query, [])
 
         assert issue.meta.operation == operation
@@ -135,7 +135,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "accepts enum equality predicates with the field on the right" do
       query = from(post in Post, where: ^:draft == post.status, where: post.status == :published)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -150,7 +150,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: field(post, :status) == ^next_status
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -164,7 +164,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == :published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -178,7 +178,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == :published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -215,7 +215,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == ^:archived
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.predicates == [
                %{operator: :in, values: [:draft, :published]},
@@ -230,7 +230,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status in ^[:published, :archived]
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.predicates == [
                %{operator: :in, values: [:draft]},
@@ -246,7 +246,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == :published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -259,7 +259,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when an enum in predicate has no possible values" do
       query = from(post in Post, where: post.status in ^[])
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert issue.meta.predicates == [%{operator: :in, values: []}]
@@ -268,7 +268,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when an enum in predicate only contains nil values" do
       query = from(post in Post, where: post.status in ^[nil])
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert issue.meta.predicates == [%{operator: :in, values: []}]
@@ -299,7 +299,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "normalizes string enum values before comparing predicates" do
       query = from(post in Post, where: post.status == "draft", where: post.status == :published)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
     end
@@ -313,7 +313,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == :archived
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -330,7 +330,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.integer_status == ^:published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :integer_status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -345,7 +345,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.integer_status == :archived
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :integer_status
 
@@ -368,7 +368,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when string equality predicates conflict" do
       query = from(post in Post, where: post.title == "draft", where: post.title == "published")
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :title
       refute Map.has_key?(issue.meta, :enum_values)
@@ -383,7 +383,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       sequence = 1
       query = from(post in Post, where: post.sequence == ^sequence, where: post.sequence == 2)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :sequence
 
@@ -403,7 +403,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when boolean equality predicates conflict" do
       query = from(post in Post, where: post.active == true, where: post.active == ^false)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :active
 
@@ -416,7 +416,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when an in predicate has no possible values" do
       query = from(post in Post, where: post.sequence in [])
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :sequence
       assert issue.meta.predicates == [%{operator: :in, values: []}]
@@ -429,7 +429,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.sequence == ^3
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :sequence
 
@@ -456,7 +456,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == "published"
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       refute Map.has_key?(issue.meta, :enum_values)
@@ -495,7 +495,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when is_nil conflicts with an enum equality predicate" do
       query = from(post in Post, where: is_nil(post.status), where: post.status == :draft)
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
 
@@ -508,7 +508,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
     test "returns an issue when is_nil conflicts with a non enum equality predicate" do
       query = from(post in Post, where: is_nil(post.title), where: post.title == "draft")
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :title
 
@@ -541,7 +541,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
           where: post.status == :published
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -727,7 +727,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
            ]}
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -743,7 +743,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
            ]}
         )
 
-      assert {:error, %Issue{} = issue} = ConflictingWherePredicates.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = ConflictingWherePredicates.validate(:all, query, [])
 
       assert issue.meta.field == :status
       assert Enum.map(issue.meta.predicates, & &1.values) == [[:draft], [:published]]
@@ -781,42 +781,34 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       assert :ok = ConflictingWherePredicates.validate(:all, query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
       assert :ok =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: false]
-               )
+               ConflictingWherePredicates.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
-      assert {:error, %Issue{} = issue} =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: true]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               ConflictingWherePredicates.validate(:all, query, validate: true)
 
       assert issue.meta.field == :status
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, where: post.status == :draft, where: post.status == :published)
 
-      assert {:error, %Issue{}} =
-               ConflictingWherePredicates.validate(:all, query,
-                 conflicting_where_predicates: [validate: nil]
-               )
+      assert {:error, [%Issue{}]} =
+               ConflictingWherePredicates.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :conflicting_where_predicates option: :fields", fn ->
-        ConflictingWherePredicates.validate(:all, query,
-          conflicting_where_predicates: [fields: [:status]]
-        )
+      assert_raise ArgumentError, "unknown option: :fields", fn ->
+        ConflictingWherePredicates.validate(:all, query, fields: [:status])
       end
     end
 
@@ -824,11 +816,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :conflicting_where_predicates opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     ConflictingWherePredicates.validate(:all, query,
-                       conflicting_where_predicates: :bad
-                     )
+                     ConflictingWherePredicates.validate(:all, query, :bad)
                    end
     end
 
@@ -836,11 +826,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicatesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :conflicting_where_predicates opts to be a keyword list, got: [true]",
+                   "expected opts to be a keyword list, got: [true]",
                    fn ->
-                     ConflictingWherePredicates.validate(:all, query,
-                       conflicting_where_predicates: [true]
-                     )
+                     ConflictingWherePredicates.validate(:all, query, [true])
                    end
     end
 

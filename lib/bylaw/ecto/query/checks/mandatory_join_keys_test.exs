@@ -60,10 +60,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.check == MandatoryJoinKeys
       assert issue.meta.operation == :all
@@ -87,9 +85,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when duplicate configured keys are satisfied" do
@@ -101,9 +97,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id, :organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id, :organisation_id])
     end
 
     test "passes for every Ecto prepare_query operation when the join key equality is present" do
@@ -115,9 +109,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       Enum.each(@prepare_query_operations, fn operation ->
         assert :ok =
-                 MandatoryJoinKeys.validate(operation, query,
-                   mandatory_join_keys: [keys: [:organisation_id]]
-                 )
+                 MandatoryJoinKeys.validate(operation, query, keys: [:organisation_id])
       end)
     end
 
@@ -129,10 +121,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} =
-                 MandatoryJoinKeys.validate(operation, query,
-                   mandatory_join_keys: [keys: [:organisation_id]]
-                 )
+        assert {:error, [%Issue{} = issue]} =
+                 MandatoryJoinKeys.validate(operation, query, keys: [:organisation_id])
 
         assert issue.meta.operation == operation
         assert issue.meta.missing_keys == [:organisation_id]
@@ -148,9 +138,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when keyword join predicates match mandatory keys" do
@@ -162,9 +150,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when field join predicates match mandatory keys" do
@@ -178,9 +164,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when mandatory key equality uses field expressions" do
@@ -194,9 +178,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when mandatory key equality uses a named root binding" do
@@ -211,9 +193,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when mandatory key equality uses a named root binding in field expressions" do
@@ -228,9 +208,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when mandatory key equality uses named joined and root bindings" do
@@ -246,9 +224,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "passes when mandatory key equality uses named bindings in field expressions" do
@@ -264,9 +240,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "returns an issue when keyword join predicates omit mandatory keys" do
@@ -277,10 +251,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -296,10 +268,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -315,10 +285,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       assert :ok =
                MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
     end
 
@@ -330,12 +298,10 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :all
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :all
                )
 
       assert issue.meta.keys == [:organisation_id, :user_id]
@@ -356,10 +322,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       assert :ok =
                MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [
-                   keys: [:organisation_id, :user_id],
-                   match: :any
-                 ]
+                 keys: [:organisation_id, :user_id],
+                 match: :any
                )
     end
 
@@ -373,10 +337,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.join_index == 1
       assert issue.meta.binding_index == 2
@@ -394,10 +356,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.join_index == 1
       assert issue.meta.binding_index == 2
@@ -416,9 +376,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "accepts mandatory key matches to named prior non-root bindings" do
@@ -435,9 +393,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "accepts mandatory key matches to named prior non-root bindings in field expressions" do
@@ -454,9 +410,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "returns multiple issues when multiple explicit joins are missing mandatory key equality" do
@@ -470,9 +424,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert {:error, [%Issue{} = first_issue, %Issue{} = second_issue]} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert first_issue.meta.join_index == 0
       assert first_issue.meta.binding_index == 1
@@ -491,10 +443,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.join_schema == Comment
       assert issue.meta.missing_keys == [:organisation_id]
@@ -508,10 +458,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -526,9 +474,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not validate schema-less joins" do
@@ -540,9 +486,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not validate subquery joins" do
@@ -559,9 +503,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not validate fragment joins" do
@@ -573,9 +515,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not validate interpolated query joins" do
@@ -592,9 +532,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not validate association joins" do
@@ -606,9 +544,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
     end
 
     test "does not accept not equal predicates as mandatory key matches" do
@@ -619,10 +555,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -638,10 +572,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -655,10 +587,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -675,10 +605,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -694,10 +622,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
@@ -711,16 +637,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           where: post.organisation_id == ^123
         )
 
-      assert {:error, %Issue{} = issue} =
-               MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [keys: [:organisation_id]]
-               )
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
       assert issue.meta.found_join_keys == []
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query =
         from(post in Post,
           join: comment in Comment,
@@ -728,7 +652,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert :ok =
-               MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [validate: false])
+               MandatoryJoinKeys.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
@@ -738,30 +662,26 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           on: comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} =
+      assert {:error, [%Issue{} = issue]} =
                MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [
-                   keys: [:organisation_id],
-                   validate: true
-                 ]
+                 keys: [:organisation_id],
+                 validate: true
                )
 
       assert issue.meta.missing_keys == [:organisation_id]
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query =
         from(post in Post,
           join: comment in Comment,
           on: comment.post_id == post.id
         )
 
-      assert {:error, %Issue{}} =
+      assert {:error, [%Issue{}]} =
                MandatoryJoinKeys.validate(:all, query,
-                 mandatory_join_keys: [
-                   keys: [:organisation_id],
-                   validate: nil
-                 ]
+                 keys: [:organisation_id],
+                 validate: nil
                )
     end
 
@@ -785,7 +705,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert_raise ArgumentError, "expected :keys to be a non-empty list of atoms, got: []", fn ->
-        MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [keys: []])
+        MandatoryJoinKeys.validate(:all, query, keys: [])
       end
     end
 
@@ -799,9 +719,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert_raise ArgumentError,
                    "expected :keys to be a non-empty list of atoms, got: :organisation_id",
                    fn ->
-                     MandatoryJoinKeys.validate(:all, query,
-                       mandatory_join_keys: [keys: :organisation_id]
-                     )
+                     MandatoryJoinKeys.validate(:all, query, keys: :organisation_id)
                    end
     end
 
@@ -815,9 +733,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert_raise ArgumentError,
                    "expected :keys to contain only atoms, got: \"organisation_id\"",
                    fn ->
-                     MandatoryJoinKeys.validate(:all, query,
-                       mandatory_join_keys: [keys: ["organisation_id"]]
-                     )
+                     MandatoryJoinKeys.validate(:all, query, keys: ["organisation_id"])
                    end
     end
 
@@ -830,10 +746,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
 
       assert_raise ArgumentError, "expected :match to be :any or :all, got: :one", fn ->
         MandatoryJoinKeys.validate(:all, query,
-          mandatory_join_keys: [
-            keys: [:organisation_id],
-            match: :one
-          ]
+          keys: [:organisation_id],
+          match: :one
         )
       end
     end
@@ -846,9 +760,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert_raise ArgumentError,
-                   "expected :mandatory_join_keys opts to be a keyword list, got: true",
+                   "expected opts to be a keyword list, got: true",
                    fn ->
-                     MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: true)
+                     MandatoryJoinKeys.validate(:all, query, true)
                    end
     end
 
@@ -860,9 +774,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
         )
 
       assert_raise ArgumentError,
-                   "expected :mandatory_join_keys opts to be a keyword list, got: [true]",
+                   "expected opts to be a keyword list, got: [true]",
                    fn ->
-                     MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [true])
+                     MandatoryJoinKeys.validate(:all, query, [true])
                    end
     end
 
@@ -873,8 +787,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
           on: comment.post_id == post.id
         )
 
-      assert_raise ArgumentError, "unknown :mandatory_join_keys option: :unknown", fn ->
-        MandatoryJoinKeys.validate(:all, query, mandatory_join_keys: [unknown: true])
+      assert_raise ArgumentError, "unknown option: :unknown", fn ->
+        MandatoryJoinKeys.validate(:all, query, unknown: true)
       end
     end
 

@@ -3,38 +3,12 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   Validates that `update_all` queries are bounded.
 
   This check is useful as a guard against accidentally updating every row in a
-  table:
+  table.
 
-      @bylaw [
-        unbounded_updates: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.UnboundedUpdates.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.update_all(query, updates, bylaw: [unbounded_updates: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        unbounded_updates: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -53,15 +27,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:unbounded_updates, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :unbounded_updates
-  def name, do: :unbounded_updates
+  @type opts :: check_opts()
 
   @doc """
   Validates that `update_all` queries are bounded.
@@ -73,10 +39,10 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) and unbounded_update?(operation, query) do
-      {:error, issue(operation)}
+      {:error, [issue(operation)]}
     else
       :ok
     end

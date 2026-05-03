@@ -20,40 +20,10 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   rejected when the joined source is an Ecto schema module and the root schema
   defines an association whose related schema matches it.
 
-      @bylaw [
-        manual_join_instead_of_assoc: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc.validate(
-               operation,
-               query,
-               bylaw_opts
-             ) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [manual_join_instead_of_assoc: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        manual_join_instead_of_assoc: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -69,16 +39,8 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:manual_join_instead_of_assoc, check_opts()})
+  @type opts :: check_opts()
   @type association_index :: %{module() => list(atom())}
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :manual_join_instead_of_assoc
-  def name, do: :manual_join_instead_of_assoc
 
   @doc """
   Validates that manual joins use root schema associations when available.
@@ -91,7 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
@@ -107,7 +69,6 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   defp validate_enabled(operation, query) do
     case issues(operation, query) do
       [] -> :ok
-      [issue] -> {:error, issue}
       issues -> {:error, issues}
     end
   end
