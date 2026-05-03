@@ -13,6 +13,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
 
     schema "posts" do
       field(:title, :string)
+      field(:value, :string)
 
       has_many(:comments, Bylaw.Ecto.Query.Checks.CartesianJoinsTest.Comment)
     end
@@ -23,6 +24,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
 
     schema "comments" do
       field(:body, :string)
+      field(:meta, :map)
 
       belongs_to(:post, Bylaw.Ecto.Query.Checks.CartesianJoinsTest.Post)
     end
@@ -277,6 +279,92 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
         )
 
       assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated lateral fragment source references a previous binding" do
+      overlapping_ids = [1, 2, 3]
+
+      query =
+        from(post in Post,
+          as: :post,
+          left_lateral_join:
+            excluded in fragment(
+              "SELECT id FROM unnest(?::bigint[]) AS t(id) WHERE t.id = ?",
+              ^overlapping_ids,
+              post.id
+            ),
+          on: true,
+          select: {post.id, field(excluded, :id)}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated cross lateral fragment source references a previous binding" do
+      query =
+        from(post in Post,
+          cross_lateral_join: derived in fragment("SELECT ? AS id", post.id),
+          select: {post.id, field(derived, :id)}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "returns an issue when a lateral fragment source has no previous binding reference" do
+      ids = [1, 2, 3]
+
+      query =
+        from(post in Post,
+          left_lateral_join:
+            excluded in fragment("SELECT id FROM unnest(?::bigint[]) AS t(id)", ^ids),
+          on: true,
+          select: {post.id, field(excluded, :id)}
+        )
+
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :left_lateral
+      assert issue.meta.reason == :literal_true_on
+    end
+
+    test "passes when a correlated lateral subquery uses a boolean fragment predicate" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(fragment_predicate_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "passes when a correlated lateral subquery wraps a local field in a fragment" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join: comment in subquery(fragment_wrapped_local_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert :ok = CartesianJoins.validate(:all, query, [])
+    end
+
+    test "returns an issue when a lateral subquery fragment only compares parent bindings" do
+      query =
+        from(post in Post,
+          as: :post,
+          inner_lateral_join:
+            comment in subquery(fragment_parent_comparing_comment_id_subquery()),
+          on: true,
+          select: {post.id, comment.id}
+        )
+
+      assert {:error, [%Issue{} = issue]} = CartesianJoins.validate(:all, query, [])
+
+      assert issue.meta.join_qual == :inner_lateral
+      assert issue.meta.reason == :literal_true_on
     end
 
     test "passes when a correlated lateral subquery references a dynamic parent field" do
@@ -642,6 +730,27 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoinsTest do
   defp parent_comparing_comment_id_subquery do
     from(comment in Comment,
       where: parent_as(:post).id == parent_as(:post).id,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp fragment_predicate_comment_id_subquery do
+    from(comment in Comment,
+      where: fragment("? = ?", comment.post_id, parent_as(:post).id),
+      select: %{id: comment.id}
+    )
+  end
+
+  defp fragment_wrapped_local_comment_id_subquery do
+    from(comment in Comment,
+      where: fragment("?->>'chain_id'", comment.meta) == parent_as(:post).value,
+      select: %{id: comment.id}
+    )
+  end
+
+  defp fragment_parent_comparing_comment_id_subquery do
+    from(comment in Comment,
+      where: fragment("? = ?", parent_as(:post).id, parent_as(:post).id),
       select: %{id: comment.id}
     )
   end
