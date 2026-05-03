@@ -29,7 +29,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     test "returns an issue when delete_all has no where clause" do
       query = from(post in Post)
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
 
@@ -42,7 +42,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     test "returns an issue when delete_all only has a literal true where clause" do
       query = from(post in Post, where: true)
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -53,7 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       predicate = dynamic([_post], ^always_true)
       query = from(post in Post, where: ^predicate)
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -63,7 +63,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       always_true = true
       query = from(post in Post, where: type(^always_true, :boolean))
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -76,7 +76,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
           or_where: true
         )
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -85,7 +85,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     test "returns an issue when delete_all has an empty keyword where clause" do
       query = from(Post, where: [])
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -136,7 +136,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
           on: comment.post_id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
     end
@@ -145,7 +145,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       scoped_posts = from(post in Post, where: post.status == ^"archived")
       query = from(post in subquery(scoped_posts), select: post.id)
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -155,7 +155,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       scoped_posts = from(post in Post, where: post.status == ^"archived")
       query = with_cte(Post, "scoped_posts", as: ^scoped_posts)
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -170,7 +170,8 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     end
 
     test "returns an issue when delete_all cannot find where clauses on a non-query value" do
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, :not_a_query, [])
+      assert {:error, [%Issue{} = issue]} =
+               UnboundedDeletes.validate(:delete_all, :not_a_query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -185,7 +186,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     test "returns an issue for supported raw query maps with literal true where entries" do
       query = %{wheres: [%{expr: true, op: :and, params: []}]}
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
@@ -194,38 +195,38 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
     test "returns an issue for supported raw query maps without where entries" do
       query = %{wheres: []}
 
-      assert {:error, %Issue{} = issue} = UnboundedDeletes.validate(:delete_all, query, [])
+      assert {:error, [%Issue{} = issue]} = UnboundedDeletes.validate(:delete_all, query, [])
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post)
 
       assert :ok =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: false])
+               UnboundedDeletes.validate(:delete_all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post)
 
-      assert {:error, %Issue{}} =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: true])
+      assert {:error, [%Issue{}]} =
+               UnboundedDeletes.validate(:delete_all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post)
 
-      assert {:error, %Issue{}} =
-               UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [validate: nil])
+      assert {:error, [%Issue{}]} =
+               UnboundedDeletes.validate(:delete_all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :unbounded_deletes option: :mode", fn ->
-        UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [mode: :strict])
+      assert_raise ArgumentError, "unknown option: :mode", fn ->
+        UnboundedDeletes.validate(:delete_all, query, mode: :strict)
       end
     end
 
@@ -233,9 +234,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_deletes opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: :bad)
+                     UnboundedDeletes.validate(:delete_all, query, :bad)
                    end
     end
 
@@ -243,9 +244,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :unbounded_deletes opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     UnboundedDeletes.validate(:delete_all, query, unbounded_deletes: [:bad])
+                     UnboundedDeletes.validate(:delete_all, query, [:bad])
                    end
     end
 

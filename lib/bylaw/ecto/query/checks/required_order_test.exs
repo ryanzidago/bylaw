@@ -27,7 +27,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "returns an issue when limit has no order_by" do
       query = from(post in Post, limit: 10)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with limit to include order_by"
@@ -38,7 +38,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "returns an issue when offset has no order_by" do
       query = from(post in Post, offset: 50)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with offset to include order_by"
@@ -48,7 +48,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "returns every reason that requires ordering" do
       query = from(post in Post, limit: 10, offset: 50)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:stream, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:stream, query, [])
 
       assert issue.message ==
                "expected query with limit, offset, stream operation to include order_by"
@@ -60,7 +60,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "returns an issue when stream has no order_by" do
       query = from(post in Post)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:stream, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:stream, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with stream operation to include order_by"
@@ -69,7 +69,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     end
 
     test "returns an issue when stream cannot find order_by on a non-query value" do
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:stream, :not_a_query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:stream, :not_a_query, [])
 
       assert issue.check == RequiredOrder
       assert issue.meta.operation == :stream
@@ -80,7 +80,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       query = from(post in Post, limit: 10)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = RequiredOrder.validate(operation, query, [])
+        assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(operation, query, [])
 
         assert issue.check == RequiredOrder
         assert issue.meta.operation == operation
@@ -110,7 +110,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     test "returns an issue when limit has an empty order_by" do
       query = from(post in Post, order_by: [], limit: 10)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with limit to include order_by"
@@ -121,7 +121,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       order_by = []
       query = from(post in Post, order_by: ^order_by, limit: 10)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with limit to include order_by"
@@ -164,7 +164,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
         |> select(1)
         |> limit(1)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.check == RequiredOrder
       assert issue.message == "expected query with offset to include order_by"
@@ -175,7 +175,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       limited_posts = from(post in Post, limit: 10)
       query = from(post in subquery(limited_posts), select: count())
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -185,7 +185,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       offset_posts = from(post in Post, offset: 10)
       query = from(post in subquery(offset_posts), select: count())
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include order_by"
       assert issue.meta.required_by == [:offset]
@@ -200,7 +200,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
           on: limited_post.id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -228,7 +228,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
           on: field(limited_post, :id) == post.id
         )
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -255,7 +255,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
         |> select([post], post.id)
         |> union_all(^limited_posts)
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -276,7 +276,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       limited_posts = from(post in Post, select: post.id, limit: 10)
       query = from(post in Post, where: post.id in subquery(limited_posts))
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -293,7 +293,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       limited_posts = from(post in Post, select: count(), limit: 10)
       query = from(post in Post, select: %{id: post.id, limited_count: subquery(limited_posts)})
 
-      assert {:error, %Issue{} = issue} = RequiredOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
 
       assert issue.message == "expected query with limit to include order_by"
       assert issue.meta.required_by == [:limit]
@@ -325,48 +325,48 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
 
       assert :ok = RequiredOrder.validate(:all, ordered_query, [])
 
-      assert {:error, %Issue{check: DeterministicOrder}} =
+      assert {:error, [%Issue{check: DeterministicOrder}]} =
                DeterministicOrder.validate(:all, ordered_query, [])
 
-      assert {:error, %Issue{check: RequiredOrder}} =
+      assert {:error, [%Issue{check: RequiredOrder}]} =
                RequiredOrder.validate(:all, bounded_query, [])
 
       assert :ok = DeterministicOrder.validate(:all, bounded_query, [])
 
       assert :ok = RequiredOrder.validate(:all, bounded_ordered_query, [])
 
-      assert {:error, %Issue{check: DeterministicOrder}} =
+      assert {:error, [%Issue{check: DeterministicOrder}]} =
                DeterministicOrder.validate(:all, bounded_ordered_query, [])
 
       assert :ok = RequiredOrder.validate(:all, deterministic_bounded_query, [])
       assert :ok = DeterministicOrder.validate(:all, deterministic_bounded_query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, limit: 10)
 
-      assert :ok = RequiredOrder.validate(:all, query, required_order: [validate: false])
+      assert :ok = RequiredOrder.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, limit: 10)
 
-      assert {:error, %Issue{}} =
-               RequiredOrder.validate(:all, query, required_order: [validate: true])
+      assert {:error, [%Issue{}]} =
+               RequiredOrder.validate(:all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, limit: 10)
 
-      assert {:error, %Issue{}} =
-               RequiredOrder.validate(:all, query, required_order: [validate: nil])
+      assert {:error, [%Issue{}]} =
+               RequiredOrder.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, limit: 10)
 
-      assert_raise ArgumentError, "unknown :required_order option: :reasons", fn ->
-        RequiredOrder.validate(:all, query, required_order: [reasons: [:limit]])
+      assert_raise ArgumentError, "unknown option: :reasons", fn ->
+        RequiredOrder.validate(:all, query, reasons: [:limit])
       end
     end
 
@@ -374,9 +374,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       query = from(post in Post, limit: 10)
 
       assert_raise ArgumentError,
-                   "expected :required_order opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     RequiredOrder.validate(:all, query, required_order: :bad)
+                     RequiredOrder.validate(:all, query, :bad)
                    end
     end
 
@@ -384,9 +384,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       query = from(post in Post, limit: 10)
 
       assert_raise ArgumentError,
-                   "expected :required_order opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     RequiredOrder.validate(:all, query, required_order: [:bad])
+                     RequiredOrder.validate(:all, query, [:bad])
                    end
     end
 

@@ -92,7 +92,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           on: true
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = NamedBindings.validate(:all, query, [])
       assert issue.check == NamedBindings
       assert issue.meta.reason == :missing_root_as
       assert issue.meta.binding == :root
@@ -106,7 +106,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
           on: as(:comment).post_id == as(:post).id
         )
 
-      assert {:error, %Issue{} = issue} = NamedBindings.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = NamedBindings.validate(:all, query, [])
       assert issue.meta.reason == :missing_join_as
       assert issue.meta.join_index == 0
       assert issue.meta.binding_index == 1
@@ -424,24 +424,24 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       assert :ok = NamedBindings.validate(:all, query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
-      assert :ok = NamedBindings.validate(:all, query, named_bindings: [validate: false])
+      assert :ok = NamedBindings.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert {:error, [%Issue{} | _issues]} =
-               NamedBindings.validate(:all, query, named_bindings: [validate: true])
+               NamedBindings.validate(:all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert {:error, [%Issue{} | _issues]} =
-               NamedBindings.validate(:all, query, named_bindings: [validate: nil])
+               NamedBindings.validate(:all, query, validate: nil)
     end
 
     test "raises when top-level opts are not a keyword list" do
@@ -464,9 +464,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :named_bindings opts to be a keyword list, got: :invalid",
+                   "expected opts to be a keyword list, got: :invalid",
                    fn ->
-                     NamedBindings.validate(:all, query, named_bindings: :invalid)
+                     NamedBindings.validate(:all, query, :invalid)
                    end
     end
 
@@ -474,17 +474,17 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindingsTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected :named_bindings opts to be a keyword list, got: [:invalid]",
+                   "expected opts to be a keyword list, got: [:invalid]",
                    fn ->
-                     NamedBindings.validate(:all, query, named_bindings: [:invalid])
+                     NamedBindings.validate(:all, query, [:invalid])
                    end
     end
 
     test "raises for unknown check options" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "unknown :named_bindings option: :unknown", fn ->
-        NamedBindings.validate(:all, query, named_bindings: [unknown: true])
+      assert_raise ArgumentError, "unknown option: :unknown", fn ->
+        NamedBindings.validate(:all, query, unknown: true)
       end
     end
   end

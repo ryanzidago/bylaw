@@ -29,16 +29,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [named_bindings: [validate: false]])
-
   Supported options:
-
-      [
-        named_bindings: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
   """
@@ -50,7 +41,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:named_bindings, check_opts()})
+  @type opts :: check_opts()
   @type expression_source :: %{
           macro: atom(),
           expr: term(),
@@ -66,14 +57,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
         }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :named_bindings
-  def name, do: :named_bindings
-
-  @doc """
   Validates named binding aliases and references for a prepared Ecto query.
 
   The operation is kept as issue metadata. This check applies the same query
@@ -84,12 +67,11 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       case issues(operation, query) do
         [] -> :ok
-        [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
     else
