@@ -11,7 +11,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
         )
 
       Bylaw.Db.Adapters.Postgres.validate([target], [
-        Bylaw.Db.Postgres.Checks.ForeignKeyIndexes
+        Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
       ])
 
   The `:repo` option expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
