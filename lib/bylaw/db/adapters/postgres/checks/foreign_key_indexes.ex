@@ -134,8 +134,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   end
 
   defp rows(result) when is_map(result) do
-    columns = Map.fetch!(result, :columns)
-    rows = Map.fetch!(result, :rows)
+    %{columns: columns, rows: rows} = result
 
     Enum.map(rows, fn row ->
       columns
