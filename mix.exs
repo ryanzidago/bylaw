@@ -142,11 +142,11 @@ defmodule Bylaw.MixProject do
           Bylaw.Db.Target
         ],
         "Bylaw.Db adapters": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\./,
-        "Bylaw.Db checks": ~r/^(Elixir\.)?Bylaw\.Db\.Postgres\.Checks\./
+        "Bylaw.Db adapter checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\..*\.Checks\./
       ],
       nest_modules_by_prefix: [
         Bylaw.Ecto.Query.Checks,
-        Bylaw.Db.Postgres.Checks
+        Bylaw.Db.Adapters.Postgres.Checks
       ]
     ]
   end

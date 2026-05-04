@@ -1,9 +1,9 @@
-defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   use ExUnit.Case, async: false
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
   alias Bylaw.Db.Issue
-  alias Bylaw.Db.Postgres.Checks.ForeignKeyIndexes
   alias Bylaw.Db.Postgres.TestDatabase
   alias Bylaw.Db.Postgres.TestRepo
   alias Ecto.Adapters.SQL.Sandbox

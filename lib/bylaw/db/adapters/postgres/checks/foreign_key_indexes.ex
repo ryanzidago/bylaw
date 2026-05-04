@@ -1,4 +1,4 @@
-defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 

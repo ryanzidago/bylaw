@@ -1,9 +1,9 @@
-defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
   use ExUnit.Case, async: true
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
   alias Bylaw.Db.Issue
-  alias Bylaw.Db.Postgres.Checks.ForeignKeyIndexes
   alias Bylaw.Db.Target
 
   describe "validate/2" do
