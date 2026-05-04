@@ -65,23 +65,19 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   @doc """
   Runs checks against a non-empty list of Postgres targets.
+
+  Invalid target and check arguments raise `ArgumentError`.
   """
 
   @impl Bylaw.Db.Adapter
   @spec validate(list(Target.t()), list(Db.check_spec())) :: Check.result()
-  def validate(targets, checks) when is_list(targets) and is_list(checks) do
+  def validate(targets, checks) do
+    checks = validate_checks!(checks)
+
     validate_postgres_targets!(targets)
     Enum.each(targets, &validate_postgres_target!/1)
 
     Db.validate(targets, checks)
-  end
-
-  def validate(_targets, checks) when not is_list(checks) do
-    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
-  end
-
-  def validate(targets, _checks) do
-    raise ArgumentError, "expected Postgres targets to be a list, got: #{inspect(targets)}"
   end
 
   @doc """
@@ -157,7 +153,17 @@ defmodule Bylaw.Db.Adapters.Postgres do
   defp validate_postgres_targets!([]),
     do: raise(ArgumentError, "expected at least one Postgres target")
 
-  defp validate_postgres_targets!(_targets), do: :ok
+  defp validate_postgres_targets!(targets) when is_list(targets), do: :ok
+
+  defp validate_postgres_targets!(targets) do
+    raise ArgumentError, "expected Postgres targets to be a list, got: #{inspect(targets)}"
+  end
+
+  defp validate_checks!(checks) when is_list(checks), do: checks
+
+  defp validate_checks!(checks) do
+    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
+  end
 
   defp ensure_dynamic_repo_support(%Target{dynamic_repo: nil}), do: :ok
 
