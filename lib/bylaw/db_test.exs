@@ -61,6 +61,16 @@ defmodule Bylaw.DbTest do
     def validate(_target, _opts), do: {:error, []}
   end
 
+  defmodule InvalidIssueCheck do
+    @behaviour Bylaw.Db.Check
+
+    @impl Bylaw.Db.Check
+    def name, do: :invalid_issue_check
+
+    @impl Bylaw.Db.Check
+    def validate(_target, _opts), do: {:error, [:bad]}
+  end
+
   describe "validate/2" do
     test "returns :ok when every check passes" do
       target = target(:primary)
@@ -97,6 +107,14 @@ defmodule Bylaw.DbTest do
 
       assert_raise ArgumentError, ~r/expected #{inspect(EmptyIssueCheck)}.validate\/2/, fn ->
         Db.validate([target], [EmptyIssueCheck])
+      end
+    end
+
+    test "raises when a failing check returns invalid issues" do
+      target = target(:primary)
+
+      assert_raise ArgumentError, ~r/expected #{inspect(InvalidIssueCheck)}.validate\/2/, fn ->
+        Db.validate([target], [InvalidIssueCheck])
       end
     end
 

@@ -7,6 +7,7 @@ defmodule Bylaw.Db do
   """
 
   alias Bylaw.Db.Check
+  alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
 
   @typedoc """
@@ -57,8 +58,7 @@ defmodule Bylaw.Db do
 
     case check.validate(target, opts) do
       :ok -> []
-      {:error, []} = result -> invalid_check_result!(check, result)
-      {:error, issues} when is_list(issues) -> issues
+      {:error, issues} = result when is_list(issues) -> valid_issues!(check, issues, result)
     end
   end
 
@@ -79,6 +79,14 @@ defmodule Bylaw.Db do
   defp invalid_check_result!(check, result) do
     raise ArgumentError,
           "expected #{inspect(check)}.validate/2 to return :ok or {:error, non_empty_issue_list}, got: #{inspect(result)}"
+  end
+
+  defp valid_issues!(check, issues, result) do
+    if Enum.any?(issues) and Enum.all?(issues, &match?(%Issue{}, &1)) do
+      issues
+    else
+      invalid_check_result!(check, result)
+    end
   end
 
   defp result([]), do: :ok
