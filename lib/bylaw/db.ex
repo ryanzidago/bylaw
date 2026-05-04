@@ -57,6 +57,7 @@ defmodule Bylaw.Db do
 
     case check.validate(target, opts) do
       :ok -> []
+      {:error, []} = result -> invalid_check_result!(check, result)
       {:error, issues} when is_list(issues) -> issues
     end
   end
@@ -73,6 +74,11 @@ defmodule Bylaw.Db do
 
   defp normalize_check!(check) do
     raise ArgumentError, "expected a check module or {check, opts}, got: #{inspect(check)}"
+  end
+
+  defp invalid_check_result!(check, result) do
+    raise ArgumentError,
+          "expected #{inspect(check)}.validate/2 to return :ok or {:error, non_empty_issue_list}, got: #{inspect(result)}"
   end
 
   defp result([]), do: :ok

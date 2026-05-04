@@ -51,6 +51,16 @@ defmodule Bylaw.DbTest do
     end
   end
 
+  defmodule EmptyIssueCheck do
+    @behaviour Bylaw.Db.Check
+
+    @impl Bylaw.Db.Check
+    def name, do: :empty_issue_check
+
+    @impl Bylaw.Db.Check
+    def validate(_target, _opts), do: {:error, []}
+  end
+
   describe "validate/2" do
     test "returns :ok when every check passes" do
       target = target(:primary)
@@ -80,6 +90,14 @@ defmodule Bylaw.DbTest do
       assert {:error, issues} = Db.validate([target], [MultiIssueCheck])
 
       assert Enum.map(issues, & &1.message) == ["first", "second"]
+    end
+
+    test "raises when a failing check returns no issues" do
+      target = target(:primary)
+
+      assert_raise ArgumentError, ~r/expected #{inspect(EmptyIssueCheck)}.validate\/2/, fn ->
+        Db.validate([target], [EmptyIssueCheck])
+      end
     end
 
     test "raises for malformed check specs" do
