@@ -90,28 +90,35 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   @impl Bylaw.Db.Adapter
   @spec query(Target.t(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
-  def query(%Target{adapter: __MODULE__, query: query} = target, sql, params, opts)
-      when is_function(query, 4) and is_binary(sql) and is_list(params) and is_list(opts) do
-    query.(target, sql, params, opts)
-  end
+  def query(%Target{adapter: __MODULE__} = target, sql, params, opts)
+      when is_binary(sql) and is_list(params) and is_list(opts) do
+    cond do
+      is_function(target.query, 4) ->
+        target.query.(target, sql, params, opts)
 
-  def query(%Target{adapter: __MODULE__, repo: repo} = target, sql, params, opts)
-      when is_atom(repo) and not is_nil(repo) and is_binary(sql) and is_list(params) and
-             is_list(opts) do
-    with {:module, _module} <- Code.ensure_loaded(Ecto.Adapters.SQL),
-         :ok <- ensure_dynamic_repo_support(target) do
-      with_dynamic_repo(target, fn ->
-        # credo:disable-for-next-line Credo.Check.Refactor.Apply
-        apply(Ecto.Adapters.SQL, :query, [repo, sql, params, opts])
-      end)
-    else
-      {:error, :nofile} -> {:error, {:missing_dependency, :ecto_sql}}
-      {:error, reason} -> {:error, reason}
+      valid_repo?(target.repo) ->
+        repo_query(target, sql, params, opts)
+
+      true ->
+        {:error, :missing_query_source}
     end
   end
 
   def query(%Target{adapter: __MODULE__}, _sql, _params, _opts) do
     {:error, :missing_query_source}
+  end
+
+  defp repo_query(target, sql, params, opts) do
+    with {:module, _module} <- Code.ensure_loaded(Ecto.Adapters.SQL),
+         :ok <- ensure_dynamic_repo_support(target) do
+      with_dynamic_repo(target, fn ->
+        # credo:disable-for-next-line Credo.Check.Refactor.Apply
+        apply(Ecto.Adapters.SQL, :query, [target.repo, sql, params, opts])
+      end)
+    else
+      {:error, :nofile} -> {:error, {:missing_dependency, :ecto_sql}}
+      {:error, reason} -> {:error, reason}
+    end
   end
 
   defp validate_target_opts!(opts) do
@@ -128,8 +135,10 @@ defmodule Bylaw.Db.Adapters.Postgres do
     end
   end
 
+  defp valid_repo?(repo), do: is_atom(repo) and not is_nil(repo)
+
   defp valid_query_source?(repo, query) do
-    (is_atom(repo) and not is_nil(repo)) or is_function(query, 4)
+    valid_repo?(repo) or is_function(query, 4)
   end
 
   defp keyword_list!(opts, label) do
@@ -167,25 +176,25 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   defp ensure_dynamic_repo_support(%Target{dynamic_repo: nil}), do: :ok
 
-  defp ensure_dynamic_repo_support(%Target{repo: repo}) do
-    if function_exported?(repo, :get_dynamic_repo, 0) and
-         function_exported?(repo, :put_dynamic_repo, 1) do
+  defp ensure_dynamic_repo_support(%Target{} = target) do
+    if function_exported?(target.repo, :get_dynamic_repo, 0) and
+         function_exported?(target.repo, :put_dynamic_repo, 1) do
       :ok
     else
-      {:error, {:dynamic_repo_not_supported, repo}}
+      {:error, {:dynamic_repo_not_supported, target.repo}}
     end
   end
 
   defp with_dynamic_repo(%Target{dynamic_repo: nil}, fun), do: fun.()
 
-  defp with_dynamic_repo(%Target{repo: repo, dynamic_repo: dynamic_repo}, fun) do
-    previous_dynamic_repo = repo.get_dynamic_repo()
+  defp with_dynamic_repo(%Target{} = target, fun) do
+    previous_dynamic_repo = target.repo.get_dynamic_repo()
 
     try do
-      repo.put_dynamic_repo(dynamic_repo)
+      target.repo.put_dynamic_repo(target.dynamic_repo)
       fun.()
     after
-      repo.put_dynamic_repo(previous_dynamic_repo)
+      target.repo.put_dynamic_repo(previous_dynamic_repo)
     end
   end
 end
