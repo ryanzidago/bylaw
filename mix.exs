@@ -59,7 +59,7 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
@@ -70,7 +70,7 @@ defmodule Bylaw.MixProject do
 
   defp dialyzer do
     [
-      plt_add_apps: [:ex_unit, :mix],
+      plt_add_apps: [:credo, :ex_unit, :mix],
       plt_local_path: "priv/plts"
     ]
   end

@@ -200,8 +200,9 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   end
 
   defp through_related_schema(schema, [association | rest]) do
-    with {:ok, next_schema} <- related_schema(schema, association) do
-      through_related_schema(next_schema, rest)
+    case related_schema(schema, association) do
+      {:ok, next_schema} -> through_related_schema(next_schema, rest)
+      :skip -> :skip
     end
   end
 
