@@ -20,21 +20,16 @@ defmodule Bylaw.Db do
 
   Checks run independently for each explicit target. The return shape matches
   individual checks: `:ok`, `{:error, issue}`, or `{:error, issues}`.
+  Invalid target and check arguments raise `ArgumentError`.
   """
   @spec validate(list(Target.t()), list(check_spec())) :: Check.result()
-  def validate(targets, checks) when is_list(targets) and is_list(checks) do
+  def validate(targets, checks) do
+    checks = validate_checks!(checks)
+
     targets
     |> validate_targets!()
     |> Enum.flat_map(&target_issues(&1, checks))
     |> result()
-  end
-
-  def validate(_targets, checks) when not is_list(checks) do
-    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
-  end
-
-  def validate(targets, _checks) do
-    raise ArgumentError, "expected database targets to be a list, got: #{inspect(targets)}"
   end
 
   defp target_issues(%Target{} = target, checks) do
@@ -46,7 +41,17 @@ defmodule Bylaw.Db do
   end
 
   defp validate_targets!([]), do: raise(ArgumentError, "expected at least one database target")
-  defp validate_targets!(targets), do: targets
+  defp validate_targets!(targets) when is_list(targets), do: targets
+
+  defp validate_targets!(targets) do
+    raise ArgumentError, "expected database targets to be a list, got: #{inspect(targets)}"
+  end
+
+  defp validate_checks!(checks) when is_list(checks), do: checks
+
+  defp validate_checks!(checks) do
+    raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
+  end
 
   defp check_issues(target, check_spec) do
     {check, opts} = normalize_check!(check_spec)
