@@ -111,6 +111,49 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
   end
 
+  describe "nested_queries/1" do
+    test "returns direct source, join, CTE, and combination queries" do
+      source_posts = from(post in Post, limit: 1)
+      joined_posts = from(post in Post, limit: 2)
+      cte_posts = from(post in Post, limit: 3)
+      combination_posts = from(post in Post, select: post.id, limit: 4)
+
+      query =
+        from(post in subquery(source_posts),
+          join: joined_post in subquery(joined_posts),
+          on: joined_post.id == post.id,
+          select: post.id
+        )
+        |> with_cte("cte_posts", as: ^cte_posts)
+        |> union_all(^combination_posts)
+
+      assert query
+             |> Introspection.nested_queries()
+             |> Enum.map(&limit_value/1) == [1, 2, 3, 4]
+    end
+
+    test "returns expression subqueries" do
+      where_posts = from(post in Post, select: post.id, offset: 10)
+      select_posts = from(post in Post, select: count(), offset: 20)
+
+      query =
+        from(post in Post,
+          where: post.id in subquery(where_posts),
+          select: %{id: post.id, selected_count: subquery(select_posts)}
+        )
+
+      assert query
+             |> Introspection.nested_queries()
+             |> Enum.map(&offset_value/1)
+             |> Enum.sort() == [10, 20]
+    end
+
+    test "returns an empty list for unsupported values" do
+      assert Introspection.nested_queries(:not_a_query) == []
+      assert Introspection.nested_queries(%{joins: [:bad], combinations: [:bad]}) == []
+    end
+  end
+
   describe "binding_index/2" do
     test "returns positional and named binding indexes" do
       aliases = %{post: 0, comment: 1}
@@ -173,6 +216,33 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
   end
 
+  describe "direct_root_field/2" do
+    test "accepts atom and binary root field names" do
+      status_field = dot_field({:&, [], [0]}, :status)
+      title_field = field_call({:&, [], [0]}, "title")
+
+      assert Introspection.direct_root_field(status_field, %{}) == {:ok, :status}
+      assert Introspection.direct_root_field(title_field, %{}) == {:ok, "title"}
+    end
+
+    test "unwraps type wrappers around root fields" do
+      root_aliases = MapSet.new([:post])
+      status_field = type_wrapper(field_call({:as, [], [:post]}, :status), :string)
+      title_field = type_wrapper(field_call({:as, [], [:post]}, "title"), :string)
+
+      assert Introspection.direct_root_field(status_field, root_aliases) == {:ok, :status}
+      assert Introspection.direct_root_field(title_field, root_aliases) == {:ok, "title"}
+    end
+
+    test "returns unknown for non-root fields and non-field expressions" do
+      aliases = %{post: 0, comment: 1}
+      comment_status = type_wrapper(field_call({:as, [], [:comment]}, "status"), :string)
+
+      assert Introspection.direct_root_field(comment_status, aliases) == :unknown
+      assert Introspection.direct_root_field(:status, aliases) == :unknown
+    end
+  end
+
   describe "field_reference?/1" do
     test "detects direct and nested field references" do
       status_field = dot_field({:&, [], [0]}, :status)
@@ -201,4 +271,7 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
   defp dot_field(source, field), do: {{:., [], [source, field]}, [], []}
   defp field_call(source, field), do: {:field, [], [source, field]}
+  defp type_wrapper(expr, type), do: {:type, [], [expr, type]}
+  defp limit_value(%{limit: %{expr: value}}), do: value
+  defp offset_value(%{offset: %{expr: value}}), do: value
 end

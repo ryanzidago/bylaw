@@ -3,32 +3,33 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   Validates that an `Ecto.Query` uses named binding aliases in query expressions.
 
   This check reads the prepared Ecto query struct. It requires the root binding
-  and every join to declare an `:as` alias, then rejects positional field
-  references such as `post.id` or `field(post, :id)` after Ecto has expanded
-  them to `&0.id` or `field(&0, :id)`.
+  and every join to declare an `:as` alias, then rejects field references that
+  target bindings without a declared alias.
+
+  Ecto expands named binding lists such as `[post: post]` to the same prepared
+  query shape as local binding variables such as `post`. Because that source
+  syntax is no longer distinguishable from the prepared query struct, this
+  check accepts both forms as long as the referenced binding has an alias.
 
   Association join sources, joined preloads, and whole-binding selects are not
   rejected because Ecto either requires binding variables for those forms or
   erases the source syntax before this check runs.
 
+  Ecto's repo lookup helpers, such as `Repo.get_by/3`, generate rootless
+  keyword `where` queries inside Ecto repo internals before
+  `c:Ecto.Repo.prepare_query/3` runs. The original caller did not have a place
+  to provide a root `:as` alias in that form, so this check ignores that
+  generated lookup shape. Predicate-oriented checks can still validate those
+  generated `where` fields.
+
       query =
-        from(post in Post,
-          as: :post,
-          where: as(:post).organisation_id == ^organisation_id
-        )
+        Post
+        |> from(as: :post)
+        |> where([post: post], post.organisation_id == ^organisation_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
 
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [named_bindings: [validate: false]])
-
   Supported options:
-
-      [
-        named_bindings: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
   """
@@ -40,7 +41,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   alias Bylaw.Ecto.Query.Issue
 
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:named_bindings, check_opts()})
+  @type opts :: check_opts()
   @type expression_source :: %{
           macro: atom(),
           expr: term(),
@@ -56,14 +57,6 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
         }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :named_bindings
-  def name, do: :named_bindings
-
-  @doc """
   Validates named binding aliases and references for a prepared Ecto query.
 
   The operation is kept as issue metadata. This check applies the same query
@@ -74,12 +67,11 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       case issues(operation, query) do
         [] -> :ok
-        [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
     else
@@ -92,16 +84,111 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   end
 
   defp issues(operation, query) when is_map(query) do
-    aliases = Introspection.aliases(query)
-    aliases_by_index = aliases_by_index(aliases)
-
-    root_as_issues(operation, query, aliases_by_index) ++
-      join_as_issues(operation, query) ++
-      expression_reference_issues(operation, query, aliases_by_index) ++
+    if repo_lookup_query?(operation, query) do
       subquery_issues(operation, query)
+    else
+      aliases = Introspection.aliases(query)
+      aliases_by_index = aliases_by_index(aliases)
+
+      root_as_issues(operation, query, aliases_by_index) ++
+        join_as_issues(operation, query) ++
+        expression_reference_issues(operation, query, aliases_by_index) ++
+        subquery_issues(operation, query)
+    end
   end
 
   defp issues(_operation, _query), do: []
+
+  defp repo_lookup_query?(:all, query) do
+    # Repo lookup helpers reach prepare_query/3 as normal :all queries. Keep
+    # the exemption tied to the generated lookup shapes Ecto leaves behind.
+    aliases_empty? =
+      query
+      |> Introspection.aliases()
+      |> Enum.empty?()
+
+    joins_empty? =
+      query
+      |> Map.get(:joins, [])
+      |> Enum.empty?()
+
+    repo_lookup_wheres? =
+      query
+      |> Map.get(:wheres, [])
+      |> repo_lookup_wheres?()
+
+    repo_lookup_expression_sources? =
+      query
+      |> expression_sources()
+      |> Enum.all?(&repo_lookup_expression_source?/1)
+
+    aliases_empty? and generated_unaliased_root?(query) and joins_empty? and repo_lookup_wheres? and
+      repo_lookup_expression_sources?
+  end
+
+  defp repo_lookup_query?(_operation, _query), do: false
+
+  defp generated_unaliased_root?(%{from: %{as: nil, file: nil}}), do: true
+  defp generated_unaliased_root?(_query), do: false
+
+  defp repo_lookup_wheres?([_where | _rest] = wheres) do
+    Enum.all?(wheres, &repo_lookup_where?/1)
+  end
+
+  defp repo_lookup_wheres?(_wheres), do: false
+
+  defp repo_lookup_where?(where) do
+    # Caller-authored keyword wheres have the caller file here; generated repo
+    # lookups point back into Ecto's repo queryable implementation.
+    Map.get(where, :op) == :and and repo_queryable_file?(Map.get(where, :file)) and
+      repo_lookup_expr?(Map.get(where, :expr))
+  end
+
+  defp repo_queryable_file?(file) when is_binary(file) do
+    String.ends_with?(file, "/ecto/repo/queryable.ex")
+  end
+
+  defp repo_queryable_file?(_file), do: false
+
+  defp ecto_query_planner_file?(file) when is_binary(file) do
+    String.ends_with?(file, "/ecto/query/planner.ex")
+  end
+
+  defp ecto_query_planner_file?(_file), do: false
+
+  defp repo_lookup_expr?({:and, _meta, [left, right]}) do
+    repo_lookup_expr?(left) and repo_lookup_expr?(right)
+  end
+
+  defp repo_lookup_expr?({:==, _meta, [left, right]}) do
+    root_field_access?(left) and pinned_param?(right)
+  end
+
+  defp repo_lookup_expr?({:in, _meta, [left, right]}) do
+    root_field_access?(left) and pinned_param?(right)
+  end
+
+  defp repo_lookup_expr?(_expr), do: false
+
+  defp root_field_access?({{:., _meta, [{:&, _binding_meta, [0]}, field]}, _call_meta, []})
+       when is_atom(field) do
+    true
+  end
+
+  defp root_field_access?(_expr), do: false
+
+  defp pinned_param?({:^, _meta, [param_index]}) when is_integer(param_index), do: true
+  defp pinned_param?(_expr), do: false
+
+  defp repo_lookup_expression_source?(%{macro: :where} = source) do
+    repo_queryable_file?(source.file) and repo_lookup_expr?(source.expr)
+  end
+
+  defp repo_lookup_expression_source?(%{macro: :select, expr: {:&, _meta, [0]}} = source) do
+    ecto_query_planner_file?(source.file) and Enum.empty?(source.subqueries)
+  end
+
+  defp repo_lookup_expression_source?(_source), do: false
 
   defp aliases_by_index(aliases) do
     Enum.reduce(aliases, %{}, fn
@@ -157,7 +244,8 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
     |> Enum.flat_map(fn source ->
       source.expr
       |> positional_references()
-      |> Enum.map(&positional_reference_issue(operation, source, &1, aliases_by_index))
+      |> Enum.reject(&Map.has_key?(aliases_by_index, &1.binding_index))
+      |> Enum.map(&unaliased_reference_issue(operation, source, &1))
     end)
   end
 
@@ -313,31 +401,26 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   defp subquery_query(%{__struct__: Ecto.SubQuery, query: query}) when is_map(query), do: [query]
   defp subquery_query(_source), do: []
 
-  defp positional_reference_issue(operation, source, reference, aliases_by_index) do
+  defp unaliased_reference_issue(operation, source, reference) do
     binding_index = reference.binding_index
-    binding_alias = Map.get(aliases_by_index, binding_index)
 
     issue(
-      positional_reference_message(source.macro, binding_index, binding_alias),
+      unaliased_reference_message(source.macro, binding_index),
       :positional_binding_reference,
       operation,
       source,
       Map.merge(source.meta, %{
         macro: source.macro,
         binding_index: binding_index,
-        binding_alias: binding_alias,
+        binding_alias: nil,
         field: reference.field,
         reference: reference.reference
       })
     )
   end
 
-  defp positional_reference_message(macro, binding_index, nil) do
-    "expected Ecto query #{macro} field reference on binding #{binding_index} to use as(:name) or parent_as(:name)"
-  end
-
-  defp positional_reference_message(macro, _binding_index, binding_alias) do
-    "expected Ecto query #{macro} field reference on binding #{inspect(binding_alias)} to use as(:name) or parent_as(:name)"
+  defp unaliased_reference_message(macro, binding_index) do
+    "expected Ecto query #{macro} field reference on binding #{binding_index} to target a binding with an :as alias"
   end
 
   defp issue(message, reason, operation, meta_source, extra_meta) do

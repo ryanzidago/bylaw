@@ -9,48 +9,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   against configured schemas mention those fields in supported root `where`
   predicates.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw [
-        explicit_visibility_predicates: [
-          schemas: [
-            {Post, fields: [:deleted_at, :archived_at, :status]},
-            {Comment, fields: [:deleted_at]}
-          ]
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates.validate(
-               operation,
-               query,
-               bylaw_opts
-             ) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [explicit_visibility_predicates: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        explicit_visibility_predicates: [
-          schemas: [
-            {Post, fields: [:deleted_at, :status]}
-          ]
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
@@ -84,15 +46,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
             {:validate, boolean()}
             | {:schemas, list(schema_config())}
           )
-  @type opts :: list({:explicit_visibility_predicates, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :explicit_visibility_predicates
-  def name, do: :explicit_visibility_predicates
+  @type opts :: check_opts()
 
   @doc """
   Validates explicit visibility-sensitive root `where` predicates.
@@ -106,7 +60,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
     opts = CheckOptions.keyword_list!(opts, "opts")
-    check_opts = CheckOptions.fetch!(opts, name(), [:schemas, :validate])
+    check_opts = CheckOptions.normalize!(opts, [:schemas, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -176,7 +130,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp fetch_schema_configs!(opts) do

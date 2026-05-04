@@ -21,39 +21,31 @@ defmodule Bylaw.Ecto.Query.CheckOptionsTest do
     end
   end
 
-  describe "fetch!/3" do
-    test "returns check options from the configured namespace" do
-      opts = [sample_check: [validate: false]]
-
-      assert CheckOptions.fetch!(opts, :sample_check, [:validate]) == [validate: false]
+  describe "normalize!/2" do
+    test "returns check-specific options" do
+      assert CheckOptions.normalize!([validate: false], [:validate]) == [validate: false]
     end
 
-    test "returns an empty list when check options are omitted" do
-      assert CheckOptions.fetch!([], :sample_check, [:validate]) == []
-    end
-
-    test "raises when top-level options are not a keyword list" do
+    test "raises when options are not a keyword list" do
       assert_raise ArgumentError, "expected opts to be a keyword list, got: [:invalid]", fn ->
-        CheckOptions.fetch!([:invalid], :sample_check, [:validate])
+        CheckOptions.normalize!([:invalid], [:validate])
       end
     end
 
-    test "raises when namespaced check options are not a keyword list" do
-      assert_raise ArgumentError,
-                   "expected :sample_check opts to be a keyword list, got: :invalid",
-                   fn ->
-                     CheckOptions.fetch!([sample_check: :invalid], :sample_check, [:validate])
-                   end
+    test "raises when options are not a list" do
+      assert_raise ArgumentError, "expected opts to be a keyword list, got: :invalid", fn ->
+        CheckOptions.normalize!(:invalid, [:validate])
+      end
     end
 
-    test "raises when namespaced check options contain unsupported keys" do
-      assert_raise ArgumentError, "unknown :sample_check option: :fields", fn ->
-        CheckOptions.fetch!([sample_check: [fields: [:status]]], :sample_check, [:validate])
+    test "raises when check options contain unsupported keys" do
+      assert_raise ArgumentError, "unknown option: :fields", fn ->
+        CheckOptions.normalize!([fields: [:status]], [:validate])
       end
     end
 
     test "preserves loose validation when allowed keys are unrestricted" do
-      assert CheckOptions.fetch!([sample_check: [:invalid]], :sample_check, :any) == [:invalid]
+      assert CheckOptions.normalize!([fields: [:status]], :any) == [fields: [:status]]
     end
   end
 

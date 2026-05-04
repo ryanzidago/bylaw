@@ -18,5 +18,4 @@ checks live under `Bylaw.Ecto.Query.Checks` and implement
 and implement `Bylaw.Db.Check`.
 
 Use the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
-current check list, `prepare_query/3` wiring, option keys, escape hatches, and
-issue metadata.
+current check list, `prepare_query/3` wiring, check specs, and issue metadata.

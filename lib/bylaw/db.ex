@@ -52,9 +52,11 @@ defmodule Bylaw.Db do
   defp check_issues(target, check_spec) do
     {check, opts} = normalize_check!(check_spec)
 
-    target
-    |> check.validate(opts)
-    |> issues()
+    case check.validate(target, opts) do
+      :ok -> []
+      {:error, issues} when is_list(issues) -> issues
+      {:error, %Issue{} = issue} -> [issue]
+    end
   end
 
   defp normalize_check!({check, opts}) when is_atom(check) do
@@ -70,10 +72,6 @@ defmodule Bylaw.Db do
   defp normalize_check!(check) do
     raise ArgumentError, "expected a check module or {check, opts}, got: #{inspect(check)}"
   end
-
-  defp issues(:ok), do: []
-  defp issues({:error, issues}) when is_list(issues), do: issues
-  defp issues({:error, %Issue{} = issue}), do: [issue]
 
   defp result([]), do: :ok
   defp result([issue]), do: {:error, issue}

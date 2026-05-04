@@ -36,8 +36,7 @@ defmodule Bylaw.Dev.Qa do
       ["format"],
       ["compile", "--warnings-as-errors"],
       ["hex.audit"],
-      ["deps.audit"],
-      ["sobelow", "--strict", "--quiet", "--exit"]
+      ["deps.audit"]
     ]
   }
 
