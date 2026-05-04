@@ -10,7 +10,6 @@ defmodule Bylaw.MixProject do
       version: @version,
       elixir: "~> 1.19",
       test_paths: test_paths(Mix.env()),
-      test_ignore_filters: test_ignore_filters(Mix.env()),
       dialyzer: dialyzer(),
       usage_rules: usage_rules(),
       source_url: @source_url,
@@ -31,11 +30,8 @@ defmodule Bylaw.MixProject do
     ]
   end
 
-  defp test_paths(:test), do: ["lib", ".credo/checks"]
+  defp test_paths(:test), do: ["lib"]
   defp test_paths(_env), do: ["test"]
-
-  defp test_ignore_filters(:test), do: [~r/^\.credo\/checks\/.*\.ex$/]
-  defp test_ignore_filters(_env), do: []
 
   def cli do
     [
@@ -63,7 +59,7 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
@@ -74,7 +70,7 @@ defmodule Bylaw.MixProject do
 
   defp dialyzer do
     [
-      plt_add_apps: [:ex_unit, :mix],
+      plt_add_apps: [:credo, :ex_unit, :mix],
       plt_local_path: "priv/plts"
     ]
   end

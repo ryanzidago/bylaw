@@ -22,7 +22,6 @@
         # In the latter case `**/*.{ex,exs}` will be used.
         #
         included: [
-          ".credo/checks/",
           "lib/",
           "src/",
           "test/",
@@ -42,7 +41,7 @@
       # If you create your own checks, you must specify the source files for
       # them here, so they can be loaded by Credo before running the analysis.
       #
-      requires: [".credo/checks/*.ex"],
+      requires: [],
       #
       # If you want to enforce a style guide and need a more traditional linting
       # experience, you can change `strict` to `true` below:
@@ -221,15 +220,14 @@
           {Bylaw.Credo.Check.Warning.FloatUsage, []},
           {Bylaw.Credo.Check.Warning.UseVerifiedRoutes, []},
           {Bylaw.Credo.Check.Warning.PreferDateTimeOverDate, false},
-          {Bylaw.Credo.Check.Warning.EctoNamedBinding,
-           [excluded_paths: ["test/", "_test.exs"]]},
+          {Bylaw.Credo.Check.Warning.EctoNamedBinding, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.Warning.ErrorChangesetPatternMatch, []},
           {Bylaw.Credo.Check.Warning.FullySpecifiedStructTypes, []},
           {Bylaw.Credo.Check.Warning.NoAndInEctoWhere, false},
           {Bylaw.Credo.Check.Warning.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.Warning.NoInlineAssignInReturnTuple, []},
           {Bylaw.Credo.Check.Warning.NoResultTupleArgument,
-           [excluded_paths: [~r{^\.credo/checks/}]]},
+           [excluded_paths: [~r{^lib/bylaw/credo/check/}]]},
           {Bylaw.Credo.Check.Warning.NoRepoInController, []},
           {Bylaw.Credo.Check.Warning.NoRepoPreloadAfterQuery, []},
           {Bylaw.Credo.Check.Warning.ComposablePreloadQueries, []},

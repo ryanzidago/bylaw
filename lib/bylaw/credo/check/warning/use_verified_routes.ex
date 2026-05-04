@@ -329,8 +329,6 @@ defmodule Bylaw.Credo.Check.Warning.UseVerifiedRoutes do
     end
   end
 
-  defp normalize_candidate_path(_other), do: nil
-
   defp normalize_router_path(path) do
     stripped_path = strip_query_and_fragment(path)
     normalized_path = Regex.replace(~r/:[a-zA-Z_][a-zA-Z0-9_]*/, stripped_path, @dynamic_marker)
@@ -362,8 +360,6 @@ defmodule Bylaw.Credo.Check.Warning.UseVerifiedRoutes do
   defp split_segments(path) do
     String.split(path, "/", trim: true)
   end
-
-  defp route_matches_router?(nil), do: false
 
   defp route_matches_router?(shape) do
     MapSet.member?(router_paths(), shape)
