@@ -229,11 +229,12 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   defp in_candidates(candidates) when is_list(candidates), do: candidates
   defp in_candidates(_candidates), do: []
 
-  defp comparison_violation({:ok, left}, {:ok, right}, operator) do
-    mixed_field_violation(left, right, operator)
+  defp comparison_violation(left, right, operator) do
+    case {left, right} do
+      {{:ok, left}, {:ok, right}} -> mixed_field_violation(left, right, operator)
+      _result -> nil
+    end
   end
-
-  defp comparison_violation(_left, _right, _operator), do: nil
 
   defp mixed_field_violation(%{schema_type: :date} = date, datetime, operator) do
     if datetime_field_without_truncation?(datetime) do
