@@ -15,7 +15,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, issues} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()]}
              ])
 
@@ -31,7 +31,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
              ])
 
@@ -48,7 +48,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert :ok =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes,
                 schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
              ])
@@ -58,7 +58,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
              ])
 
@@ -69,7 +69,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
              ])
 
@@ -80,7 +80,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
              ])
 
@@ -92,7 +92,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, %Issue{} = issue} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
              ])
 
@@ -104,7 +104,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     target = target()
 
     assert {:error, issues} =
-             Postgres.validate(target, [
+             Postgres.validate([target], [
                {ForeignKeyIndexes,
                 schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
              ])

@@ -10,7 +10,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
           repo: MyApp.Repo
         )
 
-      Bylaw.Db.Adapters.Postgres.validate(target, [
+      Bylaw.Db.Adapters.Postgres.validate([target], [
         Bylaw.Db.Postgres.Checks.ForeignKeyIndexes
       ])
 
@@ -64,21 +64,24 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   @doc """
-  Runs checks against one Postgres target or a list of Postgres targets.
+  Runs checks against a non-empty list of Postgres targets.
   """
 
   @impl Bylaw.Db.Adapter
-  @spec validate(Target.t() | list(Target.t()), list(Db.check_spec())) :: Check.result()
-  def validate(target_or_targets, checks) when is_list(checks) do
-    targets = postgres_targets!(target_or_targets)
-
+  @spec validate(list(Target.t()), list(Db.check_spec())) :: Check.result()
+  def validate(targets, checks) when is_list(targets) and is_list(checks) do
+    validate_postgres_targets!(targets)
     Enum.each(targets, &validate_postgres_target!/1)
 
     Db.validate(targets, checks)
   end
 
-  def validate(_target_or_targets, checks) do
+  def validate(_targets, checks) when not is_list(checks) do
     raise ArgumentError, "expected checks to be a list, got: #{inspect(checks)}"
+  end
+
+  def validate(targets, _checks) do
+    raise ArgumentError, "expected Postgres targets to be a list, got: #{inspect(targets)}"
   end
 
   @doc """
@@ -151,13 +154,10 @@ defmodule Bylaw.Db.Adapters.Postgres do
     raise ArgumentError, "expected a Postgres target, got: #{inspect(target)}"
   end
 
-  defp postgres_targets!(%Target{} = target), do: [target]
-  defp postgres_targets!([]), do: raise(ArgumentError, "expected at least one Postgres target")
-  defp postgres_targets!(targets) when is_list(targets), do: targets
+  defp validate_postgres_targets!([]),
+    do: raise(ArgumentError, "expected at least one Postgres target")
 
-  defp postgres_targets!(target) do
-    raise ArgumentError, "expected a Postgres target or list of targets, got: #{inspect(target)}"
-  end
+  defp validate_postgres_targets!(_targets), do: :ok
 
   defp ensure_dynamic_repo_support(%Target{dynamic_repo: nil}), do: :ok
 
