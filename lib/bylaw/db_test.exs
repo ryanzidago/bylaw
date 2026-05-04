@@ -53,13 +53,13 @@ defmodule Bylaw.DbTest do
     test "returns :ok when every check passes" do
       target = target(:primary)
 
-      assert :ok = Db.validate(target, [PassingCheck])
+      assert :ok = Db.validate([target], [PassingCheck])
     end
 
     test "passes check-specific options to tuple checks" do
       target = target(:primary)
 
-      assert {:error, %Issue{} = issue} = Db.validate(target, [{FailingCheck, sample: true}])
+      assert {:error, %Issue{} = issue} = Db.validate([target], [{FailingCheck, sample: true}])
 
       assert issue.meta.opts == [sample: true]
     end
@@ -75,7 +75,7 @@ defmodule Bylaw.DbTest do
     test "preserves multiple issues returned by one check" do
       target = target(:primary)
 
-      assert {:error, issues} = Db.validate(target, [MultiIssueCheck])
+      assert {:error, issues} = Db.validate([target], [MultiIssueCheck])
 
       assert Enum.map(issues, & &1.message) == ["first", "second"]
     end
@@ -84,7 +84,7 @@ defmodule Bylaw.DbTest do
       target = target(:primary)
 
       assert_raise ArgumentError, ~r/expected a check module or {check, opts}/, fn ->
-        Db.validate(target, [{"not a module", []}])
+        Db.validate([target], [{"not a module", []}])
       end
     end
 
@@ -92,7 +92,7 @@ defmodule Bylaw.DbTest do
       target = target(:primary)
 
       assert_raise ArgumentError, ~r/expected check opts to be a keyword list/, fn ->
-        Db.validate(target, [{PassingCheck, [:not_keyword]}])
+        Db.validate([target], [{PassingCheck, [:not_keyword]}])
       end
     end
 
@@ -100,12 +100,12 @@ defmodule Bylaw.DbTest do
       target = target(:primary)
 
       assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
-        Db.validate(target, PassingCheck)
+        Db.validate([target], PassingCheck)
       end
     end
 
     test "raises for missing targets" do
-      assert_raise ArgumentError, ~r/expected a database target or list of targets/, fn ->
+      assert_raise ArgumentError, ~r/expected database targets to be a list/, fn ->
         Db.validate(nil, [PassingCheck])
       end
     end

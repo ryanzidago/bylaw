@@ -57,7 +57,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     test "delegates check execution for Postgres targets" do
       target = Postgres.target(query: query_fun())
 
-      assert {:error, %Issue{} = issue} = Postgres.validate(target, [FailingCheck])
+      assert {:error, %Issue{} = issue} = Postgres.validate([target], [FailingCheck])
       assert issue.target == target
     end
 
@@ -65,12 +65,12 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        Postgres.validate(target, [FailingCheck])
+        Postgres.validate([target], [FailingCheck])
       end
     end
 
     test "rejects missing targets" do
-      assert_raise ArgumentError, ~r/expected a Postgres target or list of targets/, fn ->
+      assert_raise ArgumentError, ~r/expected Postgres targets to be a list/, fn ->
         Postgres.validate(nil, [FailingCheck])
       end
     end
@@ -79,7 +79,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       target = %Target{adapter: Postgres}
 
       assert_raise ArgumentError, ~r/expected Postgres target to include :repo/, fn ->
-        Postgres.validate(target, [FailingCheck])
+        Postgres.validate([target], [FailingCheck])
       end
     end
 
@@ -93,7 +93,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       target = Postgres.target(query: query_fun())
 
       assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
-        Postgres.validate(target, FailingCheck)
+        Postgres.validate([target], FailingCheck)
       end
     end
   end

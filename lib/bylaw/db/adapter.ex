@@ -40,9 +40,9 @@ defmodule Bylaw.Db.Adapter do
   @callback target(opts :: target_opts()) :: Target.t()
 
   @doc """
-  Runs `checks` against one target or a list of targets.
+  Runs `checks` against a non-empty list of targets.
   """
-  @callback validate(Target.t() | list(Target.t()), list(Bylaw.Db.check_spec())) ::
+  @callback validate(list(Target.t()), list(Bylaw.Db.check_spec())) ::
               Check.result()
 
   @doc """
