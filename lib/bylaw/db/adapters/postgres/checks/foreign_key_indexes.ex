@@ -97,10 +97,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == false do
-      :ok
-    else
+    if Keyword.get(opts, :validate, true) == true do
       validate_foreign_key_indexes(target, opts)
+    else
+      :ok
     end
   end
 
