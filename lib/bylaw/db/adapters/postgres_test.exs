@@ -13,7 +13,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
 
     @impl Bylaw.Db.Check
     def validate(target, _opts) do
-      {:error, %Issue{check: __MODULE__, target: target, message: "failed"}}
+      {:error, [%Issue{check: __MODULE__, target: target, message: "failed"}]}
     end
   end
 
@@ -57,7 +57,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     test "delegates check execution for Postgres targets" do
       target = Postgres.target(query: query_fun())
 
-      assert {:error, %Issue{} = issue} = Postgres.validate([target], [FailingCheck])
+      assert {:error, [%Issue{} = issue]} = Postgres.validate([target], [FailingCheck])
       assert issue.target == target
     end
 

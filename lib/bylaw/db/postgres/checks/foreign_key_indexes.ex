@@ -129,7 +129,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
         |> result()
 
       {:error, reason} ->
-        {:error, query_error_issue(target, schemas, tables, reason)}
+        {:error, [query_error_issue(target, schemas, tables, reason)]}
     end
   end
 
@@ -144,7 +144,6 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   defp rows(rows) when is_list(rows), do: rows
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do

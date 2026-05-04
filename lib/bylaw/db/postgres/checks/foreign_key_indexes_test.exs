@@ -26,7 +26,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
            ])}
         )
 
-      assert {:error, %Issue{} = issue} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
 
       assert issue.check == ForeignKeyIndexes
       assert issue.target == target
@@ -88,7 +88,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
            ]}
         )
 
-      assert {:error, %Issue{} = issue} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
 
       assert issue.meta.constraint == "orders_user_id_fkey"
       assert issue.meta.columns == ["user_id"]
@@ -166,7 +166,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesTest do
     test "returns an issue when introspection fails" do
       target = target({:error, :connection_closed})
 
-      assert {:error, %Issue{} = issue} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
 
       assert issue.message == "could not inspect Postgres foreign keys"
 
