@@ -14,39 +14,10 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   timezone the value meant. Callers should convert the value to a `DateTime`
   before building the query so the timezone decision is explicit.
 
-      @bylaw [
-        utc_datetime_naive_comparisons: []
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons.validate(
-               operation,
-               query,
-               bylaw_opts
-             ) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [utc_datetime_naive_comparisons: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        utc_datetime_naive_comparisons: [
-          validate: true,
-          fields: [:inserted_at]
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:fields` - optional non-empty list of root fields to validate. When
@@ -81,15 +52,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
             {:validate, boolean()}
             | {:fields, list(atom())}
           )
-  @type opts :: list({:utc_datetime_naive_comparisons, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :utc_datetime_naive_comparisons
-  def name, do: :utc_datetime_naive_comparisons
+  @type opts :: check_opts()
 
   @doc """
   Validates UTC datetime comparisons for a prepared Ecto query.
@@ -102,7 +65,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate, :fields])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :fields])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -248,9 +211,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp checked_root_field(expr, fields, root_aliases) do
-    case direct_root_field(expr, root_aliases) do
+    case Introspection.direct_root_field(expr, root_aliases) do
       {:ok, field} -> checked_field(fields, field)
-      :error -> :error
+      :unknown -> :error
     end
   end
 
@@ -335,40 +298,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   defp reverse_operator(:>), do: :<
   defp reverse_operator(:>=), do: :<=
 
-  defp direct_root_field({:type, _meta, [expr, _type]}, root_aliases) do
-    direct_root_field(expr, root_aliases)
-  end
-
-  defp direct_root_field({{:., _meta, [source, field]}, _call_meta, []}, root_aliases)
-       when is_atom(field) or is_binary(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field({:field, _meta, [source, field]}, root_aliases)
-       when is_atom(field) or is_binary(field) do
-    if root_binding?(source, root_aliases) do
-      {:ok, field}
-    else
-      :error
-    end
-  end
-
-  defp direct_root_field(_expr, _root_aliases), do: :error
-
-  defp root_binding?({:&, _meta, [0]}, _root_aliases), do: true
-
-  defp root_binding?({:as, _meta, [alias_name]}, root_aliases) when is_atom(alias_name) do
-    MapSet.member?(root_aliases, alias_name)
-  end
-
-  defp root_binding?(_expr, _root_aliases), do: false
-
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 
   defp issue(operation, field, violations) do

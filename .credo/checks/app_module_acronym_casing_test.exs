@@ -93,6 +93,17 @@ defmodule Bylaw.Credo.Check.Readability.AppModuleAcronymCasingTest do
     |> refute_issues()
   end
 
+  test "does not crash on aliases with dynamic module segments" do
+    """
+    defmodule Bylaw.Example do
+      def adapter, do: __MODULE__.CaptureAdapter
+    end
+    """
+    |> to_source_file()
+    |> run_check(AppModuleAcronymCasing)
+    |> refute_issues()
+  end
+
   test "flags HTTP acronym words in app-owned modules" do
     """
     defmodule Bylaw.TestSupport.ExAwsHttpClient do

@@ -11,39 +11,14 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   It rejects `cross_join`, uncorrelated `cross_lateral_join`, and
   non-association joins whose `on` expression is literally `true`. Correlated
-  lateral subqueries are treated as constrained when a supported subquery
-  predicate compares a local subquery binding with a previous parent binding.
+  lateral joins are treated as constrained when a supported subquery predicate
+  depends on both a local subquery binding and a previous parent binding, or
+  when a lateral fragment source exposes a previous parent binding reference.
 
-      @bylaw [
-        cartesian_joins: [
-          validate: true
-        ]
-      ]
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.CartesianJoins.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [cartesian_joins: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        cartesian_joins: [
-          validate: true
-        ]
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -52,6 +27,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   lateral subquery shapes exposed by the Ecto query API. Association joins are
   not considered literal `on: true` joins because Ecto stores their association
   predicate separately from the `on` expression.
+
+  This check is a guardrail for obvious cartesian joins, not a full SQL
+  cardinality proof. It does not parse fragment SQL. For lateral fragments, an
+  Ecto-visible reference to a previous binding is treated as dependency
+  evidence; opaque SQL that needs stricter review should be handled in the
+  application query or by disabling the check for that call site.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -62,17 +43,9 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   @type reason :: :cross_join | :cross_lateral_join | :literal_true_on
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:cartesian_joins, check_opts()})
+  @type opts :: check_opts()
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
   @lateral_quals [:cross_lateral, :inner_lateral, :left_lateral]
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :cartesian_joins
-  def name, do: :cartesian_joins
 
   @doc """
   Validates that a prepared Ecto query does not contain cartesian joins.
@@ -85,7 +58,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
@@ -101,7 +74,6 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   defp validate_enabled(operation, query) do
     case issues(operation, query) do
       [] -> :ok
-      [issue] -> {:error, issue}
       issues -> {:error, issues}
     end
   end
@@ -145,6 +117,15 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
        )
        when qual in @lateral_quals do
     correlated_lateral_query?(query, aliases, binding_index)
+  end
+
+  defp correlated_lateral_join?(
+         %{qual: qual, source: {:fragment, _meta, _parts} = source},
+         aliases,
+         binding_index
+       )
+       when qual in @lateral_quals do
+    previous_binding_reference?(source, aliases, binding_index)
   end
 
   defp correlated_lateral_join?(_join, _aliases, _binding_index), do: false
@@ -197,11 +178,63 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
     correlated_comparison?(left, right, parent_aliases, binding_index, aliases)
   end
 
+  defp correlated_predicate?(
+         {:fragment, _meta, _parts} = expr,
+         parent_aliases,
+         binding_index,
+         aliases
+       ) do
+    correlated_expression?(expr, parent_aliases, binding_index, aliases)
+  end
+
   defp correlated_predicate?(_expr, _parent_aliases, _binding_index, _aliases), do: false
 
   defp correlated_comparison?(left, right, parent_aliases, binding_index, aliases) do
-    (parent_field?(left, parent_aliases, binding_index) and local_field?(right, aliases)) or
-      (local_field?(left, aliases) and parent_field?(right, parent_aliases, binding_index))
+    correlated_expression?([left, right], parent_aliases, binding_index, aliases)
+  end
+
+  defp correlated_expression?(expr, parent_aliases, binding_index, aliases) do
+    expr
+    |> expression_references(parent_aliases, binding_index, aliases)
+    |> correlated_references?()
+  end
+
+  defp correlated_references?(%{local?: true, parent?: true}), do: true
+  defp correlated_references?(_references), do: false
+
+  defp expression_references(expr, parent_aliases, binding_index, aliases) do
+    cond do
+      parent_field?(expr, parent_aliases, binding_index) ->
+        %{local?: false, parent?: true}
+
+      local_field?(expr, aliases) ->
+        %{local?: true, parent?: false}
+
+      is_tuple(expr) ->
+        expr
+        |> Tuple.to_list()
+        |> expression_references(parent_aliases, binding_index, aliases)
+
+      is_list(expr) ->
+        Enum.reduce(expr, empty_references(), fn item, references ->
+          merge_references(
+            references,
+            expression_references(item, parent_aliases, binding_index, aliases)
+          )
+        end)
+
+      true ->
+        empty_references()
+    end
+  end
+
+  defp empty_references, do: %{local?: false, parent?: false}
+
+  defp merge_references(left, right) do
+    %{
+      local?: left.local? or right.local?,
+      parent?: left.parent? or right.parent?
+    }
   end
 
   defp parent_field?(expr, aliases, binding_index) do
@@ -233,6 +266,38 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   defp local_field?(expr, aliases) do
     match?({:ok, {_local_index, _field}}, Introspection.field(expr, aliases))
   end
+
+  defp previous_binding_reference?(expr, aliases, binding_index) do
+    previous_binding?(expr, aliases, binding_index) or
+      previous_binding_field?(expr, aliases, binding_index) or
+      nested_previous_binding_reference?(expr, aliases, binding_index)
+  end
+
+  defp previous_binding?(expr, aliases, binding_index) do
+    case Introspection.binding_index(expr, aliases) do
+      {:ok, index} when index < binding_index -> true
+      _binding -> false
+    end
+  end
+
+  defp previous_binding_field?(expr, aliases, binding_index) do
+    case Introspection.field(expr, aliases) do
+      {:ok, {index, _field}} when index < binding_index -> true
+      _field -> false
+    end
+  end
+
+  defp nested_previous_binding_reference?(expr, aliases, binding_index) when is_tuple(expr) do
+    expr
+    |> Tuple.to_list()
+    |> previous_binding_reference?(aliases, binding_index)
+  end
+
+  defp nested_previous_binding_reference?(expr, aliases, binding_index) when is_list(expr) do
+    Enum.any?(expr, &previous_binding_reference?(&1, aliases, binding_index))
+  end
+
+  defp nested_previous_binding_reference?(_expr, _aliases, _binding_index), do: false
 
   defp literal_true_on_reason(%{on: %{expr: true}}), do: :literal_true_on
   defp literal_true_on_reason(_join), do: nil

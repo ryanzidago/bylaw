@@ -103,10 +103,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     end
 
     test "returns an issue when Ecto.Query.first/2 and last/2 use non-primary order fields" do
-      assert {:error, %Issue{} = first_issue} =
+      assert {:error, [%Issue{} = first_issue]} =
                DeterministicOrder.validate(:all, first(Post, :title), [])
 
-      assert {:error, %Issue{} = last_issue} =
+      assert {:error, [%Issue{} = last_issue]} =
                DeterministicOrder.validate(:all, last(Post, :title), [])
 
       assert first_issue.meta.primary_key == [:id]
@@ -127,7 +127,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = DeterministicOrder.validate(operation, query, [])
+        assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(operation, query, [])
 
         assert issue.check == DeterministicOrder
         assert issue.meta.operation == operation
@@ -139,7 +139,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "does not assume non-primary order fields are unique" do
       query = from(post in Post, order_by: [asc: post.slug])
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert issue.meta.found_order_keys == [:slug]
@@ -148,7 +148,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "requires the primary key even when a likely composite unique key is ordered" do
       query = from(post in Post, order_by: [asc: post.organisation_id, asc: post.sequence])
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert issue.meta.found_order_keys == [:organisation_id, :sequence]
@@ -157,7 +157,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "requires every field in a composite primary key" do
       query = from(membership in Membership, order_by: [asc: membership.organisation_id])
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:organisation_id, :user_id]
       assert issue.meta.found_order_keys == [:organisation_id]
@@ -188,7 +188,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "does not accept primary keys hidden inside fragments" do
       query = from(post in Post, order_by: fragment("? + 0", post.id))
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
@@ -197,7 +197,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "returns an issue for schema-less sources because no primary key can be reflected" do
       query = from(post in "posts", order_by: [asc: field(post, :title)])
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == []
       assert issue.meta.found_order_keys == [:title]
@@ -209,7 +209,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "returns an issue when a root schema has no primary key" do
       query = from(post in NoPrimaryKeyPost, order_by: [asc: post.title])
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == []
       assert issue.meta.found_order_keys == [:title]
@@ -223,7 +223,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
           order_by: [asc: organisation.id]
         )
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
@@ -237,7 +237,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
           order_by: [asc: field(organisation, :id)]
         )
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
@@ -265,7 +265,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
           order_by: [asc: as(:organisation).id]
         )
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
@@ -297,7 +297,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "does not accept raw field expressions from non-root bindings" do
       query = raw_order_query(asc: non_root_field_call(:id))
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
@@ -306,33 +306,31 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     test "ignores malformed raw order expressions" do
       query = raw_order_query(:invalid)
 
-      assert {:error, %Issue{} = issue} = DeterministicOrder.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
       assert issue.meta.primary_key == [:id]
       assert Enum.empty?(issue.meta.found_order_keys)
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert :ok =
-               DeterministicOrder.validate(:all, query, deterministic_order: [validate: false])
+               DeterministicOrder.validate(:all, query, validate: false)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, order_by: [asc: post.title])
 
-      assert {:error, %Issue{}} =
-               DeterministicOrder.validate(:all, query, deterministic_order: [validate: nil])
+      assert {:error, [%Issue{}]} =
+               DeterministicOrder.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, order_by: [asc: post.title])
 
-      assert_raise ArgumentError, "unknown :deterministic_order option: :unique_keys", fn ->
-        DeterministicOrder.validate(:all, query,
-          deterministic_order: [unique_keys: [[:external_id], :slug]]
-        )
+      assert_raise ArgumentError, "unknown option: :unique_keys", fn ->
+        DeterministicOrder.validate(:all, query, unique_keys: [[:external_id], :slug])
       end
     end
 
@@ -340,9 +338,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert_raise ArgumentError,
-                   "expected :deterministic_order opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     DeterministicOrder.validate(:all, query, deterministic_order: :bad)
+                     DeterministicOrder.validate(:all, query, :bad)
                    end
     end
 
@@ -350,9 +348,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
       query = from(post in Post, order_by: [asc: post.title])
 
       assert_raise ArgumentError,
-                   "expected :deterministic_order opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     DeterministicOrder.validate(:all, query, deterministic_order: [:bad])
+                     DeterministicOrder.validate(:all, query, [:bad])
                    end
     end
 

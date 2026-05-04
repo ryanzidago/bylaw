@@ -2,8 +2,11 @@ defmodule Bylaw.Ecto.Query.Check do
   @moduledoc """
   Behaviour for checks that validate an `Ecto.Query` before it runs.
 
-  Checks are intentionally small and directly callable so callers can decide how
-  to compose them in `c:Ecto.Repo.prepare_query/3`.
+  Checks are intentionally small and directly callable. `Bylaw.Ecto.Query`
+  composes them from module-based check specs for `c:Ecto.Repo.prepare_query/3`.
+
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
+  built-in check list, repo wiring, and option examples.
   """
 
   alias Bylaw.Ecto.Query.Issue
@@ -23,34 +26,23 @@ defmodule Bylaw.Ecto.Query.Check do
   @type query :: Ecto.Query.t()
 
   @typedoc """
-  Bylaw options passed to the check.
-
-  Checks should read their own nested options from this keyword list using
-  their `name/0`.
+  Check-specific options passed to the check.
   """
   @type opts :: list({atom(), term()})
 
   @typedoc """
   The result returned by a query check.
 
-  `:ok` means the query passed the check. `{:error, issue}` and
-  `{:error, issues}` let each check decide whether it reports one issue or
-  several issues.
+  `:ok` means the query passed the check. `{:error, issues}` reports one or
+  more query issues.
   """
-  @type result :: :ok | {:error, Issue.t() | list(Issue.t())}
-
-  @doc """
-  Returns the option namespace used by this check.
-
-  The returned atom should match the key the check reads from `opts/0`.
-  """
-  @callback name() :: atom()
+  @type result :: :ok | {:error, nonempty_list(Issue.t())}
 
   @doc """
   Validates a prepared Ecto query.
 
-  Return `:ok` when the query passes, or `{:error, issue}` /
-  `{:error, issues}` when the check rejects it.
+  Return `:ok` when the query passes, or `{:error, issues}` when the check
+  rejects it.
   """
   @callback validate(operation(), query(), opts()) :: result()
 end

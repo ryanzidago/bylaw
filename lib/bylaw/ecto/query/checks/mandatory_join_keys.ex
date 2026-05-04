@@ -16,6 +16,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   Like Bylaw's other Ecto query checks, this reads Ecto query structs directly.
   Ecto treats those structs as opaque, so this check intentionally supports a
   small, tested subset of Ecto's query AST.
+
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
+
+  Supported options:
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:keys` - required non-empty list of field names when the check runs.
+    * `:match` - `:any` or `:all`. Defaults to `:any`.
+
+  When a join schema does not contain any configured keys, that join is not
+  applicable and the check returns no issue for it. For applicable joins, the
+  check accepts direct equality predicates between the joined binding and
+  another query binding in the join `on` expression.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -31,16 +45,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
             | {:keys, list(atom())}
             | {:match, match()}
           )
-  @type opts :: list({:mandatory_join_keys, check_opts()})
+  @type opts :: check_opts()
   @type field_set :: list(atom())
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :mandatory_join_keys
-  def name, do: :mandatory_join_keys
 
   @doc """
   Validates mandatory join-key predicates for a prepared Ecto query.
@@ -53,7 +59,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:keys, :match, :validate])
+    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
       keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
@@ -61,7 +67,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
       case issues(operation, query, keys, match) do
         [] -> :ok
-        [issue] -> {:error, issue}
         issues -> {:error, issues}
       end
     else

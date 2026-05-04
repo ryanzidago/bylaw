@@ -120,8 +120,13 @@ defmodule Bylaw.Credo.Check.Readability.AppModuleAcronymCasing do
     end
   end
 
-  defp extract_alias_segments({:__aliases__, _meta, segments}) when is_list(segments),
-    do: {:ok, segments}
+  defp extract_alias_segments({:__aliases__, _meta, segments}) when is_list(segments) do
+    if Enum.all?(segments, &is_atom/1) do
+      {:ok, segments}
+    else
+      :error
+    end
+  end
 
   defp extract_alias_segments(_other), do: :error
 

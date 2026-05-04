@@ -1,0 +1,19 @@
+# Checks Overview
+
+Bylaw is organized around check families. A family is a namespace that targets
+one source of project rules, such as static Elixir code, database structure, or
+prepared Ecto queries.
+
+## Check Families
+
+| Namespace | Status | Scope |
+| --- | --- | --- |
+| `Bylaw.Credo` | Planned | Custom Credo checks for source-code rules that should fail during static analysis. |
+| `Bylaw.Db` | Planned | Database-schema checks for constraints that should be derived from the database shape. |
+| `Bylaw.Ecto.Query` | Available now | Runtime checks for prepared `Ecto.Query` structs before a repo operation runs. |
+
+The current public family is `Bylaw.Ecto.Query`. Its built-in checks live under
+`Bylaw.Ecto.Query.Checks` and implement `Bylaw.Ecto.Query.Check`.
+
+Use the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
+current check list, `prepare_query/3` wiring, check specs, and issue metadata.
