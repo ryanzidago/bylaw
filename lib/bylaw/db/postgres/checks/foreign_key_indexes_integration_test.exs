@@ -30,7 +30,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   test "returns issue metadata for missing foreign key indexes" do
     target = target()
 
-    assert {:error, %Issue{} = issue} =
+    assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
              ])
@@ -57,7 +57,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   test "ignores partial indexes" do
     target = target()
 
-    assert {:error, %Issue{} = issue} =
+    assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
              ])
@@ -68,7 +68,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   test "requires foreign key columns to be leading index columns" do
     target = target()
 
-    assert {:error, %Issue{} = issue} =
+    assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
              ])
@@ -79,7 +79,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   test "ignores included columns for composite foreign key index coverage" do
     target = target()
 
-    assert {:error, %Issue{} = issue} =
+    assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
              ])
@@ -91,7 +91,7 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   test "reports user schemas that start with pg but not pg underscore" do
     target = target()
 
-    assert {:error, %Issue{} = issue} =
+    assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
              ])

@@ -24,12 +24,14 @@ defmodule Bylaw.DbTest do
     @impl Bylaw.Db.Check
     def validate(target, opts) do
       {:error,
-       %Issue{
-         check: __MODULE__,
-         target: target,
-         message: "failed",
-         meta: %{opts: opts, target: target.meta.label}
-       }}
+       [
+         %Issue{
+           check: __MODULE__,
+           target: target,
+           message: "failed",
+           meta: %{opts: opts, target: target.meta.label}
+         }
+       ]}
     end
   end
 
@@ -59,7 +61,7 @@ defmodule Bylaw.DbTest do
     test "passes check-specific options to tuple checks" do
       target = target(:primary)
 
-      assert {:error, %Issue{} = issue} = Db.validate([target], [{FailingCheck, sample: true}])
+      assert {:error, [%Issue{} = issue]} = Db.validate([target], [{FailingCheck, sample: true}])
 
       assert issue.meta.opts == [sample: true]
     end

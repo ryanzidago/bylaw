@@ -13,7 +13,7 @@ defmodule Bylaw.Db.Check do
   @typedoc """
   The result returned by a database check.
   """
-  @type result :: :ok | {:error, Issue.t() | list(Issue.t())}
+  @type result :: :ok | {:error, list(Issue.t())}
 
   @typedoc """
   Check-specific option.
@@ -32,6 +32,9 @@ defmodule Bylaw.Db.Check do
 
   @doc """
   Validates a database target.
+
+  Return `:ok` when the target passes, or `{:error, issues}` with a non-empty
+  list of issues when it fails.
   """
   @callback validate(Target.t(), opts :: check_opts()) :: result()
 end

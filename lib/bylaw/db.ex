@@ -7,7 +7,6 @@ defmodule Bylaw.Db do
   """
 
   alias Bylaw.Db.Check
-  alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
 
   @typedoc """
@@ -18,8 +17,8 @@ defmodule Bylaw.Db do
   @doc """
   Runs `checks` against a non-empty list of targets.
 
-  Checks run independently for each explicit target. The return shape matches
-  individual checks: `:ok`, `{:error, issue}`, or `{:error, issues}`.
+  Checks run independently for each explicit target. Returns `:ok` when every
+  check passes, or `{:error, issues}` with a non-empty list of issues.
   Invalid target and check arguments raise `ArgumentError`.
   """
   @spec validate(list(Target.t()), list(check_spec())) :: Check.result()
@@ -59,7 +58,6 @@ defmodule Bylaw.Db do
     case check.validate(target, opts) do
       :ok -> []
       {:error, issues} when is_list(issues) -> issues
-      {:error, %Issue{} = issue} -> [issue]
     end
   end
 
@@ -78,6 +76,5 @@ defmodule Bylaw.Db do
   end
 
   defp result([]), do: :ok
-  defp result([issue]), do: {:error, issue}
   defp result(issues), do: {:error, issues}
 end
