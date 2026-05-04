@@ -15,6 +15,16 @@ defmodule Bylaw.Db.Check do
   """
   @type result :: :ok | {:error, Issue.t() | list(Issue.t())}
 
+  @typedoc """
+  Check-specific option.
+  """
+  @type check_opt :: {atom(), term()}
+
+  @typedoc """
+  Check-specific options.
+  """
+  @type check_opts :: list(check_opt())
+
   @doc """
   Returns the option namespace used by this check.
   """
@@ -23,5 +33,5 @@ defmodule Bylaw.Db.Check do
   @doc """
   Validates a database target.
   """
-  @callback validate(Target.t(), opts :: keyword()) :: result()
+  @callback validate(Target.t(), opts :: check_opts()) :: result()
 end

@@ -14,33 +14,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   intentionally ordered by another unique database key, use the explicit escape
   hatch until a DB-aware check can verify those constraints directly.
 
-  For repo-wide enforcement, call this check from Ecto's
-  `c:Ecto.Repo.prepare_query/3` callback:
-
-      @bylaw []
-
-      def prepare_query(operation, query, opts) do
-        bylaw_opts =
-          Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-            Keyword.merge(default, override)
-          end)
-
-        case Bylaw.Ecto.Query.Checks.DeterministicOrder.validate(operation, query, bylaw_opts) do
-          :ok -> {query, opts}
-          {:error, issue} -> raise inspect(issue)
-        end
-      end
-
-  The check is enabled by default. A caller must explicitly set the query-level
-  escape hatch to `false` to skip it:
-
-      Repo.all(query, bylaw: [deterministic_order: [validate: false]])
+  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
+  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
 
   Supported options:
-
-      [
-        deterministic_order: []
-      ]
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -58,15 +35,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   @type field_set :: list(atom())
   @type check_opts :: list({:validate, boolean()})
-  @type opts :: list({:deterministic_order, check_opts()})
-
-  @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Ecto.Query.Check
-  @spec name() :: :deterministic_order
-  def name, do: :deterministic_order
+  @type opts :: check_opts()
 
   @doc """
   Validates deterministic root `order_by` keys for a prepared Ecto query.
@@ -79,7 +48,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.fetch!(opts, name(), [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     if CheckOptions.enabled?(check_opts) and ordered?(query) do
       validate_ordered_query(operation, query)
@@ -99,7 +68,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     if deterministic?(fields, primary_key) do
       :ok
     else
-      {:error, issue(operation, fields, primary_key)}
+      {:error, [issue(operation, fields, primary_key)]}
     end
   end
 

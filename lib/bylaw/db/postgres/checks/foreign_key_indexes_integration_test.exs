@@ -1,5 +1,5 @@
 defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Issue
@@ -11,23 +11,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
   @moduletag :postgres
   @moduletag timeout: 30_000
 
-  setup_all do
-    TestDatabase.start_repo!()
-    TestDatabase.reset_fixtures!()
+  test "reports all foreign keys without supporting indexes from the fixture schema" do
+    target = target()
 
-    :ok
-  end
-
-  setup tags do
-    owner = Sandbox.start_owner!(TestRepo, shared: not tags[:async])
-    on_exit(fn -> Sandbox.stop_owner(owner) end)
-
-    {:ok, target: Postgres.target(repo: TestRepo)}
-  end
-
-  test "reports all foreign keys without supporting indexes from the fixture schema", %{
-    target: target
-  } do
     assert {:error, issues} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()]}
@@ -41,7 +27,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
            ]
   end
 
-  test "returns issue metadata for missing foreign key indexes", %{target: target} do
+  test "returns issue metadata for missing foreign key indexes" do
+    target = target()
+
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
@@ -56,7 +44,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.columns == ["user_id"]
   end
 
-  test "passes when scoped to foreign keys with supporting indexes", %{target: target} do
+  test "passes when scoped to foreign keys with supporting indexes" do
+    target = target()
+
     assert :ok =
              Postgres.validate(target, [
                {ForeignKeyIndexes,
@@ -64,7 +54,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
              ])
   end
 
-  test "ignores partial indexes", %{target: target} do
+  test "ignores partial indexes" do
+    target = target()
+
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
@@ -73,7 +65,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.constraint == "partial_orders_user_id_fkey"
   end
 
-  test "requires foreign key columns to be leading index columns", %{target: target} do
+  test "requires foreign key columns to be leading index columns" do
+    target = target()
+
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
@@ -82,7 +76,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.constraint == "ordered_orders_user_id_fkey"
   end
 
-  test "ignores included columns for composite foreign key index coverage", %{target: target} do
+  test "ignores included columns for composite foreign key index coverage" do
+    target = target()
+
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
@@ -92,7 +88,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.columns == ["tenant_id", "account_id"]
   end
 
-  test "reports user schemas that start with pg but not pg underscore", %{target: target} do
+  test "reports user schemas that start with pg but not pg underscore" do
+    target = target()
+
     assert {:error, %Issue{} = issue} =
              Postgres.validate(target, [
                {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
@@ -102,7 +100,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
     assert issue.meta.constraint == "orders_user_id_fkey"
   end
 
-  test "applies schema and table scope together", %{target: target} do
+  test "applies schema and table scope together" do
+    target = target()
+
     assert {:error, issues} =
              Postgres.validate(target, [
                {ForeignKeyIndexes,
@@ -113,5 +113,15 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
              {TestDatabase.schema(), "orders"},
              {TestDatabase.pg_schema(), "orders"}
            ]
+  end
+
+  defp target do
+    TestDatabase.start_repo!()
+    TestDatabase.reset_fixtures!()
+
+    owner = Sandbox.start_owner!(TestRepo, shared: false)
+    on_exit(fn -> Sandbox.stop_owner(owner) end)
+
+    Postgres.target(repo: TestRepo)
   end
 end

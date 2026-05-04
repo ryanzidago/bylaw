@@ -39,7 +39,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       limit = nil
       query = from(post in Post, limit: ^limit, offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -49,7 +49,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       limit = nil
       query = from(post in Post, limit: type(^limit, :integer), offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -58,7 +58,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue when offset has a literal nil limit" do
       query = from(post in Post, limit: nil, offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -95,7 +95,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       offset = 50
       query = from(post in Post, offset: ^offset)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -128,7 +128,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue when offset has no limit" do
       query = from(post in Post, offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.message == "expected query with offset to include limit"
@@ -139,7 +139,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue when offset is added through query composition" do
       query = offset(Post, 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -148,7 +148,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue when an ordered query has offset and no limit" do
       query = from(post in Post, order_by: post.title, offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.message == "expected query with offset to include limit"
@@ -158,7 +158,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 50)
 
       Enum.each(@prepare_query_operations, fn operation ->
-        assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(operation, query, [])
+        assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(operation, query, [])
 
         assert issue.check == OffsetWithoutLimit
         assert issue.meta.operation == operation
@@ -173,7 +173,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue when a schema-less query has offset and no limit" do
       query = from(post in "posts", offset: 50)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -202,7 +202,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
     test "returns an issue for supported raw query maps with offset and no limit" do
       query = %{offset: %{expr: 50}}
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.check == OffsetWithoutLimit
       assert issue.meta.reason == :offset_without_limit
@@ -212,7 +212,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       offset_posts = from(post in Post, offset: 10)
       query = from(post in subquery(offset_posts), select: count())
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
       assert issue.meta.reason == :offset_without_limit
@@ -234,7 +234,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
           on: offset_post.id == post.id
         )
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
     end
@@ -255,7 +255,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       offset_posts = from(post in Post, select: post.id, offset: 10)
       query = from(post in Post, where: post.id in subquery(offset_posts))
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
       assert issue.meta.reason == :offset_without_limit
@@ -272,7 +272,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       offset_posts = from(post in Post, select: count(), offset: 10)
       query = from(post in Post, select: %{id: post.id, offset_count: subquery(offset_posts)})
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
       assert issue.meta.reason == :offset_without_limit
@@ -295,7 +295,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
           on: field(offset_post, :id) == post.id
         )
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
     end
@@ -321,7 +321,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
         |> select([post], post.id)
         |> union_all(^offset_posts)
 
-      assert {:error, %Issue{} = issue} = OffsetWithoutLimit.validate(:all, query, [])
+      assert {:error, [%Issue{} = issue]} = OffsetWithoutLimit.validate(:all, query, [])
 
       assert issue.message == "expected query with offset to include limit"
     end
@@ -337,32 +337,32 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       assert :ok = OffsetWithoutLimit.validate(:all, query, [])
     end
 
-    test "respects the explicit query-level escape hatch" do
+    test "respects the explicit validate false option" do
       query = from(post in Post, offset: 10)
 
       assert :ok =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: false])
+               OffsetWithoutLimit.validate(:all, query, validate: false)
     end
 
     test "validates when validate is explicitly true" do
       query = from(post in Post, offset: 10)
 
-      assert {:error, %Issue{}} =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: true])
+      assert {:error, [%Issue{}]} =
+               OffsetWithoutLimit.validate(:all, query, validate: true)
     end
 
-    test "requires an explicit false escape hatch" do
+    test "requires an explicit false validate option" do
       query = from(post in Post, offset: 10)
 
-      assert {:error, %Issue{}} =
-               OffsetWithoutLimit.validate(:all, query, offset_without_limit: [validate: nil])
+      assert {:error, [%Issue{}]} =
+               OffsetWithoutLimit.validate(:all, query, validate: nil)
     end
 
     test "raises when unsupported options are configured" do
       query = from(post in Post, offset: 10)
 
-      assert_raise ArgumentError, "unknown :offset_without_limit option: :allow", fn ->
-        OffsetWithoutLimit.validate(:all, query, offset_without_limit: [allow: true])
+      assert_raise ArgumentError, "unknown option: :allow", fn ->
+        OffsetWithoutLimit.validate(:all, query, allow: true)
       end
     end
 
@@ -370,9 +370,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 10)
 
       assert_raise ArgumentError,
-                   "expected :offset_without_limit opts to be a keyword list, got: :bad",
+                   "expected opts to be a keyword list, got: :bad",
                    fn ->
-                     OffsetWithoutLimit.validate(:all, query, offset_without_limit: :bad)
+                     OffsetWithoutLimit.validate(:all, query, :bad)
                    end
     end
 
@@ -380,9 +380,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimitTest do
       query = from(post in Post, offset: 10)
 
       assert_raise ArgumentError,
-                   "expected :offset_without_limit opts to be a keyword list, got: [:bad]",
+                   "expected opts to be a keyword list, got: [:bad]",
                    fn ->
-                     OffsetWithoutLimit.validate(:all, query, offset_without_limit: [:bad])
+                     OffsetWithoutLimit.validate(:all, query, [:bad])
                    end
     end
 

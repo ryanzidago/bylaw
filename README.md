@@ -9,13 +9,12 @@ structure through adapter-specific targets. `Bylaw.Credo` is planned.
 
 See the HexDocs [checks overview](https://hexdocs.pm/bylaw/checks.html) and
 [`Bylaw.Ecto.Query` checks guide](https://hexdocs.pm/bylaw/ecto_query_checks.html)
-for the built-in checks, option keys, `prepare_query/3` wiring, and escape
-hatches.
+for the built-in checks, check specs, `prepare_query/3` wiring, and issue
+metadata.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `bylaw` to your list of dependencies in `mix.exs`:
+Add `bylaw` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do

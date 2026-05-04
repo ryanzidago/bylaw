@@ -7,14 +7,33 @@ Each check is intentionally small, directly callable, and documented as its own
 module under `Bylaw.Ecto.Query.Checks`. Use each module page for rule-specific
 examples, accepted query shapes, limitations, and issue metadata.
 
-## Running Query Checks
+## Repo Integration
 
 Query checks implement `Bylaw.Ecto.Query.Check`. For repo-wide enforcement,
-call them from Ecto's `c:Ecto.Repo.prepare_query/3` callback.
+run them with `Bylaw.Ecto.Query.validate/3` from Ecto's
+`c:Ecto.Repo.prepare_query/3` callback.
 
-Read the `c:Ecto.Repo.prepare_query/3` docs before copying this into a repo.
-Ecto invokes the callback for query APIs, including association and preload
-queries, so configure query-level escape hatches deliberately.
+Recommended dependency:
+
+```elixir
+{:bylaw, "~> 0.1.0"}
+```
+
+Enable validation in the environments where you want checks to run:
+
+```elixir
+# config/dev.exs and config/test.exs
+config :my_app, :bylaw, validate_ecto_queries?: true
+
+# config/prod.exs
+config :my_app, :bylaw, validate_ecto_queries?: false
+```
+
+Keep Bylaw as a normal dependency for repo integration. The production config
+above keeps query checks disabled unless you explicitly turn them on.
+
+Start with the checks you want to enforce. When validation is enabled, pass
+that list to `Bylaw.Ecto.Query.validate/3`.
 
 ```elixir
 defmodule MyApp.Repo do
@@ -22,75 +41,86 @@ defmodule MyApp.Repo do
     otp_app: :my_app,
     adapter: Ecto.Adapters.Postgres
 
-  @checks [
-    Bylaw.Ecto.Query.Checks.RequiredOrder,
-    Bylaw.Ecto.Query.Checks.DeterministicOrder,
-    Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates,
-    Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
+  @query_checks [
+    Bylaw.Ecto.Query.Checks.RequiredOrder
   ]
 
-  @bylaw []
+  @validate_ecto_queries? Application.compile_env(
+                            :my_app,
+                            [:bylaw, :validate_ecto_queries?],
+                            false
+                          )
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    bylaw_opts =
-      Keyword.merge(@bylaw, Keyword.get(opts, :bylaw, []), fn _check, default, override ->
-        Keyword.merge(default, override)
-      end)
-
-    case validate_query(operation, query, bylaw_opts) do
-      :ok -> {query, opts}
-      {:error, issue_or_issues} -> raise inspect(issue_or_issues)
+    if @validate_ecto_queries? do
+      validate_query!(operation, query)
     end
+
+    {query, opts}
   end
 
-  defp validate_query(operation, query, bylaw_opts) do
-    Enum.reduce_while(@checks, :ok, fn check, :ok ->
-      case check.validate(operation, query, bylaw_opts) do
-        :ok -> {:cont, :ok}
-        {:error, _issue_or_issues} = error -> {:halt, error}
-      end
-    end)
+  defp validate_query!(operation, query) do
+    case Bylaw.Ecto.Query.validate(operation, query, @query_checks) do
+      :ok -> :ok
+      {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
+    end
   end
 end
 ```
 
-Checks are enabled by default once they are included in `@checks`. The
-repo-level `@bylaw` keyword list is only needed for non-default options or
-default escape hatches. Callers can override a check for a single query through
-the query options:
+Bylaw returns structured issues, so production users can choose a different
+failure mode. For example, set `:validate_ecto_queries?` to `true` in
+production and replace the `raise` branch with logging or telemetry.
+
+Checks are enabled by default once they are included in the check list. A check
+spec is either a check module or `{check_module, opts}`. Each check module may
+appear at most once; duplicate modules raise `ArgumentError`.
 
 ```elixir
-Repo.all(query, bylaw: [required_order: [validate: false]])
+[
+  Bylaw.Ecto.Query.Checks.RequiredOrder,
+  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organisation_id]}
+]
 ```
 
-Every built-in query check treats `validate: false` as an explicit query-level
-escape hatch.
+If callers need per-query behavior, build a duplicate-free final check list
+before calling `Bylaw.Ecto.Query.validate/3`.
+
+Ecto invokes `prepare_query/3` for association and preload queries. Start
+without special handling. If generated preload queries create noise, keep that
+coupling isolated; Ecto currently tags them with the internal option
+`Keyword.get(opts, :ecto_query) == :preload`.
 
 ## Available Query Checks
 
 - `Bylaw.Ecto.Query.Checks.CartesianJoins`
 
-  Option key: `:cartesian_joins`
-
   Required config: none
 
   Catches explicit cartesian joins, including `cross_join`, uncorrelated
   `cross_lateral_join`, and non-association joins whose `on` expression is
-  literally `true`.
+  literally `true`. The check treats lateral joins as constrained when the
+  right side has an Ecto-visible dependency on a prior binding. It does not
+  parse SQL fragments; a parent reference inside a lateral fragment is
+  dependency evidence, not proof of exact SQL cardinality.
 
 - `Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`
-
-  Option key: `:conflicting_where_predicates`
 
   Required config: none
 
   Catches impossible root predicates such as `status == :draft` and
-  `status == :published` in the same satisfiable branch.
+  `status == :published` in the same satisfiable branch. Empty `in` predicates
+  are handled separately by `Bylaw.Ecto.Query.Checks.EmptyInPredicates`.
+
+- `Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons`
+
+  Required config: none
+
+  Catches direct comparisons between `:date` fields and datetime fields without
+  an explicit date truncation or cast.
 
 - `Bylaw.Ecto.Query.Checks.DeterministicOrder`
-
-  Option key: `:deterministic_order`
 
   Required config: none
 
@@ -99,15 +129,19 @@ escape hatch.
 
 - `Bylaw.Ecto.Query.Checks.DuplicateJoins`
 
-  Option key: `:duplicate_joins`
-
   Required config: none
 
   Catches repeated equivalent joins that can multiply result rows.
 
-- `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`
+- `Bylaw.Ecto.Query.Checks.EmptyInPredicates`
 
-  Option key: `:explicit_visibility_predicates`
+  Required config: none
+
+  Catches root `where` predicates such as `id in ^[]` where every possible
+  branch has an empty `in` candidate list and the caller could return `[]`
+  before querying the database.
+
+- `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`
 
   Required config: `schemas: [{Schema, fields: fields}]`
 
@@ -117,16 +151,19 @@ escape hatch.
 
 - `Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals`
 
-  Option key: `:half_open_temporal_intervals`
-
   Required config: optional `fields: fields`
 
   Catches temporal lower bounds written with `>` and upper bounds written with
   `<=` instead of half-open `>=` and `<` boundaries.
 
-- `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
+- `Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema`
 
-  Option key: `:left_join_where_predicates`
+  Required config: none
+
+  Catches `delete_all` operations against root schemas that declare persisted
+  soft-delete fields such as `:deleted_at` or `:archived_at`.
+
+- `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
 
   Required config: none
 
@@ -135,8 +172,6 @@ escape hatch.
 
 - `Bylaw.Ecto.Query.Checks.MandatoryJoinKeys`
 
-  Option key: `:mandatory_join_keys`
-
   Required config: `keys: fields`
 
   Catches explicit schema joins whose `on` clauses do not preserve configured
@@ -144,34 +179,54 @@ escape hatch.
 
 - `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`
 
-  Option key: `:mandatory_where_keys`
-
   Required config: `keys: fields`
 
   Catches root queries that do not constrain configured key fields in supported
   `where` predicates.
 
-- `Bylaw.Ecto.Query.Checks.NamedBindings`
+- `Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc`
 
-  Option key: `:named_bindings`
+  Required config: none
+
+  Catches explicit schema joins that duplicate a relationship already declared
+  as an association on the query root schema.
+
+- `Bylaw.Ecto.Query.Checks.NamedBindings`
 
   Required config: none
 
   Catches root or join bindings without `:as` aliases, plus positional field
   references in query expressions.
 
-- `Bylaw.Ecto.Query.Checks.RequiredOrder`
+- `Bylaw.Ecto.Query.Checks.OffsetWithoutLimit`
 
-  Option key: `:required_order`
+  Required config: none
+
+  Catches queries that use `offset` without `limit`, including nested subqueries
+  and combination branches.
+
+- `Bylaw.Ecto.Query.Checks.RequiredOrder`
 
   Required config: none
 
   Catches queries with `limit`, `offset`, or stream operations that do not
   include `order_by`.
 
-- `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
+- `Bylaw.Ecto.Query.Checks.UnboundedDeletes`
 
-  Option key: `:utc_datetime_naive_comparisons`
+  Required config: none
+
+  Catches `delete_all` queries where any possible root branch has no
+  non-literal-true `where` predicate.
+
+- `Bylaw.Ecto.Query.Checks.UnboundedUpdates`
+
+  Required config: none
+
+  Catches `update_all` queries that do not include at least one non-literal-true
+  root `where` predicate.
+
+- `Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons`
 
   Required config: optional `fields: fields`
 
@@ -179,10 +234,10 @@ escape hatch.
 
 ## Suggested Starting Set
 
-Start with checks that do not require application-specific configuration:
+One conservative starting set is:
 
 ```elixir
-@checks [
+[
   Bylaw.Ecto.Query.Checks.RequiredOrder,
   Bylaw.Ecto.Query.Checks.DeterministicOrder,
   Bylaw.Ecto.Query.Checks.CartesianJoins,
@@ -191,44 +246,52 @@ Start with checks that do not require application-specific configuration:
 ]
 ```
 
-No `@bylaw` configuration is required for these checks.
+No check-specific configuration is required for these checks.
+
+Other zero-config checks can be added when the matching risk matters for the
+application:
+
+```elixir
+[
+  Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
+  Bylaw.Ecto.Query.Checks.DuplicateJoins,
+  Bylaw.Ecto.Query.Checks.EmptyInPredicates,
+  Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema,
+  Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc,
+  Bylaw.Ecto.Query.Checks.OffsetWithoutLimit,
+  Bylaw.Ecto.Query.Checks.UnboundedDeletes,
+  Bylaw.Ecto.Query.Checks.UnboundedUpdates
+]
+```
 
 Then add configured checks where the application has clear invariants:
 
 ```elixir
-@checks [
-  Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
-  Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
-  Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
-  Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals
-]
-
-@bylaw [
-  mandatory_where_keys: [
+[
+  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
     keys: [:organisation_id],
     match: :any
-  ],
-  mandatory_join_keys: [
+  },
+  {Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
     keys: [:organisation_id],
     match: :all
-  ],
-  explicit_visibility_predicates: [
+  },
+  {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
     schemas: [
       {Post, fields: [:deleted_at, :status]},
       {Comment, fields: [:deleted_at]}
     ]
-  ],
-  half_open_temporal_intervals: [
+  },
+  {Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals,
     fields: [:inserted_at, :occurred_at]
-  ]
+  }
 ]
 ```
 
-`Bylaw.Ecto.Query.Checks.NamedBindings` is useful for teams that want every
-query expression to use Ecto named bindings. It is stricter than the other
-checks because it is a style and maintainability rule as much as a correctness
-rule, so it is often easiest to enable after existing query code has been
-cleaned up.
+`Bylaw.Ecto.Query.Checks.NamedBindings` is useful for teams that want query
+roots and joins to declare Ecto named binding aliases. It accepts normal Ecto
+named binding list usage such as `[post: post]`, and does not require field
+references to be written with `as(:post)`.
 
 ## Option Reference
 
@@ -238,7 +301,9 @@ All built-in query checks accept:
 
 | Option | Default | Meaning |
 | --- | --- | --- |
-| `:validate` | `true` | Set to `false` to skip the check for a specific repo default or query call. |
+| `:validate` | `true` | Set to `false` to skip this check spec in the final check list. |
+
+This is a check-spec option, not a repo option passed by callers.
 
 ### Configured checks
 
@@ -256,7 +321,8 @@ useful:
 
 ## Issue Results
 
-Query checks return `:ok` or `{:error, issue_or_issues}`. Issues are
+`Bylaw.Ecto.Query.validate/3` returns `:ok` or `{:error, issues}`. Individual
+checks use the same return shape. `issues` is a non-empty list of
 `Bylaw.Ecto.Query.Issue` structs with:
 
 | Field | Meaning |
@@ -268,13 +334,35 @@ Query checks return `:ok` or `{:error, issue_or_issues}`. Issues are
 Some checks can return multiple issues when a query violates the same rule in
 multiple places.
 
-## Static Analysis Boundaries
+Use `Bylaw.Ecto.Query.Issue.format/1` or
+`Bylaw.Ecto.Query.Issue.format_many/1` for human-readable output.
+
+## Ecto Query Opacity
 
 Bylaw query checks inspect prepared Ecto query structs. Ecto treats those
-structs as opaque, so each check supports a small, tested subset of Ecto's
-query AST.
+structs as opaque, so this is an intentional tradeoff rather than a public Ecto
+API guarantee.
+
+The tradeoff is useful in practice:
+
+- Ecto's query structure has been fairly stable across releases.
+- If Ecto changes a query shape that Bylaw depends on, the affected code is
+  isolated in small checks and introspection helpers.
+- Bylaw is mostly meant to run in test and development environments, so a
+  breaking Ecto change should usually fail early instead of affecting
+  production traffic.
+- The checks catch real query problems that are difficult to enforce from
+  public query APIs alone.
 
 In general, query checks trust direct root or join field references in
 supported Ecto query expressions. They intentionally avoid proving behavior
 hidden inside raw SQL fragments, arbitrary functions, dynamic expressions, or
 subqueries unless a specific check documents that support.
+
+For example, `Bylaw.Ecto.Query.Checks.CartesianJoins` uses the Ecto-visible
+dependency graph to detect obvious cartesian joins. A lateral fragment that
+receives a previous binding as an argument is treated as correlated, but Bylaw
+does not inspect the raw SQL to prove whether that fragment returns one row,
+many rows, or only rows related to the parent. Very opaque query shapes should
+still be reviewed at the application boundary or excluded from repo-wide
+enforcement when the local SQL intent is clearer than the Ecto structure.

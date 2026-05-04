@@ -16,6 +16,8 @@ defmodule Bylaw.MixProject do
       usage_rules: usage_rules(),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw",
+      description: description(),
+      package: package(),
       docs: docs(),
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -67,21 +69,20 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:credo, "~> 1.7", runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ecto_sql, "~> 3.13", only: :test},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
       {:postgrex, "~> 0.22.0", only: :test},
-      {:sobelow, "~> 0.14.1", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
 
   defp dialyzer do
     [
-      plt_add_apps: [:ex_unit, :mix],
+      plt_add_apps: [:credo, :ex_unit, :mix],
       plt_local_path: "priv/plts"
     ]
   end
@@ -93,12 +94,27 @@ defmodule Bylaw.MixProject do
     ]
   end
 
+  defp description do
+    "Validation helpers for code, database, query, schema, and workflow constraints."
+  end
+
+  defp package do
+    [
+      files:
+        Path.wildcard("lib/**/*.ex") ++
+          ~w(guides .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+      licenses: ["MIT"],
+      links: %{"GitHub" => @source_url}
+    ]
+  end
+
   defp docs do
     [
       main: "checks",
       source_ref: "v#{@version}",
       skip_code_autolink_to: [
         "Bylaw.Credo",
+        "Bylaw.Db",
         "Bylaw.Ecto.Query",
         "Bylaw.Ecto.Query.Checks"
       ],
@@ -113,6 +129,7 @@ defmodule Bylaw.MixProject do
       groups_for_modules: [
         Core: [Bylaw],
         "Bylaw.Ecto.Query": [
+          Bylaw.Ecto.Query,
           Bylaw.Ecto.Query.Check,
           Bylaw.Ecto.Query.Issue
         ],

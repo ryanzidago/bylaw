@@ -194,9 +194,9 @@ defmodule Bylaw.Db.Postgres.Checks.ForeignKeyIndexes do
   end
 
   defp filter(opts, key) do
-    opts
-    |> Keyword.get(key)
-    |> then(&filter!(key, &1))
+    values = Keyword.get(opts, key)
+
+    filter!(key, values)
   end
 
   defp filter!(_key, nil), do: nil
