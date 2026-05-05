@@ -8,7 +8,8 @@ defmodule Bylaw.Db.Adapters.Postgres do
       Bylaw.Db.Adapters.Postgres.validate(
         repo: MyApp.Repo,
         checks: [
-          Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes
+          Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+          {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType, type: "uuid"}
         ]
       )
 
@@ -17,6 +18,9 @@ defmodule Bylaw.Db.Adapters.Postgres do
       config :bylaw, Bylaw.Db.Adapters.Postgres,
         repo: MyApp.Repo,
         checks: [
+          {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+           rules: [[where: [schema: "public"], type: "uuid"]],
+           except: [[table: "schema_migrations"]]},
           {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
            rules: [[where: [schema: "public"], columns: ["tenant_id"]]],
            except: [[table: "schema_migrations"]]}
