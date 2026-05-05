@@ -34,6 +34,18 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
      scope_columns: ["tenant_id", "workspace_id"],
      except: [[referenced_table: "global_settings"]]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+    {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+     rules: [
+       [
+         where: [[table: "messages"], [referenced_table: "conversations"]],
+         on_delete: :cascade
+       ],
+       [
+         where: [referenced_table: "lookup_statuses"],
+         on_delete: :restrict,
+         on_update: :restrict
+       ]
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
@@ -101,6 +113,18 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
      scope_columns: ["tenant_id", "workspace_id"],
      except: [[referenced_table: "shared_templates"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+     rules: [
+       [
+         where: [referenced_table: "accounts"],
+         on_delete: :restrict,
+         on_update: :restrict
+       ],
+       [
+         where: [table: "messages", referenced_table: "conversations"],
+         on_delete: :cascade
+       ]
+     ]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [

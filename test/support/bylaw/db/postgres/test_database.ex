@@ -81,6 +81,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_accounts!(schema)
     create_events!(schema)
     create_included_events!(schema)
+    create_action_messages!(schema)
     create_duplicate_indexes!(schema)
     create_uuid_primary_key!(schema)
     create_bigint_primary_key!(schema)
@@ -243,6 +244,36 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     CREATE INDEX included_events_tenant_include_account_idx
       ON #{table(schema, "included_events")} (tenant_id)
       INCLUDE (account_id)
+    """)
+  end
+
+  defp create_action_messages!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "action_messages")} (
+      id bigint PRIMARY KEY,
+      owner_user_id bigint NOT NULL,
+      status_user_id bigint NOT NULL,
+      CONSTRAINT action_messages_owner_user_id_fkey
+        FOREIGN KEY (owner_user_id)
+        REFERENCES #{table(schema, "users")} (id)
+        ON DELETE CASCADE
+        ON UPDATE RESTRICT,
+      CONSTRAINT action_messages_status_user_id_fkey
+        FOREIGN KEY (status_user_id)
+        REFERENCES #{table(schema, "users")} (id)
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT
+    )
+    """)
+
+    query!("""
+    CREATE INDEX action_messages_owner_user_id_idx
+      ON #{table(schema, "action_messages")} (owner_user_id)
+    """)
+
+    query!("""
+    CREATE INDEX action_messages_status_user_id_idx
+      ON #{table(schema, "action_messages")} (status_user_id)
     """)
   end
 
