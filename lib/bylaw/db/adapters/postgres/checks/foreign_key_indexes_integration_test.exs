@@ -24,6 +24,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
            |> Enum.sort() == [
              {"accounts", "account_id"},
              {"included_events", "account_id"},
+             {"loose_orders", "user_id"},
              {"ordered_orders", "user_id"},
              {"orders", "user_id"},
              {"partial_orders", "user_id"}
@@ -52,7 +53,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert :ok =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["events", "indexed_orders"]}
+               {ForeignKeyIndexes, tables: ["duplicate_index_orders", "events", "indexed_orders"]}
              ])
   end
 

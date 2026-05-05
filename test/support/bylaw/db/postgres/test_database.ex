@@ -65,6 +65,8 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_indexed_orders!(schema)
     create_partial_orders!(schema)
     create_ordered_orders!(schema)
+    create_loose_orders!(schema)
+    create_duplicate_index_orders!(schema)
     create_accounts!(schema)
     create_events!(schema)
     create_included_events!(schema)
@@ -147,6 +149,37 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("""
     CREATE INDEX ordered_orders_status_user_id_idx
       ON #{table(schema, "ordered_orders")} (status, user_id)
+    """)
+  end
+
+  defp create_loose_orders!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "loose_orders")} (
+      id bigint PRIMARY KEY,
+      user_id bigint NOT NULL
+    )
+    """)
+  end
+
+  defp create_duplicate_index_orders!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "duplicate_index_orders")} (
+      id bigint PRIMARY KEY,
+      user_id bigint NOT NULL,
+      CONSTRAINT duplicate_index_orders_user_id_fkey
+        FOREIGN KEY (user_id)
+        REFERENCES #{table(schema, "users")} (id)
+    )
+    """)
+
+    query!("""
+    CREATE INDEX duplicate_index_orders_user_id_idx
+      ON #{table(schema, "duplicate_index_orders")} (user_id)
+    """)
+
+    query!("""
+    CREATE INDEX duplicate_index_orders_user_id_duplicate_idx
+      ON #{table(schema, "duplicate_index_orders")} (user_id)
     """)
   end
 

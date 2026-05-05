@@ -1,11 +1,11 @@
-defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   @moduledoc """
-  Validates that Postgres foreign keys have supporting indexes.
+  Validates that foreign key-like Postgres columns have foreign key constraints.
 
   By default the check uses `ecto_psql_extras` to inspect all non-system tables
   in a Postgres target. Pass `:tables` to narrow the scope. The underlying
   detection is convention-based: columns that look like foreign keys should have
-  indexes whose first indexed column matches the foreign key-like column.
+  database foreign key constraints.
   """
 
   @behaviour Bylaw.Db.Check
@@ -35,11 +35,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   """
 
   @impl Bylaw.Db.Check
-  @spec name() :: :foreign_key_indexes
-  def name, do: :foreign_key_indexes
+  @spec name() :: :missing_foreign_key_constraints
+  def name, do: :missing_foreign_key_constraints
 
   @doc """
-  Validates that foreign keys in the target scope have supporting indexes.
+  Validates that foreign key-like columns in the target scope have constraints.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
   `tables: [...]` to narrow the default all-table scope.
@@ -51,7 +51,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     opts = check_opts!(opts)
 
     if Keyword.get(opts, :validate, true) == true do
-      validate_foreign_key_indexes(target, opts)
+      validate_missing_constraints(target, opts)
     else
       :ok
     end
@@ -59,7 +59,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
   def validate(%Target{adapter: Postgres}, opts) do
     raise ArgumentError,
-          "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
+          "expected missing_foreign_key_constraints opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   def validate(%Target{} = target, _opts) do
@@ -70,10 +70,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     raise ArgumentError, "expected a database target, got: #{inspect(target)}"
   end
 
-  defp validate_foreign_key_indexes(target, opts) do
+  defp validate_missing_constraints(target, opts) do
     tables = filter(opts, :tables)
 
-    case missing_index_rows(target, tables) do
+    case missing_constraint_rows(target, tables) do
       {:ok, result} ->
         result
         |> rows()
@@ -86,14 +86,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     end
   end
 
-  defp missing_index_rows(%Target{} = target, tables) do
+  defp missing_constraint_rows(%Target{} = target, tables) do
     tables
     |> table_names()
     |> Enum.reduce_while({:ok, []}, fn table_name, {:ok, rows} ->
       case EctoPsqlExtras.query(
              target,
-             :missing_fk_indexes,
-             missing_fk_indexes_opts(table_name),
+             :missing_fk_constraints,
+             missing_fk_constraints_opts(table_name),
              [table_name]
            ) do
         {:ok, result} -> {:cont, {:ok, rows ++ result_rows(result)}}
@@ -114,8 +114,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   defp table_names(nil), do: [nil]
   defp table_names(tables), do: tables
 
-  defp missing_fk_indexes_opts(nil), do: [format: :raw]
-  defp missing_fk_indexes_opts(table_name), do: [format: :raw, args: [table_name: table_name]]
+  defp missing_fk_constraints_opts(nil), do: [format: :raw]
+
+  defp missing_fk_constraints_opts(table_name),
+    do: [format: :raw, args: [table_name: table_name]]
 
   defp rows(result) when is_map(result) do
     %{columns: columns, rows: rows} = result
@@ -140,14 +142,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   defp check_opts!(opts) do
     if not Keyword.keyword?(opts) do
       raise ArgumentError,
-            "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
+            "expected missing_foreign_key_constraints opts to be a keyword list, got: #{inspect(opts)}"
     end
 
     allowed_keys = [:validate, :tables]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
-        raise ArgumentError, "unknown foreign_key_indexes option: #{inspect(key)}"
+        raise ArgumentError, "unknown missing_foreign_key_constraints option: #{inspect(key)}"
       end
     end)
 
@@ -164,7 +166,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
       {:ok, value} ->
         raise ArgumentError,
-              "expected foreign_key_indexes #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+              "expected missing_foreign_key_constraints #{inspect(key)} to be a boolean, got: #{inspect(value)}"
 
       :error ->
         :ok
@@ -204,7 +206,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
   defp raise_filter_error!(key) do
     raise ArgumentError,
-          "expected foreign_key_indexes #{inspect(key)} to be a non-empty list of strings"
+          "expected missing_foreign_key_constraints #{inspect(key)} to be a non-empty list of strings"
   end
 
   @spec issue(Target.t(), result_row()) :: Issue.t()
@@ -216,13 +218,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
       check: __MODULE__,
       target: target,
       message:
-        "expected foreign key-like column #{column_name} on #{table_name} to have a supporting index",
+        "expected foreign key-like column #{column_name} on #{table_name} to have a foreign key constraint",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
         table: table_name,
         column: column_name,
-        columns: [column_name],
         source: :ecto_psql_extras
       }
     }
@@ -233,7 +234,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     %Issue{
       check: __MODULE__,
       target: target,
-      message: "could not inspect Postgres foreign key indexes",
+      message: "could not inspect Postgres foreign key constraints",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
