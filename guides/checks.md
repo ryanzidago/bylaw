@@ -29,6 +29,7 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
   repo: MyApp.Repo,
   checks: [
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+    Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
     Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
     {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
      scope_columns: ["tenant_id", "workspace_id"],
@@ -60,7 +61,14 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
      schemas: ["public"],
      types: ["uuid"],
-     except: [[table: "schema_migrations"]]}
+     except: [[table: "schema_migrations"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
+     schemas: ["public"],
+     types: [
+       [type: "json", prefer: "jsonb"],
+       [type: "money", prefer: "numeric plus an explicit currency column"]
+     ],
+     except: [[table: "webhook_events", column: "raw_payload"]]}
   ]
 ```
 
