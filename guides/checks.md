@@ -29,6 +29,7 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
   repo: MyApp.Repo,
   checks: [
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+    Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
@@ -88,6 +89,8 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
   checks: [
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
+    {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
+     except: [[table: "runs", column: "assistant_message_id"]]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
