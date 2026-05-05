@@ -44,6 +44,8 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
 
   @spec reset_fixtures!() :: :ok
   def reset_fixtures! do
+    Sandbox.mode(TestRepo, :auto)
+
     query!("DROP SCHEMA IF EXISTS #{quote_identifier(@schema)} CASCADE")
     query!("DROP SCHEMA IF EXISTS #{quote_identifier(@pg_schema)} CASCADE")
 

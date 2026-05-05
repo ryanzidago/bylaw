@@ -1,5 +1,5 @@
 defmodule Bylaw.Db.Adapters.PostgresTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: false
 
   alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Issue
@@ -94,6 +94,76 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
 
       assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
         Postgres.validate([target], FailingCheck)
+      end
+    end
+  end
+
+  describe "validate/1" do
+    test "builds a target from top-level config and returns raw issues" do
+      assert {:error, [%Issue{} = issue]} =
+               Postgres.validate(query: query_fun(), checks: [FailingCheck])
+
+      assert issue.check == FailingCheck
+      assert issue.target.adapter == Postgres
+      assert is_function(issue.target.query, 4)
+    end
+
+    test "builds a target from an explicit target config" do
+      assert {:error, [%Issue{} = issue]} =
+               Postgres.validate(target: [query: query_fun()], checks: [FailingCheck])
+
+      assert issue.target.adapter == Postgres
+    end
+
+    test "builds targets from explicit targets config" do
+      assert {:error, issues} =
+               Postgres.validate(
+                 targets: [[query: query_fun(), meta: %{label: :primary}], [query: query_fun()]],
+                 checks: [FailingCheck]
+               )
+
+      assert Enum.count(issues) == 2
+      assert hd(issues).target.meta == %{label: :primary}
+    end
+
+    test "accepts already built Postgres targets in config" do
+      target = Postgres.target(query: query_fun())
+
+      assert {:error, [%Issue{} = issue]} =
+               Postgres.validate(target: target, checks: [FailingCheck])
+
+      assert issue.target == target
+    end
+
+    test "rejects unknown validation config options" do
+      assert_raise ArgumentError, ~r/unknown Postgres validation option: :unknown/, fn ->
+        Postgres.validate(query: query_fun(), checks: [FailingCheck], unknown: true)
+      end
+    end
+
+    test "requires exactly one target source" do
+      assert_raise ArgumentError, ~r/exactly one target source/, fn ->
+        Postgres.validate(checks: [FailingCheck])
+      end
+
+      assert_raise ArgumentError, ~r/exactly one target source/, fn ->
+        Postgres.validate(
+          query: query_fun(),
+          target: [query: query_fun()],
+          checks: [FailingCheck]
+        )
+      end
+    end
+
+    test "requires checks" do
+      assert_raise ArgumentError, ~r/include :checks/, fn ->
+        Postgres.validate(query: query_fun())
+      end
+    end
+
+    test "rejects empty targets config" do
+      assert_raise ArgumentError, ~r/:targets to be a non-empty list/, fn ->
+        Postgres.validate(targets: [], checks: [FailingCheck])
       end
     end
   end
