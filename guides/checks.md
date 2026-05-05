@@ -64,6 +64,27 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
   ]
 ```
 
+Use `ForbiddenColumnTypes` to teach project database conventions without
+hard-coding Bylaw-wide opinions about which Postgres types are acceptable:
+
+```elixir
+{Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
+ schemas: ["public"],
+ types: [
+   [
+     type: "json",
+     prefer: "jsonb",
+     reason: "jsonb is indexable and avoids reparsing for most application queries"
+   ],
+   [
+     type: "money",
+     prefer: "numeric plus an explicit currency column",
+     reason: "Postgres money is locale-sensitive and awkward to migrate"
+   ]
+ ],
+ except: [[table: "webhook_events", column: "raw_payload"]]}
+```
+
 Then run the configured checks:
 
 ```elixir
