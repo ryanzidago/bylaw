@@ -17,9 +17,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id", "account_id"],
-                schemas: [TestDatabase.schema()],
-                tables: ["orders", "events"]}
+                rules: [
+                  [
+                    where: [schema: TestDatabase.schema(), tables: ["orders", "events"]],
+                    columns: ["tenant_id", "account_id"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.table == "orders"
@@ -32,9 +35,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id", "account_id"],
-                schemas: [TestDatabase.schema()],
-                tables: ["indexed_orders"]}
+                rules: [
+                  [
+                    where: [schema: TestDatabase.schema(), table: "indexed_orders"],
+                    columns: ["tenant_id", "account_id"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -51,35 +57,47 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id", "account_id"],
-                schemas: [TestDatabase.schema()],
-                tables: ["accounts", "events"]}
+                rules: [
+                  [
+                    where: [schema: TestDatabase.schema(), tables: ["accounts", "events"]],
+                    columns: ["tenant_id", "account_id"]
+                  ]
+                ]}
              ])
   end
 
-  test "skips tables by table name" do
+  test "skips tables with global exceptions" do
     target = target()
 
     assert :ok =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id"],
-                schemas: [TestDatabase.schema()],
-                tables: ["orders"],
-                except_tables: ["orders"]}
+                rules: [
+                  [
+                    where: [schema: TestDatabase.schema(), table: "orders"],
+                    columns: ["tenant_id"]
+                  ]
+                ],
+                except: [[schema: TestDatabase.schema(), table: "orders"]]}
              ])
   end
 
-  test "skips tables by exact schema-qualified ref" do
+  test "skips tables with rule-level exceptions" do
     target = target()
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id"],
-                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
-                tables: ["orders"],
-                except_table_refs: [{TestDatabase.schema(), "orders"}]}
+                rules: [
+                  [
+                    where: [
+                      [schema: TestDatabase.schema(), table: "orders"],
+                      [schema: TestDatabase.pg_schema(), table: "orders"]
+                    ],
+                    columns: ["tenant_id"],
+                    except: [[schema: TestDatabase.schema(), table: "orders"]]
+                  ]
+                ]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -92,7 +110,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {RequiredColumns,
-                columns: ["tenant_id"], schemas: [TestDatabase.pg_schema()], tables: ["orders"]}
+                rules: [
+                  [
+                    where: [schema: TestDatabase.pg_schema(), table: "orders"],
+                    columns: ["tenant_id"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()

@@ -31,10 +31,16 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
-     columns: ["tenant_id", "account_id"],
-     schemas: ["public"],
-     except_tables: ["schema_migrations"],
-     except_table_refs: [{"public", "audit_log"}]}
+     rules: [
+       [
+         where: [
+           [schema: "public", table: ~r/^orders/],
+           [schema: "billing", table: ~r/^invoice_/]
+         ],
+         columns: ["tenant_id", "account_id"]
+       ]
+     ],
+     except: [[table: "schema_migrations"], [schema: "public", table: "audit_log"]]}
   ]
 ```
 
@@ -51,8 +57,12 @@ Bylaw.Db.Adapters.Postgres.validate(
   repo: MyApp.Repo,
   checks: [
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
-     columns: ["tenant_id"],
-     schemas: ["tenant_one", "tenant_two"]}
+     rules: [
+       [
+         where: [[schema: "tenant_one"], [schema: "tenant_two"]],
+         columns: ["tenant_id"]
+       ]
+     ]}
   ]
 )
 ```
