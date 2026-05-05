@@ -97,13 +97,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :required_columns
-  def name, do: :required_columns
-
-  @doc """
   Validates that tables matched by each rule include the rule's columns.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation

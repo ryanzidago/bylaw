@@ -69,13 +69,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :missing_foreign_key_constraints
-  def name, do: :missing_foreign_key_constraints
-
-  @doc """
   Validates that foreign-key-shaped columns have foreign key constraints.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
