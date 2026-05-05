@@ -67,6 +67,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
   defp create_fixture_schema!(schema) do
     query!("CREATE SCHEMA #{quote_identifier(schema)}")
     create_users!(schema)
+    create_uuid_users!(schema)
     create_orders_missing_index!(schema)
     create_indexed_orders!(schema)
     create_nullable_orders!(schema)
@@ -81,6 +82,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
   defp create_pg_named_fixture_schema!(schema) do
     query!("CREATE SCHEMA #{quote_identifier(schema)}")
     create_users!(schema)
+    create_uuid_users!(schema)
     create_orders_missing_index!(schema)
     create_nullable_orders!(schema)
     create_duplicate_indexes!(schema)
@@ -90,6 +92,14 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("""
     CREATE TABLE #{table(schema, "users")} (
       id bigint PRIMARY KEY
+    )
+    """)
+  end
+
+  defp create_uuid_users!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "uuid_users")} (
+      id uuid PRIMARY KEY
     )
     """)
   end

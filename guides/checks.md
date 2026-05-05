@@ -31,6 +31,12 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+    {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+     rules: [
+       [where: [[schema: "public"]], type: "uuid"],
+       [where: [[schema: "legacy"]], types: ["bigint", "integer"]]
+     ],
+     except: [[table: "schema_migrations"]]},
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
@@ -62,6 +68,13 @@ Bylaw.Db.Adapters.Postgres.validate(
        [
          where: [[schema: "tenant_one"], [schema: "tenant_two"]],
          columns: ["tenant_id"]
+       ]
+     ]},
+    {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+     rules: [
+       [
+         where: [[schema: "tenant_one"], [schema: "tenant_two"]],
+         type: "uuid"
        ]
      ]}
   ]
@@ -97,6 +110,14 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
        [
          where: [[schema: "public"]],
          columns: ["tenant_id"]
+       ]
+     ],
+     except: [[table: "schema_migrations"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+     rules: [
+       [
+         where: [[schema: "public"]],
+         type: "uuid"
        ]
      ],
      except: [[table: "schema_migrations"]]}
