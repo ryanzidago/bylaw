@@ -42,12 +42,16 @@ defmodule Bylaw.Db.Adapter do
   @doc """
   Runs `checks` against a non-empty list of targets.
   """
-  @callback validate(list(Target.t()), list(Bylaw.Db.check_spec())) ::
+  @callback validate(targets :: list(Target.t()), checks :: list(Bylaw.Db.check_spec())) ::
               Check.result()
 
   @doc """
   Executes database-specific introspection SQL for `target`.
   """
-  @callback query(Target.t(), sql :: String.t(), params :: list(term()), opts :: query_opts()) ::
-              {:ok, query_result()} | {:error, term()}
+  @callback query(
+              target :: Target.t(),
+              sql :: String.t(),
+              params :: list(term()),
+              opts :: query_opts()
+            ) :: {:ok, query_result()} | {:error, term()}
 end

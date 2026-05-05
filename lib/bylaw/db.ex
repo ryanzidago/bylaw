@@ -22,7 +22,7 @@ defmodule Bylaw.Db do
   check passes, or `{:error, issues}` with a non-empty list of issues.
   Invalid target and check arguments raise `ArgumentError`.
   """
-  @spec validate(list(Target.t()), list(check_spec())) :: Check.result()
+  @spec validate(targets :: list(Target.t()), checks :: list(check_spec())) :: Check.result()
   def validate(targets, checks) do
     checks = validate_checks!(checks)
 

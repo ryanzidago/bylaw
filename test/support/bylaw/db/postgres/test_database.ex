@@ -55,7 +55,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     Sandbox.mode(TestRepo, :manual)
   end
 
-  @spec query!(String.t()) :: term()
+  @spec query!(sql :: String.t()) :: term()
   def query!(sql) do
     SQL.query!(TestRepo, sql, [], timeout: @timeout)
   end
