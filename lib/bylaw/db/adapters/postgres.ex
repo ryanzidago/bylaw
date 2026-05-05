@@ -72,7 +72,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec target(target_opts()) :: Target.t()
+  @spec target(opts :: target_opts()) :: Target.t()
   def target(opts) when is_list(opts) do
     keyword_list!(opts, "Postgres target opts")
     validate_target_opts!(opts)
@@ -111,7 +111,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   This is the convenient consumer-facing entrypoint for one-off validation.
   Pass `:checks` plus either top-level target options, `:target`, or `:targets`.
   """
-  @spec validate(validate_opts()) :: Check.result()
+  @spec validate(opts :: validate_opts()) :: Check.result()
   def validate(opts) when is_list(opts) do
     keyword_list!(opts, "Postgres validation config")
     validate_config_opts!(opts)
@@ -133,7 +133,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec validate(list(Target.t()), list(Db.check_spec())) :: Check.result()
+  @spec validate(targets :: list(Target.t()), checks :: list(Db.check_spec())) :: Check.result()
   def validate(targets, checks) do
     checks = validate_checks!(checks)
 
@@ -152,7 +152,12 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec query(Target.t(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
+  @spec query(
+          target :: Target.t(),
+          sql :: String.t(),
+          params :: list(term()),
+          opts :: Bylaw.Db.Adapter.query_opts()
+        ) :: {:ok, term()} | {:error, term()}
   def query(%Target{adapter: __MODULE__} = target, sql, params, opts)
       when is_binary(sql) and is_list(params) and is_list(opts) do
     cond do
