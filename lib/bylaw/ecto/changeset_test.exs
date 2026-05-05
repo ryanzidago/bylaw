@@ -39,6 +39,15 @@ defmodule Bylaw.Ecto.ChangesetTest.User do
   end
 
   @doc false
+  @spec partition_changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def partition_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email])
+    |> unique_constraint(:email, name: :email_key, match: :suffix)
+    |> unique_constraint(:email, name: ~r/^users_p[0-9]+_email_key$/)
+  end
+
+  @doc false
   @spec profile_changeset(struct(), map()) :: Ecto.Changeset.struct()
   def profile_changeset(user, attrs) do
     Ecto.Changeset.cast(user, attrs, [:name])
@@ -69,6 +78,7 @@ defmodule Bylaw.Ecto.ChangesetTest do
 
       assert Enum.map(candidates, &{&1.function, &1.arity, &1.fields}) == [
                {:change_changeset, 1, [:email]},
+               {:partition_changeset, 2, [:email]},
                {:profile_changeset, 2, [:name]},
                {:registration_changeset, 2, [:account_id, :email]}
              ]
@@ -85,6 +95,21 @@ defmodule Bylaw.Ecto.ChangesetTest do
                {:unique, [:email], "users_email_index"},
                {:foreign_key, [:account_id], nil}
              ]
+    end
+
+    test "extracts constraint name match modes and literal regex names" do
+      [candidate] =
+        __ENV__.file
+        |> List.wrap()
+        |> Changeset.candidates([User])
+        |> Enum.filter(&(&1.function == :partition_changeset))
+
+      assert [
+               %{kind: :unique, fields: [:email], name: "email_key", match: :suffix},
+               %{kind: :unique, fields: [:email], name: regex, match: :exact}
+             ] = candidate.constraints
+
+      assert Regex.match?(regex, "users_p12_email_key")
     end
   end
 end

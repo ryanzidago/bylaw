@@ -41,6 +41,23 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.P
   end
 end
 
+defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.PrefixedMissingUser do
+  use Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.CustomSchema
+
+  import Ecto.Changeset
+
+  @schema_prefix "tenant_a"
+  schema "prefixed_users" do
+    field(:email, :string)
+  end
+
+  @doc false
+  @spec changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def changeset(user, attrs) do
+    cast(user, attrs, [:email])
+  end
+end
+
 defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.MatchingUser do
   use Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.CustomSchema
 
@@ -59,6 +76,60 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.M
   end
 end
 
+defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.SuffixMatchingUser do
+  use Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.CustomSchema
+
+  import Ecto.Changeset
+
+  schema "suffix_matching_users" do
+    field(:email, :string)
+  end
+
+  @doc false
+  @spec changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email])
+    |> unique_constraint(:email, name: :email_key, match: :suffix)
+  end
+end
+
+defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.PrefixMatchingUser do
+  use Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.CustomSchema
+
+  import Ecto.Changeset
+
+  schema "prefix_matching_users" do
+    field(:email, :string)
+  end
+
+  @doc false
+  @spec changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email])
+    |> unique_constraint(:email, name: :prefix_matching_users_p0, match: :prefix)
+  end
+end
+
+defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.RegexMatchingUser do
+  use Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.CustomSchema
+
+  import Ecto.Changeset
+
+  schema "regex_matching_users" do
+    field(:email, :string)
+  end
+
+  @doc false
+  @spec changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def changeset(user, attrs) do
+    user
+    |> cast(attrs, [:email])
+    |> unique_constraint(:email, name: ~r/^regex_matching_users_p[0-9]+_email_key$/)
+  end
+end
+
 defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.Repo do
   @doc false
   @spec config() :: keyword()
@@ -72,8 +143,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.MatchingUser
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.MissingUser
+  alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.PrefixedMissingUser
+  alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.PrefixMatchingUser
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.ProfileOnlyUser
+  alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.RegexMatchingUser
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.Repo
+  alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.SuffixMatchingUser
   alias Bylaw.Db.Issue
 
   describe "validate/2" do
@@ -105,6 +180,32 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
                )
     end
 
+    test "does not apply non-public catalog constraints to an unprefixed schema" do
+      target = target([unique("tenant_b", "users", "users_email_index", ["email"])])
+
+      assert :ok =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [MissingUser]
+               )
+    end
+
+    test "only applies catalog constraints from the schema prefix" do
+      target =
+        target([
+          unique("tenant_a", "prefixed_users", "prefixed_users_email_index", ["email"]),
+          unique("tenant_b", "prefixed_users", "prefixed_users_email_index", ["email"])
+        ])
+
+      assert {:error, [%Issue{} = issue]} =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [PrefixedMissingUser]
+               )
+
+      assert issue.meta.table_schema == "tenant_a"
+    end
+
     test "passes with an existing inferred unique helper" do
       target =
         target([unique("public", "matching_users", "matching_users_email_index", ["email"])])
@@ -113,6 +214,51 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
                EctoChangesetUniqueConstraints.validate(target,
                  paths: [__ENV__.file],
                  schema_modules: [MatchingUser]
+               )
+    end
+
+    test "passes with an existing suffix-matched unique helper" do
+      target =
+        target([
+          unique("public", "suffix_matching_users", "suffix_matching_users_p0_email_key", [
+            "email"
+          ])
+        ])
+
+      assert :ok =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [SuffixMatchingUser]
+               )
+    end
+
+    test "passes with an existing prefix-matched unique helper" do
+      target =
+        target([
+          unique("public", "prefix_matching_users", "prefix_matching_users_p0_email_key", [
+            "email"
+          ])
+        ])
+
+      assert :ok =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [PrefixMatchingUser]
+               )
+    end
+
+    test "passes with an existing regex-matched unique helper" do
+      target =
+        target([
+          unique("public", "regex_matching_users", "regex_matching_users_p42_email_key", [
+            "email"
+          ])
+        ])
+
+      assert :ok =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [RegexMatchingUser]
                )
     end
   end

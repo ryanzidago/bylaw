@@ -35,16 +35,19 @@ defmodule Bylaw.Ecto.Changeset do
     """
 
     @type kind :: :unique | :foreign_key | :check | :exclusion
+    @type match :: :exact | :suffix | :prefix
 
     @type t :: %__MODULE__{
             kind: kind(),
             fields: list(atom()),
-            name: String.t() | nil
+            name: String.t() | Regex.t() | nil,
+            match: match()
           }
 
     defstruct kind: nil,
               fields: [],
-              name: nil
+              name: nil,
+              match: :exact
   end
 
   @constraint_calls %{
@@ -259,7 +262,8 @@ defmodule Bylaw.Ecto.Changeset do
     %ConstraintCall{
       kind: kind,
       fields: constraint_fields(field_arg),
-      name: constraint_name(opts_arg)
+      name: constraint_name(opts_arg),
+      match: constraint_match(opts_arg)
     }
   end
 
@@ -277,11 +281,31 @@ defmodule Bylaw.Ecto.Changeset do
     case Keyword.fetch(opts, :name) do
       {:ok, name} when is_atom(name) -> Atom.to_string(name)
       {:ok, name} when is_binary(name) -> name
+      {:ok, name} -> literal_regex(name)
       _other -> nil
     end
   end
 
   defp constraint_name(_opts), do: nil
+
+  defp constraint_match(opts) when is_list(opts) do
+    case Keyword.fetch(opts, :match) do
+      {:ok, match} when match in [:exact, :suffix, :prefix] -> match
+      _other -> :exact
+    end
+  end
+
+  defp constraint_match(_opts), do: :exact
+
+  defp literal_regex({:sigil_r, _meta, [{:<<>>, _string_meta, [source]}, modifiers]})
+       when is_binary(source) and is_list(modifiers) do
+    case Regex.compile(source, to_string(modifiers)) do
+      {:ok, regex} -> regex
+      {:error, _reason} -> nil
+    end
+  end
+
+  defp literal_regex(_name), do: nil
 
   defp ecto_changeset_module?({:__aliases__, _meta, [:Ecto, :Changeset]}), do: true
   defp ecto_changeset_module?(Ecto.Changeset), do: true

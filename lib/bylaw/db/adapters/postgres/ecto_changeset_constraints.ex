@@ -177,12 +177,19 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
 
   defp schema_issues(target, schema, candidates, constraints, config) do
     schema_candidates = Enum.filter(candidates, &(&1.module == schema.module))
-    table_constraints = Enum.filter(constraints, &(&1.table == schema.source))
+    table_constraints = Enum.filter(constraints, &constraint_for_schema?(&1, schema))
 
     Enum.flat_map(schema_candidates, fn candidate ->
       candidate_issues(target, schema, candidate, table_constraints, config)
     end)
   end
+
+  defp constraint_for_schema?(constraint, schema) do
+    constraint.table == schema.source and constraint.schema == schema_prefix(schema)
+  end
+
+  defp schema_prefix(%{prefix: nil}), do: "public"
+  defp schema_prefix(%{prefix: prefix}), do: prefix
 
   defp candidate_issues(target, schema, candidate, constraints, config) do
     Enum.flat_map(constraints, fn constraint ->
@@ -225,9 +232,23 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     end)
   end
 
-  defp matching_call?(_schema, %{name: name}, constraint, _fields)
+  defp matching_call?(_schema, %{name: %Regex{} = name}, constraint, _fields) do
+    Regex.match?(name, constraint.name)
+  end
+
+  defp matching_call?(_schema, %{name: name, match: :exact}, constraint, _fields)
        when is_binary(name) do
     name == constraint.name
+  end
+
+  defp matching_call?(_schema, %{name: name, match: :suffix}, constraint, _fields)
+       when is_binary(name) do
+    String.ends_with?(constraint.name, name)
+  end
+
+  defp matching_call?(_schema, %{name: name, match: :prefix}, constraint, _fields)
+       when is_binary(name) do
+    String.starts_with?(constraint.name, name)
   end
 
   defp matching_call?(schema, call, constraint, fields) do
