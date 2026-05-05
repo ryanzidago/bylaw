@@ -31,6 +31,18 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+    {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+     rules: [
+       [
+         where: [[table: "messages"], [referenced_table: "conversations"]],
+         on_delete: :cascade
+       ],
+       [
+         where: [referenced_table: "lookup_statuses"],
+         on_delete: :restrict,
+         on_update: :restrict
+       ]
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
@@ -91,6 +103,18 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
     {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
      except: [[table: "runs", column: "assistant_message_id"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+     rules: [
+       [
+         where: [referenced_table: "accounts"],
+         on_delete: :restrict,
+         on_update: :restrict
+       ],
+       [
+         where: [table: "messages", referenced_table: "conversations"],
+         on_delete: :cascade
+       ]
+     ]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
