@@ -71,13 +71,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   @type check_opts :: list(check_opt())
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :ecto_changeset_unique_constraints
-  def name, do: :ecto_changeset_unique_constraints
-
-  @doc """
   Validates changeset unique-constraint helpers for a Postgres target.
   """
   @impl Bylaw.Db.Check
@@ -94,7 +87,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
     %{
       check: __MODULE__,
       kind: :unique,
-      name: name(),
+      name: :ecto_changeset_unique_constraints,
       helper: "unique_constraint",
       label: "unique index",
       query: @query,

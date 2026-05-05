@@ -78,13 +78,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :duplicate_indexes
-  def name, do: :duplicate_indexes
-
-  @doc """
   Validates that tables do not have duplicate indexes.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use

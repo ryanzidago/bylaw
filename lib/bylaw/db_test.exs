@@ -9,17 +9,11 @@ defmodule Bylaw.DbTest do
     @behaviour Bylaw.Db.Check
 
     @impl Bylaw.Db.Check
-    def name, do: :passing_check
-
-    @impl Bylaw.Db.Check
     def validate(_target, _opts), do: :ok
   end
 
   defmodule FailingCheck do
     @behaviour Bylaw.Db.Check
-
-    @impl Bylaw.Db.Check
-    def name, do: :failing_check
 
     @impl Bylaw.Db.Check
     def validate(target, opts) do
@@ -39,9 +33,6 @@ defmodule Bylaw.DbTest do
     @behaviour Bylaw.Db.Check
 
     @impl Bylaw.Db.Check
-    def name, do: :multi_issue_check
-
-    @impl Bylaw.Db.Check
     def validate(target, _opts) do
       {:error,
        [
@@ -55,17 +46,11 @@ defmodule Bylaw.DbTest do
     @behaviour Bylaw.Db.Check
 
     @impl Bylaw.Db.Check
-    def name, do: :empty_issue_check
-
-    @impl Bylaw.Db.Check
     def validate(_target, _opts), do: {:error, []}
   end
 
   defmodule InvalidIssueCheck do
     @behaviour Bylaw.Db.Check
-
-    @impl Bylaw.Db.Check
-    def name, do: :invalid_issue_check
 
     @impl Bylaw.Db.Check
     def validate(_target, _opts), do: {:error, [:bad]}

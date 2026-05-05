@@ -26,11 +26,6 @@ defmodule Bylaw.Db.Check do
   @type check_opts :: list(check_opt())
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @callback name() :: atom()
-
-  @doc """
   Validates a database target.
 
   Return `:ok` when the target passes, or `{:error, issues}` with a non-empty

@@ -141,13 +141,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :scoped_foreign_keys
-  def name, do: :scoped_foreign_keys
-
-  @doc """
   Validates that scoped foreign keys include configured scope columns.
 
   The check is enabled by default and requires `scope_columns: [...]`. Pass
