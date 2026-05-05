@@ -36,29 +36,41 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
+  @type check_specs :: list(Db.check_spec())
+  @type dynamic_repo :: atom() | pid() | nil
+  @type meta :: map()
+  @type query :: Target.query_fun()
+  @type repo :: module()
+  @type target :: Target.t()
+  @type targets :: list(target())
+
+  @typedoc """
+  Option accepted by `target/1`.
+  """
+  @type target_opt ::
+          {:repo, repo()}
+          | {:dynamic_repo, dynamic_repo()}
+          | {:query, query()}
+          | {:meta, meta()}
+
   @typedoc """
   Options accepted by `target/1`.
   """
-  @type target_opts ::
-          list(
-            {:repo, module()}
-            | {:dynamic_repo, atom() | pid() | nil}
-            | {:query, Target.query_fun()}
-            | {:meta, map()}
-          )
+  @type target_opts :: list(target_opt())
+
+  @typedoc """
+  Option accepted by configured validation.
+  """
+  @type validate_opt ::
+          {:checks, check_specs()}
+          | target_opt()
+          | {:target, target_opts() | target()}
+          | {:targets, list(target_opts() | target())}
+
   @typedoc """
   Options accepted by configured validation.
   """
-  @type validate_opts ::
-          list(
-            {:checks, list(Db.check_spec())}
-            | {:repo, module()}
-            | {:dynamic_repo, atom() | pid() | nil}
-            | {:query, Target.query_fun()}
-            | {:meta, map()}
-            | {:target, target_opts() | Target.t()}
-            | {:targets, list(target_opts() | Target.t())}
-          )
+  @type validate_opts :: list(validate_opt())
 
   @doc """
   Builds a single Postgres validation target.
@@ -68,7 +80,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec target(target_opts()) :: Target.t()
+  @spec target(target_opts()) :: target()
   def target(opts) when is_list(opts) do
     keyword_list!(opts, "Postgres target opts")
     validate_target_opts!(opts)
@@ -129,7 +141,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec validate(list(Target.t()), list(Db.check_spec())) :: Check.result()
+  @spec validate(targets(), check_specs()) :: Check.result()
   def validate(targets, checks) do
     checks = validate_checks!(checks)
 
@@ -148,7 +160,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec query(Target.t(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
+  @spec query(target(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
   def query(%Target{adapter: __MODULE__} = target, sql, params, opts)
       when is_binary(sql) and is_list(params) and is_list(opts) do
     cond do

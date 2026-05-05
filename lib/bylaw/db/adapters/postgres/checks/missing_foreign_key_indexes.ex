@@ -60,12 +60,18 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   ORDER BY schema_name, table_name, constraint_name
   """
 
-  @type check_opts ::
-          list(
-            {:validate, boolean()}
-            | {:schemas, list(String.t())}
-            | {:tables, list(String.t())}
-          )
+  @type filter :: list(String.t()) | nil
+  @type schema_names :: list(String.t())
+  @type table_names :: list(String.t())
+  @type target :: Target.t()
+
+  @type check_opt ::
+          {:validate, boolean()}
+          | {:schemas, schema_names()}
+          | {:tables, table_names()}
+
+  @type check_opts :: list(check_opt())
+
   @type result_row :: %{
           optional(String.t()) => term(),
           optional(atom()) => term()
@@ -93,7 +99,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   """
 
   @impl Bylaw.Db.Check
-  @spec validate(Target.t(), check_opts()) :: Check.result()
+  @spec validate(target(), check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
@@ -219,7 +225,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
           "expected missing_foreign_key_indexes #{inspect(key)} to be a non-empty list of strings"
   end
 
-  @spec issue(Target.t(), result_row()) :: Issue.t()
+  @spec issue(target(), result_row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = value(row, "schema_name")
     table_name = value(row, "table_name")
@@ -242,8 +248,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
     }
   end
 
-  @spec query_error_issue(Target.t(), list(String.t()) | nil, list(String.t()) | nil, term()) ::
-          Issue.t()
+  @spec query_error_issue(target(), filter(), filter(), term()) :: Issue.t()
   defp query_error_issue(target, schemas, tables, reason) do
     %Issue{
       check: __MODULE__,
