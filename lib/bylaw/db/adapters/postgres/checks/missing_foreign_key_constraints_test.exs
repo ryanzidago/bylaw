@@ -1,21 +1,21 @@
-defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsTest do
   use ExUnit.Case, async: true
 
   alias Bylaw.Db.Adapters.Postgres
-  alias Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
+  alias Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
 
   describe "validate/2" do
-    test "passes when every foreign key has a supporting index" do
+    test "passes when every foreign key-like column has a constraint" do
       target = target({:ok, result([])})
 
-      assert :ok = ForeignKeyIndexes.validate(target, [])
+      assert :ok = MissingForeignKeyConstraints.validate(target, [])
 
-      assert_received {:query, "ecto_psql_extras.missing_fk_indexes", [nil], []}
+      assert_received {:query, "ecto_psql_extras.missing_fk_constraints", [nil], []}
     end
 
-    test "returns an issue when one foreign key is missing a supporting index" do
+    test "returns an issue when one foreign key-like column is missing a constraint" do
       target =
         target(
           {:ok,
@@ -24,20 +24,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
            ])}
         )
 
-      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} =
+               MissingForeignKeyConstraints.validate(target, [])
 
-      assert issue.check == ForeignKeyIndexes
+      assert issue.check == MissingForeignKeyConstraints
       assert issue.target == target
 
       assert issue.message ==
-               "expected foreign key-like column user_id on orders to have a supporting index"
+               "expected foreign key-like column user_id on orders to have a foreign key constraint"
 
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
                table: "orders",
                column: "user_id",
-               columns: ["user_id"],
                source: :ecto_psql_extras
              }
     end
@@ -46,30 +46,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
       target = target({:ok, result([])})
 
       assert :ok =
-               ForeignKeyIndexes.validate(target,
+               MissingForeignKeyConstraints.validate(target,
                  tables: ["orders", "line_items"]
                )
 
       assert_received {:query, _sql, ["orders"], []}
       assert_received {:query, _sql, ["line_items"], []}
-    end
-
-    test "returns every missing foreign key index issue" do
-      target =
-        target(
-          {:ok,
-           result([
-             ["orders", "user_id"],
-             ["line_items", "order_id"]
-           ])}
-        )
-
-      assert {:error, issues} = ForeignKeyIndexes.validate(target, [])
-
-      assert Enum.map(issues, &{&1.meta.table, &1.meta.column}) == [
-               {"orders", "user_id"},
-               {"line_items", "order_id"}
-             ]
     end
 
     test "accepts query results that are already maps" do
@@ -84,11 +66,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
            ]}
         )
 
-      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} = MissingForeignKeyConstraints.validate(target, [])
 
       assert issue.meta.table == "orders"
       assert issue.meta.column == "user_id"
-      assert issue.meta.columns == ["user_id"]
     end
 
     test "skips validation when disabled" do
@@ -97,67 +78,51 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
           query: fn _target, _sql, _params, _opts -> flunk("query should not run") end
         )
 
-      assert :ok = ForeignKeyIndexes.validate(target, validate: false)
+      assert :ok = MissingForeignKeyConstraints.validate(target, validate: false)
     end
 
     test "rejects unknown options" do
       target = target({:ok, result([])})
 
-      assert_raise ArgumentError, ~r/unknown foreign_key_indexes option: :unknown/, fn ->
-        ForeignKeyIndexes.validate(target, unknown: true)
-      end
+      assert_raise ArgumentError,
+                   ~r/unknown missing_foreign_key_constraints option: :unknown/,
+                   fn ->
+                     MissingForeignKeyConstraints.validate(target, unknown: true)
+                   end
     end
 
     test "requires keyword options" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes opts to be a keyword list/,
+                   ~r/expected missing_foreign_key_constraints opts to be a keyword list/,
                    fn ->
-                     ForeignKeyIndexes.validate(target, [:not_keyword])
+                     MissingForeignKeyConstraints.validate(target, [:not_keyword])
                    end
-    end
-
-    test "requires options to be a list" do
-      target = target({:ok, result([])})
-
-      assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes opts to be a keyword list/,
-                   fn ->
-                     ForeignKeyIndexes.validate(target, :not_a_list)
-                   end
-    end
-
-    test "rejects schema filters because ecto_psql_extras scopes by table" do
-      target = target({:ok, result([])})
-
-      assert_raise ArgumentError, ~r/unknown foreign_key_indexes option: :schemas/, fn ->
-        ForeignKeyIndexes.validate(target, schemas: ["public"])
-      end
     end
 
     test "requires table filters to be non-empty lists of strings" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes :tables to be a non-empty list of strings/,
+                   ~r/expected missing_foreign_key_constraints :tables to be a non-empty list of strings/,
                    fn ->
-                     ForeignKeyIndexes.validate(target, tables: [])
+                     MissingForeignKeyConstraints.validate(target, tables: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes :tables to be a non-empty list of strings/,
+                   ~r/expected missing_foreign_key_constraints :tables to be a non-empty list of strings/,
                    fn ->
-                     ForeignKeyIndexes.validate(target, tables: [""])
+                     MissingForeignKeyConstraints.validate(target, tables: [""])
                    end
     end
 
     test "returns an issue when introspection fails" do
       target = target({:error, :connection_closed})
 
-      assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
+      assert {:error, [%Issue{} = issue]} = MissingForeignKeyConstraints.validate(target, [])
 
-      assert issue.message == "could not inspect Postgres foreign key indexes"
+      assert issue.message == "could not inspect Postgres foreign key constraints"
 
       assert issue.meta == %{
                repo: nil,
@@ -171,7 +136,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        ForeignKeyIndexes.validate(target, [])
+        MissingForeignKeyConstraints.validate(target, [])
       end
     end
   end
