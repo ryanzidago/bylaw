@@ -15,6 +15,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
 
   @schema "bylaw_fk_index_fixtures"
   @pg_schema "pgapp_fk_index_fixtures"
+  @scoped_schema "bylaw_scoped_fk_fixtures"
   @timeout 15_000
 
   @spec schema() :: String.t()
@@ -22,6 +23,9 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
 
   @spec pg_schema() :: String.t()
   def pg_schema, do: @pg_schema
+
+  @spec scoped_schema() :: String.t()
+  def scoped_schema, do: @scoped_schema
 
   @spec start_repo!() :: pid()
   def start_repo! do
@@ -52,9 +56,11 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
 
     query!("DROP SCHEMA IF EXISTS #{quote_identifier(@schema)} CASCADE")
     query!("DROP SCHEMA IF EXISTS #{quote_identifier(@pg_schema)} CASCADE")
+    query!("DROP SCHEMA IF EXISTS #{quote_identifier(@scoped_schema)} CASCADE")
 
     create_fixture_schema!(@schema)
     create_pg_named_fixture_schema!(@pg_schema)
+    create_scoped_fixture_schema!(@scoped_schema)
 
     Sandbox.mode(TestRepo, :manual)
   end
@@ -89,6 +95,16 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_orders_missing_index!(schema)
     create_nullable_orders!(schema)
     create_duplicate_indexes!(schema)
+  end
+
+  defp create_scoped_fixture_schema!(schema) do
+    query!("CREATE SCHEMA #{quote_identifier(schema)}")
+    create_scoped_customers!(schema)
+    create_scoped_orders_missing_scope!(schema)
+    create_scoped_orders_with_scope!(schema)
+    create_global_statuses!(schema)
+    create_scoped_orders_with_global_status!(schema)
+    create_global_imports!(schema)
   end
 
   defp create_users!(schema) do
@@ -295,6 +311,77 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
       tenant_id uuid NOT NULL,
       account_id bigint NOT NULL,
       PRIMARY KEY (tenant_id, account_id)
+    )
+    """)
+  end
+
+  defp create_scoped_customers!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "scoped_customers")} (
+      id bigint PRIMARY KEY,
+      tenant_id bigint NOT NULL,
+      name text NOT NULL,
+      UNIQUE (tenant_id, id)
+    )
+    """)
+  end
+
+  defp create_scoped_orders_missing_scope!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "scoped_orders_missing_scope")} (
+      id bigint PRIMARY KEY,
+      tenant_id bigint NOT NULL,
+      customer_id bigint NOT NULL,
+      CONSTRAINT scoped_orders_missing_scope_customer_id_fkey
+        FOREIGN KEY (customer_id)
+        REFERENCES #{table(schema, "scoped_customers")} (id)
+    )
+    """)
+  end
+
+  defp create_scoped_orders_with_scope!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "scoped_orders_with_scope")} (
+      id bigint PRIMARY KEY,
+      tenant_id bigint NOT NULL,
+      customer_id bigint NOT NULL,
+      CONSTRAINT scoped_orders_with_scope_customer_id_fkey
+        FOREIGN KEY (tenant_id, customer_id)
+        REFERENCES #{table(schema, "scoped_customers")} (tenant_id, id)
+    )
+    """)
+  end
+
+  defp create_global_statuses!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "global_statuses")} (
+      id bigint PRIMARY KEY,
+      name text NOT NULL
+    )
+    """)
+  end
+
+  defp create_scoped_orders_with_global_status!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "scoped_orders_with_global_status")} (
+      id bigint PRIMARY KEY,
+      tenant_id bigint NOT NULL,
+      status_id bigint NOT NULL,
+      CONSTRAINT scoped_orders_with_global_status_status_id_fkey
+        FOREIGN KEY (status_id)
+        REFERENCES #{table(schema, "global_statuses")} (id)
+    )
+    """)
+  end
+
+  defp create_global_imports!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "global_imports")} (
+      id bigint PRIMARY KEY,
+      customer_id bigint NOT NULL,
+      CONSTRAINT global_imports_customer_id_fkey
+        FOREIGN KEY (customer_id)
+        REFERENCES #{table(schema, "scoped_customers")} (id)
     )
     """)
   end

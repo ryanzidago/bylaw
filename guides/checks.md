@@ -30,6 +30,9 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
   checks: [
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
+    {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
+     scope_columns: ["tenant_id", "workspace_id"],
+     except: [[referenced_table: "global_settings"]]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
@@ -95,6 +98,9 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
     {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
      except: [[table: "runs", column: "assistant_message_id"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
+     scope_columns: ["tenant_id", "workspace_id"],
+     except: [[referenced_table: "shared_templates"]]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
@@ -114,6 +120,14 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
 `Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType` can replace
 project-specific checks such as "all tables use UUID primary keys" while still
 allowing scoped exceptions for migration metadata or legacy tables.
+
+`ScopedForeignKeys` is useful for tenant, workspace, account, or similar
+scoping. If both `messages` and `conversations` have `tenant_id` and
+`workspace_id`, a foreign key from `messages(conversation_id)` to
+`conversations(id)` fails because it can cross scopes. Define the constraint as
+`messages(tenant_id, workspace_id, conversation_id)` referencing
+`conversations(tenant_id, workspace_id, id)` instead, or add an `except` matcher
+for intentionally shared references.
 
 Then add one ExUnit test that runs after the test database has been created and
 migrated:
