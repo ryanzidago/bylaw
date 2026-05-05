@@ -83,6 +83,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_included_events!(schema)
     create_action_messages!(schema)
     create_duplicate_indexes!(schema)
+    create_column_type_examples!(schema)
     create_uuid_primary_key!(schema)
     create_bigint_primary_key!(schema)
     create_missing_primary_key!(schema)
@@ -96,6 +97,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_orders_missing_index!(schema)
     create_nullable_orders!(schema)
     create_duplicate_indexes!(schema)
+    create_column_type_examples!(schema)
   end
 
   defp create_scoped_fixture_schema!(schema) do
@@ -299,6 +301,18 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("""
     CREATE INDEX duplicate_indexes_status_note_idx
       ON #{table(schema, "duplicate_indexes")} (status, note)
+    """)
+  end
+
+  defp create_column_type_examples!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "column_type_examples")} (
+      id bigint PRIMARY KEY,
+      json_payload json,
+      jsonb_payload jsonb,
+      fixed_code character(8),
+      raw_payload json
+    )
     """)
   end
 
