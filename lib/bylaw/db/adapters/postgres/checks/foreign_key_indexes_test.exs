@@ -12,9 +12,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
 
       assert :ok = ForeignKeyIndexes.validate(target, [])
 
-      assert_received {:query, sql, [nil, nil], []}
-      assert sql =~ "pg_catalog.pg_constraint"
-      assert sql =~ "pg_catalog.pg_index"
+      assert_received {:query, "ecto_psql_extras.missing_fk_indexes", [nil], []}
     end
 
     test "returns an issue when one foreign key is missing a supporting index" do
@@ -22,7 +20,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
         target(
           {:ok,
            result([
-             ["public", "orders", "orders_user_id_fkey", ["user_id"]]
+             ["orders", "user_id"]
            ])}
         )
 
@@ -32,28 +30,27 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
       assert issue.target == target
 
       assert issue.message ==
-               "expected foreign key orders_user_id_fkey on public.orders to have a supporting index"
+               "expected foreign key-like column user_id on orders to have a supporting index"
 
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schema: "public",
                table: "orders",
-               constraint: "orders_user_id_fkey",
-               columns: ["user_id"]
+               column: "user_id",
+               columns: ["user_id"],
+               source: :ecto_psql_extras
              }
     end
 
-    test "passes schema and table filters as check scope" do
+    test "passes table filters as check scope" do
       target = target({:ok, result([])})
 
       assert :ok =
                ForeignKeyIndexes.validate(target,
-                 schemas: ["public", "billing"],
                  tables: ["orders", "line_items"]
                )
 
-      assert_received {:query, _sql, [["public", "billing"], ["orders", "line_items"]], []}
+      assert_received {:query, _sql, [["orders", "line_items"]], []}
     end
 
     test "returns every missing foreign key index issue" do
@@ -61,16 +58,16 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
         target(
           {:ok,
            result([
-             ["public", "orders", "orders_user_id_fkey", ["user_id"]],
-             ["public", "line_items", "line_items_order_id_fkey", ["order_id"]]
+             ["orders", "user_id"],
+             ["line_items", "order_id"]
            ])}
         )
 
       assert {:error, issues} = ForeignKeyIndexes.validate(target, [])
 
-      assert Enum.map(issues, & &1.meta.constraint) == [
-               "orders_user_id_fkey",
-               "line_items_order_id_fkey"
+      assert Enum.map(issues, &{&1.meta.table, &1.meta.column}) == [
+               {"orders", "user_id"},
+               {"line_items", "order_id"}
              ]
     end
 
@@ -80,17 +77,16 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
           {:ok,
            [
              %{
-               schema_name: "public",
-               table_name: "orders",
-               constraint_name: "orders_user_id_fkey",
-               column_names: ["user_id"]
+               table: "orders",
+               column_name: "user_id"
              }
            ]}
         )
 
       assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
 
-      assert issue.meta.constraint == "orders_user_id_fkey"
+      assert issue.meta.table == "orders"
+      assert issue.meta.column == "user_id"
       assert issue.meta.columns == ["user_id"]
     end
 
@@ -131,20 +127,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
                    end
     end
 
-    test "requires schema filters to be non-empty lists of strings" do
+    test "rejects schema filters because ecto_psql_extras scopes by table" do
       target = target({:ok, result([])})
 
-      assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes :schemas to be a non-empty list of strings/,
-                   fn ->
-                     ForeignKeyIndexes.validate(target, schemas: [])
-                   end
-
-      assert_raise ArgumentError,
-                   ~r/expected foreign_key_indexes :schemas to be a non-empty list of strings/,
-                   fn ->
-                     ForeignKeyIndexes.validate(target, schemas: [:public])
-                   end
+      assert_raise ArgumentError, ~r/unknown foreign_key_indexes option: :schemas/, fn ->
+        ForeignKeyIndexes.validate(target, schemas: ["public"])
+      end
     end
 
     test "requires table filters to be non-empty lists of strings" do
@@ -168,12 +156,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
 
       assert {:error, [%Issue{} = issue]} = ForeignKeyIndexes.validate(target, [])
 
-      assert issue.message == "could not inspect Postgres foreign keys"
+      assert issue.message == "could not inspect Postgres foreign key indexes"
 
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: nil,
                tables: nil,
                reason: :connection_closed
              }
@@ -201,7 +188,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
 
   defp result(rows) do
     %{
-      columns: ["schema_name", "table_name", "constraint_name", "column_names"],
+      columns: ["table", "column_name"],
       rows: rows
     }
   end

@@ -2,10 +2,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 
-  By default the check inspects all non-system schemas in a Postgres target.
-  Pass `:schemas` or `:tables` options to narrow the scope. A foreign key passes
-  when the referencing table has a valid, non-partial index whose leading
-  columns contain the foreign key columns.
+  By default the check uses `ecto_psql_extras` to inspect all non-system tables
+  in a Postgres target. Pass `:tables` to narrow the scope. The underlying
+  detection is convention-based: columns that look like foreign keys should have
+  indexes whose first indexed column matches the foreign key-like column.
   """
 
   @behaviour Bylaw.Db.Check
@@ -15,55 +15,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
 
-  @query """
-  SELECT
-    schema_name,
-    table_name,
-    constraint_name,
-    column_names
-  FROM (
-    SELECT
-      namespace.nspname AS schema_name,
-      table_class.relname AS table_name,
-      constraint_record.conname AS constraint_name,
-      constraint_record.conrelid AS table_oid,
-      constraint_record.conkey AS key_attnums,
-      ARRAY(
-        SELECT attribute.attname
-        FROM unnest(constraint_record.conkey) WITH ORDINALITY AS key(attnum, position)
-        JOIN pg_catalog.pg_attribute AS attribute
-          ON attribute.attrelid = constraint_record.conrelid
-         AND attribute.attnum = key.attnum
-        ORDER BY key.position
-      ) AS column_names
-    FROM pg_catalog.pg_constraint AS constraint_record
-    JOIN pg_catalog.pg_class AS table_class
-      ON table_class.oid = constraint_record.conrelid
-    JOIN pg_catalog.pg_namespace AS namespace
-      ON namespace.oid = table_class.relnamespace
-    WHERE constraint_record.contype = 'f'
-      AND namespace.nspname <> 'information_schema'
-      AND namespace.nspname NOT LIKE 'pg\\_%' ESCAPE '\\'
-      AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
-      AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
-  ) AS foreign_key
-  WHERE NOT EXISTS (
-    SELECT 1
-    FROM pg_catalog.pg_index AS index_record
-    WHERE index_record.indrelid = foreign_key.table_oid
-      AND index_record.indisvalid
-      AND index_record.indpred IS NULL
-      AND index_record.indnkeyatts >= array_length(foreign_key.key_attnums, 1)
-      AND foreign_key.key_attnums <@
-        index_record.indkey[0:array_length(foreign_key.key_attnums, 1) - 1]
-  )
-  ORDER BY schema_name, table_name, constraint_name
-  """
+  @query "ecto_psql_extras.missing_fk_indexes"
 
   @type check_opts ::
           list(
             {:validate, boolean()}
-            | {:schemas, list(String.t())}
             | {:tables, list(String.t())}
           )
   @type result_row :: %{
@@ -71,10 +27,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
           optional(atom()) => term()
         }
   @row_keys %{
-    "column_names" => :column_names,
-    "constraint_name" => :constraint_name,
-    "schema_name" => :schema_name,
-    "table_name" => :table_name
+    "column_name" => :column_name,
+    "table" => :table
   }
 
   @doc """
@@ -89,7 +43,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   Validates that foreign keys in the target scope have supporting indexes.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
-  `schemas: [...]` or `tables: [...]` to narrow the default all-schema scope.
+  `tables: [...]` to narrow the default all-table scope.
   """
 
   @impl Bylaw.Db.Check
@@ -118,20 +72,60 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   end
 
   defp validate_foreign_key_indexes(target, opts) do
-    schemas = filter(opts, :schemas)
     tables = filter(opts, :tables)
 
-    case Postgres.query(target, @query, [schemas, tables], []) do
+    case missing_index_rows(target, tables) do
       {:ok, result} ->
         result
         |> rows()
+        |> Enum.uniq_by(&row_key/1)
         |> Enum.map(&issue(target, &1))
         |> result()
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, reason)]}
+        {:error, [query_error_issue(target, tables, reason)]}
     end
   end
+
+  defp missing_index_rows(%Target{} = target, tables) do
+    if is_function(target.query, 4) do
+      Postgres.query(target, @query, [tables], [])
+    else
+      missing_index_rows_from_repo_target(target, tables)
+    end
+  end
+
+  defp missing_index_rows_from_repo_target(target, tables) do
+    with {:module, _module} <- Code.ensure_loaded(EctoPSQLExtras),
+         :ok <- ensure_dynamic_repo_support(target) do
+      {:ok, missing_index_rows_from_repo(target, tables)}
+    else
+      {:error, :nofile} -> {:error, {:missing_dependency, :ecto_psql_extras}}
+      {:error, reason} -> {:error, reason}
+    end
+  rescue
+    exception -> {:error, exception}
+  catch
+    kind, reason -> {:error, {kind, reason}}
+  end
+
+  defp missing_index_rows_from_repo(target, tables) do
+    with_dynamic_repo(target, fn ->
+      tables
+      |> table_names()
+      |> Enum.flat_map(fn table_name ->
+        target.repo
+        |> EctoPSQLExtras.missing_fk_indexes(missing_fk_indexes_opts(table_name))
+        |> Map.fetch!(:rows)
+      end)
+    end)
+  end
+
+  defp table_names(nil), do: [nil]
+  defp table_names(tables), do: tables
+
+  defp missing_fk_indexes_opts(nil), do: [format: :raw]
+  defp missing_fk_indexes_opts(table_name), do: [format: :raw, args: [table_name: table_name]]
 
   defp rows(result) when is_map(result) do
     %{columns: columns, rows: rows} = result
@@ -143,7 +137,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     end)
   end
 
-  defp rows(rows) when is_list(rows), do: rows
+  defp rows(rows) when is_list(rows) do
+    Enum.map(rows, fn
+      [table_name, column_name] -> %{"table" => table_name, "column_name" => column_name}
+      row -> row
+    end)
+  end
 
   defp result([]), do: :ok
   defp result(issues), do: {:error, issues}
@@ -154,7 +153,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
             "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
     end
 
-    allowed_keys = [:validate, :schemas, :tables]
+    allowed_keys = [:validate, :tables]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
@@ -163,7 +162,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     end)
 
     validate_boolean_option!(opts, :validate)
-    validate_filter_option!(opts, :schemas)
     validate_filter_option!(opts, :tables)
 
     opts
@@ -221,38 +219,34 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
   @spec issue(Target.t(), result_row()) :: Issue.t()
   defp issue(target, row) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    constraint_name = value(row, "constraint_name")
-    column_names = value(row, "column_names")
+    table_name = value(row, "table")
+    column_name = value(row, "column_name")
 
     %Issue{
       check: __MODULE__,
       target: target,
       message:
-        "expected foreign key #{constraint_name} on #{schema_name}.#{table_name} to have a supporting index",
+        "expected foreign key-like column #{column_name} on #{table_name} to have a supporting index",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schema: schema_name,
         table: table_name,
-        constraint: constraint_name,
-        columns: column_names
+        column: column_name,
+        columns: [column_name],
+        source: :ecto_psql_extras
       }
     }
   end
 
-  @spec query_error_issue(Target.t(), list(String.t()) | nil, list(String.t()) | nil, term()) ::
-          Issue.t()
-  defp query_error_issue(target, schemas, tables, reason) do
+  @spec query_error_issue(Target.t(), list(String.t()) | nil, term()) :: Issue.t()
+  defp query_error_issue(target, tables, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
-      message: "could not inspect Postgres foreign keys",
+      message: "could not inspect Postgres foreign key indexes",
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
         tables: tables,
         reason: reason
       }
@@ -263,6 +257,32 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     case Map.fetch(row, key) do
       {:ok, value} -> value
       :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
+    end
+  end
+
+  defp row_key(row), do: {value(row, "table"), value(row, "column_name")}
+
+  defp ensure_dynamic_repo_support(%Target{dynamic_repo: nil}), do: :ok
+
+  defp ensure_dynamic_repo_support(%Target{} = target) do
+    if function_exported?(target.repo, :get_dynamic_repo, 0) and
+         function_exported?(target.repo, :put_dynamic_repo, 1) do
+      :ok
+    else
+      {:error, {:dynamic_repo_not_supported, target.repo}}
+    end
+  end
+
+  defp with_dynamic_repo(%Target{dynamic_repo: nil}, fun), do: fun.()
+
+  defp with_dynamic_repo(%Target{} = target, fun) do
+    previous_dynamic_repo = target.repo.get_dynamic_repo()
+
+    try do
+      target.repo.put_dynamic_repo(target.dynamic_repo)
+      fun.()
+    after
+      target.repo.put_dynamic_repo(previous_dynamic_repo)
     end
   end
 end
