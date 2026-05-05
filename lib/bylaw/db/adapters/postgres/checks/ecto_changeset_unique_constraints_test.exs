@@ -152,6 +152,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
   alias Bylaw.Db.Issue
 
   describe "validate/2" do
+    test "skips validation without discovery options when disabled" do
+      target =
+        Postgres.target(
+          query: fn _target, _sql, _params, _opts ->
+            flunk("query should not run when validation is disabled")
+          end
+        )
+
+      assert :ok = EctoChangesetUniqueConstraints.validate(target, validate: false)
+    end
+
     test "reports a missing unique_constraint for a cast unique field" do
       target = target([unique("public", "users", "users_email_index", ["email"])])
 

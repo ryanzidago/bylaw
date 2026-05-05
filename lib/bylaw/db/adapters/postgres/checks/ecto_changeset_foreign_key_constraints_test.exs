@@ -64,6 +64,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraintsTe
   alias Bylaw.Db.Issue
 
   describe "validate/2" do
+    test "skips validation without discovery options when disabled" do
+      target =
+        Postgres.target(
+          query: fn _target, _sql, _params, _opts ->
+            flunk("query should not run when validation is disabled")
+          end
+        )
+
+      assert :ok = EctoChangesetForeignKeyConstraints.validate(target, validate: false)
+    end
+
     test "reports a missing foreign_key_constraint for a cast foreign key field" do
       target =
         target([foreign_key("public", "members", "members_account_id_fkey", ["account_id"])])
