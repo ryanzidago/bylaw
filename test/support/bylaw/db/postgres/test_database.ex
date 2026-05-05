@@ -68,12 +68,14 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_accounts!(schema)
     create_events!(schema)
     create_included_events!(schema)
+    create_duplicate_indexes!(schema)
   end
 
   defp create_pg_named_fixture_schema!(schema) do
     query!("CREATE SCHEMA #{quote_identifier(schema)}")
     create_users!(schema)
     create_orders_missing_index!(schema)
+    create_duplicate_indexes!(schema)
   end
 
   defp create_users!(schema) do
@@ -195,6 +197,31 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     CREATE INDEX included_events_tenant_include_account_idx
       ON #{table(schema, "included_events")} (tenant_id)
       INCLUDE (account_id)
+    """)
+  end
+
+  defp create_duplicate_indexes!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "duplicate_indexes")} (
+      id bigint PRIMARY KEY,
+      status text NOT NULL,
+      note text
+    )
+    """)
+
+    query!("""
+    CREATE INDEX duplicate_indexes_status_idx
+      ON #{table(schema, "duplicate_indexes")} (status)
+    """)
+
+    query!("""
+    CREATE INDEX duplicate_indexes_status_duplicate_idx
+      ON #{table(schema, "duplicate_indexes")} (status)
+    """)
+
+    query!("""
+    CREATE INDEX duplicate_indexes_status_note_idx
+      ON #{table(schema, "duplicate_indexes")} (status, note)
     """)
   end
 
