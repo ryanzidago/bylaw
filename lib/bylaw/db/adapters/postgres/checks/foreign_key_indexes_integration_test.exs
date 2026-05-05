@@ -16,17 +16,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, issues} =
              Postgres.validate([target], [
-               ForeignKeyIndexes
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()]}
              ])
 
-    assert issues
-           |> Enum.map(&{&1.meta.table, &1.meta.column})
-           |> Enum.sort() == [
-             {"accounts", "account_id"},
-             {"included_events", "account_id"},
-             {"ordered_orders", "user_id"},
-             {"orders", "user_id"},
-             {"partial_orders", "user_id"}
+    assert Enum.map(issues, & &1.meta.constraint) == [
+             "included_events_account_fkey",
+             "ordered_orders_user_id_fkey",
+             "orders_user_id_fkey",
+             "partial_orders_user_id_fkey"
            ]
   end
 
@@ -35,16 +32,16 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["orders"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
              ])
 
     assert issue.message ==
-             "expected foreign key-like column user_id on orders to have a supporting index"
+             "expected foreign key orders_user_id_fkey on #{TestDatabase.schema()}.orders to have a supporting index"
 
+    assert issue.meta.schema == TestDatabase.schema()
     assert issue.meta.table == "orders"
-    assert issue.meta.column == "user_id"
+    assert issue.meta.constraint == "orders_user_id_fkey"
     assert issue.meta.columns == ["user_id"]
-    assert issue.meta.source == :ecto_psql_extras
   end
 
   test "passes when scoped to foreign keys with supporting indexes" do
@@ -52,7 +49,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert :ok =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["events", "indexed_orders"]}
+               {ForeignKeyIndexes,
+                schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
              ])
   end
 
@@ -61,11 +59,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["partial_orders"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
              ])
 
-    assert issue.meta.table == "partial_orders"
-    assert issue.meta.column == "user_id"
+    assert issue.meta.constraint == "partial_orders_user_id_fkey"
   end
 
   test "requires foreign key columns to be leading index columns" do
@@ -73,46 +70,49 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["ordered_orders"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
              ])
 
-    assert issue.meta.table == "ordered_orders"
-    assert issue.meta.column == "user_id"
+    assert issue.meta.constraint == "ordered_orders_user_id_fkey"
   end
 
-  test "ignores included columns for foreign key-like index coverage" do
+  test "ignores included columns for composite foreign key index coverage" do
     target = target()
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["included_events"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
              ])
 
-    assert issue.meta.table == "included_events"
-    assert issue.meta.column == "account_id"
+    assert issue.meta.constraint == "included_events_account_fkey"
+    assert issue.meta.columns == ["tenant_id", "account_id"]
   end
 
-  test "reports conventional foreign key-like columns even without outgoing constraints" do
+  test "reports user schemas that start with pg but not pg underscore" do
     target = target()
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["accounts"]}
+               {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
              ])
 
-    assert issue.meta.table == "accounts"
-    assert issue.meta.column == "account_id"
+    assert issue.meta.schema == TestDatabase.pg_schema()
+    assert issue.meta.constraint == "orders_user_id_fkey"
   end
 
-  test "deduplicates repeated table findings across schemas" do
+  test "applies schema and table scope together" do
     target = target()
 
     assert {:error, issues} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, tables: ["orders"]}
+               {ForeignKeyIndexes,
+                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
              ])
 
-    assert Enum.map(issues, &{&1.meta.table, &1.meta.column}) == [{"orders", "user_id"}]
+    assert Enum.map(issues, &{&1.meta.schema, &1.meta.table}) == [
+             {TestDatabase.schema(), "orders"},
+             {TestDatabase.pg_schema(), "orders"}
+           ]
   end
 
   defp target do
