@@ -83,6 +83,11 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_included_events!(schema)
     create_action_messages!(schema)
     create_duplicate_indexes!(schema)
+    create_uuid_primary_key!(schema)
+    create_bigint_primary_key!(schema)
+    create_missing_primary_key!(schema)
+    create_composite_uuid_primary_key!(schema)
+    create_composite_mixed_primary_key!(schema)
   end
 
   defp create_pg_named_fixture_schema!(schema) do
@@ -294,6 +299,50 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("""
     CREATE INDEX duplicate_indexes_status_note_idx
       ON #{table(schema, "duplicate_indexes")} (status, note)
+    """)
+  end
+
+  defp create_uuid_primary_key!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "uuid_primary_key")} (
+      id uuid PRIMARY KEY
+    )
+    """)
+  end
+
+  defp create_bigint_primary_key!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "bigint_primary_key")} (
+      id bigint PRIMARY KEY
+    )
+    """)
+  end
+
+  defp create_missing_primary_key!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "missing_primary_key")} (
+      id uuid NOT NULL
+    )
+    """)
+  end
+
+  defp create_composite_uuid_primary_key!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "composite_uuid_primary_key")} (
+      tenant_id uuid NOT NULL,
+      account_id uuid NOT NULL,
+      PRIMARY KEY (tenant_id, account_id)
+    )
+    """)
+  end
+
+  defp create_composite_mixed_primary_key!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "composite_mixed_primary_key")} (
+      tenant_id uuid NOT NULL,
+      account_id bigint NOT NULL,
+      PRIMARY KEY (tenant_id, account_id)
+    )
     """)
   end
 
