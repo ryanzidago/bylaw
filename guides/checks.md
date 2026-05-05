@@ -41,7 +41,11 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
          columns: ["tenant_id", "account_id"]
        ]
      ],
-     except: [[table: "schema_migrations"], [schema: "public", table: "audit_log"]]}
+     except: [[table: "schema_migrations"], [schema: "public", table: "audit_log"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+     schemas: ["public"],
+     types: ["uuid"],
+     except: [[table: "schema_migrations"]]}
   ]
 ```
 
@@ -99,9 +103,17 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
          columns: ["tenant_id"]
        ]
      ],
+     except: [[table: "schema_migrations"]]},
+    {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+     schemas: ["public"],
+     types: ["uuid"],
      except: [[table: "schema_migrations"]]}
   ]
 ```
+
+`Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType` can replace
+project-specific checks such as "all tables use UUID primary keys" while still
+allowing scoped exceptions for migration metadata or legacy tables.
 
 Then add one ExUnit test that runs after the test database has been created and
 migrated:
