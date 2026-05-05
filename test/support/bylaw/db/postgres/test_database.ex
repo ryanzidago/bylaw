@@ -27,9 +27,13 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
   def start_repo! do
     case TestRepo.start_link() do
       {:ok, pid} ->
+        # credo:disable-for-next-line Bylaw.Credo.Check.NoLowLevelProcessPrimitives
+        Process.unlink(pid)
         pid
 
       {:error, {:already_started, pid}} ->
+        # credo:disable-for-next-line Bylaw.Credo.Check.NoLowLevelProcessPrimitives
+        Process.unlink(pid)
         pid
 
       {:error, reason} ->
@@ -65,6 +69,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_users!(schema)
     create_orders_missing_index!(schema)
     create_indexed_orders!(schema)
+    create_nullable_orders!(schema)
     create_partial_orders!(schema)
     create_ordered_orders!(schema)
     create_accounts!(schema)
@@ -77,6 +82,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("CREATE SCHEMA #{quote_identifier(schema)}")
     create_users!(schema)
     create_orders_missing_index!(schema)
+    create_nullable_orders!(schema)
     create_duplicate_indexes!(schema)
   end
 
@@ -116,6 +122,23 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     query!("""
     CREATE INDEX indexed_orders_user_id_idx
       ON #{table(schema, "indexed_orders")} (user_id)
+    """)
+  end
+
+  defp create_nullable_orders!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "nullable_orders")} (
+      id bigint PRIMARY KEY,
+      user_id bigint,
+      CONSTRAINT nullable_orders_user_id_fkey
+        FOREIGN KEY (user_id)
+        REFERENCES #{table(schema, "users")} (id)
+    )
+    """)
+
+    query!("""
+    CREATE INDEX nullable_orders_user_id_idx
+      ON #{table(schema, "nullable_orders")} (user_id)
     """)
   end
 
