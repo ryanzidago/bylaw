@@ -61,14 +61,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   """
 
   @type filter :: list(String.t()) | nil
-  @type schema_names :: list(String.t())
-  @type table_names :: list(String.t())
   @type target :: Target.t()
 
   @type check_opt ::
           {:validate, boolean()}
-          | {:schemas, schema_names()}
-          | {:tables, table_names()}
+          | {:schemas, list(String.t())}
+          | {:tables, list(String.t())}
 
   @type check_opts :: list(check_opt())
 

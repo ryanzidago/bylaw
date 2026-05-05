@@ -59,21 +59,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   ORDER BY scoped_tables.schema_name, scoped_tables.table_name
   """
 
-  @type columns :: list(String.t())
-  @type except_table_refs :: list(table_ref())
   @type filter :: list(String.t()) | nil
-  @type schema_names :: list(String.t())
-  @type table_names :: list(String.t())
   @type table_ref :: {String.t(), String.t()}
   @type target :: Target.t()
 
   @type check_opt ::
           {:validate, boolean()}
-          | {:columns, columns()}
-          | {:schemas, schema_names()}
-          | {:tables, table_names()}
-          | {:except_tables, table_names()}
-          | {:except_table_refs, except_table_refs()}
+          | {:columns, list(String.t())}
+          | {:schemas, list(String.t())}
+          | {:tables, list(String.t())}
+          | {:except_tables, list(String.t())}
+          | {:except_table_refs, list(table_ref())}
 
   @type check_opts :: list(check_opt())
 
@@ -334,11 +330,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   @spec query_error_issue(
           target(),
-          columns(),
+          list(String.t()),
           filter(),
           filter(),
           filter(),
-          except_table_refs(),
+          list(table_ref()),
           term()
         ) :: Issue.t()
   defp query_error_issue(

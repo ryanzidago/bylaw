@@ -36,13 +36,11 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
-  @type check_specs :: list(Db.check_spec())
   @type dynamic_repo :: atom() | pid() | nil
   @type meta :: map()
   @type query :: Target.query_fun()
   @type repo :: module()
   @type target :: Target.t()
-  @type targets :: list(target())
 
   @typedoc """
   Option accepted by `target/1`.
@@ -62,7 +60,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   Option accepted by configured validation.
   """
   @type validate_opt ::
-          {:checks, check_specs()}
+          {:checks, list(Db.check_spec())}
           | target_opt()
           | {:target, target_opts() | target()}
           | {:targets, list(target_opts() | target())}
@@ -141,7 +139,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec validate(targets(), check_specs()) :: Check.result()
+  @spec validate(list(Target.t()), list(Db.check_spec())) :: Check.result()
   def validate(targets, checks) do
     checks = validate_checks!(checks)
 
