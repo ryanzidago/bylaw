@@ -50,8 +50,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesTest do
                  tables: ["orders", "line_items"]
                )
 
-      assert_received {:query, _sql, ["orders"], []}
-      assert_received {:query, _sql, ["line_items"], []}
+      assert_received {:query, _sql, [["orders", "line_items"]], []}
     end
 
     test "returns every missing foreign key index issue" do

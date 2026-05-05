@@ -11,10 +11,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
-  alias Bylaw.Db.Adapters.Postgres.EctoPsqlExtras
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
+
+  @query "ecto_psql_extras.missing_fk_indexes"
 
   @type check_opts ::
           list(
@@ -87,29 +88,38 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   end
 
   defp missing_index_rows(%Target{} = target, tables) do
-    tables
-    |> table_names()
-    |> Enum.reduce_while({:ok, []}, fn table_name, {:ok, rows} ->
-      case EctoPsqlExtras.query(
-             target,
-             :missing_fk_indexes,
-             missing_fk_indexes_opts(table_name),
-             [table_name]
-           ) do
-        {:ok, result} -> {:cont, {:ok, rows ++ result_rows(result)}}
-        {:error, reason} -> {:halt, {:error, reason}}
-      end
-    end)
-  end
-
-  defp result_rows(result) when is_map(result) do
-    case Map.fetch(result, :rows) do
-      {:ok, rows} -> rows
-      :error -> Map.fetch!(result, "rows")
+    if is_function(target.query, 4) do
+      Postgres.query(target, @query, [tables], [])
+    else
+      missing_index_rows_from_repo_target(target, tables)
     end
   end
 
-  defp result_rows(rows) when is_list(rows), do: rows
+  defp missing_index_rows_from_repo_target(target, tables) do
+    with {:module, _module} <- Code.ensure_loaded(EctoPSQLExtras),
+         :ok <- ensure_dynamic_repo_support(target) do
+      {:ok, missing_index_rows_from_repo(target, tables)}
+    else
+      {:error, :nofile} -> {:error, {:missing_dependency, :ecto_psql_extras}}
+      {:error, reason} -> {:error, reason}
+    end
+  rescue
+    exception -> {:error, exception}
+  catch
+    kind, reason -> {:error, {kind, reason}}
+  end
+
+  defp missing_index_rows_from_repo(target, tables) do
+    with_dynamic_repo(target, fn ->
+      tables
+      |> table_names()
+      |> Enum.flat_map(fn table_name ->
+        target.repo
+        |> EctoPSQLExtras.missing_fk_indexes(missing_fk_indexes_opts(table_name))
+        |> Map.fetch!(:rows)
+      end)
+    end)
+  end
 
   defp table_names(nil), do: [nil]
   defp table_names(tables), do: tables
@@ -251,4 +261,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   end
 
   defp row_key(row), do: {value(row, "table"), value(row, "column_name")}
+
+  defp ensure_dynamic_repo_support(%Target{dynamic_repo: nil}), do: :ok
+
+  defp ensure_dynamic_repo_support(%Target{} = target) do
+    if function_exported?(target.repo, :get_dynamic_repo, 0) and
+         function_exported?(target.repo, :put_dynamic_repo, 1) do
+      :ok
+    else
+      {:error, {:dynamic_repo_not_supported, target.repo}}
+    end
+  end
+
+  defp with_dynamic_repo(%Target{dynamic_repo: nil}, fun), do: fun.()
+
+  defp with_dynamic_repo(%Target{} = target, fun) do
+    previous_dynamic_repo = target.repo.get_dynamic_repo()
+
+    try do
+      target.repo.put_dynamic_repo(target.dynamic_repo)
+      fun.()
+    after
+      target.repo.put_dynamic_repo(previous_dynamic_repo)
+    end
+  end
 end
