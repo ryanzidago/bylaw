@@ -59,9 +59,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   ORDER BY scoped_tables.schema_name, scoped_tables.table_name
   """
 
-  @type filter :: list(String.t()) | nil
   @type table_ref :: {String.t(), String.t()}
-  @type target :: Target.t()
 
   @type check_opt ::
           {:validate, boolean()}
@@ -97,7 +95,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   `columns: [...]` is required when validation is enabled.
   """
   @impl Bylaw.Db.Check
-  @spec validate(target(), check_opts()) :: Check.result()
+  @spec validate(Target.t(), check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
@@ -307,7 +305,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
           "expected required_columns :except_table_refs to be a list of {schema, table} string tuples"
   end
 
-  @spec issue(target(), result_row()) :: Issue.t()
+  @spec issue(Target.t(), result_row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = value(row, "schema_name")
     table_name = value(row, "table_name")
@@ -329,11 +327,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   end
 
   @spec query_error_issue(
-          target(),
+          Target.t(),
           list(String.t()),
-          filter(),
-          filter(),
-          filter(),
+          list(String.t()) | nil,
+          list(String.t()) | nil,
+          list(String.t()) | nil,
           list(table_ref()),
           term()
         ) :: Issue.t()
