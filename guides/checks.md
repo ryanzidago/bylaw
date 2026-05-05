@@ -19,3 +19,43 @@ and implement `Bylaw.Db.Check`.
 
 Use the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
 current check list, `prepare_query/3` wiring, check specs, and issue metadata.
+
+## Postgres Database Checks
+
+Postgres database checks can be configured once in the consuming application:
+
+```elixir
+config :bylaw, Bylaw.Db.Adapters.Postgres,
+  repo: MyApp.Repo,
+  checks: [
+    Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+    Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+    {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+     columns: ["tenant_id", "account_id"],
+     schemas: ["public"],
+     except_tables: ["schema_migrations"],
+     except_table_refs: [{"public", "audit_log"}]}
+  ]
+```
+
+Then run the configured checks:
+
+```elixir
+Bylaw.Db.Adapters.Postgres.validate()
+```
+
+For one-off validation, pass the same shape directly:
+
+```elixir
+Bylaw.Db.Adapters.Postgres.validate(
+  repo: MyApp.Repo,
+  checks: [
+    {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+     columns: ["tenant_id"],
+     schemas: ["tenant_one", "tenant_two"]}
+  ]
+)
+```
+
+Both forms return raw `Bylaw.Db.Issue` structs in `{:error, issues}`, so tests
+can assert on issue metadata directly without formatting adapter code.
