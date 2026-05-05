@@ -72,11 +72,10 @@ defmodule Bylaw.MixProject do
       {:credo, "~> 1.7", runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
-      {:ecto_psql_extras, "~> 0.8.8"},
-      {:ecto_sql, "~> 3.13"},
+      {:ecto_sql, "~> 3.13", only: :test},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
-      {:postgrex, "~> 0.22.0"},
+      {:postgrex, "~> 0.22.0", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
