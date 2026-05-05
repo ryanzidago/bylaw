@@ -1,8 +1,8 @@
-defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationTest do
   use ExUnit.Case, async: false
 
   alias Bylaw.Db.Adapters.Postgres
-  alias Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
+  alias Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Postgres.TestDatabase
   alias Bylaw.Db.Postgres.TestRepo
@@ -16,7 +16,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, issues} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.schema()]}
+               {MissingForeignKeyIndexes, schemas: [TestDatabase.schema()]}
              ])
 
     assert Enum.map(issues, & &1.meta.constraint) == [
@@ -32,7 +32,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
+               {MissingForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
              ])
 
     assert issue.message ==
@@ -49,7 +49,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert :ok =
              Postgres.validate([target], [
-               {ForeignKeyIndexes,
+               {MissingForeignKeyIndexes,
                 schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
              ])
   end
@@ -59,7 +59,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
+               {MissingForeignKeyIndexes,
+                schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
              ])
 
     assert issue.meta.constraint == "partial_orders_user_id_fkey"
@@ -70,7 +71,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
+               {MissingForeignKeyIndexes,
+                schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
              ])
 
     assert issue.meta.constraint == "ordered_orders_user_id_fkey"
@@ -81,7 +83,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["included_events"]}
+               {MissingForeignKeyIndexes,
+                schemas: [TestDatabase.schema()], tables: ["included_events"]}
              ])
 
     assert issue.meta.constraint == "included_events_account_fkey"
@@ -93,7 +96,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
+               {MissingForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -105,7 +108,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexesIntegrationTest do
 
     assert {:error, issues} =
              Postgres.validate([target], [
-               {ForeignKeyIndexes,
+               {MissingForeignKeyIndexes,
                 schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
              ])
 

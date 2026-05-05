@@ -1,4 +1,4 @@
-defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
+defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 
@@ -82,8 +82,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   """
 
   @impl Bylaw.Db.Check
-  @spec name() :: :foreign_key_indexes
-  def name, do: :foreign_key_indexes
+  @spec name() :: :missing_foreign_key_indexes
+  def name, do: :missing_foreign_key_indexes
 
   @doc """
   Validates that foreign keys in the target scope have supporting indexes.
@@ -98,7 +98,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     opts = check_opts!(opts)
 
     if Keyword.get(opts, :validate, true) == true do
-      validate_foreign_key_indexes(target, opts)
+      validate_missing_foreign_key_indexes(target, opts)
     else
       :ok
     end
@@ -106,7 +106,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
   def validate(%Target{adapter: Postgres}, opts) do
     raise ArgumentError,
-          "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
+          "expected missing_foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
   end
 
   def validate(%Target{} = target, _opts) do
@@ -117,7 +117,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
     raise ArgumentError, "expected a database target, got: #{inspect(target)}"
   end
 
-  defp validate_foreign_key_indexes(target, opts) do
+  defp validate_missing_foreign_key_indexes(target, opts) do
     schemas = filter(opts, :schemas)
     tables = filter(opts, :tables)
 
@@ -151,14 +151,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
   defp check_opts!(opts) do
     if not Keyword.keyword?(opts) do
       raise ArgumentError,
-            "expected foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
+            "expected missing_foreign_key_indexes opts to be a keyword list, got: #{inspect(opts)}"
     end
 
     allowed_keys = [:validate, :schemas, :tables]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
-        raise ArgumentError, "unknown foreign_key_indexes option: #{inspect(key)}"
+        raise ArgumentError, "unknown missing_foreign_key_indexes option: #{inspect(key)}"
       end
     end)
 
@@ -176,7 +176,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
       {:ok, value} ->
         raise ArgumentError,
-              "expected foreign_key_indexes #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+              "expected missing_foreign_key_indexes #{inspect(key)} to be a boolean, got: #{inspect(value)}"
 
       :error ->
         :ok
@@ -216,7 +216,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes do
 
   defp raise_filter_error!(key) do
     raise ArgumentError,
-          "expected foreign_key_indexes #{inspect(key)} to be a non-empty list of strings"
+          "expected missing_foreign_key_indexes #{inspect(key)} to be a non-empty list of strings"
   end
 
   @spec issue(Target.t(), result_row()) :: Issue.t()

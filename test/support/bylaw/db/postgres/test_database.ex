@@ -89,6 +89,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     CREATE TABLE #{table(schema, "orders")} (
       id bigint PRIMARY KEY,
       user_id bigint NOT NULL,
+      account_id bigint NOT NULL,
       status text NOT NULL DEFAULT 'open',
       CONSTRAINT orders_user_id_fkey
         FOREIGN KEY (user_id)
