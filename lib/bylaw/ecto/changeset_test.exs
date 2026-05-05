@@ -48,6 +48,14 @@ defmodule Bylaw.Ecto.ChangesetTest.User do
   end
 
   @doc false
+  @spec age_changeset(struct(), map()) :: Ecto.Changeset.struct()
+  def age_changeset(user, attrs) do
+    user
+    |> cast(attrs, [:age])
+    |> check_constraint(:age, name: :users_age_must_be_positive)
+  end
+
+  @doc false
   @spec profile_changeset(struct(), map()) :: Ecto.Changeset.struct()
   def profile_changeset(user, attrs) do
     Ecto.Changeset.cast(user, attrs, [:name])
@@ -77,6 +85,7 @@ defmodule Bylaw.Ecto.ChangesetTest do
       candidates = Changeset.candidates([__ENV__.file], [User])
 
       assert Enum.map(candidates, &{&1.function, &1.arity, &1.fields}) == [
+               {:age_changeset, 2, [:age]},
                {:change_changeset, 1, [:email]},
                {:partition_changeset, 2, [:email]},
                {:profile_changeset, 2, [:name]},
@@ -110,6 +119,18 @@ defmodule Bylaw.Ecto.ChangesetTest do
              ] = candidate.constraints
 
       assert Regex.match?(regex, "users_p12_email_key")
+    end
+
+    test "extracts check constraint helper calls" do
+      [candidate] =
+        __ENV__.file
+        |> List.wrap()
+        |> Changeset.candidates([User])
+        |> Enum.filter(&(&1.function == :age_changeset))
+
+      assert Enum.map(candidate.constraints, &{&1.kind, &1.fields, &1.name}) == [
+               {:check, [:age], "users_age_must_be_positive"}
+             ]
     end
   end
 end
