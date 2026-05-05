@@ -36,5 +36,5 @@ defmodule Bylaw.Db.Check do
   Return `:ok` when the target passes, or `{:error, issues}` with a non-empty
   list of issues when it fails.
   """
-  @callback validate(Target.t(), opts :: check_opts()) :: result()
+  @callback validate(target :: Target.t(), opts :: check_opts()) :: result()
 end
