@@ -14,9 +14,8 @@ defmodule Bylaw.Db.Adapters.Postgres do
         Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyIndexes
       ])
 
-  The `:repo` option expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
-  an optional integration; callers must have `ecto_sql` and a Postgres driver in
-  their application when they use repo-backed targets.
+  The `:repo` option expects an Ecto SQL repo. Postgres checks can use
+  `ecto_psql_extras` internally for database introspection.
   """
 
   @behaviour Bylaw.Db.Adapter
