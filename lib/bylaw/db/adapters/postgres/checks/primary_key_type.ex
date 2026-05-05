@@ -110,13 +110,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :primary_key_type
-  def name, do: :primary_key_type
-
-  @doc """
   Validates that every table in scope has a primary key using allowed types.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation

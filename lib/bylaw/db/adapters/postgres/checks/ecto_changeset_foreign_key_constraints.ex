@@ -63,13 +63,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   @type check_opts :: list(check_opt())
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :ecto_changeset_foreign_key_constraints
-  def name, do: :ecto_changeset_foreign_key_constraints
-
-  @doc """
   Validates changeset foreign-key constraint helpers for a Postgres target.
   """
   @impl Bylaw.Db.Check
@@ -86,7 +79,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
     %{
       check: __MODULE__,
       kind: :foreign_key,
-      name: name(),
+      name: :ecto_changeset_foreign_key_constraints,
       helper: "foreign_key_constraint",
       label: "foreign key constraint",
       query: @query,

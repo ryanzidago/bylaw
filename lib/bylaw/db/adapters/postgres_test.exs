@@ -9,9 +9,6 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     @behaviour Bylaw.Db.Check
 
     @impl Bylaw.Db.Check
-    def name, do: :failing_check
-
-    @impl Bylaw.Db.Check
     def validate(target, _opts) do
       {:error, [%Issue{check: __MODULE__, target: target, message: "failed"}]}
     end

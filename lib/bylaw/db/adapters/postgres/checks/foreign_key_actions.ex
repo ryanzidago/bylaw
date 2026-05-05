@@ -142,13 +142,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :foreign_key_actions
-  def name, do: :foreign_key_actions
-
-  @doc """
   Validates that foreign keys in the target scope use configured actions.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation

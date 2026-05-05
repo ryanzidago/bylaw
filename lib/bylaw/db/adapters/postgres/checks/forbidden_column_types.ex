@@ -85,13 +85,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :forbidden_column_types
-  def name, do: :forbidden_column_types
-
-  @doc """
   Validates that scoped Postgres columns do not use forbidden database types.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation

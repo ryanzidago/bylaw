@@ -65,13 +65,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   @type check_opts :: list(check_opt())
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :ecto_changeset_check_constraints
-  def name, do: :ecto_changeset_check_constraints
-
-  @doc """
   Validates changeset check-constraint helpers for a Postgres target.
   """
   @impl Bylaw.Db.Check
@@ -88,7 +81,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
     %{
       check: __MODULE__,
       kind: :check,
-      name: name(),
+      name: :ecto_changeset_check_constraints,
       helper: "check_constraint",
       label: "check constraint",
       query: @query,

@@ -79,14 +79,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-
-  @impl Bylaw.Db.Check
-  @spec name() :: :missing_foreign_key_indexes
-  def name, do: :missing_foreign_key_indexes
-
-  @doc """
   Validates that foreign keys in the target scope have supporting indexes.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
