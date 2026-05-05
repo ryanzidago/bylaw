@@ -11,7 +11,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   defmodule CatalogConstraint do
     @moduledoc false
 
-    @type kind :: :unique | :foreign_key
+    @type kind :: :unique | :foreign_key | :check
 
     @type t :: %__MODULE__{
             kind: kind(),
@@ -267,6 +267,8 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   defp inferred_names(schema, :foreign_key, [field]) do
     ["#{schema.source}_#{field_source!(schema, field)}_fkey"]
   end
+
+  defp inferred_names(_schema, :check, _fields), do: []
 
   defp inferred_names(_schema, _kind, _fields), do: []
 
