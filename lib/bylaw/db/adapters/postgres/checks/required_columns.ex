@@ -59,16 +59,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   ORDER BY scoped_tables.schema_name, scoped_tables.table_name
   """
 
+  @type columns :: list(String.t())
+  @type except_table_refs :: list(table_ref())
+  @type filter :: list(String.t()) | nil
+  @type schema_names :: list(String.t())
+  @type table_names :: list(String.t())
   @type table_ref :: {String.t(), String.t()}
-  @type check_opts ::
-          list(
-            {:validate, boolean()}
-            | {:columns, list(String.t())}
-            | {:schemas, list(String.t())}
-            | {:tables, list(String.t())}
-            | {:except_tables, list(String.t())}
-            | {:except_table_refs, list(table_ref())}
-          )
+  @type target :: Target.t()
+
+  @type check_opt ::
+          {:validate, boolean()}
+          | {:columns, columns()}
+          | {:schemas, schema_names()}
+          | {:tables, table_names()}
+          | {:except_tables, table_names()}
+          | {:except_table_refs, except_table_refs()}
+
+  @type check_opts :: list(check_opt())
+
   @type result_row :: %{
           optional(String.t()) => term(),
           optional(atom()) => term()
@@ -93,7 +101,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   `columns: [...]` is required when validation is enabled.
   """
   @impl Bylaw.Db.Check
-  @spec validate(Target.t(), check_opts()) :: Check.result()
+  @spec validate(target(), check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
@@ -303,7 +311,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
           "expected required_columns :except_table_refs to be a list of {schema, table} string tuples"
   end
 
-  @spec issue(Target.t(), result_row()) :: Issue.t()
+  @spec issue(target(), result_row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = value(row, "schema_name")
     table_name = value(row, "table_name")
@@ -325,12 +333,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   end
 
   @spec query_error_issue(
-          Target.t(),
-          list(String.t()),
-          list(String.t()) | nil,
-          list(String.t()) | nil,
-          list(String.t()) | nil,
-          list(table_ref()),
+          target(),
+          columns(),
+          filter(),
+          filter(),
+          filter(),
+          except_table_refs(),
           term()
         ) :: Issue.t()
   defp query_error_issue(
