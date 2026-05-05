@@ -79,13 +79,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   }
 
   @doc """
-  Returns the option namespace used by this check.
-  """
-  @impl Bylaw.Db.Check
-  @spec name() :: :foreign_key_nullability
-  def name, do: :foreign_key_nullability
-
-  @doc """
   Validates that foreign key columns in the target scope are `NOT NULL`.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
