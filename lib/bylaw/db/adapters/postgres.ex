@@ -36,20 +36,14 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
-  @type dynamic_repo :: atom() | pid() | nil
-  @type meta :: map()
-  @type query :: Target.query_fun()
-  @type repo :: module()
-  @type target :: Target.t()
-
   @typedoc """
   Option accepted by `target/1`.
   """
   @type target_opt ::
-          {:repo, repo()}
-          | {:dynamic_repo, dynamic_repo()}
-          | {:query, query()}
-          | {:meta, meta()}
+          {:repo, module()}
+          | {:dynamic_repo, atom() | pid() | nil}
+          | {:query, Target.query_fun()}
+          | {:meta, map()}
 
   @typedoc """
   Options accepted by `target/1`.
@@ -62,8 +56,8 @@ defmodule Bylaw.Db.Adapters.Postgres do
   @type validate_opt ::
           {:checks, list(Db.check_spec())}
           | target_opt()
-          | {:target, target_opts() | target()}
-          | {:targets, list(target_opts() | target())}
+          | {:target, target_opts() | Target.t()}
+          | {:targets, list(target_opts() | Target.t())}
 
   @typedoc """
   Options accepted by configured validation.
@@ -78,7 +72,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec target(target_opts()) :: target()
+  @spec target(target_opts()) :: Target.t()
   def target(opts) when is_list(opts) do
     keyword_list!(opts, "Postgres target opts")
     validate_target_opts!(opts)
@@ -158,7 +152,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
 
   @impl Bylaw.Db.Adapter
-  @spec query(target(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
+  @spec query(Target.t(), String.t(), list(term()), keyword()) :: {:ok, term()} | {:error, term()}
   def query(%Target{adapter: __MODULE__} = target, sql, params, opts)
       when is_binary(sql) and is_list(params) and is_list(opts) do
     cond do

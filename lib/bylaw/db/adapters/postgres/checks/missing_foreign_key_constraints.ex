@@ -51,9 +51,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   ORDER BY schema_name, table_name, column_name
   """
 
-  @type filter :: list(String.t()) | nil
-  @type target :: Target.t()
-
   @type check_opt ::
           {:validate, boolean()}
           | {:schemas, list(String.t())}
@@ -85,7 +82,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   `schemas: [...]` or `tables: [...]` to narrow the default all-schema scope.
   """
   @impl Bylaw.Db.Check
-  @spec validate(target(), check_opts()) :: Check.result()
+  @spec validate(Target.t(), check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
@@ -211,7 +208,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
           "expected missing_foreign_key_constraints #{inspect(key)} to be a non-empty list of strings"
   end
 
-  @spec issue(target(), result_row()) :: Issue.t()
+  @spec issue(Target.t(), result_row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = value(row, "schema_name")
     table_name = value(row, "table_name")
@@ -232,7 +229,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
     }
   end
 
-  @spec query_error_issue(target(), filter(), filter(), term()) :: Issue.t()
+  @spec query_error_issue(Target.t(), list(String.t()) | nil, list(String.t()) | nil, term()) ::
+          Issue.t()
   defp query_error_issue(target, schemas, tables, reason) do
     %Issue{
       check: __MODULE__,
