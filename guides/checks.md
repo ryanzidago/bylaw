@@ -69,3 +69,72 @@ Bylaw.Db.Adapters.Postgres.validate(
 
 Both forms return raw `Bylaw.Db.Issue` structs in `{:error, issues}`, so tests
 can assert on issue metadata directly without formatting adapter code.
+
+### Consumer test integration
+
+Database checks are best treated as test-environment contract checks in the
+consuming application. The test database is regularly dropped and recreated, so
+it reflects the current branch's migrations without stale schema objects from
+unrelated development work. A long-lived dev database can be polluted by other
+branches or experiments, which makes database-shape checks noisy for reasons
+unrelated to the code under test.
+
+Configure the target and checks in `config/test.exs`, after the application has
+a normal Ecto SQL repo and Postgres driver available:
+
+```elixir
+config :bylaw, Bylaw.Db.Adapters.Postgres,
+  repo: MyApp.Repo,
+  checks: [
+    Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+    Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
+    Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+    {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+     rules: [
+       [
+         where: [[schema: "public"]],
+         columns: ["tenant_id"]
+       ]
+     ],
+     except: [[table: "schema_migrations"]]}
+  ]
+```
+
+Then add one ExUnit test that runs after the test database has been created and
+migrated:
+
+```elixir
+defmodule MyApp.BylawDbTest do
+  use ExUnit.Case, async: false
+
+  test "database structure satisfies Bylaw checks" do
+    assert :ok = Bylaw.Db.Adapters.Postgres.validate()
+  end
+end
+```
+
+If the application wants clearer failure output, keep the formatting local to
+the test:
+
+```elixir
+defmodule MyApp.BylawDbTest do
+  use ExUnit.Case, async: false
+
+  test "database structure satisfies Bylaw checks" do
+    case Bylaw.Db.Adapters.Postgres.validate() do
+      :ok -> :ok
+      {:error, issues} -> flunk(format_issues(issues))
+    end
+  end
+
+  defp format_issues(issues) do
+    issues
+    |> Enum.map_join("\n", fn issue ->
+      "#{inspect(issue.check)}: #{issue.message} #{inspect(issue.meta)}"
+    end)
+  end
+end
+```
+
+This keeps database-shape validation close to migrations and schema changes
+without running catalog queries in production request paths.
