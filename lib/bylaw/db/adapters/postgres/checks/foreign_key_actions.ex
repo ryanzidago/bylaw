@@ -201,7 +201,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :schemas, :tables, :except, :on_delete, :on_update],
+      [:validate, :rules, :on_delete, :on_update],
       :foreign_key_actions
     )
 
@@ -210,13 +210,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     if RuleOptions.enabled?(opts) do
       RuleOptions.reject_top_level_keys_with_rules!(
         opts,
-        [:schemas, :tables, :except, :on_delete, :on_update],
+        [:on_delete, :on_update],
         :foreign_key_actions
       )
 
       normalize_rules!(opts)
-      RuleOptions.filter(opts, :schemas, :foreign_key_actions)
-      RuleOptions.filter(opts, :tables, :foreign_key_actions)
     end
 
     opts
@@ -242,9 +240,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
       Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update) ->
         [
           %{
-            only: legacy_only(opts),
-            except:
-              RuleOptions.matchers(opts, :except, :foreign_key_actions, allowed_matcher_keys()),
+            only: [],
+            except: [],
             on_delete: action!(opts, :on_delete),
             on_update: action!(opts, :on_update)
           }
@@ -255,18 +252,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
               "expected foreign_key_actions to include :on_delete, :on_update, or :rules"
     end
   end
-
-  defp legacy_only(opts) do
-    matcher =
-      []
-      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
-      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
-
-    if Enum.empty?(matcher), do: [], else: [matcher]
-  end
-
-  defp maybe_put_matcher(matcher, _key, nil), do: matcher
-  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
   defp rule_payload!(rule) do
     if not (Keyword.has_key?(rule, :on_delete) or Keyword.has_key?(rule, :on_update)) do

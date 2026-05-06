@@ -17,7 +17,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()], scope_columns: ["tenant_id"]}
+                rules: [
+                  [only: [schema: TestDatabase.scoped_schema()], scope_columns: ["tenant_id"]]
+                ]}
              ])
 
     assert issue.meta.table == "scoped_orders_missing_scope"
@@ -30,9 +32,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()],
-                tables: ["scoped_orders_missing_scope"],
-                scope_columns: ["tenant_id"]}
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.scoped_schema(),
+                      table: "scoped_orders_missing_scope"
+                    ],
+                    scope_columns: ["tenant_id"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -54,9 +62,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()],
-                tables: ["scoped_orders_with_scope"],
-                scope_columns: ["tenant_id"]}
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.scoped_schema(),
+                      table: "scoped_orders_with_scope"
+                    ],
+                    scope_columns: ["tenant_id"]
+                  ]
+                ]}
              ])
   end
 
@@ -66,9 +80,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()],
-                tables: ["scoped_orders_with_global_status"],
-                scope_columns: ["tenant_id"]}
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.scoped_schema(),
+                      table: "scoped_orders_with_global_status"
+                    ],
+                    scope_columns: ["tenant_id"]
+                  ]
+                ]}
              ])
   end
 
@@ -78,9 +98,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()],
-                tables: ["global_imports"],
-                scope_columns: ["tenant_id"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.scoped_schema(), table: "global_imports"],
+                    scope_columns: ["tenant_id"]
+                  ]
+                ]}
              ])
   end
 
@@ -90,9 +113,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ScopedForeignKeys,
-                schemas: [TestDatabase.scoped_schema()],
-                scope_columns: ["tenant_id"],
-                except: [[referenced_table: "scoped_customers"]]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.scoped_schema()],
+                    scope_columns: ["tenant_id"],
+                    except: [[referenced_table: "scoped_customers"]]
+                  ]
+                ]}
              ])
   end
 
