@@ -3,9 +3,9 @@
 Bylaw is an Elixir library for validating code, database, query, schema, and
 workflow constraints.
 
-Bylaw is organized around check families. The first public family is
-`Bylaw.Ecto.Query`, which validates prepared Ecto queries before the repo runs
-them. `Bylaw.Credo` and `Bylaw.Db` are planned families.
+Bylaw is organized around check families. `Bylaw.Ecto.Query` validates prepared
+Ecto queries before the repo runs them, and `Bylaw.Db` validates database
+structure through adapter-specific targets. `Bylaw.Credo` is planned.
 
 See the HexDocs [checks overview](https://hexdocs.pm/bylaw/checks.html) and
 [`Bylaw.Ecto.Query` checks guide](https://hexdocs.pm/bylaw/ecto_query_checks.html)
@@ -25,3 +25,21 @@ end
 ```
 
 Documentation is published on [HexDocs](https://hexdocs.pm/bylaw).
+
+## Development
+
+Postgres integration tests are tagged with `:postgres` and excluded by default.
+Run them against a disposable `bylaw_test` database with:
+
+```sh
+mix test.postgres
+```
+
+The `test.postgres` alias drops and recreates the configured test database
+before running the tagged tests. If your local Postgres needs explicit
+credentials, set `BYLAW_POSTGRES_URL`:
+
+```sh
+BYLAW_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/bylaw_test \
+  mix test.postgres
+```

@@ -9,7 +9,9 @@ defmodule Bylaw.MixProject do
       app: :bylaw,
       version: @version,
       elixir: "~> 1.19",
+      elixirc_paths: elixirc_paths(Mix.env()),
       test_paths: test_paths(Mix.env()),
+      aliases: aliases(),
       dialyzer: dialyzer(),
       usage_rules: usage_rules(),
       source_url: @source_url,
@@ -18,7 +20,6 @@ defmodule Bylaw.MixProject do
       package: package(),
       docs: docs(),
       start_permanent: Mix.env() == :prod,
-      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -30,6 +31,9 @@ defmodule Bylaw.MixProject do
     ]
   end
 
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_env), do: ["lib"]
+
   defp test_paths(:test), do: ["lib"]
   defp test_paths(_env), do: ["test"]
 
@@ -37,14 +41,20 @@ defmodule Bylaw.MixProject do
     [
       preferred_envs: [
         qa: :test,
-        dialyzer: :test
+        dialyzer: :test,
+        "test.postgres": :test
       ]
     ]
   end
 
   defp aliases do
     [
-      qa: &run_qa/1
+      qa: &run_qa/1,
+      "test.postgres": [
+        "ecto.drop --quiet --force",
+        "ecto.create --quiet",
+        "test --include postgres"
+      ]
     ]
   end
 
@@ -62,8 +72,10 @@ defmodule Bylaw.MixProject do
       {:credo, "~> 1.7", runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
+      {:ecto_sql, "~> 3.13", only: :test},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},
+      {:postgrex, "~> 0.22.0", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
@@ -103,6 +115,7 @@ defmodule Bylaw.MixProject do
       skip_code_autolink_to: [
         "Bylaw.Credo",
         "Bylaw.Db",
+        "Bylaw.Ecto.Query",
         "Bylaw.Ecto.Query.Checks"
       ],
       extras: [
@@ -120,10 +133,20 @@ defmodule Bylaw.MixProject do
           Bylaw.Ecto.Query.Check,
           Bylaw.Ecto.Query.Issue
         ],
-        "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./
+        "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./,
+        "Bylaw.Db": [
+          Bylaw.Db,
+          Bylaw.Db.Adapter,
+          Bylaw.Db.Check,
+          Bylaw.Db.Issue,
+          Bylaw.Db.Target
+        ],
+        "Bylaw.Db adapters": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\./,
+        "Bylaw.Db adapter checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\..*\.Checks\./
       ],
       nest_modules_by_prefix: [
-        Bylaw.Ecto.Query.Checks
+        Bylaw.Ecto.Query.Checks,
+        Bylaw.Db.Adapters.Postgres.Checks
       ]
     ]
   end
