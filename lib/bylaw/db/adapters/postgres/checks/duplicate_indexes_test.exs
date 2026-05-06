@@ -168,8 +168,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: nil,
-               tables: nil,
+               rules: [%{only: [], except: []}],
                reason: :connection_closed
              }
     end

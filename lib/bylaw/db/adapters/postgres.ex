@@ -18,8 +18,13 @@ defmodule Bylaw.Db.Adapters.Postgres do
         repo: MyApp.Repo,
         checks: [
           {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
-           rules: [[where: [schema: "public"], columns: ["tenant_id"]]],
-           except: [[table: "schema_migrations"]]}
+           rules: [
+             [
+               only: [schema: "public"],
+               columns: ["tenant_id"],
+               except: [[table: "schema_migrations"]]
+             ]
+           ]}
         ]
 
       Bylaw.Db.Adapters.Postgres.validate()

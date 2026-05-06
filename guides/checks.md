@@ -32,17 +32,21 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
     Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
     {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
-     scope_columns: ["tenant_id", "workspace_id"],
-     except: [[referenced_table: "global_settings"]]},
+     rules: [
+       [
+         scope_columns: ["tenant_id", "workspace_id"],
+         except: [[referenced_table: "global_settings"]]
+       ]
+     ]},
     Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
     {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
      rules: [
        [
-         where: [[table: "messages"], [referenced_table: "conversations"]],
+         only: [[table: "messages"], [referenced_table: "conversations"]],
          on_delete: :cascade
        ],
        [
-         where: [referenced_table: "lookup_statuses"],
+         only: [referenced_table: "lookup_statuses"],
          on_delete: :restrict,
          on_update: :restrict
        ]
@@ -50,25 +54,33 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
-         where: [
+         only: [
            [schema: "public", table: ~r/^orders/],
            [schema: "billing", table: ~r/^invoice_/]
          ],
-         columns: ["tenant_id", "account_id"]
+         columns: ["tenant_id", "account_id"],
+         except: [[table: "schema_migrations"], [schema: "public", table: "audit_log"]]
        ]
-     ],
-     except: [[table: "schema_migrations"], [schema: "public", table: "audit_log"]]},
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
-     schemas: ["public"],
-     types: ["uuid"],
-     except: [[table: "schema_migrations"]]},
+     rules: [
+       [
+         only: [schema: "public"],
+         types: ["uuid"],
+         except: [[table: "schema_migrations"]]
+       ]
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
-     schemas: ["public"],
-     types: [
-       [type: "json", prefer: "jsonb"],
-       [type: "money", prefer: "numeric plus an explicit currency column"]
-     ],
-     except: [[table: "webhook_events", column: "raw_payload"]]}
+     rules: [
+       [
+         only: [schema: "public"],
+         types: [
+           [type: "json", prefer: "jsonb"],
+           [type: "money", prefer: "numeric plus an explicit currency column"]
+         ],
+         except: [[table: "webhook_events", column: "raw_payload"]]
+       ]
+     ]}
   ]
 ```
 
@@ -77,20 +89,24 @@ hard-coding Bylaw-wide opinions about which Postgres types are acceptable:
 
 ```elixir
 {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
- schemas: ["public"],
- types: [
+ rules: [
    [
-     type: "json",
-     prefer: "jsonb",
-     reason: "jsonb is indexable and avoids reparsing for most application queries"
-   ],
-   [
-     type: "money",
-     prefer: "numeric plus an explicit currency column",
-     reason: "Postgres money is locale-sensitive and awkward to migrate"
+     only: [schema: "public"],
+     types: [
+       [
+         type: "json",
+         prefer: "jsonb",
+         reason: "jsonb is indexable and avoids reparsing for most application queries"
+       ],
+       [
+         type: "money",
+         prefer: "numeric plus an explicit currency column",
+         reason: "Postgres money is locale-sensitive and awkward to migrate"
+       ]
+     ],
+     except: [[table: "webhook_events", column: "raw_payload"]]
    ]
- ],
- except: [[table: "webhook_events", column: "raw_payload"]]}
+ ]}
 ```
 
 Then run the configured checks:
@@ -108,7 +124,7 @@ Bylaw.Db.Adapters.Postgres.validate(
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
-         where: [[schema: "tenant_one"], [schema: "tenant_two"]],
+         only: [[schema: "tenant_one"], [schema: "tenant_two"]],
          columns: ["tenant_id"]
        ]
      ]}
@@ -138,19 +154,23 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
     Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
     {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
-     except: [[table: "runs", column: "assistant_message_id"]]},
+     rules: [[except: [[table: "runs", column: "assistant_message_id"]]]]},
     {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
-     scope_columns: ["tenant_id", "workspace_id"],
-     except: [[referenced_table: "shared_templates"]]},
+     rules: [
+       [
+         scope_columns: ["tenant_id", "workspace_id"],
+         except: [[referenced_table: "shared_templates"]]
+       ]
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
      rules: [
        [
-         where: [referenced_table: "accounts"],
+         only: [referenced_table: "accounts"],
          on_delete: :restrict,
          on_update: :restrict
        ],
        [
-         where: [table: "messages", referenced_table: "conversations"],
+         only: [table: "messages", referenced_table: "conversations"],
          on_delete: :cascade
        ]
      ]},
@@ -158,15 +178,19 @@ config :bylaw, Bylaw.Db.Adapters.Postgres,
     {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
      rules: [
        [
-         where: [[schema: "public"]],
-         columns: ["tenant_id"]
+         only: [schema: "public"],
+         columns: ["tenant_id"],
+         except: [[table: "schema_migrations"]]
        ]
-     ],
-     except: [[table: "schema_migrations"]]},
+     ]},
     {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
-     schemas: ["public"],
-     types: ["uuid"],
-     except: [[table: "schema_migrations"]]}
+     rules: [
+       [
+         only: [schema: "public"],
+         types: ["uuid"],
+         except: [[table: "schema_migrations"]]
+       ]
+     ]}
   ]
 ```
 

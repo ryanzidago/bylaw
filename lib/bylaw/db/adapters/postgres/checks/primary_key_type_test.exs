@@ -287,10 +287,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
 
       assert {:error, [%Issue{} = issue]} =
                PrimaryKeyType.validate(target,
-                 schemas: ["public"],
-                 tables: ["orders"],
-                 types: ["uuid"],
-                 except: [[table: "schema_migrations"]]
+                 rules: [
+                   [
+                     only: [schema: "public", table: "orders"],
+                     types: ["uuid"],
+                     except: [[table: "schema_migrations"]]
+                   ]
+                 ]
                )
 
       assert issue.message == "could not inspect Postgres primary key types"
@@ -298,10 +301,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: ["public"],
-               tables: ["orders"],
-               types: ["uuid"],
-               except: [[table: "schema_migrations"]],
+               rules: [
+                 %{
+                   only: [[schema: "public", table: "orders"]],
+                   types: ["uuid"],
+                   except: [[table: "schema_migrations"]]
+                 }
+               ],
                reason: :connection_closed
              }
     end

@@ -187,16 +187,16 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                ForeignKeyActions.validate(target,
                  rules: [
                    [
-                     where: [[table: "messages"], [referenced_table: "conversations"]],
+                     only: [[table: "messages"], [referenced_table: "conversations"]],
                      on_delete: :cascade
                    ],
                    [
-                     where: [referenced_table: "lookup_statuses"],
+                     only: [referenced_table: "lookup_statuses"],
                      on_delete: :restrict,
                      on_update: :restrict
                    ],
                    [
-                     where: [columns: [~r/account_id/], referenced_columns: ["tenant_id"]],
+                     only: [column: [~r/account_id/], referenced_column: ["tenant_id"]],
                      on_delete: :cascade
                    ]
                  ]
@@ -372,7 +372,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       assert_raise ArgumentError,
                    ~r/expected foreign_key_actions rule to include :on_delete or :on_update/,
                    fn ->
-                     ForeignKeyActions.validate(target, rules: [[where: [table: "orders"]]])
+                     ForeignKeyActions.validate(target, rules: [[only: [table: "orders"]]])
                    end
     end
 
@@ -396,10 +396,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions :where to be a matcher or non-empty list of matchers/,
+                   ~r/expected foreign_key_actions :only to be a matcher or non-empty list of matchers/,
                    fn ->
                      ForeignKeyActions.validate(target,
-                       rules: [[where: [], on_delete: :cascade]]
+                       rules: [[only: [], on_delete: :cascade]]
                      )
                    end
 
@@ -413,10 +413,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions :where :referenced_tables to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected foreign_key_actions :only :referenced_table to be a matcher value or non-empty list of matcher values/,
                    fn ->
                      ForeignKeyActions.validate(target,
-                       rules: [[where: [referenced_tables: [""]], on_delete: :cascade]]
+                       rules: [[only: [referenced_table: [""]], on_delete: :cascade]]
                      )
                    end
     end
@@ -426,8 +426,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
 
       assert {:error, [%Issue{} = issue]} =
                ForeignKeyActions.validate(target,
-                 rules: [[where: [schema: "public"], on_delete: :cascade]],
-                 except: [[table: "schema_migrations"]]
+                 rules: [
+                   [
+                     only: [schema: "public"],
+                     on_delete: :cascade,
+                     except: [[table: "schema_migrations"]]
+                   ]
+                 ]
                )
 
       assert issue.message == "could not inspect Postgres foreign key actions"
@@ -435,10 +440,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: nil,
-               tables: nil,
-               rules: [%{where: [[schema: "public"]], on_delete: :cascade, on_update: nil}],
-               except: [[table: "schema_migrations"]],
+               rules: [
+                 %{
+                   only: [[schema: "public"]],
+                   except: [[table: "schema_migrations"]],
+                   on_delete: :cascade,
+                   on_update: nil
+                 }
+               ],
                reason: :connection_closed
              }
     end

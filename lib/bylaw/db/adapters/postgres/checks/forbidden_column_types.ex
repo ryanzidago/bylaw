@@ -2,22 +2,26 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   @moduledoc """
   Validates that Postgres columns do not use configured forbidden types.
 
-  By default the check inspects all non-system schemas in a Postgres target.
-  Pass `:schemas` or `:tables` options to narrow the scope. Use `:except` to
-  allow intentional columns:
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [...]` to configure forbidden types for scoped groups of columns:
 
       {ForbiddenColumnTypes,
-       schemas: ["public"],
-       types: [
-         [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
-         [type: ~r/^character\\(/, prefer: "text"]
-       ],
-       except: [[table: "webhook_events", column: "raw_payload"]]}
+       rules: [
+         [
+           only: [schema: "public"],
+           types: [
+             [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
+             [type: ~r/^character\\(/, prefer: "text"]
+           ],
+           except: [[table: "webhook_events", column: "raw_payload"]]
+         ]
+       ]}
   """
 
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -52,20 +56,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   @type matcher ::
           list(
             {:schema, matcher_values()}
-            | {:schemas, list(matcher_value())}
             | {:table, matcher_values()}
-            | {:tables, list(matcher_value())}
             | {:column, matcher_values()}
-            | {:columns, list(matcher_value())}
             | {:type, matcher_values()}
-            | {:types, list(matcher_value())}
+          )
+  @type scope_rule ::
+          list(
+            {:only, matcher() | list(matcher())}
+            | {:except, matcher() | list(matcher())}
+            | {:types, list(type_rule())}
           )
   @type check_opt ::
           {:validate, boolean()}
-          | {:types, list(type_rule())}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
-          | {:except, matcher() | list(matcher())}
+          | {:rules, list(scope_rule())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
@@ -88,15 +91,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   Validates that scoped Postgres columns do not use forbidden database types.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires `types: [...]`, where each rule can be a string, regex, or keyword
-  rule with optional `:prefer` and `:reason` guidance.
+  requires `rules: [[types: [...]]]`; each type rule can be a string, regex, or
+  keyword rule with optional `:prefer` and `:reason` guidance.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
       validate_forbidden_column_types(target, opts)
     else
       :ok
@@ -117,21 +120,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   end
 
   defp validate_forbidden_column_types(target, opts) do
-    schemas = filter(opts, :schemas)
-    tables = filter(opts, :tables)
-    rules = rules!(Keyword.fetch!(opts, :types))
-    exceptions = matchers(opts, :except)
+    rules = normalize_scope_rules!(opts)
+    schemas = RuleOptions.filter(opts, :schemas, :forbidden_column_types)
+    tables = RuleOptions.filter(opts, :tables, :forbidden_column_types)
 
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
         |> rows()
-        |> Enum.reject(&matches_any?(&1, exceptions))
         |> Enum.flat_map(&issues_for_row(target, &1, rules))
         |> result()
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, rules, exceptions, reason)]}
+        {:error, [query_error_issue(target, rules, reason)]}
     end
   end
 
@@ -151,75 +152,91 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError,
-            "expected forbidden_column_types opts to be a keyword list, got: #{inspect(opts)}"
-    end
+    RuleOptions.keyword_list!(opts, :forbidden_column_types)
 
-    allowed_keys = [:validate, :types, :schemas, :tables, :except]
+    RuleOptions.validate_allowed_keys!(
+      opts,
+      [:validate, :rules, :types, :schemas, :tables, :except],
+      :forbidden_column_types
+    )
 
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown forbidden_column_types option: #{inspect(key)}"
-      end
-    end)
+    RuleOptions.validate_boolean_option!(opts, :validate, :forbidden_column_types)
 
-    validate_boolean_option!(opts, :validate)
-    validate_filter_option!(opts, :schemas)
-    validate_filter_option!(opts, :tables)
-
-    if Keyword.get(opts, :validate, true) == true do
-      validate_types_option!(opts)
-      matchers(opts, :except)
+    if RuleOptions.enabled?(opts) do
+      normalize_scope_rules!(opts)
+      RuleOptions.filter(opts, :schemas, :forbidden_column_types)
+      RuleOptions.filter(opts, :tables, :forbidden_column_types)
     end
 
     opts
   end
 
-  defp validate_boolean_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
+  defp normalize_scope_rules!(opts) do
+    cond do
+      Keyword.has_key?(opts, :rules) ->
+        opts
+        |> Keyword.fetch!(:rules)
+        |> RuleOptions.rules!(
+          :forbidden_column_types,
+          allowed_matcher_keys(),
+          [:types],
+          &scope_rule_payload!/1
+        )
 
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected forbidden_column_types #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+      Keyword.has_key?(opts, :types) ->
+        [
+          %{
+            types: type_rules!(Keyword.fetch!(opts, :types)),
+            only: legacy_only(opts),
+            except:
+              RuleOptions.matchers(opts, :except, :forbidden_column_types, allowed_matcher_keys())
+          }
+        ]
 
-      :error ->
-        :ok
-    end
-  end
-
-  defp validate_types_option!(opts) do
-    case Keyword.fetch(opts, :types) do
-      {:ok, value} ->
-        rules!(value)
-        :ok
-
-      :error ->
+      true ->
         raise ArgumentError, "expected forbidden_column_types to include :types"
     end
   end
 
-  defp rules!(rules) when is_list(rules) do
+  defp legacy_only(opts) do
+    matcher =
+      []
+      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
+      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
+
+    if Enum.empty?(matcher), do: [], else: [matcher]
+  end
+
+  defp maybe_put_matcher(matcher, _key, nil), do: matcher
+  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
+
+  defp scope_rule_payload!(rule) do
+    if not Keyword.has_key?(rule, :types) do
+      raise ArgumentError, "expected forbidden_column_types rule to include :types"
+    end
+
+    %{types: type_rules!(Keyword.fetch!(rule, :types))}
+  end
+
+  defp type_rules!(rules) when is_list(rules) do
     if Enum.empty?(rules) do
       raise_types_error!()
     end
 
-    Enum.map(rules, &rule!/1)
+    Enum.map(rules, &type_rule!/1)
   end
 
-  defp rules!(_rules), do: raise_types_error!()
+  defp type_rules!(_rules), do: raise_types_error!()
 
-  defp rule!(type) when is_binary(type) and byte_size(type) > 0 do
+  defp type_rule!(type) when is_binary(type) and byte_size(type) > 0 do
     %{type: type, prefer: nil, reason: nil}
   end
 
-  defp rule!(%Regex{} = type) do
+  defp type_rule!(%Regex{} = type) do
     %{type: type, prefer: nil, reason: nil}
   end
 
-  defp rule!(rule) when is_list(rule) do
+  defp type_rule!(rule) when is_list(rule) do
     if not Keyword.keyword?(rule) do
       raise_types_error!()
     end
@@ -243,7 +260,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
     %{type: type, prefer: prefer, reason: reason}
   end
 
-  defp rule!(_rule), do: raise_types_error!()
+  defp type_rule!(_rule), do: raise_types_error!()
 
   defp type_matcher!(%Regex{} = type), do: type
 
@@ -270,140 +287,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           "expected forbidden_column_types :types to be a non-empty list of strings, regexes, or keyword type rules"
   end
 
-  defp validate_filter_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, values} ->
-        filter!(key, values)
-        :ok
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp filter(opts, key) do
-    values = Keyword.get(opts, key)
-
-    filter!(key, values)
-  end
-
-  defp filter!(_key, nil), do: nil
-
-  defp filter!(key, values) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
-      raise_filter_error!(key)
-    end
-
-    values
-  end
-
-  defp filter!(key, _values), do: raise_filter_error!(key)
-
-  defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
-
-  defp raise_filter_error!(key) do
-    raise ArgumentError,
-          "expected forbidden_column_types #{inspect(key)} to be a non-empty list of strings"
-  end
-
-  defp matchers(opts, key) do
-    case Keyword.get(opts, key, []) do
-      [] -> []
-      value when is_list(value) -> matchers!(key, value)
-      _value -> raise_matcher_error!(key)
-    end
-  end
-
-  defp matchers!(key, value) do
-    cond do
-      Keyword.keyword?(value) ->
-        [matcher!(key, value)]
-
-      Enum.empty?(value) ->
-        raise_matcher_error!(key)
-
-      Enum.all?(value, &Keyword.keyword?/1) ->
-        Enum.map(value, &matcher!(key, &1))
-
-      true ->
-        raise_matcher_error!(key)
-    end
-  end
-
-  defp matcher!(key, matcher) do
-    allowed_keys = [:schema, :schemas, :table, :tables, :column, :columns, :type, :types]
-
-    Enum.each(matcher, fn {matcher_key, matcher_value} ->
-      if matcher_key not in allowed_keys do
-        raise ArgumentError,
-              "unknown forbidden_column_types #{inspect(key)} matcher option: #{inspect(matcher_key)}"
-      end
-
-      matcher_values!(key, matcher_key, matcher_value)
-    end)
-
-    if Enum.empty?(matcher) do
-      raise_matcher_error!(key)
-    end
-
-    matcher
-  end
-
-  defp matcher_values!(key, matcher_key, values)
-       when matcher_key in [:schemas, :tables, :columns, :types] do
-    if not is_list(values) or Enum.empty?(values) or Enum.any?(values, &(not matcher_value?(&1))) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_values!(key, matcher_key, value) do
-    if not matcher_value?(value) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_value?(%Regex{}), do: true
-  defp matcher_value?(value), do: non_empty_string?(value)
-
-  defp raise_matcher_error!(key) do
-    raise ArgumentError,
-          "expected forbidden_column_types #{inspect(key)} to be a matcher or non-empty list of matchers"
-  end
-
-  defp raise_matcher_values_error!(key, matcher_key) do
-    raise ArgumentError,
-          "expected forbidden_column_types #{inspect(key)} #{inspect(matcher_key)} to be a matcher value or non-empty list of matcher values"
-  end
-
-  defp matches_any?(_row, []), do: false
-  defp matches_any?(row, matchers), do: Enum.any?(matchers, &matches?(row, &1))
-
-  defp matches?(row, matcher) do
-    Enum.all?(matcher, fn
-      {:schema, values} -> matches_value?(value(row, "schema_name"), values)
-      {:schemas, values} -> matches_value?(value(row, "schema_name"), values)
-      {:table, values} -> matches_value?(value(row, "table_name"), values)
-      {:tables, values} -> matches_value?(value(row, "table_name"), values)
-      {:column, values} -> matches_value?(value(row, "column_name"), values)
-      {:columns, values} -> matches_value?(value(row, "column_name"), values)
-      {:type, values} -> matches_value?(value(row, "type_name"), values)
-      {:types, values} -> matches_value?(value(row, "type_name"), values)
-    end)
-  end
-
-  defp matches_value?(value, values) when is_list(values),
-    do: Enum.any?(values, &matches_value?(value, &1))
-
-  defp matches_value?(value, %Regex{} = regex), do: Regex.match?(regex, value)
-  defp matches_value?(value, expected), do: value == expected
-
   defp issues_for_row(target, row, rules) do
     rules
-    |> Enum.filter(&rule_matches?(&1, value(row, "type_name")))
+    |> Enum.filter(fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
+    |> Enum.flat_map(&matching_type_rules(row, &1))
     |> Enum.map(&issue(target, row, &1))
   end
 
-  defp rule_matches?(rule, actual_type), do: matches_value?(actual_type, rule.type)
+  defp matching_type_rules(row, rule) do
+    Enum.filter(rule.types, &type_rule_matches?(&1, value(row, "type_name")))
+  end
+
+  defp type_rule_matches?(%{type: %Regex{} = regex}, actual_type),
+    do: Regex.match?(regex, actual_type)
+
+  defp type_rule_matches?(rule, actual_type), do: rule.type == actual_type
+
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :column), do: value(row, "column_name")
+  defp matcher_value(row, :type), do: value(row, "type_name")
+
+  defp allowed_matcher_keys, do: [:schema, :table, :column, :type]
 
   @spec issue(target :: Target.t(), row :: result_row(), rule :: normalized_rule()) :: Issue.t()
   defp issue(target, row, rule) do
@@ -444,13 +349,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   @spec query_error_issue(
           target :: Target.t(),
-          schemas :: list(String.t()) | nil,
-          tables :: list(String.t()) | nil,
-          rules :: list(normalized_rule()),
-          exceptions :: list(matcher()),
+          rules :: list(map()),
           reason :: term()
         ) :: Issue.t()
-  defp query_error_issue(target, schemas, tables, rules, exceptions, reason) do
+  defp query_error_issue(target, rules, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
@@ -458,10 +360,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
-        tables: tables,
-        types: rules,
-        except: exceptions,
+        rules: rules,
         reason: reason
       }
     }
