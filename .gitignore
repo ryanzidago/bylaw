@@ -6,6 +6,10 @@
 
 # The directory Mix downloads your dependencies sources to.
 /deps/
+/packages/*/_build/
+/packages/*/cover/
+/packages/*/deps/
+/packages/*/doc/
 
 # Where third-party dependencies like ExDoc output generated docs.
 /doc/
@@ -20,7 +24,7 @@ erl_crash.dump
 *.ez
 
 # Ignore package tarball (built via "mix hex.build").
-bylaw-*.tar
+bylaw*.tar
 
 # Dialyzer PLTs.
 /priv/plts/
@@ -28,3 +32,6 @@ bylaw-*.tar
 # Local git worktrees.
 .worktrees/*
 !.worktrees/.gitkeep
+
+# Local validation artifacts.
+.artefacts/
