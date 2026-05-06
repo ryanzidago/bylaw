@@ -17,7 +17,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyActions,
-                schemas: [TestDatabase.schema()], tables: ["action_messages"], on_delete: :cascade}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "action_messages"],
+                    on_delete: :cascade
+                  ]
+                ]}
              ])
 
     assert issue.meta.constraint == "action_messages_status_user_id_fkey"
@@ -29,10 +34,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyActions,
-                schemas: [TestDatabase.schema()],
                 rules: [
                   [
-                    where: [constraint: "action_messages_owner_user_id_fkey"],
+                    only: [
+                      schema: TestDatabase.schema(),
+                      constraint: "action_messages_owner_user_id_fkey"
+                    ],
                     on_delete: :restrict
                   ]
                 ]}
@@ -56,10 +63,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ForeignKeyActions,
-                schemas: [TestDatabase.schema()],
                 rules: [
                   [
-                    where: [
+                    only: [
+                      schema: TestDatabase.schema(),
                       table: "action_messages",
                       column: "owner_user_id",
                       referenced_table: "users"
@@ -68,7 +75,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsIntegrationTest do
                     on_update: :restrict
                   ],
                   [
-                    where: [constraint: "action_messages_status_user_id_fkey"],
+                    only: [
+                      schema: TestDatabase.schema(),
+                      constraint: "action_messages_status_user_id_fkey"
+                    ],
                     on_delete: :restrict
                   ]
                 ]}
@@ -81,10 +91,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {ForeignKeyActions,
-                schemas: [TestDatabase.schema()],
-                tables: ["action_messages"],
-                on_delete: :cascade,
-                except: [[constraint: "action_messages_status_user_id_fkey"]]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "action_messages"],
+                    on_delete: :cascade,
+                    except: [[constraint: "action_messages_status_user_id_fkey"]]
+                  ]
+                ]}
              ])
   end
 

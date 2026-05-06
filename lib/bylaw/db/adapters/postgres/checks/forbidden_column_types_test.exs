@@ -194,10 +194,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
 
       assert {:error, [%Issue{} = issue]} =
                ForbiddenColumnTypes.validate(target,
-                 schemas: ["public"],
-                 tables: ["events"],
-                 types: ["json"],
-                 except: [[table: "webhook_events"]]
+                 rules: [
+                   [
+                     only: [schema: "public", table: "events"],
+                     types: ["json"],
+                     except: [[table: "webhook_events"]]
+                   ]
+                 ]
                )
 
       assert issue.message == "could not inspect Postgres column types"
@@ -205,10 +208,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: ["public"],
-               tables: ["events"],
-               types: [%{type: "json", prefer: nil, reason: nil}],
-               except: [[table: "webhook_events"]],
+               rules: [
+                 %{
+                   only: [[schema: "public", table: "events"]],
+                   types: [%{type: "json", prefer: nil, reason: nil}],
+                   except: [[table: "webhook_events"]]
+                 }
+               ],
                reason: :connection_closed
              }
     end

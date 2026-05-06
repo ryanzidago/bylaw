@@ -2,6 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   @moduledoc false
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -33,8 +34,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
+          | {:rules, list(keyword())}
 
   @type check_opts :: list(check_opt())
 
@@ -121,10 +121,11 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   end
 
   defp validate_enabled(target, opts, config) do
-    schemas = filter(opts, :schemas, config.name)
-    tables = filter(opts, :tables, config.name)
+    rules = RuleOptions.default_rules!(opts, config.name, allowed_matcher_keys())
+    schemas = RuleOptions.filter(opts, :schemas, config.name)
+    tables = RuleOptions.filter(opts, :tables, config.name)
 
-    case catalog_constraints(target, schemas, tables, config) do
+    case catalog_constraints(target, rules, schemas, tables, config) do
       {:ok, constraints} ->
         schema_infos =
           opts
@@ -141,16 +142,17 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
         compare(target, schema_infos, candidates, constraints, config)
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, reason, config)]}
+        {:error, [query_error_issue(target, rules, reason, config)]}
     end
   end
 
-  defp catalog_constraints(target, schemas, tables, config) do
+  defp catalog_constraints(target, rules, schemas, tables, config) do
     case Postgres.query(target, config.query, [schemas, tables], []) do
       {:ok, result} ->
         constraints =
           result
           |> rows()
+          |> Enum.filter(&matches_rules?(&1, rules))
           |> Enum.map(&catalog_constraint(&1, config.kind))
 
         {:ok, constraints}
@@ -344,7 +346,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
       raise ArgumentError, "expected #{name} opts to be a keyword list, got: #{inspect(opts)}"
     end
 
-    allowed_keys = [:validate, :otp_app, :paths, :schema_modules, :schemas, :tables]
+    allowed_keys = [:validate, :otp_app, :paths, :schema_modules, :rules, :schemas, :tables]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
@@ -361,8 +363,9 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
       validate_required_option!(opts, :paths, name)
       validate_schema_modules_option!(opts, name)
       validate_paths_option!(opts, name)
-      validate_filter_option!(opts, :schemas, name)
-      validate_filter_option!(opts, :tables, name)
+      RuleOptions.default_rules!(opts, name, allowed_matcher_keys())
+      RuleOptions.filter(opts, :schemas, name)
+      RuleOptions.filter(opts, :tables, name)
     end
 
     opts
@@ -440,37 +443,6 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     end
   end
 
-  defp validate_filter_option!(opts, key, name) do
-    case Keyword.fetch(opts, key) do
-      {:ok, values} ->
-        filter!(key, values, name)
-        :ok
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp filter(opts, key, name) do
-    values = Keyword.get(opts, key)
-
-    filter!(key, values, name)
-  end
-
-  defp filter!(_key, nil, _name), do: nil
-
-  defp filter!(key, values, name) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
-      raise_filter_error!(key, name)
-    end
-
-    values
-  end
-
-  defp filter!(key, _values, name), do: raise_filter_error!(key, name)
-
-  defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
-
   defp raise_paths_error!(name) do
     raise ArgumentError, "expected #{name} :paths to be a non-empty list of strings"
   end
@@ -479,11 +451,17 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     raise ArgumentError, "expected #{name} :schema_modules to be a non-empty list of modules"
   end
 
-  defp raise_filter_error!(key, name) do
-    raise ArgumentError, "expected #{name} #{inspect(key)} to be a non-empty list of strings"
-  end
+  defp matches_rules?(row, rules),
+    do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
 
-  defp query_error_issue(target, schemas, tables, reason, config) do
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :constraint), do: value(row, "constraint_name")
+  defp matcher_value(row, :column), do: value(row, "column_names")
+
+  defp allowed_matcher_keys, do: [:schema, :table, :constraint, :column]
+
+  defp query_error_issue(target, rules, reason, config) do
     %Issue{
       check: config.check,
       target: target,
@@ -491,8 +469,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
-        tables: tables,
+        rules: rules,
         reason: reason
       }
     }

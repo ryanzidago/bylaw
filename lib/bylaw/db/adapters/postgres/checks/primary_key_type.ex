@@ -2,19 +2,23 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   @moduledoc """
   Validates that Postgres primary key columns use configured data types.
 
-  By default the check inspects all non-system schemas in a Postgres target.
-  Pass `:schemas` or `:tables` options to narrow the scope. Use `:except` for
-  intentional exceptions:
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [...]` to configure allowed types for scoped groups of tables:
 
       {PrimaryKeyType,
-       schemas: ["public"],
-       types: ["uuid"],
-       except: [[table: "schema_migrations"]]}
+       rules: [
+         [
+           only: [schema: "public"],
+           types: ["uuid"],
+           except: [[table: "schema_migrations"]]
+         ]
+       ]}
   """
 
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -82,18 +86,18 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   @type matcher ::
           list(
             {:schema, matcher_values()}
-            | {:schemas, list(matcher_value())}
             | {:table, matcher_values()}
-            | {:tables, list(matcher_value())}
             | {:column, matcher_values()}
-            | {:columns, list(matcher_value())}
+          )
+  @type rule ::
+          list(
+            {:only, matcher() | list(matcher())}
+            | {:except, matcher() | list(matcher())}
+            | {:types, list(String.t())}
           )
   @type check_opt ::
           {:validate, boolean()}
-          | {:types, list(String.t())}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
-          | {:except, matcher() | list(matcher())}
+          | {:rules, list(rule())}
 
   @type check_opts :: list(check_opt())
 
@@ -113,15 +117,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   Validates that every table in scope has a primary key using allowed types.
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires `types: [...]`, such as `types: ["uuid"]` or
-  `types: ["uuid", "bigint"]`.
+  requires `rules: [[types: [...]]]`, such as
+  `rules: [[types: ["uuid"]]]`.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
       validate_primary_key_type(target, opts)
     else
       :ok
@@ -142,21 +146,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   end
 
   defp validate_primary_key_type(target, opts) do
-    schemas = filter(opts, :schemas)
-    tables = filter(opts, :tables)
-    types = types!(Keyword.fetch!(opts, :types))
-    exceptions = matchers(opts, :except)
+    rules = normalize_rules!(opts)
+    schemas = RuleOptions.filter(opts, :schemas, :primary_key_type)
+    tables = RuleOptions.filter(opts, :tables, :primary_key_type)
 
-    case Postgres.query(target, @query, [schemas, tables, types], []) do
+    case Postgres.query(target, @query, [schemas, tables, query_types(rules, opts)], []) do
       {:ok, result} ->
         result
         |> rows()
-        |> Enum.reject(&matches_any?(&1, exceptions))
-        |> Enum.map(&issue(target, &1, types))
+        |> Enum.filter(&(matches_rules?(&1, rules) and violates_matching_rule?(&1, rules)))
+        |> Enum.map(&issue(target, &1, matching_types(&1, rules)))
         |> result()
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, types, exceptions, reason)]}
+        {:error, [query_error_issue(target, rules, reason)]}
     end
   end
 
@@ -176,77 +179,74 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError,
-            "expected primary_key_type opts to be a keyword list, got: #{inspect(opts)}"
-    end
+    RuleOptions.keyword_list!(opts, :primary_key_type)
 
-    allowed_keys = [:validate, :types, :schemas, :tables, :except]
+    RuleOptions.validate_allowed_keys!(
+      opts,
+      [:validate, :rules, :types, :schemas, :tables, :except],
+      :primary_key_type
+    )
 
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown primary_key_type option: #{inspect(key)}"
-      end
-    end)
+    RuleOptions.validate_boolean_option!(opts, :validate, :primary_key_type)
 
-    validate_boolean_option!(opts, :validate)
-    validate_filter_option!(opts, :schemas)
-    validate_filter_option!(opts, :tables)
-
-    if Keyword.get(opts, :validate, true) == true do
-      if not Keyword.has_key?(opts, :types) do
-        raise ArgumentError, "expected primary_key_type to include :types"
-      end
-
-      types!(Keyword.fetch!(opts, :types))
-      matchers(opts, :except)
+    if RuleOptions.enabled?(opts) do
+      normalize_rules!(opts)
+      RuleOptions.filter(opts, :schemas, :primary_key_type)
+      RuleOptions.filter(opts, :tables, :primary_key_type)
     end
 
     opts
   end
 
-  defp validate_boolean_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
+  defp normalize_rules!(opts) do
+    cond do
+      Keyword.has_key?(opts, :rules) ->
+        opts
+        |> Keyword.fetch!(:rules)
+        |> RuleOptions.rules!(
+          :primary_key_type,
+          allowed_matcher_keys(),
+          [:types],
+          &rule_payload!/1
+        )
 
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected primary_key_type #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+      Keyword.has_key?(opts, :types) ->
+        [
+          %{
+            types: types!(Keyword.fetch!(opts, :types)),
+            only: legacy_only(opts),
+            except: RuleOptions.matchers(opts, :except, :primary_key_type, allowed_matcher_keys())
+          }
+        ]
 
-      :error ->
-        :ok
+      true ->
+        raise ArgumentError, "expected primary_key_type to include :types"
     end
   end
 
-  defp validate_filter_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, values} ->
-        filter!(key, values)
-        :ok
+  defp legacy_only(opts) do
+    matcher =
+      []
+      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
+      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
 
-      :error ->
-        :ok
-    end
+    if Enum.empty?(matcher), do: [], else: [matcher]
   end
 
-  defp filter(opts, key) do
-    values = Keyword.get(opts, key)
+  defp maybe_put_matcher(matcher, _key, nil), do: matcher
+  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
-    filter!(key, values)
+  defp query_types(_rules, opts) do
+    if Keyword.has_key?(opts, :types), do: Keyword.fetch!(opts, :types), else: []
   end
 
-  defp filter!(_key, nil), do: nil
-
-  defp filter!(key, values) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
-      raise_filter_error!(key)
+  defp rule_payload!(rule) do
+    if not Keyword.has_key?(rule, :types) do
+      raise ArgumentError, "expected primary_key_type rule to include :types"
     end
 
-    values
+    %{types: types!(Keyword.fetch!(rule, :types))}
   end
-
-  defp filter!(key, _values), do: raise_filter_error!(key)
 
   defp types!(values) when is_list(values) do
     if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
@@ -260,104 +260,35 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
 
-  defp raise_filter_error!(key) do
-    raise ArgumentError,
-          "expected primary_key_type #{inspect(key)} to be a non-empty list of strings"
-  end
-
   defp raise_types_error! do
     raise ArgumentError, "expected primary_key_type :types to be a non-empty list of strings"
   end
 
-  defp matchers(opts, key) do
-    case Keyword.get(opts, key, []) do
-      [] -> []
-      value when is_list(value) -> matchers!(key, value)
-      _value -> raise_matcher_error!(key)
+  defp matches_rules?(row, rules),
+    do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
+
+  defp matching_types(row, rules) do
+    rules
+    |> Enum.filter(fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
+    |> Enum.flat_map(& &1.types)
+    |> Enum.uniq()
+  end
+
+  defp violates_matching_rule?(row, rules) do
+    case value(row, "reason") do
+      reason when reason in ["missing_primary_key", :missing_primary_key] ->
+        true
+
+      reason when reason in ["wrong_type", :wrong_type] ->
+        value(row, "actual_type") not in matching_types(row, rules)
     end
   end
 
-  defp matchers!(key, value) do
-    cond do
-      Keyword.keyword?(value) ->
-        [matcher!(key, value)]
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :column), do: value(row, "column_name")
 
-      Enum.empty?(value) ->
-        raise_matcher_error!(key)
-
-      Enum.all?(value, &Keyword.keyword?/1) ->
-        Enum.map(value, &matcher!(key, &1))
-
-      true ->
-        raise_matcher_error!(key)
-    end
-  end
-
-  defp matcher!(key, matcher) do
-    allowed_keys = [:schema, :schemas, :table, :tables, :column, :columns]
-
-    Enum.each(matcher, fn {matcher_key, matcher_value} ->
-      if matcher_key not in allowed_keys do
-        raise ArgumentError,
-              "unknown primary_key_type #{inspect(key)} matcher option: #{inspect(matcher_key)}"
-      end
-
-      matcher_values!(key, matcher_key, matcher_value)
-    end)
-
-    if Enum.empty?(matcher) do
-      raise_matcher_error!(key)
-    end
-
-    matcher
-  end
-
-  defp matcher_values!(key, matcher_key, values)
-       when matcher_key in [:schemas, :tables, :columns] do
-    if not is_list(values) or Enum.empty?(values) or Enum.any?(values, &(not matcher_value?(&1))) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_values!(key, matcher_key, value) do
-    if not matcher_value?(value) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_value?(%Regex{}), do: true
-  defp matcher_value?(value), do: non_empty_string?(value)
-
-  defp raise_matcher_error!(key) do
-    raise ArgumentError,
-          "expected primary_key_type #{inspect(key)} to be a matcher or non-empty list of matchers"
-  end
-
-  defp raise_matcher_values_error!(key, matcher_key) do
-    raise ArgumentError,
-          "expected primary_key_type #{inspect(key)} #{inspect(matcher_key)} to be a matcher value or non-empty list of matcher values"
-  end
-
-  defp matches_any?(_row, []), do: false
-  defp matches_any?(row, matchers), do: Enum.any?(matchers, &matches?(row, &1))
-
-  defp matches?(row, matcher) do
-    Enum.all?(matcher, fn
-      {:schema, values} -> matches_value?(value(row, "schema_name"), values)
-      {:schemas, values} -> matches_value?(value(row, "schema_name"), values)
-      {:table, values} -> matches_value?(value(row, "table_name"), values)
-      {:tables, values} -> matches_value?(value(row, "table_name"), values)
-      {:column, values} -> matches_value?(value(row, "column_name"), values)
-      {:columns, values} -> matches_value?(value(row, "column_name"), values)
-    end)
-  end
-
-  defp matches_value?(value, values) when is_list(values),
-    do: Enum.any?(values, &matches_value?(value, &1))
-
-  defp matches_value?(nil, _expected), do: false
-  defp matches_value?(value, %Regex{} = regex), do: Regex.match?(regex, value)
-  defp matches_value?(value, expected), do: value == expected
+  defp allowed_matcher_keys, do: [:schema, :table, :column]
 
   @spec issue(target :: Target.t(), row :: result_row(), types :: list(String.t())) :: Issue.t()
   defp issue(target, row, types) do
@@ -415,13 +346,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   @spec query_error_issue(
           target :: Target.t(),
-          schemas :: list(String.t()) | nil,
-          tables :: list(String.t()) | nil,
-          types :: list(String.t()),
-          exceptions :: list(matcher()),
+          rules :: list(map()),
           reason :: term()
         ) :: Issue.t()
-  defp query_error_issue(target, schemas, tables, types, exceptions, reason) do
+  defp query_error_issue(target, rules, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
@@ -429,10 +357,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
-        tables: tables,
-        types: types,
-        except: exceptions,
+        rules: rules,
         reason: reason
       }
     }
