@@ -144,6 +144,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
     RuleOptions.validate_boolean_option!(opts, :validate, :missing_foreign_key_constraints)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:schemas, :tables],
+        :missing_foreign_key_constraints
+      )
+
       RuleOptions.default_rules!(opts, :missing_foreign_key_constraints, allowed_matcher_keys())
       RuleOptions.filter(opts, :schemas, :missing_foreign_key_constraints)
       RuleOptions.filter(opts, :tables, :missing_foreign_key_constraints)

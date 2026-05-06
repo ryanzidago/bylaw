@@ -196,11 +196,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected required_columns to include :columns or :rules, not both/,
+                   ~r/expected required_columns to use rule-level :columns when :rules is provided/,
                    fn ->
                      RequiredColumns.validate(target,
                        columns: ["tenant_id"],
                        rules: [[columns: ["account_id"]]]
+                     )
+                   end
+    end
+
+    test "rejects top-level exceptions when rules are provided" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected required_columns to use rule-level :except when :rules is provided/,
+                   fn ->
+                     RequiredColumns.validate(target,
+                       rules: [[columns: ["tenant_id"]]],
+                       except: [[table: "schema_migrations"]]
                      )
                    end
     end

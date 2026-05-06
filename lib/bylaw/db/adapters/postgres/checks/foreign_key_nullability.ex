@@ -153,6 +153,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
     RuleOptions.validate_boolean_option!(opts, :validate, :foreign_key_nullability)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:schemas, :tables, :except],
+        :foreign_key_nullability
+      )
+
       RuleOptions.default_rules!(opts, :foreign_key_nullability, allowed_matcher_keys())
       RuleOptions.filter(opts, :schemas, :foreign_key_nullability)
       RuleOptions.filter(opts, :tables, :foreign_key_nullability)

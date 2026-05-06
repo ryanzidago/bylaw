@@ -190,6 +190,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
     RuleOptions.validate_boolean_option!(opts, :validate, :primary_key_type)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:types, :schemas, :tables, :except],
+        :primary_key_type
+      )
+
       normalize_rules!(opts)
       RuleOptions.filter(opts, :schemas, :primary_key_type)
       RuleOptions.filter(opts, :tables, :primary_key_type)

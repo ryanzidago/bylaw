@@ -359,6 +359,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     validate_boolean_option!(opts, :validate, name)
 
     if Keyword.get(opts, :validate, true) == true do
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], name)
       validate_schema_discovery_opts!(opts, name)
       validate_required_option!(opts, :paths, name)
       validate_schema_modules_option!(opts, name)
