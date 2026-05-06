@@ -2,6 +2,6 @@
 [
   inputs: [
     "{mix,.formatter}.exs",
-    "{config,lib,scripts,test}/**/*.{ex,exs}"
+    "{config,credo_checks,lib,scripts,test}/**/*.{ex,exs}"
   ]
 ]
