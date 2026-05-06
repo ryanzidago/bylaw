@@ -17,9 +17,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()],
-                tables: ["uuid_primary_key", "composite_uuid_primary_key"],
-                types: ["uuid"]}
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.schema(),
+                      table: ["uuid_primary_key", "composite_uuid_primary_key"]
+                    ],
+                    types: ["uuid"]
+                  ]
+                ]}
              ])
   end
 
@@ -29,9 +35,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()],
-                tables: ["bigint_primary_key"],
-                types: ["bigint"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "bigint_primary_key"],
+                    types: ["bigint"]
+                  ]
+                ]}
              ])
   end
 
@@ -41,7 +50,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()], tables: ["missing_primary_key"], types: ["uuid"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "missing_primary_key"],
+                    types: ["uuid"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -60,7 +74,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()], tables: ["bigint_primary_key"], types: ["uuid"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "bigint_primary_key"],
+                    types: ["uuid"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -80,9 +99,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()],
-                tables: ["composite_mixed_primary_key"],
-                types: ["uuid"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "composite_mixed_primary_key"],
+                    types: ["uuid"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.table == "composite_mixed_primary_key"
@@ -96,9 +118,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()],
-                tables: ["uuid_primary_key", "bigint_primary_key", "composite_mixed_primary_key"],
-                types: ["uuid", "bigint"]}
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.schema(),
+                      table: [
+                        "uuid_primary_key",
+                        "bigint_primary_key",
+                        "composite_mixed_primary_key"
+                      ]
+                    ],
+                    types: ["uuid", "bigint"]
+                  ]
+                ]}
              ])
   end
 
@@ -108,12 +140,18 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
     assert :ok =
              Postgres.validate([target], [
                {PrimaryKeyType,
-                schemas: [TestDatabase.schema()],
-                tables: ["bigint_primary_key", "missing_primary_key"],
-                types: ["uuid"],
-                except: [
-                  [table: "bigint_primary_key", column: "id"],
-                  [table: "missing_primary_key"]
+                rules: [
+                  [
+                    only: [
+                      schema: TestDatabase.schema(),
+                      table: ["bigint_primary_key", "missing_primary_key"]
+                    ],
+                    types: ["uuid"],
+                    except: [
+                      [table: "bigint_primary_key", column: "id"],
+                      [table: "missing_primary_key"]
+                    ]
+                  ]
                 ]}
              ])
   end

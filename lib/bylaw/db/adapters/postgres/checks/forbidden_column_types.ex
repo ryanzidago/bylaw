@@ -156,22 +156,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :types, :schemas, :tables, :except],
+      [:validate, :rules, :types],
       :forbidden_column_types
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :forbidden_column_types)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(
-        opts,
-        [:types, :schemas, :tables, :except],
-        :forbidden_column_types
-      )
-
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:types], :forbidden_column_types)
       normalize_scope_rules!(opts)
-      RuleOptions.filter(opts, :schemas, :forbidden_column_types)
-      RuleOptions.filter(opts, :tables, :forbidden_column_types)
     end
 
     opts
@@ -193,9 +186,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
         [
           %{
             types: type_rules!(Keyword.fetch!(opts, :types)),
-            only: legacy_only(opts),
-            except:
-              RuleOptions.matchers(opts, :except, :forbidden_column_types, allowed_matcher_keys())
+            only: [],
+            except: []
           }
         ]
 
@@ -203,18 +195,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
         raise ArgumentError, "expected forbidden_column_types to include :types"
     end
   end
-
-  defp legacy_only(opts) do
-    matcher =
-      []
-      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
-      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
-
-    if Enum.empty?(matcher), do: [], else: [matcher]
-  end
-
-  defp maybe_put_matcher(matcher, _key, nil), do: matcher
-  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
   defp scope_rule_payload!(rule) do
     if not Keyword.has_key?(rule, :types) do

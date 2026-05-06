@@ -183,22 +183,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :types, :schemas, :tables, :except],
+      [:validate, :rules, :types],
       :primary_key_type
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :primary_key_type)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(
-        opts,
-        [:types, :schemas, :tables, :except],
-        :primary_key_type
-      )
-
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:types], :primary_key_type)
       normalize_rules!(opts)
-      RuleOptions.filter(opts, :schemas, :primary_key_type)
-      RuleOptions.filter(opts, :tables, :primary_key_type)
     end
 
     opts
@@ -220,8 +213,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
         [
           %{
             types: types!(Keyword.fetch!(opts, :types)),
-            only: legacy_only(opts),
-            except: RuleOptions.matchers(opts, :except, :primary_key_type, allowed_matcher_keys())
+            only: [],
+            except: []
           }
         ]
 
@@ -229,18 +222,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
         raise ArgumentError, "expected primary_key_type to include :types"
     end
   end
-
-  defp legacy_only(opts) do
-    matcher =
-      []
-      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
-      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
-
-    if Enum.empty?(matcher), do: [], else: [matcher]
-  end
-
-  defp maybe_put_matcher(matcher, _key, nil), do: matcher
-  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
   defp query_types(_rules, opts) do
     if Keyword.has_key?(opts, :types), do: Keyword.fetch!(opts, :types), else: []

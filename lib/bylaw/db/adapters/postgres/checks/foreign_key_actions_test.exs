@@ -129,17 +129,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
              ]
     end
 
-    test "passes schema and table filters as check scope" do
+    test "applies rule scope after introspection" do
       target = target({:ok, result([])})
 
       assert :ok =
                ForeignKeyActions.validate(target,
-                 schemas: ["public", "billing"],
-                 tables: ["messages", "line_items"],
-                 on_delete: :cascade
+                 rules: [
+                   [
+                     only: [schema: ["public", "billing"], table: ["messages", "line_items"]],
+                     on_delete: :cascade
+                   ]
+                 ]
                )
 
-      assert_received {:query, _sql, [["public", "billing"], ["messages", "line_items"]], []}
+      assert_received {:query, _sql, [nil, nil], []}
     end
 
     test "supports multiple scoped rules that accumulate by match" do
@@ -246,10 +249,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
 
       assert {:error, [%Issue{} = issue]} =
                ForeignKeyActions.validate(target,
-                 on_delete: :cascade,
-                 except: [
-                   [table: "messages", referenced_table: "conversations"],
-                   [columns: ["tenant_id"], referenced_column: ~r/missing/]
+                 rules: [
+                   [
+                     on_delete: :cascade,
+                     except: [
+                       [table: "messages", referenced_table: "conversations"],
+                       [columns: ["tenant_id"], referenced_column: ~r/missing/]
+                     ]
+                   ]
                  ]
                )
 
@@ -342,16 +349,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                    end
     end
 
-    test "rejects top-level exceptions when rules are provided" do
+    test "rejects top-level scope options" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions to use rule-level :except when :rules is provided/,
+                   ~r/unknown foreign_key_actions option: :except/,
                    fn ->
                      ForeignKeyActions.validate(target,
-                       rules: [[on_delete: :restrict]],
+                       on_delete: :cascade,
                        except: [[table: "schema_migrations"]]
                      )
+                   end
+
+      assert_raise ArgumentError,
+                   ~r/unknown foreign_key_actions option: :schemas/,
+                   fn ->
+                     ForeignKeyActions.validate(target, schemas: [], on_delete: :cascade)
                    end
     end
 
@@ -389,17 +402,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                    end
     end
 
-    test "requires schema and table filters to be non-empty lists of strings" do
+    test "rejects top-level table scope" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions :schemas to be a non-empty list of strings/,
-                   fn ->
-                     ForeignKeyActions.validate(target, schemas: [], on_delete: :cascade)
-                   end
-
-      assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions :tables to be a non-empty list of strings/,
+                   ~r/unknown foreign_key_actions option: :tables/,
                    fn ->
                      ForeignKeyActions.validate(target, tables: [:orders], on_delete: :cascade)
                    end
@@ -420,8 +427,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                    ~r/unknown foreign_key_actions :except matcher option: :unknown/,
                    fn ->
                      ForeignKeyActions.validate(target,
-                       on_delete: :cascade,
-                       except: [unknown: "orders"]
+                       rules: [[on_delete: :cascade, except: [unknown: "orders"]]]
                      )
                    end
 

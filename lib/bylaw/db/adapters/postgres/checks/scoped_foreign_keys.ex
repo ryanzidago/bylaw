@@ -217,19 +217,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :scope_columns, :schemas, :tables, :except],
+      [:validate, :rules, :scope_columns],
       :scoped_foreign_keys
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :scoped_foreign_keys)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(
-        opts,
-        [:scope_columns, :schemas, :tables, :except],
-        :scoped_foreign_keys
-      )
-
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:scope_columns], :scoped_foreign_keys)
       normalize_rules!(opts)
     end
 
@@ -249,15 +244,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
         )
 
       Keyword.has_key?(opts, :scope_columns) ->
-        RuleOptions.filter(opts, :schemas, :scoped_foreign_keys)
-        RuleOptions.filter(opts, :tables, :scoped_foreign_keys)
-
         [
           %{
             scope_columns: scope_columns!(Keyword.fetch!(opts, :scope_columns)),
-            only: legacy_only(opts),
-            except:
-              RuleOptions.matchers(opts, :except, :scoped_foreign_keys, allowed_matcher_keys())
+            only: [],
+            except: []
           }
         ]
 
@@ -265,18 +256,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
         raise ArgumentError, "expected scoped_foreign_keys to include :scope_columns"
     end
   end
-
-  defp legacy_only(opts) do
-    matcher =
-      []
-      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
-      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
-
-    if Enum.empty?(matcher), do: [], else: [matcher]
-  end
-
-  defp maybe_put_matcher(matcher, _key, nil), do: matcher
-  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
   defp rule_payload!(rule) do
     if not Keyword.has_key?(rule, :scope_columns) do

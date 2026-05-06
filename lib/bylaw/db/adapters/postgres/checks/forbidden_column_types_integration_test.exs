@@ -17,9 +17,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
     assert {:error, issues} =
              Postgres.validate([target], [
                {ForbiddenColumnTypes,
-                schemas: [TestDatabase.schema()],
-                tables: ["column_type_examples"],
-                types: ["json"]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    types: ["json"]
+                  ]
+                ]}
              ])
 
     assert Enum.map(issues, & &1.meta.column) == ["json_payload", "raw_payload"]
@@ -33,10 +36,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
     assert :ok =
              Postgres.validate([target], [
                {ForbiddenColumnTypes,
-                schemas: [TestDatabase.schema()],
-                tables: ["column_type_examples"],
-                types: ["json"],
-                except: [[columns: ["json_payload", "raw_payload"]]]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    types: ["json"],
+                    except: [[columns: ["json_payload", "raw_payload"]]]
+                  ]
+                ]}
              ])
   end
 
@@ -46,9 +52,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForbiddenColumnTypes,
-                schemas: [TestDatabase.schema()],
-                tables: ["column_type_examples"],
-                types: [[type: ~r/^character\(/, prefer: "text"]]}
+                rules: [
+                  [
+                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    types: [[type: ~r/^character\(/, prefer: "text"]]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -65,14 +74,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForbiddenColumnTypes,
-                schemas: [TestDatabase.schema()],
-                tables: ["column_type_examples"],
-                types: ["json"],
-                except: [
+                rules: [
                   [
-                    schema: TestDatabase.schema(),
-                    table: "column_type_examples",
-                    column: "raw_payload"
+                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    types: ["json"],
+                    except: [
+                      [
+                        schema: TestDatabase.schema(),
+                        table: "column_type_examples",
+                        column: "raw_payload"
+                      ]
+                    ]
                   ]
                 ]}
              ])
