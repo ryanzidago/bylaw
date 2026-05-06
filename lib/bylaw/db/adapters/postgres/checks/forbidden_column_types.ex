@@ -21,6 +21,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -127,29 +128,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.flat_map(&issues_for_row(target, &1, rules))
-        |> result()
+        |> Result.to_check_result()
 
       {:error, reason} ->
         {:error, [query_error_issue(target, rules, reason)]}
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :forbidden_column_types)
@@ -281,7 +267,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   end
 
   defp matching_type_rules(row, rule) do
-    Enum.filter(rule.types, &type_rule_matches?(&1, value(row, "type_name")))
+    Enum.filter(rule.types, &type_rule_matches?(&1, Result.value(row, "type_name", @row_keys)))
   end
 
   defp type_rule_matches?(%{type: %Regex{} = regex}, actual_type),
@@ -289,19 +275,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   defp type_rule_matches?(rule, actual_type), do: rule.type == actual_type
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
-  defp matcher_value(row, :column), do: value(row, "column_name")
-  defp matcher_value(row, :type), do: value(row, "type_name")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
+  defp matcher_value(row, :column), do: Result.value(row, "column_name", @row_keys)
+  defp matcher_value(row, :type), do: Result.value(row, "type_name", @row_keys)
 
   defp allowed_matcher_keys, do: [:schema, :table, :column, :type]
 
   @spec issue(target :: Target.t(), row :: result_row(), rule :: normalized_rule()) :: Issue.t()
   defp issue(target, row, rule) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    column_name = value(row, "column_name")
-    type_name = value(row, "type_name")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    column_name = Result.value(row, "column_name", @row_keys)
+    type_name = Result.value(row, "type_name", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -350,12 +336,5 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
         reason: reason
       }
     }
-  end
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
   end
 end

@@ -28,6 +28,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -172,29 +173,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.flat_map(&row_issues(target, &1, rules))
-        |> result()
+        |> Result.to_check_result()
 
       {:error, reason} ->
         {:error, [query_error_issue(target, rules, reason)]}
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :foreign_key_actions)
@@ -283,13 +269,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     Enum.filter(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
   end
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
-  defp matcher_value(row, :constraint), do: value(row, "constraint_name")
-  defp matcher_value(row, :column), do: value(row, "column_names")
-  defp matcher_value(row, :referenced_schema), do: value(row, "referenced_schema_name")
-  defp matcher_value(row, :referenced_table), do: value(row, "referenced_table_name")
-  defp matcher_value(row, :referenced_column), do: value(row, "referenced_column_names")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
+  defp matcher_value(row, :constraint), do: Result.value(row, "constraint_name", @row_keys)
+  defp matcher_value(row, :column), do: Result.value(row, "column_names", @row_keys)
+
+  defp matcher_value(row, :referenced_schema),
+    do: Result.value(row, "referenced_schema_name", @row_keys)
+
+  defp matcher_value(row, :referenced_table),
+    do: Result.value(row, "referenced_table_name", @row_keys)
+
+  defp matcher_value(row, :referenced_column),
+    do: Result.value(row, "referenced_column_names", @row_keys)
 
   defp allowed_matcher_keys do
     [
@@ -323,8 +315,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     [issue(target, row, expected, actual, type) | issues]
   end
 
-  defp delete_action(row), do: action(value(row, "delete_action_code"))
-  defp update_action(row), do: action(value(row, "update_action_code"))
+  defp delete_action(row), do: action(Result.value(row, "delete_action_code", @row_keys))
+  defp update_action(row), do: action(Result.value(row, "update_action_code", @row_keys))
 
   defp action(code), do: Map.fetch!(@action_codes, to_string(code))
 
@@ -336,9 +328,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
           type :: :delete | :update
         ) :: Issue.t()
   defp issue(target, row, expected, actual, type) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    constraint_name = value(row, "constraint_name")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    constraint_name = Result.value(row, "constraint_name", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -351,10 +343,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
         schema: schema_name,
         table: table_name,
         constraint: constraint_name,
-        columns: value(row, "column_names"),
-        referenced_schema: value(row, "referenced_schema_name"),
-        referenced_table: value(row, "referenced_table_name"),
-        referenced_columns: value(row, "referenced_column_names")
+        columns: Result.value(row, "column_names", @row_keys),
+        referenced_schema: Result.value(row, "referenced_schema_name", @row_keys),
+        referenced_table: Result.value(row, "referenced_table_name", @row_keys),
+        referenced_columns: Result.value(row, "referenced_column_names", @row_keys)
       }
     }
   end
@@ -386,11 +378,4 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   defp format_action(:cascade), do: "CASCADE"
   defp format_action(:set_null), do: "SET NULL"
   defp format_action(:set_default), do: "SET DEFAULT"
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
-  end
 end

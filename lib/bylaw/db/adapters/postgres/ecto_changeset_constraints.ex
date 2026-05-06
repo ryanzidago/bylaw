@@ -2,6 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   @moduledoc false
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -117,7 +118,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
       |> Enum.flat_map(&schema_issues(target, &1, candidates, constraints, config))
       |> Enum.sort_by(&{&1.meta.schema_module, &1.meta.function, &1.meta.constraint})
 
-    result(issues)
+    Result.to_check_result(issues)
   end
 
   defp validate_enabled(target, opts, config) do
@@ -151,7 +152,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
       {:ok, result} ->
         constraints =
           result
-          |> rows()
+          |> Result.rows()
           |> Enum.filter(&matches_rules?(&1, rules))
           |> Enum.map(&catalog_constraint(&1, config.kind))
 
@@ -316,30 +317,15 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     end
   end
 
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
   defp catalog_constraint(row, expected_kind) do
     %CatalogConstraint{
       kind: expected_kind,
-      schema: value(row, "schema_name"),
-      table: value(row, "table_name"),
-      name: value(row, "constraint_name"),
-      columns: value(row, "column_names")
+      schema: Result.value(row, "schema_name", @row_keys),
+      table: Result.value(row, "table_name", @row_keys),
+      name: Result.value(row, "constraint_name", @row_keys),
+      columns: Result.value(row, "column_names", @row_keys)
     }
   end
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(target, opts, name) do
     if not Keyword.keyword?(opts) do
@@ -455,10 +441,10 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   defp matches_rules?(row, rules),
     do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
-  defp matcher_value(row, :constraint), do: value(row, "constraint_name")
-  defp matcher_value(row, :column), do: value(row, "column_names")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
+  defp matcher_value(row, :constraint), do: Result.value(row, "constraint_name", @row_keys)
+  defp matcher_value(row, :column), do: Result.value(row, "column_names", @row_keys)
 
   defp allowed_matcher_keys, do: [:schema, :table, :constraint, :column]
 
@@ -474,9 +460,5 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
         reason: reason
       }
     }
-  end
-
-  defp value(row, key) do
-    Map.get(row, key) || Map.fetch!(row, Map.fetch!(@row_keys, key))
   end
 end
