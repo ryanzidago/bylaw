@@ -153,6 +153,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
     RuleOptions.validate_boolean_option!(opts, :validate, :duplicate_indexes)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], :duplicate_indexes)
       RuleOptions.default_rules!(opts, :duplicate_indexes, allowed_matcher_keys())
       RuleOptions.filter(opts, :schemas, :duplicate_indexes)
       RuleOptions.filter(opts, :tables, :duplicate_indexes)

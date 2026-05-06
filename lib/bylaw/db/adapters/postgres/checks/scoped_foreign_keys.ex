@@ -224,6 +224,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
     RuleOptions.validate_boolean_option!(opts, :validate, :scoped_foreign_keys)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:scope_columns, :schemas, :tables, :except],
+        :scoped_foreign_keys
+      )
+
       normalize_rules!(opts)
     end
 

@@ -333,11 +333,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions to include global actions or :rules, not both/,
+                   ~r/expected foreign_key_actions to use rule-level :on_delete when :rules is provided/,
                    fn ->
                      ForeignKeyActions.validate(target,
                        on_delete: :cascade,
                        rules: [[on_delete: :restrict]]
+                     )
+                   end
+    end
+
+    test "rejects top-level exceptions when rules are provided" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected foreign_key_actions to use rule-level :except when :rules is provided/,
+                   fn ->
+                     ForeignKeyActions.validate(target,
+                       rules: [[on_delete: :restrict]],
+                       except: [[table: "schema_migrations"]]
                      )
                    end
     end

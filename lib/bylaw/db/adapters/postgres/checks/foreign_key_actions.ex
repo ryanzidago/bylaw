@@ -208,6 +208,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     RuleOptions.validate_boolean_option!(opts, :validate, :foreign_key_actions)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:schemas, :tables, :except, :on_delete, :on_update],
+        :foreign_key_actions
+      )
+
       normalize_rules!(opts)
       RuleOptions.filter(opts, :schemas, :foreign_key_actions)
       RuleOptions.filter(opts, :tables, :foreign_key_actions)

@@ -173,6 +173,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
     RuleOptions.validate_boolean_option!(opts, :validate, :required_columns)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:columns, :except], :required_columns)
       normalize_rules!(opts)
       RuleOptions.matchers(opts, :except, :required_columns, allowed_matcher_keys())
     end

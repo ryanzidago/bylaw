@@ -155,6 +155,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
     RuleOptions.validate_boolean_option!(opts, :validate, :missing_foreign_key_indexes)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:schemas, :tables],
+        :missing_foreign_key_indexes
+      )
+
       RuleOptions.default_rules!(opts, :missing_foreign_key_indexes, allowed_matcher_keys())
       RuleOptions.filter(opts, :schemas, :missing_foreign_key_indexes)
       RuleOptions.filter(opts, :tables, :missing_foreign_key_indexes)

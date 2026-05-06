@@ -42,6 +42,25 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
   end
 
   @doc false
+  @spec reject_top_level_keys_with_rules!(keyword(), list(atom()), atom()) :: :ok
+  def reject_top_level_keys_with_rules!(opts, keys, check) when is_list(opts) do
+    opts
+    |> top_level_key_with_rules(keys)
+    |> reject_top_level_key_with_rules!(check)
+  end
+
+  defp top_level_key_with_rules(opts, keys) do
+    if Keyword.has_key?(opts, :rules), do: Enum.find(keys, &Keyword.has_key?(opts, &1))
+  end
+
+  defp reject_top_level_key_with_rules!(nil, _check), do: :ok
+
+  defp reject_top_level_key_with_rules!(key, check) do
+    raise ArgumentError,
+          "expected #{check} to use rule-level #{inspect(key)} when :rules is provided"
+  end
+
+  @doc false
   @spec validate_boolean_option!(keyword(), atom(), atom()) :: :ok
   def validate_boolean_option!(opts, key, check) do
     case Keyword.fetch(opts, key) do

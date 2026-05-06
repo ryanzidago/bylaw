@@ -163,6 +163,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
     RuleOptions.validate_boolean_option!(opts, :validate, :forbidden_column_types)
 
     if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:types, :schemas, :tables, :except],
+        :forbidden_column_types
+      )
+
       normalize_scope_rules!(opts)
       RuleOptions.filter(opts, :schemas, :forbidden_column_types)
       RuleOptions.filter(opts, :tables, :forbidden_column_types)

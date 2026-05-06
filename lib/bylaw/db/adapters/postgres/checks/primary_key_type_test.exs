@@ -260,6 +260,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                    end
     end
 
+    test "rejects top-level options when rules are provided" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected primary_key_type to use rule-level :except when :rules is provided/,
+                   fn ->
+                     PrimaryKeyType.validate(target,
+                       rules: [[types: ["uuid"]]],
+                       except: [[table: "schema_migrations"]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   ~r/expected primary_key_type to use rule-level :types when :rules is provided/,
+                   fn ->
+                     PrimaryKeyType.validate(target,
+                       rules: [[types: ["uuid"]]],
+                       types: ["bigint"]
+                     )
+                   end
+    end
+
     test "requires exceptions to be matchers" do
       target = target({:ok, result([])})
 
