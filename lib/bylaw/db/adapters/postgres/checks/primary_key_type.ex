@@ -18,6 +18,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -153,30 +154,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
     case Postgres.query(target, @query, [schemas, tables, query_types(rules, opts)], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.filter(&(matches_rules?(&1, rules) and violates_matching_rule?(&1, rules)))
         |> Enum.map(&issue(target, &1, matching_types(&1, rules)))
-        |> result()
+        |> Result.to_check_result()
 
       {:error, reason} ->
         {:error, [query_error_issue(target, rules, reason)]}
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :primary_key_type)
@@ -262,24 +248,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   end
 
   defp violates_matching_rule?(row, rules) do
-    case value(row, "reason") do
+    case Result.value(row, "reason", @row_keys) do
       reason when reason in ["missing_primary_key", :missing_primary_key] ->
         true
 
       reason when reason in ["wrong_type", :wrong_type] ->
-        value(row, "actual_type") not in matching_types(row, rules)
+        Result.value(row, "actual_type", @row_keys) not in matching_types(row, rules)
     end
   end
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
-  defp matcher_value(row, :column), do: value(row, "column_name")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
+  defp matcher_value(row, :column), do: Result.value(row, "column_name", @row_keys)
 
   defp allowed_matcher_keys, do: [:schema, :table, :column]
 
   @spec issue(target :: Target.t(), row :: result_row(), types :: list(String.t())) :: Issue.t()
   defp issue(target, row, types) do
-    case value(row, "reason") do
+    case Result.value(row, "reason", @row_keys) do
       "missing_primary_key" -> missing_primary_key_issue(target, row, types)
       :missing_primary_key -> missing_primary_key_issue(target, row, types)
       "wrong_type" -> wrong_type_issue(target, row, types)
@@ -288,8 +274,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   end
 
   defp missing_primary_key_issue(target, row, types) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -308,10 +294,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   end
 
   defp wrong_type_issue(target, row, types) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    column_name = value(row, "column_name")
-    actual_type = value(row, "actual_type")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    column_name = Result.value(row, "column_name", @row_keys)
+    actual_type = Result.value(row, "actual_type", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -348,12 +334,5 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
         reason: reason
       }
     }
-  end
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
   end
 end

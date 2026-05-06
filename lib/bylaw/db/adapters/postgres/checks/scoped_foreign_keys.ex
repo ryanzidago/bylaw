@@ -19,6 +19,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -179,7 +180,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
     opts
     |> normalize_rules!()
     |> Enum.flat_map(&rule_issues(target, &1))
-    |> result()
+    |> Result.to_check_result()
   end
 
   defp rule_issues(target, rule) do
@@ -188,7 +189,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
     case Postgres.query(target, @query, [schemas, tables, rule.scope_columns], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.filter(fn row -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
         |> Enum.map(&issue(target, &1, rule.scope_columns))
 
@@ -196,21 +197,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
         [query_error_issue(target, rule, reason)]
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :scoped_foreign_keys)
@@ -282,10 +268,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
           "expected scoped_foreign_keys :scope_columns to be a non-empty list of strings"
   end
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
-  defp matcher_value(row, :constraint), do: value(row, "constraint_name")
-  defp matcher_value(row, :referenced_table), do: value(row, "referenced_table_name")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
+  defp matcher_value(row, :constraint), do: Result.value(row, "constraint_name", @row_keys)
+
+  defp matcher_value(row, :referenced_table),
+    do: Result.value(row, "referenced_table_name", @row_keys)
 
   defp allowed_matcher_keys, do: [:schema, :table, :constraint, :referenced_table]
 
@@ -302,13 +290,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   @spec issue(target :: Target.t(), row :: result_row(), scope_columns :: list(String.t())) ::
           Issue.t()
   defp issue(target, row, scope_columns) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    constraint_name = value(row, "constraint_name")
-    column_names = value(row, "column_names")
-    referenced_schema_name = value(row, "referenced_schema_name")
-    referenced_table_name = value(row, "referenced_table_name")
-    referenced_column_names = value(row, "referenced_column_names")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    constraint_name = Result.value(row, "constraint_name", @row_keys)
+    column_names = Result.value(row, "column_names", @row_keys)
+    referenced_schema_name = Result.value(row, "referenced_schema_name", @row_keys)
+    referenced_table_name = Result.value(row, "referenced_table_name", @row_keys)
+    referenced_column_names = Result.value(row, "referenced_column_names", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -348,12 +336,5 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
         reason: reason
       }
     }
-  end
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
   end
 end

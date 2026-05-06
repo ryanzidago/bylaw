@@ -12,6 +12,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -116,30 +117,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.filter(&matches_rules?(&1, rules))
         |> Enum.map(&issue(target, &1))
-        |> result()
+        |> Result.to_check_result()
 
       {:error, reason} ->
         {:error, [query_error_issue(target, rules, reason)]}
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :duplicate_indexes)
@@ -165,16 +151,16 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   defp matches_rules?(row, rules),
     do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
 
   defp allowed_matcher_keys, do: [:schema, :table]
 
   @spec issue(target :: Target.t(), row :: result_row()) :: Issue.t()
   defp issue(target, row) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    index_names = value(row, "index_names")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    index_names = Result.value(row, "index_names", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -208,12 +194,5 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
         reason: reason
       }
     }
-  end
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
   end
 end

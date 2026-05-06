@@ -28,6 +28,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
@@ -130,14 +131,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
     rules
     |> Enum.flat_map(&rule_issues(target, &1, global_except))
-    |> result()
+    |> Result.to_check_result()
   end
 
   defp rule_issues(target, rule, global_except) do
     case Postgres.query(target, @query, [rule.columns], []) do
       {:ok, result} ->
         result
-        |> rows()
+        |> Result.rows()
         |> Enum.filter(&matched_by_rule?(&1, rule, global_except))
         |> Enum.map(&issue(target, &1, rule))
 
@@ -145,21 +146,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
         [query_error_issue(target, rule, global_except, reason)]
     end
   end
-
-  defp rows(result) when is_map(result) do
-    %{columns: columns, rows: rows} = result
-
-    Enum.map(rows, fn row ->
-      columns
-      |> Enum.zip(row)
-      |> Map.new()
-    end)
-  end
-
-  defp rows(rows) when is_list(rows), do: rows
-
-  defp result([]), do: :ok
-  defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
     RuleOptions.keyword_list!(opts, :required_columns)
@@ -230,8 +216,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
       not RuleOptions.matches_any?(row, global_except, &matcher_value/2)
   end
 
-  defp matcher_value(row, :schema), do: value(row, "schema_name")
-  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
+  defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
 
   defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
 
@@ -243,9 +229,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   @spec issue(target :: Target.t(), row :: result_row(), rule :: normalized_rule()) :: Issue.t()
   defp issue(target, row, rule) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-    missing_columns = value(row, "missing_columns")
+    schema_name = Result.value(row, "schema_name", @row_keys)
+    table_name = Result.value(row, "table_name", @row_keys)
+    missing_columns = Result.value(row, "missing_columns", @row_keys)
 
     %Issue{
       check: __MODULE__,
@@ -290,12 +276,5 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
       only: rule.only,
       except: rule.except
     }
-  end
-
-  defp value(row, key) do
-    case Map.fetch(row, key) do
-      {:ok, value} -> value
-      :error -> Map.fetch!(row, Map.fetch!(@row_keys, key))
-    end
   end
 end
