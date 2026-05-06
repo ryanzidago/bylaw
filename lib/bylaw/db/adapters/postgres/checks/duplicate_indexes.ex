@@ -68,10 +68,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   @type check_opts :: list(check_opt())
 
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "index_names" => :index_names,
     "schema_name" => :schema_name,
@@ -156,7 +152,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   defp allowed_matcher_keys, do: [:schema, :table]
 
-  @spec issue(target :: Target.t(), row :: result_row()) :: Issue.t()
+  @spec issue(target :: Target.t(), row :: Result.row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = Result.value(row, "schema_name", @row_keys)
     table_name = Result.value(row, "table_name", @row_keys)

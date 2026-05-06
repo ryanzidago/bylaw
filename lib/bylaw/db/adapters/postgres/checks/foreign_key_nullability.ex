@@ -67,10 +67,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
   @type check_opts :: list(check_opt())
 
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "column_name" => :column_name,
     "constraint_name" => :constraint_name,
@@ -163,7 +159,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
   defp allowed_matcher_keys, do: [:schema, :table, :constraint, :column]
 
-  @spec issue(target :: Target.t(), row :: result_row()) :: Issue.t()
+  @spec issue(target :: Target.t(), row :: Result.row()) :: Issue.t()
   defp issue(target, row) do
     schema_name = Result.value(row, "schema_name", @row_keys)
     table_name = Result.value(row, "table_name", @row_keys)

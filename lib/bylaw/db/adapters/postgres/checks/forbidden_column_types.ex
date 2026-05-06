@@ -77,10 +77,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           prefer: String.t() | nil,
           reason: String.t() | nil
         }
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "column_name" => :column_name,
     "schema_name" => :schema_name,
@@ -282,7 +278,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   defp allowed_matcher_keys, do: [:schema, :table, :column, :type]
 
-  @spec issue(target :: Target.t(), row :: result_row(), rule :: normalized_rule()) :: Issue.t()
+  @spec issue(target :: Target.t(), row :: Result.row(), rule :: normalized_rule()) :: Issue.t()
   defp issue(target, row, rule) do
     schema_name = Result.value(row, "schema_name", @row_keys)
     table_name = Result.value(row, "table_name", @row_keys)

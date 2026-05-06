@@ -39,11 +39,6 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
 
   @type check_opts :: list(check_opt())
 
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
-
   @type config :: %{
           check: module(),
           kind: CatalogConstraint.kind(),

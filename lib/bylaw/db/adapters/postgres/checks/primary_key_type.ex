@@ -102,10 +102,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   @type check_opts :: list(check_opt())
 
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "actual_type" => :actual_type,
     "column_name" => :column_name,
@@ -263,7 +259,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   defp allowed_matcher_keys, do: [:schema, :table, :column]
 
-  @spec issue(target :: Target.t(), row :: result_row(), types :: list(String.t())) :: Issue.t()
+  @spec issue(target :: Target.t(), row :: Result.row(), types :: list(String.t())) :: Issue.t()
   defp issue(target, row, types) do
     case Result.value(row, "reason", @row_keys) do
       "missing_primary_key" -> missing_primary_key_issue(target, row, types)
