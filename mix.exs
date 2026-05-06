@@ -31,7 +31,8 @@ defmodule Bylaw.MixProject do
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(:dev), do: ["lib", "credo_checks"]
+  defp elixirc_paths(:test), do: ["lib", "credo_checks", "test/support"]
   defp elixirc_paths(_env), do: ["lib"]
 
   defp test_paths(:test), do: ["lib"]
@@ -69,7 +70,7 @@ defmodule Bylaw.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:credo, "~> 1.7", runtime: false},
+      {:credo, "~> 1.7", optional: true, runtime: false},
       {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ecto_sql, "~> 3.13", only: :test},
@@ -102,6 +103,7 @@ defmodule Bylaw.MixProject do
     [
       files:
         Path.wildcard("lib/**/*.ex") ++
+          Path.wildcard("credo_checks/**/*.ex") ++
           ~w(guides .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url}
