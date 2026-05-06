@@ -352,10 +352,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
 
       assert {:error, [%Issue{} = issue]} =
                ScopedForeignKeys.validate(target,
-                 scope_columns: ["tenant_id"],
-                 schemas: ["public"],
-                 tables: ["orders"],
-                 except: [[referenced_table: "global_settings"]]
+                 rules: [
+                   [
+                     scope_columns: ["tenant_id"],
+                     only: [schema: "public", table: "orders"],
+                     except: [[referenced_table: "global_settings"]]
+                   ]
+                 ]
                )
 
       assert issue.message == "could not inspect Postgres scoped foreign keys"
@@ -363,10 +366,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               schemas: ["public"],
-               tables: ["orders"],
-               scope_columns: ["tenant_id"],
-               except: [[referenced_table: "global_settings"]],
+               rule: %{
+                 only: [[schema: "public", table: "orders"]],
+                 scope_columns: ["tenant_id"],
+                 except: [[referenced_table: "global_settings"]]
+               },
                reason: :connection_closed
              }
     end

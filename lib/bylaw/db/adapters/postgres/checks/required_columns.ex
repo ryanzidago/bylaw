@@ -3,29 +3,32 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   Validates that Postgres tables include required columns.
 
   Use `rules: [...]` to require columns for scoped groups of tables. A rule
-  applies when a table matches any matcher in `where`; keys inside one matcher
+  applies when a table matches any matcher in `only`; keys inside one matcher
   are combined. Matching rules accumulate, so the same table can be validated by
   more than one rule.
 
       {RequiredColumns,
        rules: [
-         [columns: ["inserted_at", "updated_at"]],
          [
-           where: [
+           columns: ["inserted_at", "updated_at"],
+           except: [[table: "schema_migrations"]]
+         ],
+         [
+          only: [
              [schema: "audit"],
              [schema: "billing", table: ~r/^invoice_/]
            ],
            columns: ["tenant_id"]
          ]
-       ],
-       except: [[table: "schema_migrations"]]}
+       ]}
 
-  For the common one-rule case, pass `columns: [...]` directly.
+  Use rule-level `except: [...]` for exclusions.
   """
 
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -61,29 +64,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   @type matcher_value :: String.t() | Regex.t()
   @type matcher_values :: matcher_value() | list(matcher_value())
-  @type matcher ::
-          list(
-            {:schema, matcher_values()}
-            | {:schemas, list(matcher_value())}
-            | {:table, matcher_values()}
-            | {:tables, list(matcher_value())}
-          )
+  @type matcher :: list({:schema, matcher_values()} | {:table, matcher_values()})
   @type rule ::
           list(
             {:columns, list(String.t())}
-            | {:where, matcher() | list(matcher())}
+            | {:only, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
           )
   @type check_opt ::
           {:validate, boolean()}
-          | {:columns, list(String.t())}
           | {:rules, list(rule())}
           | {:except, matcher() | list(matcher())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
           columns: list(String.t()),
-          where: list(matcher()),
+          only: list(matcher()),
           except: list(matcher())
         }
   @type result_row :: %{
@@ -108,7 +104,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
       validate_required_columns(target, opts)
     else
       :ok
@@ -130,7 +126,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   defp validate_required_columns(target, opts) do
     rules = normalize_rules!(opts)
-    global_except = matchers(opts, :except)
+    global_except = RuleOptions.matchers(opts, :except, :required_columns, allowed_matcher_keys())
 
     rules
     |> Enum.flat_map(&rule_issues(target, &1, global_except))
@@ -166,92 +162,57 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError,
-            "expected required_columns opts to be a keyword list, got: #{inspect(opts)}"
-    end
+    RuleOptions.keyword_list!(opts, :required_columns)
 
-    allowed_keys = [:validate, :columns, :rules, :except]
+    RuleOptions.validate_allowed_keys!(
+      opts,
+      [:validate, :columns, :rules, :except],
+      :required_columns
+    )
 
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown required_columns option: #{inspect(key)}"
-      end
-    end)
+    RuleOptions.validate_boolean_option!(opts, :validate, :required_columns)
 
-    validate_boolean_option!(opts, :validate)
-
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:columns, :except], :required_columns)
       normalize_rules!(opts)
-      matchers(opts, :except)
+      RuleOptions.matchers(opts, :except, :required_columns, allowed_matcher_keys())
     end
 
     opts
   end
 
-  defp validate_boolean_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
-
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected required_columns #{inspect(key)} to be a boolean, got: #{inspect(value)}"
-
-      :error ->
-        :ok
-    end
-  end
-
   defp normalize_rules!(opts) do
-    has_columns? = Keyword.has_key?(opts, :columns)
     has_rules? = Keyword.has_key?(opts, :rules)
+    has_columns? = Keyword.has_key?(opts, :columns)
 
     cond do
-      has_columns? and has_rules? ->
+      has_rules? and has_columns? ->
         raise ArgumentError, "expected required_columns to include :columns or :rules, not both"
-
-      has_columns? ->
-        [%{columns: columns!(Keyword.fetch!(opts, :columns)), where: [], except: []}]
 
       has_rules? ->
         opts
         |> Keyword.fetch!(:rules)
-        |> rules!()
+        |> RuleOptions.rules!(
+          :required_columns,
+          allowed_matcher_keys(),
+          [:columns],
+          &rule_payload!/1
+        )
+
+      has_columns? ->
+        [%{columns: columns!(Keyword.fetch!(opts, :columns)), only: [], except: []}]
 
       true ->
         raise ArgumentError, "expected required_columns to include :columns or :rules"
     end
   end
 
-  defp rules!(rules) when is_list(rules) do
-    if Enum.empty?(rules) or Enum.any?(rules, &(not Keyword.keyword?(&1))) do
-      raise_rules_error!()
-    end
-
-    Enum.map(rules, &rule!/1)
-  end
-
-  defp rules!(_rules), do: raise_rules_error!()
-
-  defp rule!(rule) do
-    allowed_keys = [:columns, :where, :except]
-
-    Enum.each(rule, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown required_columns rule option: #{inspect(key)}"
-      end
-    end)
-
+  defp rule_payload!(rule) do
     if not Keyword.has_key?(rule, :columns) do
       raise ArgumentError, "expected required_columns rule to include :columns"
     end
 
-    %{
-      columns: columns!(Keyword.fetch!(rule, :columns)),
-      where: matchers(rule, :where),
-      except: matchers(rule, :except)
-    }
+    %{columns: columns!(Keyword.fetch!(rule, :columns))}
   end
 
   defp columns!(values) when is_list(values) do
@@ -264,101 +225,21 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   defp columns!(_values), do: raise_columns_error!()
 
-  defp matchers(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} -> matchers!(key, value)
-      :error -> []
-    end
-  end
-
-  defp matchers!(key, value) when is_list(value) do
-    cond do
-      Keyword.keyword?(value) ->
-        [matcher!(key, value)]
-
-      Enum.empty?(value) ->
-        raise_matchers_error!(key)
-
-      Enum.all?(value, &Keyword.keyword?/1) ->
-        Enum.map(value, &matcher!(key, &1))
-
-      true ->
-        raise_matchers_error!(key)
-    end
-  end
-
-  defp matchers!(key, _value), do: raise_matchers_error!(key)
-
-  defp matcher!(key, matcher) do
-    allowed_keys = [:schema, :schemas, :table, :tables]
-
-    if Enum.empty?(matcher) do
-      raise_matchers_error!(key)
-    end
-
-    Enum.each(matcher, fn {matcher_key, value} ->
-      if matcher_key not in allowed_keys or not matcher_value?(value) do
-        raise_matchers_error!(key)
-      end
-    end)
-
-    matcher
-  end
-
-  defp matcher_value?(%Regex{}), do: true
-  defp matcher_value?(value) when is_binary(value), do: non_empty_string?(value)
-
-  defp matcher_value?(values) when is_list(values) do
-    not Enum.empty?(values) and Enum.all?(values, &matcher_value?/1)
-  end
-
-  defp matcher_value?(_value), do: false
-
   defp matched_by_rule?(row, rule, global_except) do
-    schema_name = value(row, "schema_name")
-    table_name = value(row, "table_name")
-
-    (Enum.empty?(rule.where) or matches_any?(rule.where, schema_name, table_name)) and
-      not matches_any?(rule.except, schema_name, table_name) and
-      not matches_any?(global_except, schema_name, table_name)
+    RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) and
+      not RuleOptions.matches_any?(row, global_except, &matcher_value/2)
   end
 
-  defp matches_any?([], _schema_name, _table_name), do: false
-
-  defp matches_any?(matchers, schema_name, table_name) do
-    Enum.any?(matchers, &matches?(schema_name, table_name, &1))
-  end
-
-  defp matches?(schema_name, table_name, matcher) do
-    Enum.all?(matcher, fn
-      {:schema, value} -> matches_value?(schema_name, value)
-      {:schemas, values} -> matches_value?(schema_name, values)
-      {:table, value} -> matches_value?(table_name, value)
-      {:tables, values} -> matches_value?(table_name, values)
-    end)
-  end
-
-  defp matches_value?(value, %Regex{} = pattern), do: Regex.match?(pattern, value)
-  defp matches_value?(value, expected) when is_binary(expected), do: value == expected
-
-  defp matches_value?(value, expected) when is_list(expected),
-    do: Enum.any?(expected, &matches_value?(value, &1))
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
 
   defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
-
-  defp raise_rules_error! do
-    raise ArgumentError,
-          "expected required_columns :rules to be a non-empty list of keyword rules"
-  end
 
   defp raise_columns_error! do
     raise ArgumentError, "expected required_columns :columns to be a non-empty list of strings"
   end
 
-  defp raise_matchers_error!(key) do
-    raise ArgumentError,
-          "expected required_columns #{inspect(key)} to be a matcher or non-empty list of matchers"
-  end
+  defp allowed_matcher_keys, do: [:schema, :table]
 
   @spec issue(target :: Target.t(), row :: result_row(), rule :: normalized_rule()) :: Issue.t()
   defp issue(target, row, rule) do
@@ -406,7 +287,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   defp rule_meta(rule) do
     %{
       columns: rule.columns,
-      where: rule.where,
+      only: rule.only,
       except: rule.except
     }
   end

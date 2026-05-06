@@ -57,8 +57,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
+          | {:rules, list(keyword())}
 
   @type check_opts :: list(check_opt())
 

@@ -43,7 +43,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
                missing_columns: ["tenant_id", "account_id"],
                rule: %{
                  columns: ["tenant_id", "account_id"],
-                 where: [],
+                 only: [],
                  except: []
                }
              }
@@ -65,13 +65,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
                RequiredColumns.validate(target,
                  rules: [
                    [
-                     where: [
+                     only: [
                        [schema: "public", table: ~r/^orders/],
                        [schema: "billing", table: ~r/^invoice_/]
                      ],
                      columns: ["tenant_id"]
                    ],
-                   [where: [schema: "audit"], columns: ["actor_id"]]
+                   [only: [schema: "audit"], columns: ["actor_id"]]
                  ]
                )
 
@@ -100,12 +100,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
                RequiredColumns.validate(target,
                  rules: [
                    [
-                     where: [[schema: "public"], [schema: "billing"]],
+                     only: [[schema: "public"], [schema: "billing"]],
                      columns: ["tenant_id"],
-                     except: [[schema: "billing", table: ~r/^invoice_/]]
+                     except: [
+                       [schema: "billing", table: ~r/^invoice_/],
+                       [table: "schema_migrations"],
+                       [table: "orders"]
+                     ]
                    ]
-                 ],
-                 except: [[table: "schema_migrations"], [table: "orders"]]
+                 ]
                )
     end
 
@@ -193,11 +196,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected required_columns to include :columns or :rules, not both/,
+                   ~r/expected required_columns to use rule-level :columns when :rules is provided/,
                    fn ->
                      RequiredColumns.validate(target,
                        columns: ["tenant_id"],
                        rules: [[columns: ["account_id"]]]
+                     )
+                   end
+    end
+
+    test "rejects top-level exceptions when rules are provided" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected required_columns to use rule-level :except when :rules is provided/,
+                   fn ->
+                     RequiredColumns.validate(target,
+                       rules: [[columns: ["tenant_id"]]],
+                       except: [[table: "schema_migrations"]]
                      )
                    end
     end
@@ -232,15 +248,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected required_columns :where to be a matcher or non-empty list of matchers/,
+                   ~r/expected required_columns :only to be a matcher or non-empty list of matchers/,
                    fn ->
                      RequiredColumns.validate(target,
-                       rules: [[where: [], columns: ["tenant_id"]]]
+                       rules: [[only: [], columns: ["tenant_id"]]]
                      )
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected required_columns :except to be a matcher or non-empty list of matchers/,
+                   ~r/expected required_columns :except :tables to be a matcher value or non-empty list of matcher values/,
                    fn ->
                      RequiredColumns.validate(target,
                        columns: ["tenant_id"],
@@ -254,8 +270,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
 
       assert {:error, [%Issue{} = issue]} =
                RequiredColumns.validate(target,
-                 rules: [[where: [schema: "public"], columns: ["tenant_id"]]],
-                 except: [[table: "schema_migrations"]]
+                 rules: [
+                   [
+                     only: [schema: "public"],
+                     columns: ["tenant_id"],
+                     except: [[table: "schema_migrations"]]
+                   ]
+                 ]
                )
 
       assert issue.message == "could not inspect Postgres table columns"
@@ -265,10 +286,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
                dynamic_repo: nil,
                rule: %{
                  columns: ["tenant_id"],
-                 where: [[schema: "public"]],
-                 except: []
+                 only: [[schema: "public"]],
+                 except: [[table: "schema_migrations"]]
                },
-               except: [[table: "schema_migrations"]],
+               except: [],
                reason: :connection_closed
              }
     end

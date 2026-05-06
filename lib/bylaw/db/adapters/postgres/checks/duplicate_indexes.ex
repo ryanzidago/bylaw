@@ -2,9 +2,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   @moduledoc """
   Flags equivalent Postgres indexes on the same table.
 
-  By default the check inspects all non-system schemas in a Postgres target.
-  Pass `:schemas` or `:tables` options to narrow the scope. Indexes are treated
-  as duplicates when they have the same table, access method, uniqueness,
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope. Indexes are treated as duplicates
+  when they have the same table, access method, uniqueness,
   validity, key and included columns, operator classes, collations, sort options,
   expressions, and predicate.
   """
@@ -12,6 +12,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -62,8 +63,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   @type check_opt ::
           {:validate, boolean()}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
+          | {:rules, list(keyword())}
 
   @type check_opts :: list(check_opt())
 
@@ -81,14 +81,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   Validates that tables do not have duplicate indexes.
 
   The check is enabled by default. Pass `validate: false` to skip it. Use
-  `schemas: [...]` or `tables: [...]` to narrow the default all-schema scope.
+  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
       validate_duplicate_indexes(target, opts)
     else
       :ok
@@ -109,18 +109,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   end
 
   defp validate_duplicate_indexes(target, opts) do
-    schemas = filter(opts, :schemas)
-    tables = filter(opts, :tables)
+    rules = RuleOptions.default_rules!(opts, :duplicate_indexes, allowed_matcher_keys())
+    schemas = RuleOptions.filter(opts, :schemas, :duplicate_indexes)
+    tables = RuleOptions.filter(opts, :tables, :duplicate_indexes)
 
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
         |> rows()
+        |> Enum.filter(&matches_rules?(&1, rules))
         |> Enum.map(&issue(target, &1))
         |> result()
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, reason)]}
+        {:error, [query_error_issue(target, rules, reason)]}
     end
   end
 
@@ -140,75 +142,33 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError,
-            "expected duplicate_indexes opts to be a keyword list, got: #{inspect(opts)}"
+    RuleOptions.keyword_list!(opts, :duplicate_indexes)
+
+    RuleOptions.validate_allowed_keys!(
+      opts,
+      [:validate, :rules, :schemas, :tables],
+      :duplicate_indexes
+    )
+
+    RuleOptions.validate_boolean_option!(opts, :validate, :duplicate_indexes)
+
+    if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], :duplicate_indexes)
+      RuleOptions.default_rules!(opts, :duplicate_indexes, allowed_matcher_keys())
+      RuleOptions.filter(opts, :schemas, :duplicate_indexes)
+      RuleOptions.filter(opts, :tables, :duplicate_indexes)
     end
-
-    allowed_keys = [:validate, :schemas, :tables]
-
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown duplicate_indexes option: #{inspect(key)}"
-      end
-    end)
-
-    validate_boolean_option!(opts, :validate)
-    validate_filter_option!(opts, :schemas)
-    validate_filter_option!(opts, :tables)
 
     opts
   end
 
-  defp validate_boolean_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
+  defp matches_rules?(row, rules),
+    do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
 
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected duplicate_indexes #{inspect(key)} to be a boolean, got: #{inspect(value)}"
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
 
-      :error ->
-        :ok
-    end
-  end
-
-  defp validate_filter_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, values} ->
-        filter!(key, values)
-        :ok
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp filter(opts, key) do
-    values = Keyword.get(opts, key)
-
-    filter!(key, values)
-  end
-
-  defp filter!(_key, nil), do: nil
-
-  defp filter!(key, values) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
-      raise_filter_error!(key)
-    end
-
-    values
-  end
-
-  defp filter!(key, _values), do: raise_filter_error!(key)
-
-  defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
-
-  defp raise_filter_error!(key) do
-    raise ArgumentError,
-          "expected duplicate_indexes #{inspect(key)} to be a non-empty list of strings"
-  end
+  defp allowed_matcher_keys, do: [:schema, :table]
 
   @spec issue(target :: Target.t(), row :: result_row()) :: Issue.t()
   defp issue(target, row) do
@@ -233,11 +193,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   @spec query_error_issue(
           target :: Target.t(),
-          schemas :: list(String.t()) | nil,
-          tables :: list(String.t()) | nil,
+          rules :: list(RuleOptions.rule()),
           reason :: term()
         ) :: Issue.t()
-  defp query_error_issue(target, schemas, tables, reason) do
+  defp query_error_issue(target, rules, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
@@ -245,8 +204,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
-        tables: tables,
+        rules: rules,
         reason: reason
       }
     }
