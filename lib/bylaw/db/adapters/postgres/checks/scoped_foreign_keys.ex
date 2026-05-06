@@ -131,10 +131,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
   @type check_opts :: list(check_opt())
 
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "column_names" => :column_names,
     "constraint_name" => :constraint_name,
@@ -287,7 +283,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   defp query_filters(%{only: [[table: tables]]}), do: {nil, List.wrap(tables)}
   defp query_filters(_rule), do: {nil, nil}
 
-  @spec issue(target :: Target.t(), row :: result_row(), scope_columns :: list(String.t())) ::
+  @spec issue(target :: Target.t(), row :: Result.row(), scope_columns :: list(String.t())) ::
           Issue.t()
   defp issue(target, row, scope_columns) do
     schema_name = Result.value(row, "schema_name", @row_keys)

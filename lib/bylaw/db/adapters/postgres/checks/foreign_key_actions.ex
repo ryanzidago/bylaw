@@ -116,10 +116,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
           on_delete: action() | nil,
           on_update: action() | nil
         }
-  @type result_row :: %{
-          optional(String.t()) => term(),
-          optional(atom()) => term()
-        }
   @row_keys %{
     "column_names" => :column_names,
     "constraint_name" => :constraint_name,
@@ -322,7 +318,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   @spec issue(
           target :: Target.t(),
-          row :: result_row(),
+          row :: Result.row(),
           expected :: action(),
           actual :: action(),
           type :: :delete | :update
