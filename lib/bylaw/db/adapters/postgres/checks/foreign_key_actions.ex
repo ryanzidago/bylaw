@@ -2,12 +2,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @moduledoc """
   Validates Postgres foreign key `ON DELETE` and `ON UPDATE` actions.
 
-  Use global `:on_delete` and/or `:on_update` options when every foreign key in
-  scope should use the same action:
+  Use a rule without `:only` when every foreign key in scope should use the same
+  action:
 
       {ForeignKeyActions,
-       schemas: ["public"],
-       on_delete: :cascade}
+       rules: [[on_delete: :cascade]]}
 
   Use `rules: [...]` for scoped policy. A foreign key can match more than one
   rule, and matching rules accumulate.
@@ -15,11 +14,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
       {ForeignKeyActions,
        rules: [
          [
-           where: [[table: "messages"], [referenced_table: "conversations"]],
+          only: [[table: "messages"], [referenced_table: "conversations"]],
            on_delete: :cascade
          ],
          [
-           where: [referenced_table: "lookup_statuses"],
+          only: [referenced_table: "lookup_statuses"],
            on_delete: :restrict,
            on_update: :restrict
          ]
@@ -29,6 +28,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -90,38 +90,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @type matcher ::
           list(
             {:schema, matcher_values()}
-            | {:schemas, list(matcher_value())}
             | {:table, matcher_values()}
-            | {:tables, list(matcher_value())}
             | {:constraint, matcher_values()}
-            | {:constraints, list(matcher_value())}
             | {:column, matcher_values()}
-            | {:columns, list(matcher_value())}
             | {:referenced_schema, matcher_values()}
-            | {:referenced_schemas, list(matcher_value())}
             | {:referenced_table, matcher_values()}
-            | {:referenced_tables, list(matcher_value())}
             | {:referenced_column, matcher_values()}
-            | {:referenced_columns, list(matcher_value())}
           )
   @type rule ::
           list(
-            {:where, matcher() | list(matcher())}
+            {:only, matcher() | list(matcher())}
+            | {:except, matcher() | list(matcher())}
             | {:on_delete, action()}
             | {:on_update, action()}
           )
   @type check_opt ::
           {:validate, boolean()}
-          | {:schemas, list(String.t())}
-          | {:tables, list(String.t())}
-          | {:except, matcher() | list(matcher())}
-          | {:on_delete, action()}
-          | {:on_update, action()}
           | {:rules, list(rule())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
-          where: list(matcher()),
+          only: list(matcher()),
+          except: list(matcher()),
           on_delete: action() | nil,
           on_update: action() | nil
         }
@@ -146,15 +136,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   The check is enabled by default. Pass `validate: false` to skip it. Validation
   requires either global `:on_delete` and/or `:on_update` policy, or `rules:
-  [...]` for scoped policy. Use `:schemas`, `:tables`, and `:except` to narrow
-  or exclude the inspected child foreign keys.
+  [...]` for scoped policy. Use rule-level `:only` and `:except` matchers to
+  narrow or exclude the inspected foreign keys.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do
     opts = check_opts!(opts)
 
-    if Keyword.get(opts, :validate, true) == true do
+    if RuleOptions.enabled?(opts) do
       validate_foreign_key_actions(target, opts)
     else
       :ok
@@ -175,21 +165,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   end
 
   defp validate_foreign_key_actions(target, opts) do
-    schemas = filter(opts, :schemas)
-    tables = filter(opts, :tables)
     rules = normalize_rules!(opts)
-    exceptions = matchers(opts, :except)
+    schemas = RuleOptions.filter(opts, :schemas, :foreign_key_actions)
+    tables = RuleOptions.filter(opts, :tables, :foreign_key_actions)
 
     case Postgres.query(target, @query, [schemas, tables], []) do
       {:ok, result} ->
         result
         |> rows()
-        |> Enum.reject(&matches_any?(&1, exceptions))
         |> Enum.flat_map(&row_issues(target, &1, rules))
         |> result()
 
       {:error, reason} ->
-        {:error, [query_error_issue(target, schemas, tables, rules, exceptions, reason)]}
+        {:error, [query_error_issue(target, rules, reason)]}
     end
   end
 
@@ -209,97 +197,58 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   defp result(issues), do: {:error, issues}
 
   defp check_opts!(opts) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError,
-            "expected foreign_key_actions opts to be a keyword list, got: #{inspect(opts)}"
-    end
+    RuleOptions.keyword_list!(opts, :foreign_key_actions)
 
-    allowed_keys = [:validate, :schemas, :tables, :except, :on_delete, :on_update, :rules]
+    RuleOptions.validate_allowed_keys!(
+      opts,
+      [:validate, :rules, :schemas, :tables, :except, :on_delete, :on_update],
+      :foreign_key_actions
+    )
 
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown foreign_key_actions option: #{inspect(key)}"
-      end
-    end)
+    RuleOptions.validate_boolean_option!(opts, :validate, :foreign_key_actions)
 
-    validate_boolean_option!(opts, :validate)
-    validate_filter_option!(opts, :schemas)
-    validate_filter_option!(opts, :tables)
+    if RuleOptions.enabled?(opts) do
+      RuleOptions.reject_top_level_keys_with_rules!(
+        opts,
+        [:schemas, :tables, :except, :on_delete, :on_update],
+        :foreign_key_actions
+      )
 
-    if Keyword.get(opts, :validate, true) == true do
       normalize_rules!(opts)
-      matchers(opts, :except)
+      RuleOptions.filter(opts, :schemas, :foreign_key_actions)
+      RuleOptions.filter(opts, :tables, :foreign_key_actions)
     end
 
     opts
   end
 
-  defp validate_boolean_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
-
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected foreign_key_actions #{inspect(key)} to be a boolean, got: #{inspect(value)}"
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp validate_filter_option!(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, values} ->
-        filter!(key, values)
-        :ok
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp filter(opts, key) do
-    values = Keyword.get(opts, key)
-
-    filter!(key, values)
-  end
-
-  defp filter!(_key, nil), do: nil
-
-  defp filter!(key, values) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not non_empty_string?(&1))) do
-      raise_filter_error!(key)
-    end
-
-    values
-  end
-
-  defp filter!(key, _values), do: raise_filter_error!(key)
-
   defp normalize_rules!(opts) do
-    has_delete? = Keyword.has_key?(opts, :on_delete)
-    has_update? = Keyword.has_key?(opts, :on_update)
-    has_rules? = Keyword.has_key?(opts, :rules)
-
     cond do
-      has_rules? and (has_delete? or has_update?) ->
+      Keyword.has_key?(opts, :rules) and
+          (Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update)) ->
         raise ArgumentError,
               "expected foreign_key_actions to include global actions or :rules, not both"
 
-      has_delete? or has_update? ->
+      Keyword.has_key?(opts, :rules) ->
+        opts
+        |> Keyword.fetch!(:rules)
+        |> RuleOptions.rules!(
+          :foreign_key_actions,
+          allowed_matcher_keys(),
+          [:on_delete, :on_update],
+          &rule_payload!/1
+        )
+
+      Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update) ->
         [
           %{
-            where: [],
+            only: legacy_only(opts),
+            except:
+              RuleOptions.matchers(opts, :except, :foreign_key_actions, allowed_matcher_keys()),
             on_delete: action!(opts, :on_delete),
             on_update: action!(opts, :on_update)
           }
         ]
-
-      has_rules? ->
-        opts
-        |> Keyword.fetch!(:rules)
-        |> rules!()
 
       true ->
         raise ArgumentError,
@@ -307,32 +256,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     end
   end
 
-  defp rules!(rules) when is_list(rules) do
-    if Enum.empty?(rules) or Enum.any?(rules, &(not Keyword.keyword?(&1))) do
-      raise_rules_error!()
-    end
+  defp legacy_only(opts) do
+    matcher =
+      []
+      |> maybe_put_matcher(:schema, Keyword.get(opts, :schemas))
+      |> maybe_put_matcher(:table, Keyword.get(opts, :tables))
 
-    Enum.map(rules, &rule!/1)
+    if Enum.empty?(matcher), do: [], else: [matcher]
   end
 
-  defp rules!(_rules), do: raise_rules_error!()
+  defp maybe_put_matcher(matcher, _key, nil), do: matcher
+  defp maybe_put_matcher(matcher, key, value), do: Keyword.put(matcher, key, value)
 
-  defp rule!(rule) do
-    allowed_keys = [:where, :on_delete, :on_update]
-
-    Enum.each(rule, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown foreign_key_actions rule option: #{inspect(key)}"
-      end
-    end)
-
+  defp rule_payload!(rule) do
     if not (Keyword.has_key?(rule, :on_delete) or Keyword.has_key?(rule, :on_update)) do
       raise ArgumentError,
             "expected foreign_key_actions rule to include :on_delete or :on_update"
     end
 
     %{
-      where: matchers(rule, :where),
       on_delete: action!(rule, :on_delete),
       on_update: action!(rule, :on_update)
     }
@@ -352,154 +294,29 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     end
   end
 
-  defp matchers(opts, key) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} -> matchers!(key, value)
-      :error -> []
-    end
-  end
-
-  defp matchers!(key, value) when is_list(value) do
-    cond do
-      Keyword.keyword?(value) ->
-        [matcher!(key, value)]
-
-      Enum.empty?(value) ->
-        raise_matchers_error!(key)
-
-      Enum.all?(value, &Keyword.keyword?/1) ->
-        Enum.map(value, &matcher!(key, &1))
-
-      true ->
-        raise_matchers_error!(key)
-    end
-  end
-
-  defp matchers!(key, _value), do: raise_matchers_error!(key)
-
-  defp matcher!(key, matcher) do
-    allowed_keys = [
-      :schema,
-      :schemas,
-      :table,
-      :tables,
-      :constraint,
-      :constraints,
-      :column,
-      :columns,
-      :referenced_schema,
-      :referenced_schemas,
-      :referenced_table,
-      :referenced_tables,
-      :referenced_column,
-      :referenced_columns
-    ]
-
-    if Enum.empty?(matcher) do
-      raise_matchers_error!(key)
-    end
-
-    Enum.each(matcher, fn {matcher_key, matcher_value} ->
-      if matcher_key not in allowed_keys do
-        raise ArgumentError,
-              "unknown foreign_key_actions #{inspect(key)} matcher option: #{inspect(matcher_key)}"
-      end
-
-      matcher_values!(key, matcher_key, matcher_value)
-    end)
-
-    matcher
-  end
-
-  defp matcher_values!(key, matcher_key, values)
-       when matcher_key in [
-              :schemas,
-              :tables,
-              :constraints,
-              :columns,
-              :referenced_schemas,
-              :referenced_tables,
-              :referenced_columns
-            ] do
-    if not is_list(values) or Enum.empty?(values) or Enum.any?(values, &(not matcher_value?(&1))) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_values!(key, matcher_key, value) do
-    if not matcher_value?(value) do
-      raise_matcher_values_error!(key, matcher_key)
-    end
-  end
-
-  defp matcher_value?(%Regex{}), do: true
-  defp matcher_value?(value), do: non_empty_string?(value)
-
   defp matched_rules(row, rules) do
-    Enum.filter(rules, fn rule ->
-      Enum.empty?(rule.where) or matches_any?(row, rule.where)
-    end)
+    Enum.filter(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
   end
 
-  defp matches_any?(_row, []), do: false
-  defp matches_any?(row, matchers), do: Enum.any?(matchers, &matches?(row, &1))
+  defp matcher_value(row, :schema), do: value(row, "schema_name")
+  defp matcher_value(row, :table), do: value(row, "table_name")
+  defp matcher_value(row, :constraint), do: value(row, "constraint_name")
+  defp matcher_value(row, :column), do: value(row, "column_names")
+  defp matcher_value(row, :referenced_schema), do: value(row, "referenced_schema_name")
+  defp matcher_value(row, :referenced_table), do: value(row, "referenced_table_name")
+  defp matcher_value(row, :referenced_column), do: value(row, "referenced_column_names")
 
-  defp matches?(row, matcher) do
-    Enum.all?(matcher, fn
-      {:schema, values} ->
-        matches_value?(value(row, "schema_name"), values)
-
-      {:schemas, values} ->
-        matches_value?(value(row, "schema_name"), values)
-
-      {:table, values} ->
-        matches_value?(value(row, "table_name"), values)
-
-      {:tables, values} ->
-        matches_value?(value(row, "table_name"), values)
-
-      {:constraint, values} ->
-        matches_value?(value(row, "constraint_name"), values)
-
-      {:constraints, values} ->
-        matches_value?(value(row, "constraint_name"), values)
-
-      {:column, values} ->
-        matches_value?(value(row, "column_names"), values)
-
-      {:columns, values} ->
-        matches_value?(value(row, "column_names"), values)
-
-      {:referenced_schema, values} ->
-        matches_value?(value(row, "referenced_schema_name"), values)
-
-      {:referenced_schemas, values} ->
-        matches_value?(value(row, "referenced_schema_name"), values)
-
-      {:referenced_table, values} ->
-        matches_value?(value(row, "referenced_table_name"), values)
-
-      {:referenced_tables, values} ->
-        matches_value?(value(row, "referenced_table_name"), values)
-
-      {:referenced_column, values} ->
-        matches_value?(value(row, "referenced_column_names"), values)
-
-      {:referenced_columns, values} ->
-        matches_value?(value(row, "referenced_column_names"), values)
-    end)
+  defp allowed_matcher_keys do
+    [
+      :schema,
+      :table,
+      :constraint,
+      :column,
+      :referenced_schema,
+      :referenced_table,
+      :referenced_column
+    ]
   end
-
-  defp matches_value?(values, expected) when is_list(values) do
-    Enum.any?(values, &matches_value?(&1, expected))
-  end
-
-  defp matches_value?(value, expected) when is_list(expected) do
-    Enum.any?(expected, &matches_value?(value, &1))
-  end
-
-  defp matches_value?(value, %Regex{} = regex), do: Regex.match?(regex, value)
-  defp matches_value?(value, expected), do: value == expected
 
   defp row_issues(target, row, rules) do
     row
@@ -525,28 +342,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   defp update_action(row), do: action(value(row, "update_action_code"))
 
   defp action(code), do: Map.fetch!(@action_codes, to_string(code))
-
-  defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0
-
-  defp raise_filter_error!(key) do
-    raise ArgumentError,
-          "expected foreign_key_actions #{inspect(key)} to be a non-empty list of strings"
-  end
-
-  defp raise_rules_error! do
-    raise ArgumentError,
-          "expected foreign_key_actions :rules to be a non-empty list of keyword rules"
-  end
-
-  defp raise_matchers_error!(key) do
-    raise ArgumentError,
-          "expected foreign_key_actions #{inspect(key)} to be a matcher or non-empty list of matchers"
-  end
-
-  defp raise_matcher_values_error!(key, matcher_key) do
-    raise ArgumentError,
-          "expected foreign_key_actions #{inspect(key)} #{inspect(matcher_key)} to be a matcher value or non-empty list of matcher values"
-  end
 
   @spec issue(
           target :: Target.t(),
@@ -581,13 +376,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   @spec query_error_issue(
           target :: Target.t(),
-          schemas :: list(String.t()) | nil,
-          tables :: list(String.t()) | nil,
           rules :: list(normalized_rule()),
-          exceptions :: list(matcher()),
           reason :: term()
         ) :: Issue.t()
-  defp query_error_issue(target, schemas, tables, rules, exceptions, reason) do
+  defp query_error_issue(target, rules, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
@@ -595,10 +387,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
       meta: %{
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
-        schemas: schemas,
-        tables: tables,
         rules: rules,
-        except: exceptions,
         reason: reason
       }
     }
