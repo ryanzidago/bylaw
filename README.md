@@ -42,19 +42,3 @@ To run the standard checks across all packages from the repository root:
 ```sh
 scripts/qa.sh
 ```
-
-Postgres integration tests are tagged with `:postgres` and excluded by default.
-Run them against a disposable `bylaw_test` database with:
-
-```sh
-scripts/test_postgres.sh
-```
-
-The script runs the Postgres package's integration suite after dropping and
-recreating the configured test database. If your local Postgres needs explicit
-credentials, set `BYLAW_POSTGRES_URL`:
-
-```sh
-BYLAW_POSTGRES_URL=postgres://postgres:postgres@localhost:5432/bylaw_test \
-  scripts/test_postgres.sh
-```
