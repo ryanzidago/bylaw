@@ -54,7 +54,8 @@ defmodule BylawPostgres.MixProject do
       {:bylaw_db, "~> 0.1", hex: :bylaw_db, path: "../bylaw_db"},
       {:ecto_sql, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
-      {:postgrex, "~> 0.22.0"}
+      {:postgrex, "~> 0.22.0"},
+      {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
 

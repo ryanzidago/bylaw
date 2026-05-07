@@ -31,7 +31,8 @@ defmodule BylawEctoQuery.MixProject do
   defp deps do
     [
       {:ecto, "~> 3.13"},
-      {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false}
+      {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
+      {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
 
