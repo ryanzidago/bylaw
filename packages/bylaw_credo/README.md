@@ -22,6 +22,7 @@ Then enable the checks you want in your Credo configuration:
       checks: [
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.HEEx.RequireImageAlt, []},
+        {Bylaw.Credo.Check.HEEx.RequireLinkText, []},
         {Bylaw.Credo.Check.PreferListTypeSyntax, []}
       ]
     }
@@ -29,8 +30,10 @@ Then enable the checks you want in your Credo configuration:
 }
 ```
 
-`Bylaw.Credo.Check.HEEx.RequireImageAlt` uses Phoenix LiveView's HEEx tokenizer
-when available. Add `phoenix_live_view` to applications that enable this check.
+HEEx checks, including `Bylaw.Credo.Check.HEEx.RequireImageAlt` and
+`Bylaw.Credo.Check.HEEx.RequireLinkText`, use Phoenix LiveView's HEEx tokenizer
+when available. Add `phoenix_live_view` to applications that enable these
+checks.
 
 Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
 To check standalone Phoenix `.html.heex` templates, enable
