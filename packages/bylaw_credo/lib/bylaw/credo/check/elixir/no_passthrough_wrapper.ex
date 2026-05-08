@@ -1,6 +1,21 @@
 defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
   @moduledoc """
-  Disallows tiny pass-through wrappers that only forward arguments to a single call.
+  Avoid private functions that only forward their arguments to a single call.
+  Inline the call instead.
+
+  This should be refactored:
+
+      defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
+
+  Into this:
+
+      DateTime.to_iso8601(datetime)
+
+  If the wrapper name materially improves readability, keep it and disable
+  this check locally:
+
+      # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoPassthroughWrapper
+      defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
   """
 
   use Credo.Check,
@@ -8,24 +23,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
     category: :design,
     param_defaults: [include_public: false],
     explanations: [
-      check: """
-      Avoid private functions that only forward their arguments to a single call.
-      Inline the call instead.
-
-      This should be refactored:
-
-          defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
-
-      Into this:
-
-          DateTime.to_iso8601(datetime)
-
-      If the wrapper name materially improves readability, keep it and disable
-      this check locally:
-
-          # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoPassthroughWrapper
-          defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
-      """,
+      check: @moduledoc,
       params: [
         include_public: "When true, also report public `def` passthrough wrappers"
       ]

@@ -116,20 +116,8 @@ Then enable the checks you want in your Credo configuration:
 
 ## HEEx templates
 
-HEEx checks, including `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`,
-`Bylaw.Credo.Check.HEEx.NoElementSpacing`,
-`Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement`,
-`Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText`,
-`Bylaw.Credo.Check.HEEx.NoJavascriptHref`,
-`Bylaw.Credo.Check.HEEx.RequireButtonType`,
-`Bylaw.Credo.Check.HEEx.RequireImageAlt`,
-`Bylaw.Credo.Check.HEEx.RequireLabelForInput`,
-`Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit`,
-`Bylaw.Credo.Check.HEEx.RequireLinkHref`,
-`Bylaw.Credo.Check.HEEx.RequireLinkText`, and
-`Bylaw.Credo.Check.HEEx.RequireTargetBlankRel`, use Phoenix LiveView's HEEx tokenizer
-when available. Add `phoenix_live_view` to applications that enable these
-checks.
+HEEx checks use Phoenix LiveView's undocumented HEEx tokenizer when it is
+available. Add `phoenix_live_view` to applications that enable these checks.
 
 Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
 To check standalone Phoenix `.html.heex` templates, enable

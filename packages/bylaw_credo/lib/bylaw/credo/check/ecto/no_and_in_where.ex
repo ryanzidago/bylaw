@@ -1,9 +1,36 @@
 defmodule Bylaw.Credo.Check.Ecto.NoAndInWhere do
   @moduledoc """
-  Discourages combining multiple predicates with `and` inside Ecto `where` clauses.
+  Split combined Ecto `where` predicates into separate `where` clauses.
+
+  ### Bad
+
+      User
+      |> where([u], u.active and u.confirmed_at > ^cutoff)
+      |> Repo.all()
+
+  ### Why?
+
+  Packing multiple predicates into one `where` expression makes query
+  composition harder. Separate clauses are easier to add, remove, reorder,
+  and conditionally compose with helper functions.
+
+  ### Better
+
+      User
+      |> where([u], u.active)
+      |> where([u], u.confirmed_at > ^cutoff)
+      |> Repo.all()
+
+  Each clause carries one constraint, which keeps incremental query
+  building clear and makes diffs smaller when a predicate changes.
   """
 
-  use Credo.Check, base_priority: :higher, category: :warning
+  use Credo.Check,
+    base_priority: :higher,
+    category: :warning,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

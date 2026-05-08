@@ -1,25 +1,23 @@
 defmodule Bylaw.Credo.Check.Elixir.PreferEmptyListChecks do
   @moduledoc """
-  Prefers `Enum.empty?/1` and `Enum.any?/1` over comparing collections to `[]`.
+  Prefer `Enum.empty?/1` and `Enum.any?/1` over comparing collections to `[]`.
+
+  This should be refactored:
+
+      items == []
+      items != []
+
+  Into this:
+
+      Enum.empty?(items)
+      Enum.any?(items)
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer `Enum.empty?/1` and `Enum.any?/1` over comparing collections to `[]`.
-
-      This should be refactored:
-
-          items == []
-          items != []
-
-      Into this:
-
-          Enum.empty?(items)
-          Enum.any?(items)
-      """
+      check: @moduledoc
     ]
 
   @empty_list_operators [:==, :===]

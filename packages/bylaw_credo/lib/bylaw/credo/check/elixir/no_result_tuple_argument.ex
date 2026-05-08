@@ -2,6 +2,27 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
   @moduledoc """
   Prevents functions from accepting `{:ok, _}` or `{:error, _}` as their first
   argument.
+
+  ## Bad
+
+      def handle({:ok, value}), do: process(value)
+      def handle({:error, reason}), do: reason
+
+  ## Why?
+
+  A helper that accepts tagged result tuples mixes two responsibilities:
+  branching on the result shape and doing the work for the successful or error
+  value. That makes the helper harder to reuse with plain values.
+
+  ## Better
+
+      case fetch_value() do
+        {:ok, value} -> process(value)
+        {:error, reason} -> reason
+      end
+
+  Branch where the tagged result is produced, then call helpers with the value
+  or reason they actually operate on.
   """
 
   use Credo.Check,
@@ -9,11 +30,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
     category: :warning,
     param_defaults: [excluded_paths: []],
     explanations: [
-      check: """
-      Branch on tagged result tuples before calling a helper. Functions should
-      accept the value or error they actually need, rather than dispatching on
-      `{:ok, _}` or `{:error, _}` in the first argument position.
-      """,
+      check: @moduledoc,
       params: [
         excluded_paths: "List of paths or regexes to exclude from this check"
       ]

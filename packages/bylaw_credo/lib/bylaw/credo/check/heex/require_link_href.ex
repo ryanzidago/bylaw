@@ -24,13 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkHref do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Anchors in HEEx templates should define `href` so they behave as real
-      links for keyboard navigation and assistive technology. Use a button when
-      the element performs an action instead of navigation.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

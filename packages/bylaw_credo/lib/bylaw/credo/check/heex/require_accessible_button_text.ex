@@ -24,12 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Buttons in HEEx templates should have a visible label or an ARIA name so
-      assistive technology can describe the action.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

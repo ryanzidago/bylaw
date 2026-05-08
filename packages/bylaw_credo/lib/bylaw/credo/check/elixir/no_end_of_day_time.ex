@@ -1,12 +1,38 @@
 defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
   @moduledoc """
-  Discourages `~T[23:59:59]` as an end-of-day bound.
+  Avoid `~T[23:59:59]` as an end-of-day bound.
+
+  ### Bad
+
+      occurred_at >= day_start and occurred_at <= ~T[23:59:59]
+
+  ### Why?
+
+  An inclusive `23:59:59` bound misses values with fractional seconds, such
+  as `23:59:59.500000`. That creates edge-case bugs for timestamp and time
+  comparisons.
+
+  ### Better
+
+      occurred_at >= day_start and occurred_at < next_day_start
+
+  Use the next day's midnight as an exclusive upper bound. Half-open ranges
+  include every representable time in the day without guessing precision.
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    param_defaults: [excluded_paths: ["test/"]]
+    param_defaults: [excluded_paths: ["test/"]],
+    explanations: [
+      check: @moduledoc,
+      params: [
+        excluded_paths: """
+        Paths containing any configured string are skipped. Defaults to `test/`
+        so fixtures and assertions can still describe boundary values directly.
+        """
+      ]
+    ]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

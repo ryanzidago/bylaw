@@ -1,6 +1,22 @@
 defmodule Bylaw.Credo.Check.FullyTypedOpts do
   @moduledoc """
-  Requires concrete opts types instead of broad `keyword()` / `Keyword.t()`.
+  Fully type option lists instead of using `keyword()` or `Keyword.t()` for
+  `opts` parameters or `*_opts` type aliases.
+
+  This should be refactored:
+
+      @spec search(query :: String.t(), opts :: keyword()) :: result()
+      @type search_opts :: Keyword.t()
+
+  Into this:
+
+      @type search_opt ::
+              {:max_results, pos_integer()}
+              | {:country, String.t()}
+
+      @type search_opts :: [search_opt()]
+
+      @spec search(query :: String.t(), opts :: search_opts()) :: result()
   """
 
   use Credo.Check,
@@ -8,25 +24,7 @@ defmodule Bylaw.Credo.Check.FullyTypedOpts do
     category: :readability,
     param_defaults: [excluded_paths: []],
     explanations: [
-      check: """
-      Fully type option lists instead of using `keyword()` or `Keyword.t()` for
-      `opts` parameters or `*_opts` type aliases.
-
-      This should be refactored:
-
-          @spec search(query :: String.t(), opts :: keyword()) :: result()
-          @type search_opts :: Keyword.t()
-
-      Into this:
-
-          @type search_opt ::
-                  {:max_results, pos_integer()}
-                  | {:country, String.t()}
-
-          @type search_opts :: [search_opt()]
-
-          @spec search(query :: String.t(), opts :: search_opts()) :: result()
-      """,
+      check: @moduledoc,
       params: [
         excluded_paths: "List of path prefixes or regexes to exclude from this check."
       ]

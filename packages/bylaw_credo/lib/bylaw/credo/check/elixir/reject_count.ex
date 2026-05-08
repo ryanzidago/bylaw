@@ -1,9 +1,34 @@
 defmodule Bylaw.Credo.Check.Elixir.RejectCount do
   @moduledoc """
-  Prefers `Enum.count/2` over `Enum.reject/2 |> Enum.count/1`.
+  Use `Enum.count/2` instead of rejecting items and then counting the
+  remaining list.
+
+  ### Bad
+
+      users
+      |> Enum.reject(&(&1.status == :inactive))
+      |> Enum.count()
+
+  ### Why?
+
+  `Enum.reject/2` builds an intermediate list just so `Enum.count/1` can
+  count it. The callback is also written in the negative, which makes the
+  kept values less obvious.
+
+  ### Better
+
+      Enum.count(users, &(&1.status != :inactive))
+
+  `Enum.count/2` performs the count in one pass without allocating the
+  rejected list, and the predicate describes the values being counted.
   """
 
-  use Credo.Check, category: :refactor, base_priority: :high
+  use Credo.Check,
+    category: :refactor,
+    base_priority: :high,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

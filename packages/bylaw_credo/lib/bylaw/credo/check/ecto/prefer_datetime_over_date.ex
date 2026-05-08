@@ -1,31 +1,29 @@
 defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
   @moduledoc """
-  Discourages `:date` in Ecto schemas and migrations in favor of timestamp types.
+  Prefer `:naive_datetime` or `:utc_datetime` over `:date` in Ecto schemas and
+  migrations when you need precise timestamps.
+
+  This check flags:
+
+      schema "events" do
+        field :starts_on, :date
+      end
+
+      alter table(:events) do
+        add :starts_on, :date
+        modify :ends_on, :date
+      end
+
+  Use `:naive_datetime`, `:utc_datetime`, or `timestamps/1` instead unless the
+  field is intentionally a calendar-only value. If a true date-only field is
+  required, disable the check locally with Credo.
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :warning,
     explanations: [
-      check: """
-      Prefer `:naive_datetime` or `:utc_datetime` over `:date` in Ecto schemas and
-      migrations when you need precise timestamps.
-
-      This check flags:
-
-          schema "events" do
-            field :starts_on, :date
-          end
-
-          alter table(:events) do
-            add :starts_on, :date
-            modify :ends_on, :date
-          end
-
-      Use `:naive_datetime`, `:utc_datetime`, or `timestamps/1` instead unless the
-      field is intentionally a calendar-only value. If a true date-only field is
-      required, disable the check locally with Credo.
-      """
+      check: @moduledoc
     ]
 
   @schema_macros [:schema, :embedded_schema]

@@ -1,27 +1,25 @@
 defmodule Bylaw.Credo.Check.PreferListTypeSyntax do
   @moduledoc """
-  Prefers `list(type)` over `[type]` in typespecs.
+  Prefer `list(type)` over `[type]` in typespecs.
+
+  This should be refactored:
+
+      @type names :: [String.t()]
+      @spec run([integer()]) :: [atom()]
+
+  Into this:
+
+      @type names :: list(String.t())
+      @spec run(list(integer())) :: list(atom())
+
+  Keep `[type, ...]` when the intent is a non-empty list.
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer `list(type)` over `[type]` in typespecs.
-
-      This should be refactored:
-
-          @type names :: [String.t()]
-          @spec run([integer()]) :: [atom()]
-
-      Into this:
-
-          @type names :: list(String.t())
-          @spec run(list(integer())) :: list(atom())
-
-      Keep `[type, ...]` when the intent is a non-empty list.
-      """
+      check: @moduledoc
     ]
 
   @typespec_attributes [:spec, :type, :typep, :opaque, :callback, :macrocallback]

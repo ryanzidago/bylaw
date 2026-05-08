@@ -28,10 +28,7 @@ defmodule Bylaw.Credo.Check.NamedSpecParams do
     category: :readability,
     param_defaults: [min_params: 1],
     explanations: [
-      check: """
-      All `@spec` parameters should use the `name :: type` syntax so that the
-      spec is self-documenting.
-      """,
+      check: @moduledoc,
       params: [
         min_params: "Minimum number of parameters to trigger the check (default: 1)."
       ]

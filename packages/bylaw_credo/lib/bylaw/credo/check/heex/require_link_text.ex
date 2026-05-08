@@ -25,13 +25,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Links in HEEx templates should have an accessible name. Empty and
-      icon-only links make navigation unclear for screen-reader and keyboard
-      users.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

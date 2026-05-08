@@ -1,11 +1,27 @@
 defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
   @moduledoc """
-  Enforces that each Ecto schema lives under its own dedicated context module.
+  Each Ecto schema should live under its own dedicated context module.
 
-  A schema `Bylaw.Foos.Foo` is correctly placed because `Foos` is the
-  context for `Foo`. A schema `Bylaw.Runs.ToolCall` is incorrectly placed
-  because `Runs` is the context for `Run`, not `ToolCall` - it should be
-  `Bylaw.ToolCalls.ToolCall`.
+  ## Why?
+
+  Keeping one schema per context ensures that context modules stay small
+  and focused. When a schema is nested under another schema's context
+  (e.g. `Bylaw.Runs.ToolCall`), the context tends to accumulate
+  unrelated responsibilities.
+
+  ## Examples
+
+  Bad - `ToolCall` is nested under the `Runs` context:
+
+      defmodule Bylaw.Runs.ToolCall do
+        use Bylaw.Schema
+      end
+
+  Good - `ToolCall` has its own context:
+
+      defmodule Bylaw.ToolCalls.ToolCall do
+        use Bylaw.Schema
+      end
   """
 
   use Credo.Check,
@@ -13,30 +29,7 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
     category: :design,
     param_defaults: [excluded_modules: []],
     explanations: [
-      check: """
-      Each Ecto schema should live under its own dedicated context module.
-
-      ## Why?
-
-      Keeping one schema per context ensures that context modules stay small
-      and focused. When a schema is nested under another schema's context
-      (e.g. `Bylaw.Runs.ToolCall`), the context tends to accumulate
-      unrelated responsibilities.
-
-      ## Examples
-
-      Bad - `ToolCall` is nested under the `Runs` context:
-
-          defmodule Bylaw.Runs.ToolCall do
-            use Bylaw.Schema
-          end
-
-      Good - `ToolCall` has its own context:
-
-          defmodule Bylaw.ToolCalls.ToolCall do
-            use Bylaw.Schema
-          end
-      """,
+      check: @moduledoc,
       params: [
         excluded_modules:
           "List of fully qualified module names (as strings) to exclude from this check."

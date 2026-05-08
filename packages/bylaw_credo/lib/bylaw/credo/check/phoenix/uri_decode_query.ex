@@ -1,9 +1,32 @@
 defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
   @moduledoc """
-  Discourages `URI.decode_query/1` in favor of `Plug.Conn.Query.decode/1`.
+  Use `Plug.Conn.Query.decode/1` instead of `URI.decode_query/1` for query
+  strings handled by Phoenix or Plug.
+
+  ### Bad
+
+      URI.decode_query("ids[]=1&ids[]=2")
+
+  ### Why?
+
+  `URI.decode_query/1` does not decode Plug-style array and nested
+  parameters the same way Phoenix controllers and LiveViews receive them.
+  That can make hand-parsed query strings disagree with request params.
+
+  ### Better
+
+      Plug.Conn.Query.decode("ids[]=1&ids[]=2")
+
+  `Plug.Conn.Query.decode/1` follows Plug's query parser semantics, so the
+  decoded data matches the rest of the Phoenix request stack.
   """
 
-  use Credo.Check, category: :warning, base_priority: :higher
+  use Credo.Check,
+    category: :warning,
+    base_priority: :higher,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @replacement_module Plug.Conn.Query
   @replacement_function :decode

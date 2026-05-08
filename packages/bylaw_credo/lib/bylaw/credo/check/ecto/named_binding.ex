@@ -1,12 +1,46 @@
 defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
   @moduledoc """
-  Prefers named Ecto bindings over positional bindings.
+  Prefer named Ecto bindings over positional bindings in composed queries.
+
+  ### Bad
+
+      User
+      |> join(:inner, [u], p in assoc(u, :profile))
+      |> where([u, p], p.active)
+      |> select([u, p], {u.id, p.display_name})
+
+  ### Why?
+
+  Positional bindings make every later query clause depend on the order of
+  earlier joins. Adding, removing, or reordering a join can silently change
+  what `[u, p]` means in the rest of the pipeline.
+
+  ### Better
+
+      User
+      |> from(as: :user)
+      |> join(:inner, [user: u], p in assoc(u, :profile), as: :profile)
+      |> where([profile: p], p.active)
+      |> select([user: u, profile: p], {u.id, p.display_name})
+
+  Named bindings make each clause say which relationship it is using, so
+  query changes are easier to review and less sensitive to join order.
   """
 
   use Credo.Check,
     category: :warning,
     base_priority: :higher,
-    param_defaults: [excluded_paths: []]
+    param_defaults: [excluded_paths: []],
+    explanations: [
+      check: @moduledoc,
+      params: [
+        excluded_paths: """
+        Paths containing any configured string are skipped. Use this for
+        generated files or transitional areas that cannot yet follow named
+        binding conventions.
+        """
+      ]
+    ]
 
   @ecto_query_functions ~w(where select select_merge order_by group_by having preload lock distinct update)a
   @ecto_join_functions ~w(join left_join right_join inner_join cross_join full_join)a

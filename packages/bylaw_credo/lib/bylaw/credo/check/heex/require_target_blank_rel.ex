@@ -25,13 +25,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Links that open a new browsing context with `target="_blank"` should set
-      `rel="noopener"` to prevent the opened page from retaining access to the
-      opener page.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 
