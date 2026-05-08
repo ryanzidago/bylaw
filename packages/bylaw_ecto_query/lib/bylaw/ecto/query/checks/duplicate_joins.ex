@@ -17,22 +17,35 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   ## Examples
 
-  Repeating the same join can multiply rows and make later predicates ambiguous:
+  Bad:
 
-      # Bad: the comments join is repeated with the same relationship.
       from post in Post,
         join: comment in Comment,
         on: comment.post_id == post.id,
         join: visible_comment in Comment,
         on: visible_comment.post_id == post.id
 
-  Use one join and put the intended predicates on that binding:
+  Why this is bad:
 
-      # Better: one join represents the relationship once.
+  The same relationship appears twice. That can multiply rows and make later
+  predicates ambiguous because each binding represents the same joined source.
+
+  Better:
+
       from post in Post,
         join: comment in Comment,
         on: comment.post_id == post.id,
         where: comment.visible == true
+
+  Why this is better:
+
+  One join represents the relationship once, and predicates that refine the
+  joined rows use that binding.
+
+  Limitations:
+
+  This check compares supported Ecto join shapes after normalization. It is not
+  a semantic SQL equivalence engine.
 
   The check is static and intentionally inspects the query structure produced by
   Ecto's query macros. It supports the tested join shapes exposed by the Ecto

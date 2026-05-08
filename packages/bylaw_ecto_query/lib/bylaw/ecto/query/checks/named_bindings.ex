@@ -24,16 +24,20 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   ## Examples
 
-  Positional binding references become fragile as queries grow:
+  Bad:
 
-      # Bad: the root binding has no alias and fields use positional access.
       from post in Post,
         join: comment in assoc(post, :comments),
         where: post.organisation_id == ^organisation_id
 
-  Name the root and join bindings, then reference fields through those aliases:
+  Why this is bad:
 
-      # Better: field references are tied to explicit binding names.
+  The root and join bindings have no `:as` aliases, and the predicate relies on
+  positional binding access. As the query grows, it becomes easier to reference
+  the wrong binding.
+
+  Better:
+
       query =
         Post
         |> from(as: :post)
@@ -41,6 +45,17 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
         |> where([post: post], post.organisation_id == ^organisation_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
+
+  Why this is better:
+
+  Field references are tied to explicit binding names instead of binding
+  positions.
+
+  Limitations:
+
+  Ecto's prepared query struct erases some source syntax. This check accepts
+  named binding lists and local binding variables when the referenced binding
+  has an alias.
 
   Supported options:
 

@@ -6,25 +6,38 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   ## Examples
 
-  A query cannot satisfy two different equality predicates for the same field:
+  Bad:
 
-      # Bad: no post can be both draft and published.
       from post in Post,
         where: post.status == ^:draft,
         where: post.status == ^:published
 
-  Keep a single intended value, or use `in` when several values are acceptable:
+  Why this is bad:
 
-      # Better: the allowed statuses are represented in one satisfiable predicate.
+  No row can satisfy both equality predicates for the same field. The query is
+  guaranteed to return no rows, which usually means a filter was composed
+  incorrectly.
+
+  Better:
+
       from post in Post,
         where: post.status in ^[:draft, :published]
 
-  Conflicting numeric values are caught the same way:
+  Why this is better:
 
-      # Bad: no row can have both sequence values.
+  The allowed values are represented in one satisfiable predicate.
+
+  Bad:
+
       from post in Post,
         where: post.sequence == ^1,
         where: post.sequence == ^2
+
+  Limitations:
+
+  This check is intentionally narrow. It evaluates supported root `where`
+  predicates and ignores fragments, subqueries, non-root bindings, and most
+  arbitrary expressions.
 
   The check is intentionally narrow. It evaluates root schema fields and only
   trusts direct `==`, `in`, and `is_nil` predicates in `AND` where expressions.

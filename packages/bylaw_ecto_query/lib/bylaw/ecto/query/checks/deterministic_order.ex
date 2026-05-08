@@ -23,23 +23,30 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   ## Examples
 
-  Ordering by a non-unique field leaves tied rows free to move between
-  executions:
+  Bad:
 
-      # Bad: posts with the same timestamp have no stable relative order.
       from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
 
-  Include the root primary key as a tie-breaker:
+  Why this is bad:
 
-      # Better: timestamp ties are resolved by the primary key.
+  `inserted_at` is not guaranteed to be unique. Rows with the same timestamp can
+  move between executions, which can make paginated queries skip or duplicate
+  rows.
+
+  Better:
+
       from(post in Post,
         order_by: [desc: post.inserted_at, asc: post.id],
         limit: 10
       )
 
-  For a composite primary key, every primary-key field must be present:
+  Why this is better:
 
-      # Better for a schema whose primary key is [:organisation_id, :sequence].
+  The root primary key resolves ties in the visible sort key, so every row has a
+  stable relative position.
+
+  Better for a composite primary key:
+
       from(membership in Membership,
         order_by: [
           asc: membership.inserted_at,
@@ -47,6 +54,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
           asc: membership.sequence
         ]
       )
+
+  Limitations:
+
+  This check only trusts the root Ecto schema primary key. It cannot verify
+  arbitrary unique database indexes or schema-less query sources.
 
   The check is static. It infers root schema primary keys with Ecto schema
   reflection. Schema-less queries and schemas without primary keys cannot be

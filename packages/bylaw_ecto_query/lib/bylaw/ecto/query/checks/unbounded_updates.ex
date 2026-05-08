@@ -14,19 +14,31 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   ## Examples
 
-  An `update_all` query without a root predicate can update every row:
+  Bad:
 
-      # Bad: every post would be marked archived.
       from post in Post,
         update: [set: [archived: true]]
 
-  Add a root `where` clause for the intended update scope:
+  Why this is bad:
 
-      # Better: only stale drafts are archived.
+  An `update_all` query without a root predicate can update every row in the
+  table.
+
+  Better:
+
       from post in Post,
         where: post.status == ^:draft,
         where: post.updated_at < ^cutoff,
         update: [set: [archived: true]]
+
+  Why this is better:
+
+  The root `where` clauses state the intended update scope.
+
+  Limitations:
+
+  This check only requires a non-true root predicate. It does not prove the
+  predicate is selective or semantically correct.
 
   The check only applies to the `:update_all` operation reported by
   `c:Ecto.Repo.prepare_query/3`. It requires every possible root `where` branch

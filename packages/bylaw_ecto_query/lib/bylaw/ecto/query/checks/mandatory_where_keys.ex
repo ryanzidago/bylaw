@@ -16,19 +16,33 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   ## Examples
 
-  If `:organisation_id` is configured as mandatory, a root query without that
-  predicate can read across tenant boundaries:
+  Bad:
 
-      # Bad: no tenant boundary is visible in the root where clause.
       from post in Post,
         where: post.status == ^:published
 
-  Add a supported root predicate for the configured key:
+  Why this is bad:
 
-      # Better: results are scoped to one organisation.
+  If `:organisation_id` is configured as mandatory, this query has no visible
+  tenant boundary in the root `where` clause. It can read rows across
+  organisations.
+
+  Better:
+
       from post in Post,
         where: post.organisation_id == ^organisation_id,
         where: post.status == ^:published
+
+  Why this is better:
+
+  The configured key appears in a supported root predicate, so the query is
+  explicitly scoped to one organisation.
+
+  Limitations:
+
+  This check accepts supported direct root `==` and `in` predicates. It does not
+  prove tenant safety when keys are hidden inside fragments or field-to-field
+  comparisons.
 
   The check is static. It accepts configured root fields directly in `==` and `in`
   predicates inside `where` expressions, but it cannot prove fields hidden

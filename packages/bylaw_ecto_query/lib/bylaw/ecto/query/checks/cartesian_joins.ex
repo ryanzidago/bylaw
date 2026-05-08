@@ -7,27 +7,41 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   ## Examples
 
-  A join with a literal `true` predicate creates every possible pair of rows:
+  Bad:
 
-      # Bad: every post is joined to every comment.
       from post in Post,
         join: comment in Comment,
         on: true
 
-  Join through a real relationship predicate instead:
+  Why this is bad:
 
-      # Better: comments are constrained to their post.
+  `on: true` creates every possible pair of posts and comments. That can
+  multiply rows, inflate aggregates, and produce a query that is much more
+  expensive than intended.
+
+  Better:
+
       from post in Post,
         join: comment in Comment,
         on: comment.post_id == post.id
 
-  Avoid unconstrained `cross_join` unless the cartesian product is intentional
-  and validation is disabled for that call site:
+  Why this is better:
 
-      # Bad: every enabled feature is paired with every plan.
+  The join predicate states the relationship between the two tables, so each
+  joined row is tied back to its post.
+
+  Bad:
+
       from plan in Plan,
         cross_join: feature in Feature,
         where: feature.enabled == true
+
+  Limitations:
+
+  This check catches obvious cartesian joins: `cross_join`, uncorrelated
+  `cross_lateral_join`, and non-association joins whose `on` expression is
+  literally `true`. It does not parse SQL fragments or prove general SQL
+  cardinality.
 
   It rejects `cross_join`, uncorrelated `cross_lateral_join`, and
   non-association joins whose `on` expression is literally `true`. Correlated

@@ -9,20 +9,35 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   ## Examples
 
-  Filtering a left-joined binding in `where` removes rows with no match:
+  Bad:
 
-      # Bad: posts without a published comment are filtered out.
       from post in Post,
         left_join: comment in Comment,
         on: comment.post_id == post.id,
         where: comment.status == ^:published
 
-  Put the optional joined-record filter in the join predicate:
+  Why this is bad:
 
-      # Better: posts remain even when no published comment exists.
+  Rows without a matching comment have `NULL` values for the joined binding.
+  The root `where` predicate rejects those rows, so the left join behaves like
+  an inner join.
+
+  Better:
+
       from post in Post,
         left_join: comment in Comment,
         on: comment.post_id == post.id and comment.status == ^:published
+
+  Why this is better:
+
+  The optional comment filter stays in the join predicate. Posts are preserved
+  even when no matching published comment exists.
+
+  Limitations:
+
+  This check detects supported direct field predicates on left-join bindings. It
+  does not prove predicates hidden inside fragments, subqueries, or arbitrary
+  functions.
 
   Supported options:
 

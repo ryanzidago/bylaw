@@ -19,41 +19,60 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   ## Examples
 
-  A limited query without an explicit order is unstable:
+  Bad:
 
-      # Bad: the database may return any matching 10 rows.
       from(post in Post, limit: 10)
 
-  Add `order_by` so the selected window has a defined order:
+  Why this is bad:
 
-      # Better: the first 10 rows are selected from a known order.
+  A limited query without `order_by` asks the database for any matching 10 rows.
+  Pagination, retries, and repeated calls can see rows appear, disappear, or
+  move because the selected window has no stable order.
+
+  Better:
+
       from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
 
-  Offsets have the same problem. Without ordering, the skipped rows are
-  undefined:
+  Why this is better:
 
-      # Bad: page boundaries can shift between executions.
+  The selected window is taken from a declared order, so callers can reason
+  about which rows are first.
+
+  Bad:
+
       from(post in Post, offset: 50, limit: 25)
 
-      # Better: rows are skipped from a known order.
+  Why this is bad:
+
+  `offset` skips an undefined set of rows when no order exists. Page boundaries
+  can shift between executions.
+
+  Better:
+
       from(post in Post,
         order_by: [desc: post.inserted_at],
         offset: 50,
         limit: 25
       )
 
-  Streaming also needs an explicit order when callers depend on stable
-  traversal:
+  Why this is better:
 
-      # Bad: traversal order is database-dependent.
+  Rows are skipped from a known order, so the page boundary has a defined
+  meaning.
+
+  Bad:
+
       Repo.stream(from(post in Post))
 
-      # Better: traversal follows an explicit order.
+  Better:
+
       Repo.stream(from(post in Post, order_by: [asc: post.id]))
 
-  This check only requires that some `order_by` exists. If rows can tie on the
-  ordered field, pair this check with `DeterministicOrder` to require a
-  primary-key tie-breaker:
+  Limitations:
+
+  This check only requires that some `order_by` exists. It does not prove that
+  the order is deterministic. If rows can tie on the ordered field, pair this
+  check with `DeterministicOrder` to require a primary-key tie-breaker:
 
       from(post in Post,
         order_by: [desc: post.inserted_at, asc: post.id],
