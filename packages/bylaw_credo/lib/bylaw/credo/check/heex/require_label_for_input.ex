@@ -76,8 +76,16 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
 
   defp missing_accessible_name?(_tag, _labelled_ids), do: false
 
+  defp dynamic_control?(%Heex.Tag{name: "input"} = tag) do
+    dynamic_identity?(tag) or dynamic_attr?(tag, "type")
+  end
+
   defp dynamic_control?(%Heex.Tag{} = tag) do
-    Heex.has_attr?(tag, :root) or dynamic_attr?(tag, "id") or dynamic_attr?(tag, "type")
+    dynamic_identity?(tag)
+  end
+
+  defp dynamic_identity?(%Heex.Tag{} = tag) do
+    Heex.has_attr?(tag, :root) or dynamic_attr?(tag, "id")
   end
 
   defp hidden_input?(%Heex.Tag{name: "input"} = tag) do
@@ -89,7 +97,8 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
   defp hidden_input?(_tag), do: false
 
   defp has_aria_name?(%Heex.Tag{} = tag) do
-    Heex.has_attr?(tag, "aria-label") or Heex.has_attr?(tag, "aria-labelledby")
+    has_accessible_name_attr?(tag, "aria-label") or
+      has_accessible_name_attr?(tag, "aria-labelledby")
   end
 
   defp statically_labelled?(%Heex.Tag{} = tag, labelled_ids) do
@@ -106,6 +115,21 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
 
   defp static_attr_value(%{value: {:string, value, _meta}}), do: [value]
   defp static_attr_value(_attr), do: []
+
+  defp has_accessible_name_attr?(%Heex.Tag{attrs: attrs}, name) do
+    Enum.any?(attrs, &accessible_name_attr?(&1, name))
+  end
+
+  defp accessible_name_attr?(%{name: attr_name, value: {:string, value, _meta}}, name)
+       when attr_name == name do
+    String.trim(value) != ""
+  end
+
+  defp accessible_name_attr?(%{name: attr_name, value: {:expr, _expr, _meta}}, name)
+       when attr_name == name,
+       do: true
+
+  defp accessible_name_attr?(_attr, _name), do: false
 
   defp dynamic_attr?(%Heex.Tag{attrs: attrs}, name) do
     Enum.any?(attrs, &(&1.name == name and match?({:expr, _expr, _meta}, &1.value)))

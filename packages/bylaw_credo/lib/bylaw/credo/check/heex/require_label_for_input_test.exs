@@ -112,6 +112,26 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     |> refute_issues()
   end
 
+  test "reports empty static aria labels" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <input aria-label="">
+        <textarea aria-labelledby="  "></textarea>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireLabelForInput)
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 4, trigger: "<input"},
+      %{line_no: 5, trigger: "<textarea"}
+    ])
+  end
+
   test "does not report hidden inputs" do
     """
     defmodule Example do
@@ -195,6 +215,21 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     |> to_source_file("lib/example.ex")
     |> run_check(RequireLabelForInput)
     |> refute_issues()
+  end
+
+  test "reports unlabelled select with dynamic type attribute" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <select type={@type} name="role"></select>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireLabelForInput)
+    |> assert_issue(%{line_no: 4, trigger: "<select"})
   end
 
   test "reports unlabelled controls in html.heex files" do
