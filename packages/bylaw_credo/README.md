@@ -17,8 +17,7 @@ Then enable the checks you want in your Credo configuration:
     %{
       name: "default",
       checks: [
-        {Bylaw.Credo.Check.RequireImageAlt, []},
-        {Bylaw.Credo.Check.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.PreferListTypeSyntax, []}
       ]
     }

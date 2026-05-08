@@ -21,7 +21,7 @@ defmodule BylawDb.MixProject do
 
   def application do
     [
-      extra_applications: [:logger]
+      extra_applications: [:logger, :bylaw]
     ]
   end
 
@@ -30,6 +30,7 @@ defmodule BylawDb.MixProject do
 
   defp deps do
     [
+      {:bylaw, "~> 0.1", hex: :bylaw, path: "../bylaw"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
