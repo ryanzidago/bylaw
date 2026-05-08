@@ -93,11 +93,11 @@
           #
           {Credo.Check.Design.TagTODO, [exit_status: 2]},
           {Credo.Check.Design.SkipTestWithoutComment, []},
-          {Bylaw.Credo.Check.NoRaise, false},
-          {Bylaw.Credo.Check.NoPassthroughWrapper, false},
-          {Bylaw.Credo.Check.ContextFunctionNaming, false},
-          {Bylaw.Credo.Check.UseBylawSchema, false},
-          {Bylaw.Credo.Check.OwnContextForSchema, []},
+          {Bylaw.Credo.Check.Elixir.NoRaise, false},
+          {Bylaw.Credo.Check.Elixir.NoPassthroughWrapper, false},
+          {Bylaw.Credo.Check.Phoenix.ContextFunctionNaming, false},
+          {Bylaw.Credo.Check.Ecto.UseBylawSchema, false},
+          {Bylaw.Credo.Check.Ecto.OwnContextForSchema, []},
 
           #
           ## Readability Checks
@@ -106,14 +106,14 @@
           {Credo.Check.Readability.AliasOrder, []},
           {Credo.Check.Readability.BlockPipe, []},
           {Credo.Check.Readability.FunctionNames, []},
-          {Bylaw.Credo.Check.UseMaybeInFunctionName, []},
+          {Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName, []},
           {Credo.Check.Readability.ImplTrue, []},
           {Credo.Check.Readability.LargeNumbers, []},
           {Credo.Check.Readability.MaxLineLength, [priority: :low, max_length: 120]},
           {Credo.Check.Readability.ModuleAttributeNames, []},
           {Credo.Check.Readability.ModuleDoc, []},
           {Credo.Check.Readability.ModuleNames, []},
-          {Bylaw.Credo.Check.AppModuleAcronymCasing, []},
+          {Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing, []},
           {Credo.Check.Readability.MultiAlias, []},
           {Credo.Check.Readability.NestedFunctionCalls, []},
           {Credo.Check.Readability.OneArityFunctionInPipe, []},
@@ -138,16 +138,16 @@
           {Credo.Check.Readability.VariableNames, []},
           {Credo.Check.Readability.WithCustomTaggedTuple, []},
           {Credo.Check.Readability.WithSingleClause, []},
-          {Bylaw.Credo.Check.NoThen, []},
-          {Bylaw.Credo.Check.PipeBasedEctoQueries, false},
-          {Bylaw.Credo.Check.PreferEmptyListChecks, false},
-          {Bylaw.Credo.Check.PreferEnumCount, []},
-          {Bylaw.Credo.Check.PreferEnumUniqBy, []},
+          {Bylaw.Credo.Check.Elixir.NoThen, []},
+          {Bylaw.Credo.Check.Ecto.PipeBasedQueries, false},
+          {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, false},
+          {Bylaw.Credo.Check.Elixir.PreferEnumCount, []},
+          {Bylaw.Credo.Check.Elixir.PreferEnumUniqBy, []},
           {Bylaw.Credo.Check.PreferListTypeSyntax, []},
           {Bylaw.Credo.Check.DocBeforeSpec, []},
-          {Bylaw.Credo.Check.PreferRepoAggregateCount, []},
-          {Bylaw.Credo.Check.PreferSelectOverRepoAllEnumMap, []},
-          {Bylaw.Credo.Check.NoParamExtractionInFunctionHead, false},
+          {Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount, []},
+          {Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap, []},
+          {Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead, false},
           {Bylaw.Credo.Check.NamedSpecParams, false},
           {Bylaw.Credo.Check.FullyTypedOpts,
            [
@@ -156,8 +156,8 @@
                "lib/bylaw_web/auth/require_api_key.ex"
              ]
            ]},
-          {Bylaw.Credo.Check.WithElseClause, []},
-          {Bylaw.Credo.Check.NoCatchAllInWithElse, false},
+          {Bylaw.Credo.Check.Elixir.WithElseClause, []},
+          {Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse, false},
 
           #
           ## Refactoring Opportunities
@@ -188,8 +188,8 @@
           {Credo.Check.Refactor.UnlessWithElse, []},
           {Credo.Check.Refactor.UtcNowTruncate, []},
           {Credo.Check.Refactor.WithClauses, []},
-          {Bylaw.Credo.Check.FilterRejectFirst, []},
-          {Bylaw.Credo.Check.RejectCount, []},
+          {Bylaw.Credo.Check.Elixir.FilterRejectFirst, []},
+          {Bylaw.Credo.Check.Elixir.RejectCount, []},
 
           #
           ## Warnings
@@ -217,27 +217,27 @@
           {Credo.Check.Warning.UnusedStringOperation, []},
           {Credo.Check.Warning.UnusedTupleOperation, []},
           {Credo.Check.Warning.WrongTestFilename, []},
-          {Bylaw.Credo.Check.FloatUsage, []},
-          {Bylaw.Credo.Check.UseVerifiedRoutes, []},
-          {Bylaw.Credo.Check.PreferDateTimeOverDate, false},
-          {Bylaw.Credo.Check.EctoNamedBinding, [excluded_paths: ["test/", "_test.exs"]]},
-          {Bylaw.Credo.Check.ErrorChangesetPatternMatch, []},
+          {Bylaw.Credo.Check.Elixir.FloatUsage, []},
+          {Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes, []},
+          {Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate, false},
+          {Bylaw.Credo.Check.Ecto.NamedBinding, [excluded_paths: ["test/", "_test.exs"]]},
+          {Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch, []},
           {Bylaw.Credo.Check.FullySpecifiedStructTypes, []},
-          {Bylaw.Credo.Check.NoAndInEctoWhere, false},
-          {Bylaw.Credo.Check.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
-          {Bylaw.Credo.Check.NoInlineAssignInReturnTuple, []},
-          {Bylaw.Credo.Check.NoResultTupleArgument,
+          {Bylaw.Credo.Check.Ecto.NoAndInWhere, false},
+          {Bylaw.Credo.Check.Elixir.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
+          {Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple, []},
+          {Bylaw.Credo.Check.Elixir.NoResultTupleArgument,
            [excluded_paths: [~r{^lib/bylaw/credo/check/}]]},
-          {Bylaw.Credo.Check.NoRepoInController, []},
-          {Bylaw.Credo.Check.NoRepoPreloadAfterQuery, []},
-          {Bylaw.Credo.Check.ComposablePreloadQueries, []},
-          {Bylaw.Credo.Check.NoRepoTransaction, []},
-          {Bylaw.Credo.Check.NoGlobalStateInTests, []},
-          {Bylaw.Credo.Check.NoSetupInTests, [excluded_paths: ["test/support/"]]},
-          {Bylaw.Credo.Check.NoTryRescue, []},
-          {Bylaw.Credo.Check.SafeDateTimeComparison, false},
-          {Bylaw.Credo.Check.NoLowLevelProcessPrimitives, []},
-          {Bylaw.Credo.Check.URIDecodeQuery, []}
+          {Bylaw.Credo.Check.Phoenix.NoRepoInController, []},
+          {Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery, []},
+          {Bylaw.Credo.Check.Ecto.ComposablePreloadQueries, []},
+          {Bylaw.Credo.Check.Ecto.NoRepoTransaction, []},
+          {Bylaw.Credo.Check.Testing.NoGlobalStateInTests, []},
+          {Bylaw.Credo.Check.Testing.NoSetupInTests, [excluded_paths: ["test/support/"]]},
+          {Bylaw.Credo.Check.Elixir.NoTryRescue, []},
+          {Bylaw.Credo.Check.Elixir.SafeDateTimeComparison, false},
+          {Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives, []},
+          {Bylaw.Credo.Check.Phoenix.URIDecodeQuery, []}
         ],
         disabled: [
           #
@@ -250,7 +250,7 @@
           {Credo.Check.Refactor.VariableRebinding, []},
           {Credo.Check.Warning.LazyLogging, []},
           {Credo.Check.Warning.LeakyEnvironment, []},
-          {Bylaw.Credo.Check.NoTestsInTestDir, []}
+          {Bylaw.Credo.Check.Testing.NoTestsInTestDir, []}
           # {Credo.Check.Warning.UnusedOperation, [{MyMagicModule, [:fun1, :fun2]}]}
 
           # {Credo.Check.Refactor.MapInto, []},
