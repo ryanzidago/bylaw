@@ -1,30 +1,28 @@
 defmodule Bylaw.Credo.Check.Elixir.PreferEnumUniqBy do
   @moduledoc """
-  Prefers `Enum.uniq_by/2` before projecting fields with `Enum.map/2`.
+  Prefer `Enum.uniq_by/2` before projecting fields with `Enum.map/2`.
+
+  This should be refactored:
+
+      items
+      |> Enum.map(& &1.step)
+      |> Enum.uniq()
+
+  Into this:
+
+      items
+      |> Enum.uniq_by(& &1.step)
+      |> Enum.map(& &1.step)
+
+  This keeps the uniqueness rule attached to the original items instead of
+  first projecting values and then deduplicating the projected list.
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer `Enum.uniq_by/2` before projecting fields with `Enum.map/2`.
-
-      This should be refactored:
-
-          items
-          |> Enum.map(& &1.step)
-          |> Enum.uniq()
-
-      Into this:
-
-          items
-          |> Enum.uniq_by(& &1.step)
-          |> Enum.map(& &1.step)
-
-      This keeps the uniqueness rule attached to the original items instead of
-      first projecting values and then deduplicating the projected list.
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

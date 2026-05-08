@@ -24,12 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAlt do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Images in HEEx templates should always define `alt`. Informative images
-      need useful alternative text, and decorative images should use `alt=""`.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

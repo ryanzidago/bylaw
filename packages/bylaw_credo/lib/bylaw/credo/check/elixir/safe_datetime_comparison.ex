@@ -1,12 +1,41 @@
 defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
   @moduledoc """
-  Prevents direct comparison operators on likely date/time values.
+  Avoid direct comparison operators on values that look like dates or times.
+
+  ### Bad
+
+      entry.inserted_at > cutoff_at
+      start_date <= end_date
+
+  ### Why?
+
+  Elixir's term ordering can compare structs even when the comparison is
+  not the domain comparison you meant. Date and time types have comparison
+  functions that encode the correct semantics.
+
+  ### Better
+
+      DateTime.after?(entry.inserted_at, cutoff_at)
+      Date.compare(start_date, end_date) in [:lt, :eq]
+
+  Use `compare/2`, `before?/2`, or `after?/2` from the relevant date/time
+  module. Ecto `where` clauses are ignored because query comparisons are
+  translated by Ecto instead of using Elixir term ordering.
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    param_defaults: [datetime_suffixes: ~w(_datetime _at _date _time)]
+    param_defaults: [datetime_suffixes: ~w(_datetime _at _date _time)],
+    explanations: [
+      check: @moduledoc,
+      params: [
+        datetime_suffixes: """
+        Variable and field suffixes that make a value look like a date or time.
+        Defaults to `_datetime`, `_at`, `_date`, and `_time`.
+        """
+      ]
+    ]
 
   @comparison_operators [:==, :!=, :<, :>, :<=, :>=]
 

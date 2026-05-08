@@ -1,6 +1,26 @@
 defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   @moduledoc """
-  Enforces uppercase acronym words in app-owned module names and aliases.
+  App-owned module names should use uppercase acronym words such as `API`,
+  `CSV`, `HTTP`, `JSON`, `LLM`, and `UUID`.
+
+  This should be refactored:
+
+      defmodule BylawWeb.Api.V1.ToolController do
+        alias Bylaw.Accounts.TenantApiKey
+        alias Bylaw.TestSupport.ExAwsHttpClient
+        alias Bylaw.DatabaseCheck.UuidKeys
+      end
+
+  Into this:
+
+      defmodule BylawWeb.API.V1.ToolController do
+        alias Bylaw.Accounts.TenantAPIKey
+        alias Bylaw.TestSupport.ExAwsHTTPClient
+        alias Bylaw.DatabaseCheck.UUIDKeys
+      end
+
+  Mix task modules are exempt because the project intentionally keeps names
+  such as `Mix.Tasks.Qa`.
   """
 
   use Credo.Check,
@@ -13,29 +33,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
       relative_roots: ~w(api)
     ],
     explanations: [
-      check: """
-      App-owned module names should use uppercase acronym words such as `API`,
-      `CSV`, `HTTP`, `JSON`, `LLM`, and `UUID`.
-
-      This should be refactored:
-
-          defmodule BylawWeb.Api.V1.ToolController do
-            alias Bylaw.Accounts.TenantApiKey
-            alias Bylaw.TestSupport.ExAwsHttpClient
-            alias Bylaw.DatabaseCheck.UuidKeys
-          end
-
-      Into this:
-
-          defmodule BylawWeb.API.V1.ToolController do
-            alias Bylaw.Accounts.TenantAPIKey
-            alias Bylaw.TestSupport.ExAwsHTTPClient
-            alias Bylaw.DatabaseCheck.UUIDKeys
-          end
-
-      Mix task modules are exempt because the project intentionally keeps names
-      such as `Mix.Tasks.Qa`.
-      """,
+      check: @moduledoc,
       params: [
         acronyms: "Uppercase acronym words to enforce in app-owned module names.",
         app_roots: "Absolute app module roots that should be checked.",

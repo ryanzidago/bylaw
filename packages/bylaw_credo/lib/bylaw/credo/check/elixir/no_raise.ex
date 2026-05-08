@@ -1,6 +1,22 @@
 defmodule Bylaw.Credo.Check.Elixir.NoRaise do
   @moduledoc """
-  Disallows raise-like control flow in non-boundary code.
+  Prefer returning tagged results and handling them with `with` expressions
+  that include an explicit `else` clause at application boundaries.
+
+  This should be refactored:
+
+      user = Repo.get!(User, id)
+      {:ok, account} = Accounts.fetch_account(user)
+      raise "boom"
+
+  Into this:
+
+      with {:ok, user} <- Accounts.fetch_user(id),
+           {:ok, account} <- Accounts.fetch_account(user) do
+        {:ok, account}
+      else
+        {:error, reason} -> {:error, reason}
+      end
   """
 
   use Credo.Check,
@@ -8,25 +24,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
     category: :design,
     param_defaults: [excluded_paths: []],
     explanations: [
-      check: """
-      Prefer returning tagged results and handling them with `with` expressions
-      that include an explicit `else` clause at application boundaries.
-
-      This should be refactored:
-
-          user = Repo.get!(User, id)
-          {:ok, account} = Accounts.fetch_account(user)
-          raise "boom"
-
-      Into this:
-
-          with {:ok, user} <- Accounts.fetch_user(id),
-               {:ok, account} <- Accounts.fetch_account(user) do
-            {:ok, account}
-          else
-            {:error, reason} -> {:error, reason}
-          end
-      """,
+      check: @moduledoc,
       params: [
         excluded_paths: "List of paths or regex to exclude from this check"
       ]

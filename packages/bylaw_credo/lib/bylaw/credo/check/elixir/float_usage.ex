@@ -1,33 +1,31 @@
 defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
   @moduledoc """
-  Prefers `Decimal` over floats in migrations, schemas, and Elixir code.
+  Prefer `Decimal` over floats in Ecto migrations, Ecto schemas, and Elixir code.
+
+  This should be refactored:
+
+      add :amount, :float
+      field :amount, :float
+      Float.round(value, 2)
+      amount = 1.25
+      @spec amount() :: float()
+
+  Into this:
+
+      add :amount, :decimal
+      field :amount, :decimal
+      Decimal.round(value, 2)
+      amount = Decimal.new("1.25")
+      @spec amount() :: Decimal.t()
+
+  If a float is genuinely required, document the exception and disable the check locally.
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :warning,
     explanations: [
-      check: """
-      Prefer `Decimal` over floats in Ecto migrations, Ecto schemas, and Elixir code.
-
-      This should be refactored:
-
-          add :amount, :float
-          field :amount, :float
-          Float.round(value, 2)
-          amount = 1.25
-          @spec amount() :: float()
-
-      Into this:
-
-          add :amount, :decimal
-          field :amount, :decimal
-          Decimal.round(value, 2)
-          amount = Decimal.new("1.25")
-          @spec amount() :: Decimal.t()
-
-      If a float is genuinely required, document the exception and disable the check locally.
-      """
+      check: @moduledoc
     ]
 
   @migration_functions [:add, :add_if_not_exists, :modify]

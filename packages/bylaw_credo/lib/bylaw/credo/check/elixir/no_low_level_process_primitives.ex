@@ -3,7 +3,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
   Disallows direct usage of `Process`, `GenServer`, and `:ets`.
 
   Stateful and process-based primitives are **exceptions, not
-  defaults**.  They exist for very specific use cases and should only
+  defaults**. They exist for very specific use cases and should only
   be introduced after gaining explicit approval.
 
   Most of the time the right answer is simpler than you think - plain
@@ -35,25 +35,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
     category: :warning,
     param_defaults: [excluded_paths: []],
     explanations: [
-      check: """
-      You are using a stateful/process-based primitive directly.
-      This is a red flag.
-
-      `Process`, `GenServer`, and `:ets` are exceptions - they exist
-      for very specific use cases and should only be added after
-      gaining explicit approval.  The solution is almost certainly
-      simpler than you think: prefer plain functions, pass values
-      through arguments, and return data instead of storing it in the
-      process dictionary, ETS, GenServer state, or similar mutable
-      storage.  This also applies to `Agent` - avoid it even though
-      the check cannot flag it automatically.
-
-      The goal is to avoid process-heavy code altogether when possible.
-
-      If you are 100% sure this is what you need, disable the check with:
-
-          # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives
-      """,
+      check: @moduledoc,
       params: [
         excluded_paths: "List of path prefixes or regexes to exclude from this check."
       ]

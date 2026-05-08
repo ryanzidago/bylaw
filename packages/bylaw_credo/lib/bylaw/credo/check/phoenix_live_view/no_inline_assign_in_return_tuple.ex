@@ -1,9 +1,36 @@
 defmodule Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple do
   @moduledoc """
-  Prevents inline `assign/2,3` and `assign_new/3` calls inside LiveView return tuples.
+  Extract LiveView `assign/2,3` and `assign_new/3` calls before returning
+  the socket tuple.
+
+  ### Bad
+
+      {:noreply, assign(socket, :user, user)}
+
+      {:ok, socket |> assign(:user, user)}
+
+  ### Why?
+
+  Inline assignment hides the socket transformation inside the return value.
+  That makes it harder to add more socket changes, inspect intermediate
+  values, or keep return tuples visually consistent.
+
+  ### Better
+
+      socket = assign(socket, :user, user)
+      {:noreply, socket}
+
+  Keep socket updates in normal expressions and reserve `{:ok, socket}`,
+  `{:noreply, socket}`, and `{:reply, reply, socket}` for returning the
+  final socket.
   """
 
-  use Credo.Check, base_priority: :higher, category: :warning
+  use Credo.Check,
+    base_priority: :higher,
+    category: :warning,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @assign_functions [:assign, :assign_new]
 

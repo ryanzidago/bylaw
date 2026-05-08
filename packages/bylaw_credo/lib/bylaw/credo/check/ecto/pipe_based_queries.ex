@@ -1,32 +1,29 @@
 defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
   @moduledoc """
-  Enforces pipe-based Ecto query composition instead of passing query clauses
-  directly to `from/2`.
+  Prefer composing Ecto queries with pipes instead of using keyword clauses
+  directly inside `from/2`.
+
+  This should be refactored:
+
+      from(u in User, where: u.active, order_by: [asc: u.inserted_at])
+
+  Into this:
+
+      User
+      |> where([u], u.active)
+      |> order_by([u], asc: u.inserted_at)
+
+  Plain `from/1` usage is still allowed, and `from/2` with only `as:` is
+  allowed for named bindings. This check only flags query clauses like
+  `where`, `order_by`, joins, `select`, and similar clauses attached
+  directly to `from`.
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer composing Ecto queries with pipes instead of using keyword clauses
-      directly inside `from/2`.
-
-      This should be refactored:
-
-          from(u in User, where: u.active, order_by: [asc: u.inserted_at])
-
-      Into this:
-
-          User
-          |> where([u], u.active)
-          |> order_by([u], asc: u.inserted_at)
-
-      Plain `from/1` usage is still allowed, and `from/2` with only `as:` is
-      allowed for named bindings. This check only flags query clauses like
-      `where`, `order_by`, joins, `select`, and similar clauses attached
-      directly to `from`.
-      """
+      check: @moduledoc
     ]
 
   @query_clause_keys [
