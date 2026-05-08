@@ -101,6 +101,24 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClassesTest do
     |> assert_issue(%{line_no: 1, trigger: "shadow-lg"})
   end
 
+  test "flags disallowed classes on local components" do
+    """
+    <.button class="duration-300" />
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(AllowedClasses, rules: @rules)
+    |> assert_issue(%{line_no: 1, trigger: "duration-300"})
+  end
+
+  test "flags disallowed classes on remote components" do
+    """
+    <CoreComponents.button class="rounded-lg" />
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(AllowedClasses, rules: @rules)
+    |> assert_issue(%{line_no: 1, trigger: "rounded-lg"})
+  end
+
   test "reports multiple violations when present" do
     """
     <div class="duration-300 delay-500"></div>

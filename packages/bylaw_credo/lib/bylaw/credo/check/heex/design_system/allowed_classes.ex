@@ -87,7 +87,8 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses do
 
   defp normalize_rule(_rule), do: []
 
-  defp static_class_values(%Heex.Tag{type: :tag, attrs: attrs}) do
+  defp static_class_values(%Heex.Tag{type: type, attrs: attrs})
+       when type in [:tag, :local_component, :remote_component] do
     Enum.flat_map(attrs, &static_class_attr_values/1)
   end
 
