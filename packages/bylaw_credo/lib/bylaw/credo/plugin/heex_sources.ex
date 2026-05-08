@@ -20,10 +20,9 @@ defmodule Bylaw.Credo.Plugin.HEExSources do
     Credo.CLI.Command.Suggest.SuggestCommand
   ]
 
-  @doc """
-  Registers the HEEx source-loading task in Credo's command pipelines.
-  """
-  @spec init(Credo.Execution.t()) :: Credo.Execution.t()
+  # Registers the HEEx source-loading task in Credo's command pipelines.
+  @doc false
+  @spec init(term()) :: term()
   def init(exec) do
     Enum.reduce(@commands, exec, fn command, exec ->
       append_task(exec, command, :load_and_validate_source_files, __MODULE__.LoadSourceFiles)
