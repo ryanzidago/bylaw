@@ -13,6 +13,23 @@ Postgres database adapter and built-in database-structure checks.
 Postgres checks live under `Bylaw.Db.Adapters.Postgres.Checks` and implement
 `Bylaw.Db.Check`.
 
+## Built-in Checks
+
+| Check | Purpose |
+| --- | --- |
+| `MissingForeignKeyIndexes` | Requires supporting indexes for foreign keys. |
+| `MissingForeignKeyConstraints` | Flags columns that look like foreign keys but do not have constraints. |
+| `ForeignKeyNullability` | Requires foreign key columns to be non-nullable. |
+| `ScopedForeignKeys` | Requires tenant, workspace, or similar scope columns in scoped foreign keys. |
+| `DuplicateIndexes` | Flags equivalent indexes on the same table. |
+| `ForeignKeyActions` | Validates `ON DELETE` and `ON UPDATE` actions. |
+| `RequiredColumns` | Requires configured columns on matching tables. |
+| `PrimaryKeyType` | Requires configured primary key types. |
+| `ForbiddenColumnTypes` | Flags configured column types and suggests preferred alternatives. |
+| `EctoChangesetUniqueConstraints` | Requires matching `unique_constraint/3` calls for unique indexes. |
+| `EctoChangesetForeignKeyConstraints` | Requires matching `foreign_key_constraint/3` calls for foreign keys. |
+| `EctoChangesetCheckConstraints` | Requires matching `check_constraint/3` calls for check constraints when fields can be inferred. |
+
 ## Postgres Database Checks
 
 Postgres database checks can be configured once in the consuming application:
@@ -73,7 +90,13 @@ config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
          ],
          except: [[table: "webhook_events", column: "raw_payload"]]
        ]
-     ]}
+     ]},
+    {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
+     paths: ["lib/my_app"]},
+    {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
+     paths: ["lib/my_app"]},
+    {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
+     paths: ["lib/my_app"]}
   ]
 ```
 
@@ -193,6 +216,18 @@ config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
 `Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType` can replace
 project-specific checks such as "all tables use UUID primary keys" while still
 allowing scoped exceptions for migration metadata or legacy tables.
+
+The Ecto changeset checks need source paths so Bylaw can parse conservative
+changeset candidates:
+
+```elixir
+{Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
+ paths: ["lib/my_app"]}
+```
+
+When `repo.config()[:otp_app]` is available, schema discovery is inferred from
+the repo. Otherwise pass `otp_app: :my_app` or
+`schema_modules: [MyApp.Accounts.User, MyApp.Billing.Invoice]`.
 
 `ScopedForeignKeys` is useful for tenant, workspace, account, or similar
 scoping. If both `messages` and `conversations` have `tenant_id` and
