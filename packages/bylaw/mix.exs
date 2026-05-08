@@ -1,4 +1,4 @@
-defmodule BylawDb.MixProject do
+defmodule Bylaw.MixProject do
   use Mix.Project
 
   @version "0.1.0"
@@ -6,13 +6,13 @@ defmodule BylawDb.MixProject do
 
   def project do
     [
-      app: :bylaw_db,
+      app: :bylaw,
       version: @version,
       elixir: "~> 1.19",
       test_paths: test_paths(Mix.env()),
       source_url: @source_url,
-      homepage_url: "https://hexdocs.pm/bylaw_db",
-      description: "Generic database validation contracts and data structures for Bylaw.",
+      homepage_url: "https://hexdocs.pm/bylaw",
+      description: "Internal shared helpers for Bylaw packages.",
       package: package(),
       docs: docs(),
       deps: deps()
@@ -21,7 +21,7 @@ defmodule BylawDb.MixProject do
 
   def application do
     [
-      extra_applications: [:logger, :bylaw]
+      extra_applications: [:logger]
     ]
   end
 
@@ -30,7 +30,6 @@ defmodule BylawDb.MixProject do
 
   defp deps do
     [
-      {:bylaw, "~> 0.1", hex: :bylaw, path: "../bylaw"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
@@ -50,16 +49,7 @@ defmodule BylawDb.MixProject do
     [
       main: "readme",
       source_ref: "v#{@version}",
-      extras: ["README.md"],
-      groups_for_modules: [
-        "Bylaw.Db": [
-          Bylaw.Db,
-          Bylaw.Db.Adapter,
-          Bylaw.Db.Check,
-          Bylaw.Db.Issue,
-          Bylaw.Db.Target
-        ]
-      ]
+      extras: ["README.md"]
     ]
   end
 end
