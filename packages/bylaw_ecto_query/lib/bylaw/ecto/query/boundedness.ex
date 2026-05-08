@@ -3,7 +3,6 @@ defmodule Bylaw.Ecto.Query.Boundedness do
 
   @typep filter_type :: :empty | :restricting | :unrestricting
 
-  @doc false
   @spec root_where_bounded?(term()) :: boolean()
   def root_where_bounded?(%{wheres: wheres}) when is_list(wheres) do
     wheres
