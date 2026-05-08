@@ -6,6 +6,36 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   `rules: [[only: ...]]` to narrow the scope. A column is treated
   as a candidate when it ends in `_id`, is not named `id`, is not part of a
   primary key, and is not covered by a declared foreign key constraint.
+
+  Before, `account_id` looks like a relationship but the database does not
+  enforce it:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL
+  );
+  ```
+
+  Application code can insert orphaned `orders.account_id` values, and bugs may
+  only surface later as missing joins or cleanup problems.
+
+  After, make the relationship explicit in Postgres:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES accounts(id)
+  );
+  ```
+
+  The database now rejects orphaned rows no matter which code path writes to the
+  table.
+
+  This check does not infer relationships from column names that do not end in
+  `_id`, and it does not validate whether the referenced table name matches the
+  column name. It only checks whether a candidate column is covered by a
+  Postgres foreign key constraint.
   """
 
   @behaviour Bylaw.Db.Check

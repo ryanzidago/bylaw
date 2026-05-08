@@ -5,14 +5,46 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   By default the check inspects all non-system schemas in a Postgres target. Use
   `rules: [...]` to configure allowed types for scoped groups of tables:
 
-      {PrimaryKeyType,
-       rules: [
-         [
-           only: [schema: "public"],
-           types: ["uuid"],
-           except: [[table: "schema_migrations"]]
-         ]
-       ]}
+  ```elixir
+  {PrimaryKeyType,
+   rules: [
+     [
+       only: [schema: "public"],
+       types: ["uuid"],
+       except: [[table: "schema_migrations"]]
+     ]
+   ]}
+  ```
+
+  With `rules: [[only: [schema: "public"], types: ["uuid"]]]`, before:
+
+  ```sql
+  CREATE TABLE users (
+    id bigint PRIMARY KEY
+  );
+
+  CREATE TABLE audit_events (
+    message text NOT NULL
+  );
+  ```
+
+  Mixed primary key conventions complicate schemas, fixtures, foreign keys, and
+  application code. Tables without primary keys are harder to address safely.
+
+  After, use the configured primary key type:
+
+  ```sql
+  CREATE TABLE users (
+    id uuid PRIMARY KEY
+  );
+  ```
+
+  Tables now follow one identifier convention, and every scoped table has a
+  stable row identity.
+
+  Tables with no primary key fail, and composite primary keys pass only when
+  every primary key column has an allowed type. Exclude tables such as
+  `schema_migrations` when they intentionally use a different convention.
   """
 
   @behaviour Bylaw.Db.Check
