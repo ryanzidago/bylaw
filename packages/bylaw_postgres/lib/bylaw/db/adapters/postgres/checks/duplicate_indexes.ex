@@ -7,6 +7,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   when they have the same table, access method, uniqueness,
   validity, key and included columns, operator classes, collations, sort options,
   expressions, and predicate.
+
+  Before, the table has two indexes with the same definition:
+
+  ```sql
+  CREATE INDEX users_email_index ON users (email);
+  CREATE INDEX users_email_duplicate_index ON users (email);
+  ```
+
+  That slows writes and migrations without improving reads, because Postgres
+  maintains both indexes for the same lookup shape.
+
+  After, keep one index for that access path:
+
+  ```sql
+  CREATE INDEX users_email_index ON users (email);
+  ```
+
+  This preserves the read plan while removing duplicate write overhead and
+  schema noise.
+
+  A plain index and a partial index on the same column are not treated as
+  duplicates because their predicates differ.
   """
 
   @behaviour Bylaw.Db.Check

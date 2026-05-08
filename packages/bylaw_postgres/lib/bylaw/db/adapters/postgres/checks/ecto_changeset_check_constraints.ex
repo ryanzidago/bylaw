@@ -13,11 +13,43 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   parse source AST for user-defined changeset functions. When the repo can
   report `config()[:otp_app]`, schema module discovery is derived from it:
 
-      assert :ok =
-               Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints.validate(
-                 repo: MyApp.Repo,
-                 paths: ["lib/my_app"]
-               )
+  ```elixir
+  assert :ok =
+           Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints.validate(
+             repo: MyApp.Repo,
+             paths: ["lib/my_app"]
+           )
+  ```
+
+  With a check constraint on `users.age`, before:
+
+  ```elixir
+  def changeset(user, attrs) do
+    user
+    |> Ecto.Changeset.cast(attrs, [:age])
+    |> Ecto.Changeset.validate_number(:age, greater_than_or_equal_to: 13)
+  end
+  ```
+
+  The database still protects the invariant, but a constraint failure may reach
+  callers as a database error instead of a changeset error attached to `:age`.
+
+  After, annotate the changeset with the matching check constraint:
+
+  ```elixir
+  def changeset(user, attrs) do
+    user
+    |> Ecto.Changeset.cast(attrs, [:age])
+    |> Ecto.Changeset.validate_number(:age, greater_than_or_equal_to: 13)
+    |> Ecto.Changeset.check_constraint(:age, name: :users_age_check)
+  end
+  ```
+
+  Ecto can turn the database rejection into a normal changeset error.
+
+  The check skips dynamic `cast` or `change` field lists, check expressions
+  without catalog column metadata, and constraints whose columns cannot be
+  mapped to Ecto schema fields.
   """
 
   @behaviour Bylaw.Db.Check

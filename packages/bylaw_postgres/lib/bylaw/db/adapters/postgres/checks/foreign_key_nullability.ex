@@ -6,16 +6,46 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
   foreign keys:
 
-      {ForeignKeyNullability,
-       rules: [
-         [
-           only: [schema: "public"],
-           except: [
-             [table: "runs", column: "assistant_message_id"],
-             [constraint: "messages_parent_message_id_fkey"]
-           ]
-         ]
-       ]}
+  ```elixir
+  {ForeignKeyNullability,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [
+         [table: "runs", column: "assistant_message_id"],
+         [constraint: "messages_parent_message_id_fkey"]
+       ]
+     ]
+   ]}
+  ```
+
+  Before, the foreign key allows missing parents:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid REFERENCES accounts(id)
+  );
+  ```
+
+  That makes the association optional even if the application treats every order
+  as belonging to an account. Code then has to handle impossible `NULL` cases.
+
+  After, make the required relationship non-nullable:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES accounts(id)
+  );
+  ```
+
+  The database shape now matches the domain model, and callers can rely on the
+  relationship being present.
+
+  This check only inspects columns that are already part of a foreign key
+  constraint. Optional relationships should be excluded with an `except`
+  matcher.
   """
 
   @behaviour Bylaw.Db.Check

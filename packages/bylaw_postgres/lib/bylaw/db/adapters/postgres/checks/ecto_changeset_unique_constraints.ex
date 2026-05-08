@@ -12,11 +12,44 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   parse source AST for user-defined changeset functions. When the repo can
   report `config()[:otp_app]`, schema module discovery is derived from it:
 
-      assert :ok =
-               Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints.validate(
-                 repo: MyApp.Repo,
-                 paths: ["lib/my_app"]
-               )
+  ```elixir
+  assert :ok =
+           Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints.validate(
+             repo: MyApp.Repo,
+             paths: ["lib/my_app"]
+           )
+  ```
+
+  With a unique index on `users.email`, before:
+
+  ```elixir
+  def changeset(user, attrs) do
+    user
+    |> Ecto.Changeset.cast(attrs, [:email])
+    |> Ecto.Changeset.validate_required([:email])
+  end
+  ```
+
+  The database protects uniqueness, but an insert conflict can bubble up as a
+  database error instead of a changeset error attached to `:email`.
+
+  After, annotate the changeset with the matching constraint:
+
+  ```elixir
+  def changeset(user, attrs) do
+    user
+    |> Ecto.Changeset.cast(attrs, [:email])
+    |> Ecto.Changeset.validate_required([:email])
+    |> Ecto.Changeset.unique_constraint(:email)
+  end
+  ```
+
+  Ecto can translate the database constraint violation into a normal changeset
+  error for callers.
+
+  The check skips dynamic `cast` or `change` field lists, expression indexes,
+  partial indexes, primary keys, and unique indexes whose columns cannot be
+  mapped to Ecto schema fields.
   """
 
   @behaviour Bylaw.Db.Check
