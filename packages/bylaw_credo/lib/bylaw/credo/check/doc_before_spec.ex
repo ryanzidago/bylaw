@@ -18,11 +18,7 @@ defmodule Bylaw.Credo.Check.DocBeforeSpec do
   use Credo.Check,
     base_priority: :normal,
     category: :readability,
-    explanations: [
-      check: """
-      Public function declarations should read as doc, then spec, then function.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   @public_definitions [:def, :defguard, :defmacro]
 

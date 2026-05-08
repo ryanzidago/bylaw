@@ -36,14 +36,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    explanations: [
-      check: """
-      Use Phoenix verified routes (`~p`) instead of literal or interpolated route
-      strings in the web layer. Verified routes are checked against the router at
-      compile time, so renamed or removed routes fail loudly instead of silently
-      drifting in tests and controllers.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   @dynamic_marker "__bylaw_dynamic_segment__"
   @fallback_router_paths [

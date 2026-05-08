@@ -1,9 +1,37 @@
 defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
   @moduledoc """
-  Prefers `Enum.find/2` over `Enum.filter/2 |> List.first()` or `Enum.reject/2 |> List.first()`.
+  Use `Enum.find/2` when the code only needs the first item that matches a
+  predicate.
+
+  ### Bad
+
+      users
+      |> Enum.filter(& &1.active?)
+      |> List.first()
+
+      List.first(Enum.reject(users, & &1.archived?))
+
+  ### Why?
+
+  `Enum.filter/2` and `Enum.reject/2` traverse the whole enumerable and
+  allocate an intermediate list before `List.first/1` discards everything
+  but the first item.
+
+  ### Better
+
+      Enum.find(users, & &1.active?)
+      Enum.find(users, &(not &1.archived?))
+
+  `Enum.find/2` stops as soon as it finds a matching item and states the
+  intent directly.
   """
 
-  use Credo.Check, category: :refactor, base_priority: :high
+  use Credo.Check,
+    category: :refactor,
+    base_priority: :high,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

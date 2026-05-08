@@ -30,13 +30,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Static DOM IDs in the same HEEx source should be unique. Duplicate IDs
-      break labels, ARIA references, fragment links, selectors, JavaScript, and
-      LiveView targeting.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

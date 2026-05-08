@@ -1,26 +1,24 @@
 defmodule Bylaw.Credo.Check.FullySpecifiedStructTypes do
   @moduledoc """
-  Disallows empty struct literals in type declarations.
+  Fully specify struct fields in type declarations instead of using
+  empty struct literals such as `%__MODULE__{}`.
+
+  This should be refactored:
+
+      @type t :: %__MODULE__{}
+      @opaque result :: {:ok, %URI{}}
+
+  Into this:
+
+      @type t :: %__MODULE__{id: integer(), name: String.t()}
+      @opaque result :: {:ok, %URI{host: String.t() | nil, path: String.t()}}
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :warning,
     explanations: [
-      check: """
-      Fully specify struct fields in type declarations instead of using
-      empty struct literals such as `%__MODULE__{}`.
-
-      This should be refactored:
-
-          @type t :: %__MODULE__{}
-          @opaque result :: {:ok, %URI{}}
-
-      Into this:
-
-          @type t :: %__MODULE__{id: integer(), name: String.t()}
-          @opaque result :: {:ok, %URI{host: String.t() | nil, path: String.t()}}
-      """
+      check: @moduledoc
     ]
 
   @typespec_attributes [:type, :typep, :opaque]

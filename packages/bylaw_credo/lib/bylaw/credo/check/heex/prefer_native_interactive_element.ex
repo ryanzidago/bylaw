@@ -24,13 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Static div and span elements with click handlers do not provide native
-      keyboard behavior, focus semantics, or accessibility semantics. Prefer
-      button elements for actions and anchor elements for navigation.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 
