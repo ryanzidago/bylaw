@@ -1,18 +1,25 @@
 defmodule Bylaw.Db.Target do
   @moduledoc """
-  A single database validation target.
+  Target validated by database checks.
 
-  A target intentionally represents one adapter/database query source. Checks
-  own any schema, table, or other scope filtering they support.
+  A target represents one adapter/database query source. Adapter packages build
+  targets from their own options, and checks receive targets from `Bylaw.Db`.
   """
 
   @typedoc """
-  Query callback useful for tests and custom source wiring.
+  Optional query function for custom target wiring.
   """
   @type query_fun ::
           (__MODULE__.t(), sql :: String.t(), params :: list(term()), opts :: keyword() ->
              {:ok, term()} | {:error, term()})
 
+  @typedoc """
+  A database validation target.
+
+  `adapter` is the adapter module that owns query execution. `repo`,
+  `dynamic_repo`, `query`, and `meta` are adapter-defined fields used by adapter
+  packages and custom checks.
+  """
   @type t :: %__MODULE__{
           adapter: module(),
           repo: module() | nil,
