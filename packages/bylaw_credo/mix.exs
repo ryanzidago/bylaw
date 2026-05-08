@@ -32,6 +32,7 @@ defmodule BylawCredo.MixProject do
     [
       {:credo, "~> 1.7", runtime: false},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
+      {:phoenix_live_view, "~> 1.0", optional: true},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
