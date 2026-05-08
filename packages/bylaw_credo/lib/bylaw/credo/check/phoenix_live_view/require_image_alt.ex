@@ -1,6 +1,10 @@
-defmodule Bylaw.Credo.Check.RequireImageAlt do
+defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireImageAlt do
   @moduledoc """
   Requires static HEEx/HTML image tags to define an `alt` attribute.
+
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Bad
 

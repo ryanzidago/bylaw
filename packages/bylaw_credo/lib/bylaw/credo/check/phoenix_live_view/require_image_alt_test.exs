@@ -1,7 +1,8 @@
-defmodule Bylaw.Credo.Check.RequireImageAltTest do
+defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireImageAltTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.RequireImageAlt
+  alias Bylaw.Credo.Check.PhoenixLiveView.RequireImageAlt
+  alias Bylaw.Credo.Plugin.HEExSources
 
   test "reports missing alt in H sigil" do
     """
@@ -209,5 +210,68 @@ defmodule Bylaw.Credo.Check.RequireImageAltTest do
     |> Credo.SourceFile.parse("lib/example/index.html.heex")
     |> run_check(RequireImageAlt)
     |> assert_issue(%{line_no: 2, trigger: "<img"})
+  end
+
+  test "reports missing alt in html.heex files loaded by the Credo plugin" do
+    tmp_dir = tmp_dir!("require-image-alt")
+    template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
+
+    File.mkdir_p!(Path.dirname(template_path))
+
+    File.write!(template_path, """
+    <section>
+      <img src="/logo.svg">
+      <img src="/decorative.svg" alt="">
+    </section>
+    """)
+
+    source_files =
+      tmp_dir
+      |> exec_for_tmp_project()
+      |> HEExSources.LoadSourceFiles.call()
+      |> Credo.Execution.get_source_files()
+
+    assert [%Credo.SourceFile{filename: filename, status: :valid}] = source_files
+    assert String.ends_with?(filename, "index.html.heex")
+
+    source_files
+    |> run_check(RequireImageAlt)
+    |> assert_issue(%{line_no: 2, trigger: "<img"})
+  end
+
+  test "Credo plugin source loader respects excluded html.heex paths" do
+    tmp_dir = tmp_dir!("require-image-alt-excluded")
+    template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
+
+    File.mkdir_p!(Path.dirname(template_path))
+    File.write!(template_path, ~s(<img src="/logo.svg">))
+
+    source_files =
+      tmp_dir
+      |> exec_for_tmp_project(excluded: ["lib/example/"])
+      |> HEExSources.LoadSourceFiles.call()
+      |> Credo.Execution.get_source_files()
+
+    assert Enum.empty?(source_files)
+  end
+
+  defp exec_for_tmp_project(tmp_dir, opts \\ []) do
+    excluded = Keyword.get(opts, :excluded, [])
+
+    %{
+      Credo.Execution.build()
+      | cli_options: %Credo.CLI.Options{path: tmp_dir},
+        files: %{included: ["lib/**/*.{ex,exs}"], excluded: excluded}
+    }
+  end
+
+  defp tmp_dir!(name) do
+    path =
+      Path.join(System.tmp_dir!(), "bylaw-credo-#{name}-#{System.unique_integer([:positive])}")
+
+    File.rm_rf!(path)
+    File.mkdir_p!(path)
+
+    path
   end
 end
