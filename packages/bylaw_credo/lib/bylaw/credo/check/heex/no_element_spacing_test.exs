@@ -63,6 +63,47 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacingTest do
     ])
   end
 
+  test "reports logical margin utilities" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <div class="ms-4 me-2 -ms-1 rtl:me-3">Profile</div>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoElementSpacing)
+    |> assert_issues(4)
+    |> assert_issues_match([
+      %{line_no: 4, trigger: "ms-4"},
+      %{line_no: 4, trigger: "me-2"},
+      %{line_no: 4, trigger: "-ms-1"},
+      %{line_no: 4, trigger: "rtl:me-3"}
+    ])
+  end
+
+  test "reports important margin utilities" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <div class="!mt-4 hover:!mb-2 !-mx-3">Profile</div>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoElementSpacing)
+    |> assert_issues(3)
+    |> assert_issues_match([
+      %{line_no: 4, trigger: "!mt-4"},
+      %{line_no: 4, trigger: "hover:!mb-2"},
+      %{line_no: 4, trigger: "!-mx-3"}
+    ])
+  end
+
   test "reports variant-prefixed margin utilities" do
     """
     defmodule Example do

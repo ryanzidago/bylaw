@@ -41,7 +41,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   alias Bylaw.Credo.Heex
 
   @message "Prefer parent-owned spacing with gap or space utilities instead of margin classes on individual elements."
-  @margin_utilities ~w(m mx my mt mr mb ml)
+  @margin_utilities ~w(m mx my ms me mt mr mb ml)
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
@@ -88,7 +88,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   end
 
   defp margin_utility?(token) do
-    utility = final_utility(token)
+    utility =
+      token
+      |> final_utility()
+      |> strip_important_modifier()
 
     utility != "mx-auto" and
       Enum.any?(@margin_utilities, &String.starts_with?(utility, ["#{&1}-", "-#{&1}-"]))
@@ -99,6 +102,9 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
     |> String.split(":")
     |> List.last()
   end
+
+  defp strip_important_modifier("!" <> utility), do: utility
+  defp strip_important_modifier(utility), do: utility
 
   defp token_column(%{name: name, column: column}, offset)
        when is_binary(name) and is_integer(column) do
