@@ -82,6 +82,44 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacingTest do
     })
   end
 
+  test "reports arbitrary pixel space utilities" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <div class="space-x-[18px] md:space-y-[22px]"></div>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoArbitrarySpacing)
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 4, trigger: "class", message: ~r/Raw spacing: "space-x-\[18px\]"/},
+      %{line_no: 4, trigger: "class", message: ~r/Raw spacing: "md:space-y-\[22px\]"/}
+    ])
+  end
+
+  test "reports pixel values with omitted leading zero" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <div class="m-[.5px]" style="margin: .75px"></div>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoArbitrarySpacing)
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 4, trigger: "class", message: ~r/Raw spacing: "m-\[\.5px\]"/},
+      %{line_no: 4, trigger: "style", message: ~r/Raw spacing: "margin: \.75px"/}
+    ])
+  end
+
   test "reports raw pixel margin and padding declarations in style attributes" do
     """
     defmodule Example do

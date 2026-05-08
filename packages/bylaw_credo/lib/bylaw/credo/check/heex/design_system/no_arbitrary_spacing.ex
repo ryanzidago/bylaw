@@ -36,7 +36,7 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
   @class_attr "class"
   @style_attr "style"
   @message "Use a design-system spacing token instead of a raw pixel spacing value."
-  @tailwind_spacing_prefixes ~w(m mx my mt mr mb ml p px py pt pr pb pl gap gap-x gap-y)
+  @tailwind_spacing_prefixes ~w(m mx my mt mr mb ml p px py pt pr pb pl gap gap-x gap-y space-x space-y)
 
   @doc false
   @spec run(Credo.SourceFile.t(), list()) :: list(Credo.Issue.t())
@@ -116,14 +116,14 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
   end
 
   defp spacing_property?(property) do
-    property
-    |> String.trim()
-    |> String.downcase()
-    |> then(&Regex.match?(~r/^(?:margin|padding)(?:$|-)/, &1))
+    normalized_property = String.trim(property)
+    normalized_property = String.downcase(normalized_property)
+
+    Regex.match?(~r/^(?:margin|padding)(?:$|-)/, normalized_property)
   end
 
   defp raw_px_value?(value) do
-    Regex.match?(~r/(?:^|[^[:alnum:]_-])-?\d+(?:\.\d+)?px\b/i, value)
+    Regex.match?(~r/(?:^|[^[:alnum:]_.-])-?(?:\d+(?:\.\d+)?|\.\d+)px\b/i, value)
   end
 
   defp attr_name(name) do
