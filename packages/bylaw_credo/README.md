@@ -24,6 +24,7 @@ Then enable the checks you want in your Credo configuration:
         {Bylaw.Credo.Check.HEEx.NoJavascriptHref, []},
         {Bylaw.Credo.Check.HEEx.RequireButtonType, []},
         {Bylaw.Credo.Check.HEEx.RequireImageAlt, []},
+        {Bylaw.Credo.Check.HEEx.RequireLabelForInput, []},
         {Bylaw.Credo.Check.HEEx.RequireLinkHref, []},
         {Bylaw.Credo.Check.HEEx.RequireLinkText, []},
         {Bylaw.Credo.Check.PreferListTypeSyntax, []}
@@ -36,6 +37,7 @@ Then enable the checks you want in your Credo configuration:
 HEEx checks, including `Bylaw.Credo.Check.HEEx.NoJavascriptHref`,
 `Bylaw.Credo.Check.HEEx.RequireButtonType`,
 `Bylaw.Credo.Check.HEEx.RequireImageAlt`,
+`Bylaw.Credo.Check.HEEx.RequireLabelForInput`,
 `Bylaw.Credo.Check.HEEx.RequireLinkHref`, and
 `Bylaw.Credo.Check.HEEx.RequireLinkText`, use Phoenix LiveView's HEEx tokenizer
 when available. Add `phoenix_live_view` to applications that enable these
