@@ -12,6 +12,31 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
+  ## Examples
+
+  Bad:
+
+      from session in Session
+
+  Why this is bad:
+
+  A `delete_all` query without a root predicate can remove every row in the
+  table.
+
+  Better:
+
+      from session in Session,
+        where: session.expires_at < ^DateTime.utc_now()
+
+  Why this is better:
+
+  The root `where` clause states the intended delete scope.
+
+  Limitations:
+
+  This check only requires a non-true root predicate. It does not prove the
+  predicate is selective or semantically correct.
+
   The check only validates the root query prepared for the `:delete_all`
   operation. It requires every possible root `where` branch to include at least
   one non-true expression and does not try to prove whether that

@@ -22,12 +22,40 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   generated lookup shape. Predicate-oriented checks can still validate those
   generated `where` fields.
 
+  ## Examples
+
+  Bad:
+
+      from post in Post,
+        join: comment in assoc(post, :comments),
+        where: post.organisation_id == ^organisation_id
+
+  Why this is bad:
+
+  The root and join bindings have no `:as` aliases, and the predicate relies on
+  positional binding access. As the query grows, it becomes easier to reference
+  the wrong binding.
+
+  Better:
+
       query =
         Post
         |> from(as: :post)
+        |> join(:inner, [post: post], comment in assoc(post, :comments), as: :comment)
         |> where([post: post], post.organisation_id == ^organisation_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
+
+  Why this is better:
+
+  Field references are tied to explicit binding names instead of binding
+  positions.
+
+  Limitations:
+
+  Ecto's prepared query struct erases some source syntax. This check accepts
+  named binding lists and local binding variables when the referenced binding
+  has an alias.
 
   Supported options:
 

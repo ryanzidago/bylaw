@@ -3,12 +3,39 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
   Validates that root `where` predicates do not rely on empty `in` lists.
 
   This catches filters whose candidate list is already known to contain no
-  non-nil values:
+  non-nil values.
+
+  ## Examples
+
+  Bad:
 
       ids = []
 
       from thing in Thing,
         where: thing.id in ^ids
+
+  Why this is bad:
+
+  The query can never match a row because the candidate list has no non-nil
+  values. Running it still spends database work on a known-empty result.
+
+  Better:
+
+      if Enum.empty?(ids) do
+        []
+      else
+        Repo.all(from thing in Thing, where: thing.id in ^ids)
+      end
+
+  Why this is better:
+
+  The caller uses a cheap application fast path and only queries the database
+  when there are candidates to match.
+
+  Limitations:
+
+  This check only trusts supported root `in` predicates. It intentionally leaves
+  broader contradictory business logic to `ConflictingWherePredicates`.
 
   Such queries usually have a cheaper fast path: return `[]` before calling the
   repo. This check is separate from
