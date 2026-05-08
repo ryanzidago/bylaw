@@ -28,6 +28,7 @@ Then enable the checks you want in your Credo configuration:
         {Bylaw.Credo.Check.HEEx.RequireButtonType, []},
         {Bylaw.Credo.Check.HEEx.RequireImageAlt, []},
         {Bylaw.Credo.Check.HEEx.RequireLabelForInput, []},
+        {Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit, []},
         {Bylaw.Credo.Check.HEEx.RequireLinkHref, []},
         {Bylaw.Credo.Check.HEEx.RequireLinkText, []},
         {Bylaw.Credo.Check.HEEx.RequireTargetBlankRel, []},
@@ -45,6 +46,7 @@ HEEx checks, including `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`,
 `Bylaw.Credo.Check.HEEx.RequireButtonType`,
 `Bylaw.Credo.Check.HEEx.RequireImageAlt`,
 `Bylaw.Credo.Check.HEEx.RequireLabelForInput`,
+`Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit`,
 `Bylaw.Credo.Check.HEEx.RequireLinkHref`,
 `Bylaw.Credo.Check.HEEx.RequireLinkText`, and
 `Bylaw.Credo.Check.HEEx.RequireTargetBlankRel`, use Phoenix LiveView's HEEx tokenizer
