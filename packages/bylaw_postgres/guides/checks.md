@@ -1,24 +1,17 @@
 # Checks Overview
 
-Bylaw is organized around check families. A family is a namespace that targets
-one source of project rules, such as static Elixir code, database structure, or
-prepared Ecto queries.
+Bylaw is organized as independent packages. `bylaw_postgres` provides the
+Postgres database adapter and built-in database-structure checks.
 
-## Check Families
+## Related Packages
 
-| Namespace | Status | Scope |
-| --- | --- | --- |
-| `Bylaw.Credo` | Planned | Custom Credo checks for source-code rules that should fail during static analysis. |
-| `Bylaw.Db` | Available now | Database-schema checks for constraints that should be derived from the database shape. |
-| `Bylaw.Ecto.Query` | Available now | Runtime checks for prepared `Ecto.Query` structs before a repo operation runs. |
+| Package | Scope |
+| --- | --- |
+| `bylaw_db` | Generic database check contracts and result data structures. |
+| `bylaw_postgres` | Postgres adapter and database-structure checks. |
 
-The current public families are `Bylaw.Ecto.Query` and `Bylaw.Db`. Ecto query
-checks live under `Bylaw.Ecto.Query.Checks` and implement
-`Bylaw.Ecto.Query.Check`. Database checks live under adapter-specific namespaces
-and implement `Bylaw.Db.Check`.
-
-Use the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
-current check list, `prepare_query/3` wiring, check specs, and issue metadata.
+Postgres checks live under `Bylaw.Db.Adapters.Postgres.Checks` and implement
+`Bylaw.Db.Check`.
 
 ## Postgres Database Checks
 

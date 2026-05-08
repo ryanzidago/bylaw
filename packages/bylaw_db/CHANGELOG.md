@@ -2,8 +2,8 @@
 
 ## 0.1.0 - 2026-05-02
 
-Initial Hex package release.
+Initial package release.
 
-- Add the `Bylaw.Ecto.Query` check family for validating prepared Ecto queries.
-- Add built-in query checks for ordering, bounded writes, joins, visibility predicates, tenant keys, temporal comparisons, and related query constraints.
-- Add HexDocs guides for query-check setup, available checks, options, issue metadata, and static analysis boundaries.
+- Add generic database validation contracts.
+- Add `Bylaw.Db.Target` and `Bylaw.Db.Issue` data structures.
+- Add the shared `Bylaw.Db.validate/2` check runner.
