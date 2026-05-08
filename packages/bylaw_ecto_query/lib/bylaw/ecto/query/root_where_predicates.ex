@@ -12,13 +12,9 @@ defmodule Bylaw.Ecto.Query.RootWherePredicates do
           values: list(comparable_value())
         }
 
-  @doc """
-  Returns supported root `where` predicates grouped by boolean branch.
-
-  Ordinary `where` clauses and `and` expressions merge predicate facts into the
-  same branch. `or_where` clauses and `or` expressions produce alternate
-  branches. Unsupported expressions contribute an empty branch.
-  """
+  # Boolean branches model satisfiable predicate paths: ordinary `where` and
+  # `and` expressions merge facts, while `or_where` and `or` expressions create
+  # alternate branches. Unsupported expressions contribute an empty branch.
   @spec branches(term(), module()) :: list(list(predicate()))
   def branches(query, schema) when is_map(query) do
     root_aliases = Introspection.root_aliases(query)

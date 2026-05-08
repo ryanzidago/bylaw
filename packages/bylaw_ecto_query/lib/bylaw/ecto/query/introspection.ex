@@ -1,19 +1,16 @@
 defmodule Bylaw.Ecto.Query.Introspection do
   @moduledoc false
 
-  @typedoc """
-  A path from the root query into nested Ecto combination queries.
-  """
+  # Path from the root query into nested Ecto combination queries.
+  @typedoc false
   @type branch_path :: list({atom(), non_neg_integer()})
 
-  @typedoc """
-  A query branch paired with its path from the root query.
-  """
+  # Query branch paired with its path from the root query.
+  @typedoc false
   @type query_branch :: {branch_path(), term()}
 
-  @typedoc """
-  A field name extracted from an Ecto field expression.
-  """
+  # Field name extracted from an Ecto field expression.
+  @typedoc false
   @type field_name :: atom() | String.t()
 
   @expression_subquery_fields [
@@ -26,14 +23,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
     :windows
   ]
 
-  @doc """
-  Returns the root schema module for an Ecto query.
-
-  The root schema is read from the query's `from` source. `{:ok, schema}` is
-  returned only when the source points at a module that exports `__schema__/1`.
-  Schema-less sources, malformed values, and non-query values return
-  `:unknown`.
-  """
+  # The root schema comes from the query `from` source. Return `:unknown` for
+  # schema-less sources, malformed values, non-query values, and modules that do
+  # not expose Ecto schema reflection.
   @spec root_schema(term()) :: {:ok, module()} | :unknown
   def root_schema(%{from: %{source: {_source, schema}}})
       when is_atom(schema) and not is_nil(schema) do
@@ -46,15 +38,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def root_schema(_query), do: :unknown
 
-  @doc """
-  Returns the schema module for a direct explicit join.
-
-  `{:ok, schema}` is returned for joins whose source points directly at an Ecto
-  schema module. Association joins return `:skip`, because the association can
-  already encode application-specific join behavior and most checks only need
-  to reason about direct explicit joins. Schema-less joins, malformed joins, and
-  non-schema sources also return `:skip`.
-  """
+  # Association joins can encode application-specific behavior separately from
+  # the visible join source, so checks that reason about direct explicit joins
+  # skip them instead of treating them as plain schema joins.
   @spec explicit_join_schema(term()) :: {:ok, module()} | :skip
   def explicit_join_schema(%{assoc: assoc}) when assoc != nil, do: :skip
 
@@ -69,22 +55,15 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def explicit_join_schema(_join), do: :skip
 
-  @doc """
-  Returns the named binding aliases for a query.
-
-  The returned map uses alias names as keys and positional binding indexes as
-  values. Values without an aliases map return an empty map.
-  """
+  # Ecto stores named binding aliases as alias name => positional binding index.
+  # Query values without an aliases map get an empty map so callers can avoid
+  # special-casing schema-less or malformed query terms.
   @spec aliases(term()) :: map()
   def aliases(%{aliases: aliases}) when is_map(aliases), do: aliases
   def aliases(_query), do: %{}
 
-  @doc """
-  Returns the named aliases that point at the root binding.
-
-  Root aliases are aliases whose binding index is `0`. Checks that only inspect
-  the root schema can pass this set to `root_field/2` or `root_fields/2`.
-  """
+  # Root aliases are alias names whose binding index is 0. Root-only checks pass
+  # this set to field helpers when join bindings should be ignored.
   @spec root_aliases(term()) :: MapSet.t(atom())
   def root_aliases(query) do
     query
@@ -96,19 +75,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
     |> MapSet.new()
   end
 
-  @doc """
-  Returns the root query and every nested combination query branch.
-
-  Ecto stores `union`, `union_all`, `except`, `except_all`, `intersect`, and
-  `intersect_all` branches under the query's combinations. Checks that must
-  validate every branch independently can use this helper to traverse those
-  combinations consistently.
-
-  Each returned tuple contains `{branch_path, query}`. The root query has an
-  empty branch path. Combination branch paths contain `{operation, index}`
-  entries, where `operation` is the combination operation and `index` is the
-  zero-based position within that query's combinations.
-  """
+  # Ecto stores set-operation branches under `combinations`. Checks that must
+  # validate each branch independently use this path so issue metadata can point
+  # back to the nested combination branch.
   @spec query_branches(term()) :: list(query_branch())
   def query_branches(query) do
     query
@@ -116,18 +85,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
     |> Enum.map(fn {branch_path, branch_query} -> {Enum.reverse(branch_path), branch_query} end)
   end
 
-  @doc """
-  Returns the direct nested queries referenced by an Ecto query.
-
-  This covers source and join subqueries, CTE query bodies, combination
-  branches, and expression subqueries stored by Ecto query expressions such as
-  `select`, `where`, `having`, `order_by`, `group_by`, `distinct`, and
-  `windows`.
-
-  The returned list contains only the immediate nested query references for the
-  given query. Checks that need full-depth validation should recursively call
-  this helper for returned queries.
-  """
+  # Offset/order checks need to inspect immediate nested query references from
+  # sources, joins, CTEs, combinations, and expression subqueries. Callers that
+  # need full-depth traversal recurse over this result.
   @spec nested_queries(term()) :: list(term())
   def nested_queries(query) when is_map(query) do
     source_queries(query) ++
@@ -137,12 +97,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def nested_queries(_query), do: []
 
-  @doc """
-  Formats a combination branch path for issue metadata.
-
-  The root branch returns an empty map. Combination branches return a
-  `:combination_path` list with `%{operation: operation, index: index}` entries.
-  """
+  # Root branches omit metadata. Combination branches include a stable
+  # `:combination_path` value suitable for issue metadata.
   @spec combination_path_meta(branch_path()) :: map()
   def combination_path_meta([]), do: %{}
 
@@ -150,13 +106,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
     %{combination_path: Enum.map(branch_path, &combination_path_entry/1)}
   end
 
-  @doc """
-  Resolves an Ecto binding expression to a positional binding index.
-
-  Supports positional binding expressions such as `&0` and named binding
-  expressions produced by `as(:name)`. Missing, malformed, or unresolved
-  bindings return `:unknown`.
-  """
+  # Resolve positional binding expressions such as `&0` and named binding
+  # expressions such as `as(:post)`. Missing or unresolved aliases return
+  # `:unknown` instead of raising so checks can ignore unsupported shapes.
   @spec binding_index(term(), map()) :: {:ok, non_neg_integer()} | :unknown
   def binding_index({:&, _meta, [binding_index]}, _aliases)
       when is_integer(binding_index) and binding_index >= 0 do
@@ -175,14 +127,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def binding_index(_source, _aliases), do: :unknown
 
-  @doc """
-  Resolves a field expression to its binding index and field name.
-
-  Supports the dot-field expression shape produced by `post.status` and the
-  dynamic field expression shape produced by `field(post, :status)`. The source
-  binding is resolved with `binding_index/2`. Non-field expressions and
-  unresolved bindings return `:unknown`.
-  """
+  # Resolve dot-field expressions (`post.status`) and dynamic field expressions
+  # (`field(post, :status)`) to `{binding_index, field}`. Other expressions or
+  # unresolved bindings return `:unknown`.
   @spec field(term(), map()) :: {:ok, {non_neg_integer(), atom()}} | :unknown
   def field({{:., _meta, [source, field]}, _call_meta, []}, aliases) when is_atom(field) do
     field(source, field, aliases)
@@ -194,14 +141,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def field(_expr, _aliases), do: :unknown
 
-  @doc """
-  Resolves a field expression only when it targets the root binding.
-
-  The second argument may be either a full aliases map or the root alias set
-  returned by `root_aliases/1`. Positional root fields such as `&0.status` and
-  named root fields such as `as(:post).status` return `{:ok, field}`. Fields on
-  joins, non-field expressions, and unresolved bindings return `:unknown`.
-  """
+  # Like `field/2`, but succeeds only for root binding references. The second
+  # argument accepts either the full aliases map or the precomputed root alias
+  # set from `root_aliases/1`.
   @spec root_field(term(), map() | MapSet.t(atom())) :: {:ok, atom()} | :unknown
   def root_field({{:., _meta, [source, field]}, _call_meta, []}, aliases_or_root_aliases)
       when is_atom(field) do
@@ -222,12 +164,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def root_field(_expr, _aliases_or_root_aliases), do: :unknown
 
-  @doc """
-  Returns the root field referenced by `expr`, or an empty list.
-
-  This wrapper is convenient when a check is accumulating field lists from many
-  expressions and wants unsupported expressions to contribute no fields.
-  """
+  # Convenience wrapper for checks that accumulate root field lists from many
+  # expressions and want unsupported expressions to contribute no fields.
   @spec root_fields(term(), map() | MapSet.t(atom())) :: list(atom())
   def root_fields(expr, aliases_or_root_aliases) do
     case root_field(expr, aliases_or_root_aliases) do
@@ -236,15 +174,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
     end
   end
 
-  @doc """
-  Resolves a direct root field expression and unwraps `type/2` wrappers.
-
-  This helper accepts dot-field expressions such as `&0.status`, dynamic field
-  expressions such as `field(&0, :status)`, and the same expressions wrapped by
-  Ecto's `type/2`. Unlike `root_field/2`, it returns binary field names too, so
-  callers that compare against atom field configuration can decide how to
-  normalize those names.
-  """
+  # `root_field/2` intentionally returns only atom fields. This variant also
+  # accepts binary field names and unwraps `type/2` so configured checks can
+  # decide how to normalize root field references.
   @spec direct_root_field(term(), map() | MapSet.t(atom())) :: {:ok, field_name()} | :unknown
   def direct_root_field({:type, _meta, [expr, _type]}, aliases_or_root_aliases) do
     direct_root_field(expr, aliases_or_root_aliases)
@@ -273,14 +205,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def direct_root_field(_expr, _aliases_or_root_aliases), do: :unknown
 
-  @doc """
-  Returns whether an expression contains any direct field reference.
-
-  The expression is traversed recursively through tuples and lists. This helps
-  checks reject field-to-field comparisons when only field-to-value predicates
-  should count as explicit query constraints. Dynamic field expressions that use
-  string field names are treated as field references too.
-  """
+  # Predicate checks use this to distinguish field-to-value constraints from
+  # field-to-field comparisons, including nested expressions and dynamic
+  # field/2 references.
   @spec field_reference?(term()) :: boolean()
   def field_reference?({{:., _meta, [_source, field]}, _call_meta, []})
       when is_atom(field) or is_binary(field),
@@ -299,12 +226,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
   def field_reference?(expr) when is_list(expr), do: Enum.any?(expr, &field_reference?/1)
   def field_reference?(_expr), do: false
 
-  @doc """
-  Returns all fields declared by an Ecto schema module as a set.
-
-  The caller is expected to pass a schema module. Use `root_schema/1` or
-  `explicit_join_schema/1` first when the source may not be a schema.
-  """
+  # Callers are expected to pass a known Ecto schema module, usually after
+  # `root_schema/1` or `explicit_join_schema/1` has accepted the source.
   @spec schema_fields(module()) :: MapSet.t(atom())
   def schema_fields(schema) do
     fields = schema.__schema__(:fields)
@@ -312,12 +235,8 @@ defmodule Bylaw.Ecto.Query.Introspection do
     MapSet.new(fields)
   end
 
-  @doc """
-  Returns whether `field` is declared by an Ecto schema module.
-
-  The caller is expected to pass a schema module. Use this helper when a check
-  needs to ignore configured fields that do not apply to the current schema.
-  """
+  # Use this when configured fields should be ignored for schemas that do not
+  # declare them.
   @spec schema_field?(module(), atom()) :: boolean()
   def schema_field?(schema, field), do: field in schema.__schema__(:fields)
 
