@@ -28,6 +28,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
