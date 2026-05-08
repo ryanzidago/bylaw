@@ -179,19 +179,25 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElementTest do
     |> refute_issues()
   end
 
-  test "reports clickable div in html.heex files" do
+  test "reports clickable static elements and ignores native alternatives in html.heex files" do
     """
     <section>
       <div phx-click="save">Save</div>
-      <a href="/settings">Settings</a>
+      <button type="button" phx-click="cancel">Cancel</button>
+      <a href="/settings" phx-click="track">Settings</a>
+      <span phx-click="open">Open</span>
     </section>
     """
     |> Credo.SourceFile.parse("lib/example/index.html.heex")
     |> run_check(PreferNativeInteractiveElement)
-    |> assert_issue(%{line_no: 2, trigger: "<div"})
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 2, trigger: "<div"},
+      %{line_no: 5, trigger: "<span"}
+    ])
   end
 
-  test "reports clickable div in html.heex files loaded by the Credo plugin" do
+  test "reports clickable static elements in html.heex files loaded by the Credo plugin" do
     tmp_dir = tmp_dir!("prefer-native-interactive-element")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
@@ -200,6 +206,8 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElementTest do
     File.write!(template_path, """
     <section>
       <div phx-click="save">Save</div>
+      <button type="button" phx-click="cancel">Cancel</button>
+      <span phx-click="open">Open</span>
     </section>
     """)
 
@@ -214,7 +222,11 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElementTest do
 
     source_files
     |> run_check(PreferNativeInteractiveElement)
-    |> assert_issue(%{line_no: 2, trigger: "<div"})
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 2, trigger: "<div"},
+      %{line_no: 4, trigger: "<span"}
+    ])
   end
 
   defp exec_for_tmp_project(tmp_dir) do
