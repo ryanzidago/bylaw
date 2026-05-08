@@ -150,6 +150,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.Repo
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.SuffixMatchingUser
   alias Bylaw.Db.Issue
+  alias Bylaw.Db.Target
 
   describe "validate/2" do
     test "skips validation without discovery options when disabled" do
@@ -271,6 +272,53 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
                  paths: [__ENV__.file],
                  schema_modules: [RegexMatchingUser]
                )
+    end
+
+    test "returns an issue when catalog introspection fails" do
+      target = Postgres.target(query: fn _target, _sql, _params, _opts -> {:error, :closed} end)
+
+      assert {:error, [%Issue{} = issue]} =
+               EctoChangesetUniqueConstraints.validate(target,
+                 paths: [__ENV__.file],
+                 schema_modules: [MissingUser],
+                 rules: [[only: [table: "users"]]]
+               )
+
+      assert issue.check == EctoChangesetUniqueConstraints
+      assert issue.message == "could not inspect Postgres unique indexes"
+      assert issue.target == target
+      assert issue.meta.reason == :closed
+      assert issue.meta.rules == [%{only: [[table: "users"]], except: []}]
+    end
+
+    test "requires keyword options" do
+      target = target([])
+
+      assert_raise ArgumentError,
+                   "expected ecto_changeset_unique_constraints opts to be a keyword list, got: :bad",
+                   fn ->
+                     EctoChangesetUniqueConstraints.validate(target, :bad)
+                   end
+    end
+
+    test "requires a Postgres target" do
+      target = %Target{adapter: OtherAdapter}
+
+      assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
+        EctoChangesetUniqueConstraints.validate(target,
+          paths: [__ENV__.file],
+          schema_modules: [MissingUser]
+        )
+      end
+    end
+
+    test "requires a database target" do
+      assert_raise ArgumentError, ~r/expected a database target/, fn ->
+        EctoChangesetUniqueConstraints.validate(:not_a_target,
+          paths: [__ENV__.file],
+          schema_modules: [MissingUser]
+        )
+      end
     end
   end
 
