@@ -179,6 +179,21 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElementTest do
     |> refute_issues()
   end
 
+  test "does not crash when HEEx cannot be tokenized" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <div phx-click="save"
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(PreferNativeInteractiveElement)
+    |> refute_issues()
+  end
+
   test "reports clickable static elements and ignores native alternatives in html.heex files" do
     """
     <section>
