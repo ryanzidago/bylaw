@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Omit issue metadata from formatted query issue output by default, with `meta: true` for verbose debugging.
+
 ## 0.1.0 - 2026-05-02
 
 Initial package release.
