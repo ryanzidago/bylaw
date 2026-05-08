@@ -74,6 +74,33 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClassesTest do
     |> refute_issues()
   end
 
+  test "flags static string class expressions" do
+    """
+    <div class={"duration-300"}></div>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(AllowedClasses, rules: @rules)
+    |> assert_issue(%{line_no: 1, trigger: "duration-300"})
+  end
+
+  test "flags static class list entries while ignoring dynamic entries" do
+    """
+    <div class={["rounded-lg", @class, "duration-150"]}></div>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(AllowedClasses, rules: @rules)
+    |> assert_issue(%{line_no: 1, trigger: "rounded-lg"})
+  end
+
+  test "flags static sigil word class expressions" do
+    """
+    <div class={~w(shadow-lg duration-150)}></div>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(AllowedClasses, rules: @rules)
+    |> assert_issue(%{line_no: 1, trigger: "shadow-lg"})
+  end
+
   test "reports multiple violations when present" do
     """
     <div class="duration-300 delay-500"></div>

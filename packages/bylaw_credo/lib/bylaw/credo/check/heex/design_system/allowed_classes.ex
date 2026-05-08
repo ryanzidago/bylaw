@@ -61,7 +61,7 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses do
       source_file
       |> Heex.templates()
       |> Enum.flat_map(&Heex.tags/1)
-      |> Enum.flat_map(&static_class_attrs/1)
+      |> Enum.flat_map(&static_class_values/1)
       |> Enum.flat_map(&violations_for(&1, rules))
       |> Enum.map(&issue_for(issue_meta, &1))
     end
@@ -87,21 +87,67 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses do
 
   defp normalize_rule(_rule), do: []
 
-  defp static_class_attrs(%Heex.Tag{type: :tag, attrs: attrs}) do
-    Enum.filter(attrs, &static_class_attr?/1)
+  defp static_class_values(%Heex.Tag{type: :tag, attrs: attrs}) do
+    Enum.flat_map(attrs, &static_class_attr_values/1)
   end
 
-  defp static_class_attrs(_tag), do: []
+  defp static_class_values(_tag), do: []
 
-  defp static_class_attr?(%{name: "class", value: {:string, value, _meta}}) when is_binary(value),
-    do: true
-
-  defp static_class_attr?(_attr), do: false
-
-  defp violations_for(%{value: {:string, value, _meta}} = attr, rules) do
+  defp static_class_attr_values(%{name: "class", value: {:string, value, _meta}} = attr)
+       when is_binary(value) do
     value
     |> class_tokens()
-    |> Enum.flat_map(fn {class, offset} -> class_violations(class, offset, attr, rules) end)
+    |> Enum.map(fn {class, offset} ->
+      %{class: class, line: attr.line, column: literal_class_column(attr, offset)}
+    end)
+  end
+
+  defp static_class_attr_values(%{name: "class", value: {:expr, expression, meta}} = attr)
+       when is_binary(expression) do
+    expression
+    |> static_expression_class_strings()
+    |> Enum.flat_map(&class_tokens/1)
+    |> Enum.map(fn {class, _offset} ->
+      %{class: class, line: attr.line, column: expression_class_column(expression, meta, class)}
+    end)
+  end
+
+  defp static_class_attr_values(_attr), do: []
+
+  defp static_expression_class_strings(expression) do
+    with {:ok, ast} <- Code.string_to_quoted(expression, columns: true, token_metadata: true) do
+      collect_static_class_strings(ast)
+    else
+      _error -> []
+    end
+  end
+
+  defp collect_static_class_strings(value) when is_binary(value), do: [value]
+
+  defp collect_static_class_strings(values) when is_list(values) do
+    Enum.flat_map(values, &collect_static_class_strings/1)
+  end
+
+  defp collect_static_class_strings({:sigil_w, _meta, [{:<<>>, _text_meta, [value]}, _modifiers]})
+       when is_binary(value) do
+    [value]
+  end
+
+  defp collect_static_class_strings({form, _meta, args})
+       when form in [:&&, :||] and is_list(args) do
+    Enum.flat_map(args, &collect_static_class_strings/1)
+  end
+
+  defp collect_static_class_strings({:if, _meta, [_condition, clauses]}) when is_list(clauses) do
+    clauses
+    |> Keyword.values()
+    |> Enum.flat_map(&collect_static_class_strings/1)
+  end
+
+  defp collect_static_class_strings(_ast), do: []
+
+  defp violations_for(%{class: class} = class_value, rules) do
+    class_violations(class, class_value, rules)
   end
 
   defp class_tokens(value) do
@@ -110,19 +156,19 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses do
     |> Enum.map(fn [{offset, length}] -> {String.slice(value, offset, length), offset} end)
   end
 
-  defp class_violations(class, offset, attr, rules) do
+  defp class_violations(class, class_value, rules) do
     rules
     |> Enum.filter(&String.starts_with?(class, &1.prefix))
     |> Enum.reject(&(class in &1.allowed))
-    |> Enum.map(&Map.merge(&1, %{class: class, attr: attr, offset: offset}))
+    |> Enum.map(&Map.merge(&1, class_value))
   end
 
   defp issue_for(issue_meta, %{
          class: class,
          prefix: prefix,
          allowed: allowed,
-         attr: attr,
-         offset: offset
+         line: line,
+         column: column
        }) do
     format_issue(
       issue_meta,
@@ -130,14 +176,23 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses do
         ~s(Class "#{class}" is outside the configured "#{prefix}" design-system scale. ) <>
           "Allowed: #{Enum.join(allowed, ", ")}.",
       trigger: class,
-      line_no: attr.line,
-      column: class_column(attr, offset)
+      line_no: line,
+      column: column
     )
   end
 
-  defp class_column(%{column: column}, offset) when is_integer(column) do
+  defp literal_class_column(%{column: column}, offset) when is_integer(column) do
     column + String.length(~s(class=")) + offset
   end
 
-  defp class_column(_attr, _offset), do: nil
+  defp literal_class_column(_attr, _offset), do: nil
+
+  defp expression_class_column(expression, %{column: column}, class) when is_integer(column) do
+    case :binary.match(expression, class) do
+      {offset, _length} -> column + offset
+      :nomatch -> column
+    end
+  end
+
+  defp expression_class_column(_expression, _meta, _class), do: nil
 end
