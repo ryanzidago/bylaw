@@ -61,12 +61,16 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
 
   defp static_ids(tags) do
     tags
+    |> Enum.filter(&html_tag?/1)
     |> Enum.flat_map(fn tag ->
       tag.attrs
       |> Enum.filter(&static_id?/1)
       |> Enum.map(&Map.put(&1, :tag, tag))
     end)
   end
+
+  defp html_tag?(%Heex.Tag{type: :tag}), do: true
+  defp html_tag?(_tag), do: false
 
   defp static_id?(%{name: "id", value: {:string, value, _meta}}) when is_binary(value), do: true
   defp static_id?(_attr), do: false

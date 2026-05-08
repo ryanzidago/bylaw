@@ -97,6 +97,24 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIdsTest do
     |> refute_issues()
   end
 
+  test "does not report static id props on components" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <.field id="email" />
+        <.field id="email" />
+        <FormComponent id="account" />
+        <FormComponent id="account" />
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoDuplicateStaticIds)
+    |> refute_issues()
+  end
+
   test "does not report duplicate ids across separate H sigils" do
     """
     defmodule Example do
@@ -127,6 +145,18 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIdsTest do
     |> Credo.SourceFile.parse("lib/example/index.html.heex")
     |> run_check(NoDuplicateStaticIds)
     |> assert_issue(%{line_no: 2, trigger: ~s(id="settings")})
+  end
+
+  test "does not report dynamic ids in html.heex files" do
+    """
+    <section id={@settings_id}>
+      <form id={@settings_id}></form>
+      <div {@attrs}></div>
+    </section>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(NoDuplicateStaticIds)
+    |> refute_issues()
   end
 
   test "reports duplicate static ids in html.heex files loaded by the Credo plugin" do
