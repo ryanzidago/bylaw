@@ -47,6 +47,51 @@ defmodule Bylaw.Credo.Heex do
           }
   end
 
+  defmodule Text do
+    @moduledoc """
+    Normalized HEEx text content.
+    """
+
+    @enforce_keys [:content]
+    defstruct [:content]
+
+    @type t :: %__MODULE__{
+            content: String.t()
+          }
+  end
+
+  defmodule Expression do
+    @moduledoc """
+    A normalized dynamic HEEx expression.
+    """
+
+    @enforce_keys [:source, :line, :column]
+    defstruct [:source, :line, :column]
+
+    @type t :: %__MODULE__{
+            source: String.t(),
+            line: pos_integer(),
+            column: pos_integer()
+          }
+  end
+
+  defmodule CloseTag do
+    @moduledoc """
+    A normalized HEEx closing tag.
+    """
+
+    @enforce_keys [:name, :line, :column]
+    defstruct [:name, :line, :column]
+
+    @type t :: %__MODULE__{
+            name: String.t(),
+            line: pos_integer(),
+            column: pos_integer()
+          }
+  end
+
+  @type token :: Tag.t() | Text.t() | Expression.t() | CloseTag.t()
+
   @eex_expr [:start_expr, :expr, :end_expr, :middle_expr]
   @heex_extensions [".ex", ".exs"]
   @tag_engine_tokenizer Module.concat([Phoenix, LiveView, TagEngine, Tokenizer])
@@ -88,15 +133,32 @@ defmodule Bylaw.Credo.Heex do
   """
   @spec tags(Template.t() | String.t()) :: list(Tag.t())
   def tags(%Template{} = template) do
+    template
+    |> tokens()
+    |> Enum.filter(&match?(%Tag{}, &1))
+  end
+
+  def tags(source) when is_binary(source) do
+    tags(%Template{source: source, line: 1, column: 1})
+  end
+
+  @doc """
+  Tokenizes a HEEx template into normalized tokens.
+
+  Returns an empty list if Phoenix LiveView is unavailable or the template cannot
+  be tokenized.
+  """
+  @spec tokens(Template.t() | String.t()) :: list(token())
+  def tokens(%Template{} = template) do
     if available?() do
-      do_tags(template)
+      do_tokens(template)
     else
       []
     end
   end
 
-  def tags(source) when is_binary(source) do
-    tags(%Template{source: source, line: 1, column: 1})
+  def tokens(source) when is_binary(source) do
+    tokens(%Template{source: source, line: 1, column: 1})
   end
 
   @doc """
@@ -146,7 +208,7 @@ defmodule Bylaw.Credo.Heex do
 
   defp collect_sigil_template(ast, templates), do: {ast, templates}
 
-  defp do_tags(%Template{} = template) do
+  defp do_tokens(%Template{} = template) do
     template.source
     |> tokenize(template)
     |> Enum.flat_map(&normalize_token/1)
@@ -210,6 +272,40 @@ defmodule Bylaw.Credo.Heex do
         line: meta.line,
         column: meta.column,
         closing: meta[:closing]
+      }
+    ]
+  end
+
+  defp normalize_token({:close, :tag, name, meta}) do
+    [
+      %CloseTag{
+        name: name,
+        line: meta.line,
+        column: meta.column
+      }
+    ]
+  end
+
+  defp normalize_token({:text, content, _meta}) do
+    [%Text{content: content}]
+  end
+
+  defp normalize_token({:eex, _type, source, meta}) do
+    [
+      %Expression{
+        source: source,
+        line: meta.line,
+        column: meta.column
+      }
+    ]
+  end
+
+  defp normalize_token({:body_expr, source, meta}) do
+    [
+      %Expression{
+        source: source,
+        line: meta.line,
+        column: meta.column
       }
     ]
   end
