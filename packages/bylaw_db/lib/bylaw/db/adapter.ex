@@ -1,9 +1,9 @@
 defmodule Bylaw.Db.Adapter do
   @moduledoc """
-  Behaviour for database adapters.
+  Behaviour implemented by database adapter packages.
 
-  Adapters own database-specific source construction and query execution. Checks
-  stay isolated and call adapter functions when they need database internals.
+  Adapters build validation targets, run checks, and execute database-specific
+  introspection queries for checks.
   """
 
   alias Bylaw.Db.Check
@@ -35,18 +35,23 @@ defmodule Bylaw.Db.Adapter do
   @type query_opts :: list(query_opt())
 
   @doc """
-  Builds a single validation target for this adapter.
+  Builds a single validation target from adapter-specific options.
   """
   @callback target(opts :: target_opts()) :: Target.t()
 
   @doc """
   Runs `checks` against a non-empty list of targets.
+
+  Adapter implementations should usually delegate to `Bylaw.Db.validate/2`.
   """
   @callback validate(targets :: list(Target.t()), checks :: list(Bylaw.Db.check_spec())) ::
               Check.result()
 
   @doc """
   Executes database-specific introspection SQL for `target`.
+
+  Checks call this callback through the target's adapter when they need database
+  metadata.
   """
   @callback query(
               target :: Target.t(),
