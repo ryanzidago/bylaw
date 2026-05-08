@@ -174,6 +174,19 @@ defmodule Bylaw.Credo.Check.HEEx.RequireButtonTypeTest do
     |> assert_issue(%{line_no: 2, trigger: "<button"})
   end
 
+  test "does not report explicit or dynamic type in html.heex files" do
+    """
+    <form>
+      <button type="button">Cancel</button>
+      <button type={@type}>Save</button>
+      <button {@attrs}>Continue</button>
+    </form>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(RequireButtonType)
+    |> refute_issues()
+  end
+
   test "reports missing type in html.heex files loaded by the Credo plugin" do
     tmp_dir = tmp_dir!("require-button-type")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
