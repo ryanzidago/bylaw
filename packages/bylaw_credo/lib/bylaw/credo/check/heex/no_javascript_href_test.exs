@@ -73,6 +73,21 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHrefTest do
     |> refute_issues()
   end
 
+  test "does not report dynamic root attributes" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <a {@attrs}>Dynamic attributes</a>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoJavascriptHref)
+    |> refute_issues()
+  end
+
   test "reports javascript href in html.heex files" do
     """
     <section>
