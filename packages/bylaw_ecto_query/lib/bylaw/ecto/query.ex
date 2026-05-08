@@ -21,6 +21,7 @@ defmodule Bylaw.Ecto.Query do
   module may appear at most once.
   """
 
+  alias Bylaw.CheckRunner
   alias Bylaw.Ecto.Query.Check
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
@@ -96,31 +97,11 @@ defmodule Bylaw.Ecto.Query do
   end
 
   defp issues_for_check({check, opts}, operation, query) do
-    case check.validate(operation, query, opts) do
-      :ok ->
-        []
+    result = check.validate(operation, query, opts)
 
-      {:error, issues} = result when is_list(issues) ->
-        issue_list!(check, issues, result)
-
-      result ->
-        invalid_check_result!(check, result)
-    end
+    apply(CheckRunner, :result!, [check, result, Issue, 3])
   end
 
   defp result([]), do: :ok
   defp result(issues), do: {:error, issues}
-
-  defp issue_list!(check, issues, result) do
-    if not Enum.empty?(issues) and Enum.all?(issues, &match?(%Issue{}, &1)) do
-      issues
-    else
-      invalid_check_result!(check, result)
-    end
-  end
-
-  defp invalid_check_result!(check, result) do
-    raise ArgumentError,
-          "expected #{inspect(check)}.validate/3 to return :ok or {:error, non_empty_issue_list}, got: #{inspect(result)}"
-  end
 end
