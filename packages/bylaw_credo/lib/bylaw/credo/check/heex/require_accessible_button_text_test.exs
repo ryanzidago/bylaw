@@ -202,4 +202,32 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonTextTest do
     |> run_check(RequireAccessibleButtonText)
     |> refute_issues()
   end
+
+  test "does not crash when source has no HEEx" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        "not a template"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireAccessibleButtonText)
+    |> refute_issues()
+  end
+
+  test "does not crash when HEEx cannot be tokenized" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <button type="button"
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireAccessibleButtonText)
+    |> refute_issues()
+  end
 end
