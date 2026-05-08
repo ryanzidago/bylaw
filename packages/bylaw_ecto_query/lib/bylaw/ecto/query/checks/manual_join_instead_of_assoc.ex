@@ -3,15 +3,21 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   Validates that manual joins use `assoc/2` when a root association exists.
 
   This check catches direct schema joins that spell out a relationship already
-  declared on the query root schema:
+  declared on the query root schema.
 
+  ## Examples
+
+  When `Post` defines `has_many :comments, Comment`, a manual join repeats
+  association metadata that Ecto already knows:
+
+      # Bad: the association is reimplemented by hand.
       from post in Post,
         join: comment in Comment,
         on: comment.post_id == post.id
 
-  When `Post` defines `has_many :comments, Comment`, the join should be written
-  with `assoc/2` instead:
+  Write the join with `assoc/2` instead:
 
+      # Better: Ecto uses the association metadata.
       from post in Post,
         join: comment in assoc(post, :comments)
 

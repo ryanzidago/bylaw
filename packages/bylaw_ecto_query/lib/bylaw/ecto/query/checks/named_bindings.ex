@@ -22,9 +22,22 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   generated lookup shape. Predicate-oriented checks can still validate those
   generated `where` fields.
 
+  ## Examples
+
+  Positional binding references become fragile as queries grow:
+
+      # Bad: the root binding has no alias and fields use positional access.
+      from post in Post,
+        join: comment in assoc(post, :comments),
+        where: post.organisation_id == ^organisation_id
+
+  Name the root and join bindings, then reference fields through those aliases:
+
+      # Better: field references are tied to explicit binding names.
       query =
         Post
         |> from(as: :post)
+        |> join(:inner, [post: post], comment in assoc(post, :comments), as: :comment)
         |> where([post: post], post.organisation_id == ^organisation_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])

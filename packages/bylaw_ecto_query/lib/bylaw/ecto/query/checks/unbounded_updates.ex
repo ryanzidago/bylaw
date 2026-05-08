@@ -12,6 +12,22 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
+  ## Examples
+
+  An `update_all` query without a root predicate can update every row:
+
+      # Bad: every post would be marked archived.
+      from post in Post,
+        update: [set: [archived: true]]
+
+  Add a root `where` clause for the intended update scope:
+
+      # Better: only stale drafts are archived.
+      from post in Post,
+        where: post.status == ^:draft,
+        where: post.updated_at < ^cutoff,
+        update: [set: [archived: true]]
+
   The check only applies to the `:update_all` operation reported by
   `c:Ecto.Repo.prepare_query/3`. It requires every possible root `where` branch
   to include at least one non-true expression. It does not prove whether that

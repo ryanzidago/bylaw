@@ -3,16 +3,27 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   Validates that root UTC datetime fields are not compared to `NaiveDateTime` values.
 
   This catches queries where a field backed by `:utc_datetime` or
-  `:utc_datetime_usec` is compared to a `NaiveDateTime` value:
+  `:utc_datetime_usec` is compared to a `NaiveDateTime` value.
+
+  ## Examples
+
+  A naive datetime does not carry the timezone used to interpret the instant:
 
       naive_datetime = ~N[2026-01-01 00:00:00]
 
+      # Bad: the timezone meaning is implicit.
       from event in Event,
         where: event.inserted_at >= ^naive_datetime
 
   Ecto may be able to cast many values, but a naive datetime does not say what
   timezone the value meant. Callers should convert the value to a `DateTime`
   before building the query so the timezone decision is explicit.
+
+      datetime = DateTime.from_naive!(naive_datetime, "Etc/UTC")
+
+      # Better: the comparison value is an explicit UTC datetime.
+      from event in Event,
+        where: event.inserted_at >= ^datetime
 
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.

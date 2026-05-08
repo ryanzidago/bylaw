@@ -15,6 +15,25 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
+  ## Examples
+
+  Repeating the same join can multiply rows and make later predicates ambiguous:
+
+      # Bad: the comments join is repeated with the same relationship.
+      from post in Post,
+        join: comment in Comment,
+        on: comment.post_id == post.id,
+        join: visible_comment in Comment,
+        on: visible_comment.post_id == post.id
+
+  Use one join and put the intended predicates on that binding:
+
+      # Better: one join represents the relationship once.
+      from post in Post,
+        join: comment in Comment,
+        on: comment.post_id == post.id,
+        where: comment.visible == true
+
   The check is static and intentionally inspects the query structure produced by
   Ecto's query macros. It supports the tested join shapes exposed by the Ecto
   query API.

@@ -3,11 +3,31 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   Validates that queries do not use explicit cartesian joins.
 
   This check catches join shapes that are easy to introduce accidentally and
-  expensive to run:
+  expensive to run.
 
+  ## Examples
+
+  A join with a literal `true` predicate creates every possible pair of rows:
+
+      # Bad: every post is joined to every comment.
       from post in Post,
         join: comment in Comment,
         on: true
+
+  Join through a real relationship predicate instead:
+
+      # Better: comments are constrained to their post.
+      from post in Post,
+        join: comment in Comment,
+        on: comment.post_id == post.id
+
+  Avoid unconstrained `cross_join` unless the cartesian product is intentional
+  and validation is disabled for that call site:
+
+      # Bad: every enabled feature is paired with every plan.
+      from plan in Plan,
+        cross_join: feature in Feature,
+        where: feature.enabled == true
 
   It rejects `cross_join`, uncorrelated `cross_lateral_join`, and
   non-association joins whose `on` expression is literally `true`. Correlated

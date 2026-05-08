@@ -4,13 +4,28 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
 
   Schemas that declare a persisted `:deleted_at` or `:archived_at` field usually
   expect lifecycle removal to be represented as an update. A bulk hard delete on
-  that schema is therefore suspicious even when the query is otherwise bounded:
+  that schema is therefore suspicious even when the query is otherwise bounded.
 
-      from post in Post,
-        where: post.status == ^:archived
+  ## Examples
+
+  Hard-deleting rows from a soft-delete schema bypasses the lifecycle field:
+
+      # Bad: archived posts are permanently removed.
+      query =
+        from post in Post,
+          where: post.status == ^:archived
+
+      Repo.delete_all(query)
 
   Prefer `Repo.update_all/3` setting `:deleted_at` or `:archived_at` instead of
   `Repo.delete_all/2` when this check reports an issue.
+
+      # Better: removal is represented in the soft-delete field.
+      query =
+        from post in Post,
+          where: post.status == ^:archived
+
+      Repo.update_all(query, set: [deleted_at: DateTime.utc_now()])
 
   The check is zero-config. Field presence in `__schema__(:fields)` is the
   signal.

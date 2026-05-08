@@ -17,6 +17,28 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
 
+  ## Examples
+
+  If `Post` is configured with `fields: [:deleted_at]`, a query that does not
+  mention the visibility field is ambiguous:
+
+      # Bad: the query does not say whether soft-deleted rows are visible.
+      from post in Post,
+        where: post.organisation_id == ^organisation_id
+
+  Make the visibility decision explicit in the root predicate:
+
+      # Better: only visible rows are requested.
+      from post in Post,
+        where: post.organisation_id == ^organisation_id,
+        where: is_nil(post.deleted_at)
+
+  Queries that intentionally include archived rows should say so explicitly too:
+
+      # Better: the lifecycle state is part of the query contract.
+      from post in Post,
+        where: post.archived_at <= ^cutoff
+
   The check is static. It accepts configured root fields when they appear
   directly in `where` expressions, including `is_nil(field)`, `not is_nil(field)`,
   bare field predicates, comparisons against values or parameters, and `in`

@@ -14,6 +14,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     * `:keys` - required non-empty list of field names when the check runs.
     * `:match` - `:any` or `:all`. Defaults to `:any`.
 
+  ## Examples
+
+  If `:organisation_id` is configured as mandatory, a root query without that
+  predicate can read across tenant boundaries:
+
+      # Bad: no tenant boundary is visible in the root where clause.
+      from post in Post,
+        where: post.status == ^:published
+
+  Add a supported root predicate for the configured key:
+
+      # Better: results are scoped to one organisation.
+      from post in Post,
+        where: post.organisation_id == ^organisation_id,
+        where: post.status == ^:published
+
   The check is static. It accepts configured root fields directly in `==` and `in`
   predicates inside `where` expressions, but it cannot prove fields hidden
   inside raw SQL fragments. Combination queries such as `union`, `union_all`,
