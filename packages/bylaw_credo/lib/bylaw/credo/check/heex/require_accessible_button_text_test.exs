@@ -39,6 +39,23 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonTextTest do
     |> assert_issue(%{line_no: 4, trigger: "<button"})
   end
 
+  test "reports svg-only button in H sigil" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <button type="button">
+          <svg aria-hidden="true" viewBox="0 0 20 20"><path d="M1 1h18v18H1z" /></svg>
+        </button>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireAccessibleButtonText)
+    |> assert_issue(%{line_no: 4, trigger: "<button"})
+  end
+
   test "does not report button with static text" do
     """
     defmodule Example do
@@ -131,6 +148,21 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonTextTest do
     |> refute_issues()
   end
 
+  test "does not report button with dynamic aria-label" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <button type="button" aria-label={@label}><.icon name="hero-x-mark" /></button>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireAccessibleButtonText)
+    |> refute_issues()
+  end
+
   test "does not report button with dynamic attrs" do
     """
     defmodule Example do
@@ -157,5 +189,17 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonTextTest do
     |> Credo.SourceFile.parse("lib/example/index.html.heex")
     |> run_check(RequireAccessibleButtonText)
     |> assert_issue(%{line_no: 2, trigger: "<button"})
+  end
+
+  test "does not report dynamic content in html.heex files" do
+    """
+    <section>
+      <button type="button">{@label}</button>
+      <button type="button"><%= @legacy_label %></button>
+    </section>
+    """
+    |> Credo.SourceFile.parse("lib/example/index.html.heex")
+    |> run_check(RequireAccessibleButtonText)
+    |> refute_issues()
   end
 end
