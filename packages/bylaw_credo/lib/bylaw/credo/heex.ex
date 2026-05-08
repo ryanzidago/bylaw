@@ -138,7 +138,7 @@ defmodule Bylaw.Credo.Heex do
     column =
       case meta[:delimiter] do
         "\"\"\"" -> indentation + 1
-        _other -> meta[:column] || 1
+        delimiter -> (meta[:column] || 1) + 2 + String.length(delimiter || "")
       end
 
     {ast, [%Template{source: source, line: line, column: column} | templates]}
