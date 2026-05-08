@@ -21,6 +21,13 @@ Then enable the checks you want in your Credo configuration:
       ],
       checks: [
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses,
+         rules: [
+           [prefix: "duration-", allowed: ~w(duration-150)],
+           [prefix: "delay-", allowed: ~w(delay-75 delay-150)],
+           [prefix: "rounded-", allowed: ~w(rounded-none rounded-sm rounded rounded-md)],
+           [prefix: "shadow", allowed: ~w(shadow-none shadow-sm shadow shadow-md)]
+         ]},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
         {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []},
@@ -40,6 +47,7 @@ Then enable the checks you want in your Credo configuration:
 ```
 
 HEEx checks, including `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`,
+`Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses`,
 `Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement`,
 `Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText`,
 `Bylaw.Credo.Check.HEEx.NoJavascriptHref`,
@@ -56,3 +64,9 @@ checks.
 Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
 To check standalone Phoenix `.html.heex` templates, enable
 `Bylaw.Credo.Plugin.HEExSources` as shown above.
+
+`Bylaw.Credo.Check.HEEx.DesignSystem.AllowedClasses` enforces configured
+design-system class scales in static HEEx `class` strings. It checks each class
+token against rules whose `prefix` matches the token, and reports tokens outside
+that rule's `allowed` list. Dynamic-only class values such as `class={@class}`
+are intentionally ignored.
