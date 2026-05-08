@@ -20,6 +20,7 @@ Then enable the checks you want in your Credo configuration:
         {Bylaw.Credo.Plugin.HEExSources, []}
       ],
       checks: [
+        {Bylaw.Credo.Check.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
@@ -39,6 +40,81 @@ Then enable the checks you want in your Credo configuration:
   ]
 }
 ```
+
+## Checks
+
+### Elixir and typespecs
+
+- `Bylaw.Credo.Check.DocBeforeSpec`
+- `Bylaw.Credo.Check.FullySpecifiedStructTypes`
+- `Bylaw.Credo.Check.FullyTypedOpts`
+- `Bylaw.Credo.Check.NamedSpecParams`
+- `Bylaw.Credo.Check.PreferListTypeSyntax`
+- `Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing`
+- `Bylaw.Credo.Check.Elixir.FilterRejectFirst`
+- `Bylaw.Credo.Check.Elixir.FloatUsage`
+- `Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse`
+- `Bylaw.Credo.Check.Elixir.NoEndOfDayTime`
+- `Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives`
+- `Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead`
+- `Bylaw.Credo.Check.Elixir.NoPassthroughWrapper`
+- `Bylaw.Credo.Check.Elixir.NoRaise`
+- `Bylaw.Credo.Check.Elixir.NoResultTupleArgument`
+- `Bylaw.Credo.Check.Elixir.NoThen`
+- `Bylaw.Credo.Check.Elixir.NoTryRescue`
+- `Bylaw.Credo.Check.Elixir.PreferEmptyListChecks`
+- `Bylaw.Credo.Check.Elixir.PreferEnumCount`
+- `Bylaw.Credo.Check.Elixir.PreferEnumUniqBy`
+- `Bylaw.Credo.Check.Elixir.RejectCount`
+- `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison`
+- `Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName`
+- `Bylaw.Credo.Check.Elixir.WithElseClause`
+
+### Ecto
+
+- `Bylaw.Credo.Check.Ecto.ComposablePreloadQueries`
+- `Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch`
+- `Bylaw.Credo.Check.Ecto.NamedBinding`
+- `Bylaw.Credo.Check.Ecto.NoAndInWhere`
+- `Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery`
+- `Bylaw.Credo.Check.Ecto.NoRepoTransaction`
+- `Bylaw.Credo.Check.Ecto.OwnContextForSchema`
+- `Bylaw.Credo.Check.Ecto.PipeBasedQueries`
+- `Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate`
+- `Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount`
+- `Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap`
+- `Bylaw.Credo.Check.Ecto.UseBylawSchema`
+
+### HEEx
+
+- `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`
+- `Bylaw.Credo.Check.HEEx.NoElementSpacing`
+- `Bylaw.Credo.Check.HEEx.NoJavascriptHref`
+- `Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement`
+- `Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText`
+- `Bylaw.Credo.Check.HEEx.RequireButtonType`
+- `Bylaw.Credo.Check.HEEx.RequireImageAlt`
+- `Bylaw.Credo.Check.HEEx.RequireLabelForInput`
+- `Bylaw.Credo.Check.HEEx.RequireLinkHref`
+- `Bylaw.Credo.Check.HEEx.RequireLinkText`
+- `Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit`
+- `Bylaw.Credo.Check.HEEx.RequireTargetBlankRel`
+
+### Phoenix
+
+- `Bylaw.Credo.Check.Phoenix.ContextFunctionNaming`
+- `Bylaw.Credo.Check.Phoenix.NoRepoInController`
+- `Bylaw.Credo.Check.Phoenix.URIDecodeQuery`
+- `Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes`
+- `Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple`
+
+### Testing
+
+- `Bylaw.Credo.Check.Testing.NoGlobalStateInTests`
+- `Bylaw.Credo.Check.Testing.NoSetupInTests`
+- `Bylaw.Credo.Check.Testing.NoTestsInTestDir`
+
+## HEEx templates
 
 HEEx checks, including `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`,
 `Bylaw.Credo.Check.HEEx.NoElementSpacing`,
