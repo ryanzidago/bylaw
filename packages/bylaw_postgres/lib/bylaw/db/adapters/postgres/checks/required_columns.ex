@@ -7,22 +7,52 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   are combined. Matching rules accumulate, so the same table can be validated by
   more than one rule.
 
-      {RequiredColumns,
-       rules: [
-         [
-           columns: ["inserted_at", "updated_at"],
-           except: [[table: "schema_migrations"]]
-         ],
-         [
-          only: [
-             [schema: "audit"],
-             [schema: "billing", table: ~r/^invoice_/]
-           ],
-           columns: ["tenant_id"]
-         ]
-       ]}
+  ```elixir
+  {RequiredColumns,
+   rules: [
+     [
+       columns: ["inserted_at", "updated_at"],
+       except: [[table: "schema_migrations"]]
+     ],
+     [
+       only: [
+         [schema: "audit"],
+         [schema: "billing", table: ~r/^invoice_/]
+       ],
+       columns: ["tenant_id"]
+     ]
+   ]}
+  ```
 
   Use rule-level `except: [...]` for exclusions.
+
+  With `rules: [[only: [schema: "public"], columns: ["tenant_id"]]]`, before:
+
+  ```sql
+  CREATE TABLE invoices (
+    id uuid PRIMARY KEY,
+    amount numeric NOT NULL
+  );
+  ```
+
+  Tables without the project-standard scope column are easy to query or mutate
+  without tenant filtering.
+
+  After, add the required column:
+
+  ```sql
+  CREATE TABLE invoices (
+    id uuid PRIMARY KEY,
+    tenant_id uuid NOT NULL,
+    amount numeric NOT NULL
+  );
+  ```
+
+  The table can participate in the same scoping, authorization, and cleanup
+  patterns as the rest of the schema.
+
+  The check only verifies column presence. It does not validate type,
+  nullability, indexes, or constraints for required columns.
   """
 
   @behaviour Bylaw.Db.Check

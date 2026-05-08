@@ -6,6 +6,35 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   `rules: [[only: ...]]` to narrow the scope. A foreign key passes when the
   referencing table has a valid, non-partial index whose leading columns contain
   the foreign key columns.
+
+  Before, the foreign key exists but the referencing column has no index:
+
+  ```sql
+  CREATE TABLE accounts (
+    id uuid PRIMARY KEY
+  );
+
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES accounts(id)
+  );
+  ```
+
+  Deletes or primary-key updates on `accounts` can become slow because Postgres
+  must scan `orders` to enforce the foreign key.
+
+  After, add an index whose leading columns are the foreign key columns:
+
+  ```sql
+  CREATE INDEX orders_account_id_index ON orders (account_id);
+  ```
+
+  Postgres can enforce the relationship with an index lookup instead of a table
+  scan.
+
+  The supporting index does not have to be unique, and it may include extra
+  trailing columns such as `(account_id, inserted_at)`. Partial indexes such as
+  `WHERE deleted_at IS NULL` do not count as support for the foreign key.
   """
 
   @behaviour Bylaw.Db.Check

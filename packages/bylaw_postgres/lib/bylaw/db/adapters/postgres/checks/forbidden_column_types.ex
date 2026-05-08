@@ -5,17 +5,48 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   By default the check inspects all non-system schemas in a Postgres target. Use
   `rules: [...]` to configure forbidden types for scoped groups of columns:
 
-      {ForbiddenColumnTypes,
-       rules: [
-         [
-           only: [schema: "public"],
-           types: [
-             [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
-             [type: ~r/^character\\(/, prefer: "text"]
-           ],
-           except: [[table: "webhook_events", column: "raw_payload"]]
-         ]
-       ]}
+  ```elixir
+  {ForbiddenColumnTypes,
+   rules: [
+     [
+       only: [schema: "public"],
+       types: [
+         [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
+         [type: ~r/^character\\(/, prefer: "text"]
+       ],
+       except: [[table: "webhook_events", column: "raw_payload"]]
+     ]
+   ]}
+  ```
+
+  With `types: [[type: "json", prefer: "jsonb"]]`, before:
+
+  ```sql
+  CREATE TABLE webhook_events (
+    id uuid PRIMARY KEY,
+    payload json NOT NULL
+  );
+  ```
+
+  The project has decided this type is limiting or unsafe for its use case. For
+  example, plain `json` is less useful for common indexing and containment
+  queries than `jsonb`.
+
+  After, use the preferred type:
+
+  ```sql
+  CREATE TABLE webhook_events (
+    id uuid PRIMARY KEY,
+    payload jsonb NOT NULL
+  );
+  ```
+
+  The column now follows the project convention and avoids repeating the same
+  migration decision in future tables.
+
+  This check is policy-driven and has no built-in opinion about which types are
+  bad. Type matchers compare against `pg_catalog.format_type`, so use exact
+  strings such as `"json"` or regexes such as `~r/^character\\(/`.
   """
 
   @behaviour Bylaw.Db.Check
