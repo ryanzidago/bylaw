@@ -53,6 +53,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
       assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
+    test "passes when an update_all query has a literal false where clause" do
+      query = from(post in Post, where: false)
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
+    test "passes when an update_all query has a negated literal true where clause" do
+      query = from(post in Post, where: not true)
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
     test "passes when a schema-less update_all query has a where clause" do
       query = from(post in "posts", where: field(post, :published) == false)
 
@@ -235,6 +247,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdatesTest do
 
       assert issue.check == UnboundedUpdates
       assert issue.meta.operation == :update_all
+    end
+
+    test "passes supported raw query maps with false where entries" do
+      query = %{wheres: [%{expr: false, op: :and, params: []}]}
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
+    end
+
+    test "passes supported raw query maps with negated true where entries" do
+      query = %{wheres: [%{expr: {:not, [], [true]}, op: :and, params: []}]}
+
+      assert :ok = UnboundedUpdates.validate(:update_all, query, [])
     end
 
     test "returns an issue for supported raw query maps without where entries" do
