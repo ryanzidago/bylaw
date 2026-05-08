@@ -1,12 +1,48 @@
 defmodule Bylaw.Credo.Check.Testing.NoSetupInTests do
   @moduledoc """
-  Disallows `setup` and `setup_all` in test modules.
+  Avoid `setup` and `setup_all` blocks in test modules.
+
+  ### Bad
+
+      setup do
+        {:ok, user: create_user()}
+      end
+
+      test "shows user", %{user: user} do
+        assert user.active?
+      end
+
+  ### Why?
+
+  Shared setup hides the inputs a test needs and encourages unrelated tests
+  to depend on the same fixture shape. `setup_all` also creates shared data
+  that can make ordering and isolation problems harder to see.
+
+  ### Better
+
+      test "shows user" do
+        user = create_user()
+        assert user.active?
+      end
+
+  Keep each test's data close to the assertion. `setup :verify_on_exit!` is
+  allowed because it supports mock verification rather than shared fixture
+  construction.
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    param_defaults: [excluded_paths: []]
+    param_defaults: [excluded_paths: []],
+    explanations: [
+      check: @moduledoc,
+      params: [
+        excluded_paths: """
+        Paths containing any configured string are skipped. Use this for shared
+        test case modules that intentionally define setup callbacks.
+        """
+      ]
+    ]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

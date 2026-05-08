@@ -131,14 +131,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   use Credo.Check,
     base_priority: :normal,
     category: :readability,
-    explanations: [
-      check: """
-      Keep function heads focused on clause selection. Bind the whole map or
-      struct in the head, preserve only literal or underscore-based shape
-      checks there, and read the needed values from the bound param in the
-      function body.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

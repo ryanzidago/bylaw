@@ -1,38 +1,35 @@
 defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
   @moduledoc """
-  Prefers using `select` in an Ecto query over `Repo.all |> Enum.map` when the
-  map callback only accesses fields on the record.
+  Prefer using `select` in the Ecto query over loading full rows with
+  `Repo.all` and then mapping them with `Enum.map` to extract fields.
+
+  This should be refactored:
+
+      query
+      |> Repo.all()
+      |> Enum.map(&%{role: &1.role, content: &1.content})
+
+  Into this:
+
+      query
+      |> select([m], %{role: m.role, content: m.content})
+      |> Repo.all()
+
+  This pushes the projection down to the database, reducing memory usage
+  and data transfer.
+
+  Cases where `Enum.map` references the full record (not just field
+  accesses) are allowed, since they cannot be expressed as a `select`:
+
+      # OK - the full record is referenced
+      Repo.all(query) |> Enum.map(&%{id: &1.id, record: &1})
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer using `select` in the Ecto query over loading full rows with
-      `Repo.all` and then mapping them with `Enum.map` to extract fields.
-
-      This should be refactored:
-
-          query
-          |> Repo.all()
-          |> Enum.map(&%{role: &1.role, content: &1.content})
-
-      Into this:
-
-          query
-          |> select([m], %{role: m.role, content: m.content})
-          |> Repo.all()
-
-      This pushes the projection down to the database, reducing memory usage
-      and data transfer.
-
-      Cases where `Enum.map` references the full record (not just field
-      accesses) are allowed, since they cannot be expressed as a `select`:
-
-          # OK - the full record is referenced
-          Repo.all(query) |> Enum.map(&%{id: &1.id, record: &1})
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

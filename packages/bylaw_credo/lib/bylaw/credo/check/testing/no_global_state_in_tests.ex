@@ -1,22 +1,45 @@
 defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
   @moduledoc """
-  Disallows `Application.put_env/3`, `Application.put_env/4`,
-  `Application.delete_env/2`, `Application.delete_env/3`,
-  `Application.get_env/2`, `Application.get_env/3`,
-  `Application.fetch_env/2`, `Application.fetch_env!/2`,
-  `System.put_env/1`, `System.put_env/2`, `System.delete_env/1`,
-  `System.get_env/0`, `System.get_env/1`, and `System.get_env/2`
-  in test files.
+  Avoid reading or mutating global application and system environment state
+  from tests.
 
-  Reading or mutating global state in tests leads to race conditions
-  when tests run concurrently. Use dependency injection or mock
-  behaviours instead.
+  ### Bad
+
+      test "uses config" do
+        Application.put_env(:my_app, :feature_enabled?, true)
+        assert Feature.enabled?()
+      end
+
+  ### Why?
+
+  Application and system environment are shared process-wide state. Tests
+  that read or mutate that state can race with each other when the suite
+  runs concurrently, especially when a test forgets to restore a value.
+
+  ### Better
+
+      test "uses config" do
+        assert Feature.enabled?(%{feature_enabled?: true})
+      end
+
+  Prefer passing dependencies or configuration explicitly. If a test needs
+  a substitute implementation, use a behaviour-backed module or mock that
+  is scoped to the test process.
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    param_defaults: [excluded_paths: []]
+    param_defaults: [excluded_paths: []],
+    explanations: [
+      check: @moduledoc,
+      params: [
+        excluded_paths: """
+        Paths containing any configured string are skipped. Use this for test
+        support files that intentionally own global test configuration.
+        """
+      ]
+    ]
 
   @application_functions ~w(put_env delete_env get_env fetch_env fetch_env!)a
   @system_functions ~w(put_env delete_env get_env)a

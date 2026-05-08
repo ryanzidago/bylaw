@@ -1,48 +1,44 @@
 defmodule Bylaw.Credo.Check.Ecto.UseBylawSchema do
   @moduledoc """
-  Enforces `use Bylaw.Schema` instead of `use Ecto.Schema`.
+  `use Ecto.Schema` should not be used directly. Use `use Bylaw.Schema` instead.
 
-  `Bylaw.Schema` provides project defaults for UUIDv7 keys and UTC timestamps.
+  ## Why?
+
+  `Bylaw.Schema` provides project-specific defaults:
+  - UUIDv7 primary keys
+  - UUIDv7 foreign keys
+  - UTC datetime timestamps with microsecond precision
+
+  ## Examples
+
+  Bad:
+  ```elixir
+  defmodule MyApp.User do
+    use Ecto.Schema
+
+    schema "users" do
+      field :name, :string
+    end
+  end
+  ```
+
+  Good:
+  ```elixir
+  defmodule MyApp.User do
+    use Bylaw.Schema
+
+    schema "users" do
+      field :name, :string
+    end
+  end
+  ```
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :design,
     explanations: [
-      check: """
-      `use Ecto.Schema` should not be used directly. Use `use Bylaw.Schema` instead.
-
-      ## Why?
-
-      `Bylaw.Schema` provides project-specific defaults:
-      - UUIDv7 primary keys
-      - UUIDv7 foreign keys
-      - UTC datetime timestamps with microsecond precision
-
-      ## Examples
-
-      Bad:
-      ```elixir
-      defmodule MyApp.User do
-        use Ecto.Schema
-
-        schema "users" do
-          field :name, :string
-        end
-      end
-      ```
-
-      Good:
-      ```elixir
-      defmodule MyApp.User do
-        use Bylaw.Schema
-
-        schema "users" do
-          field :name, :string
-        end
-      end
-      ```
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

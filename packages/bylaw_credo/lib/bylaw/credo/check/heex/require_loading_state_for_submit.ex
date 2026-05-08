@@ -34,10 +34,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
       loading_class_patterns: []
     ],
     explanations: [
-      check: """
-      Submit actions in LiveView should expose a loading or disabled state so
-      users get feedback and duplicate submissions are harder to trigger.
-      """,
+      check: @moduledoc,
       params: [
         loading_attrs:
           "Attribute names that satisfy the loading-state requirement (default: phx-disable-with, disabled).",

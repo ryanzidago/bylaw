@@ -1,41 +1,37 @@
 defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
   @moduledoc """
-  Prefers `Repo.aggregate(queryable, :count)` over loading rows with `Repo.all`
-  and counting them in memory, and prefers `Repo.exists?/1` for count-based
-  existence checks.
+  Prefer `Repo.aggregate(queryable, :count)` over loading rows with `Repo.all`
+  and counting them in memory.
+
+  This should be refactored:
+
+      Repo.all(query) |> Enum.count()
+      Enum.count(Repo.all(query))
+      query |> Repo.all() |> length()
+
+  Into this:
+
+      Repo.aggregate(query, :count)
+
+  Prefer `Repo.exists?/1` or `not Repo.exists?/1` over comparing
+  `Repo.aggregate(query, :count)` to `0` or `1` for existence checks.
+
+  This should be refactored:
+
+      Repo.aggregate(query, :count) > 0
+      Repo.aggregate(query, :count) == 0
+
+  Into this:
+
+      Repo.exists?(query)
+      not Repo.exists?(query)
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer `Repo.aggregate(queryable, :count)` over loading rows with `Repo.all`
-      and counting them in memory.
-
-      This should be refactored:
-
-          Repo.all(query) |> Enum.count()
-          Enum.count(Repo.all(query))
-          query |> Repo.all() |> length()
-
-      Into this:
-
-          Repo.aggregate(query, :count)
-
-      Prefer `Repo.exists?/1` or `not Repo.exists?/1` over comparing
-      `Repo.aggregate(query, :count)` to `0` or `1` for existence checks.
-
-      This should be refactored:
-
-          Repo.aggregate(query, :count) > 0
-          Repo.aggregate(query, :count) == 0
-
-      Into this:
-
-          Repo.exists?(query)
-          not Repo.exists?(query)
-      """
+      check: @moduledoc
     ]
 
   @comparison_operators [:>, :>=, :<, :<=, :==, :===, :!=, :!==]

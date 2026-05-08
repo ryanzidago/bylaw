@@ -27,13 +27,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Form controls in HEEx templates should have an accessible name. Prefer a
-      visible label connected with `for`/`id`; use `aria-label` or
-      `aria-labelledby` when a visible label is not appropriate.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

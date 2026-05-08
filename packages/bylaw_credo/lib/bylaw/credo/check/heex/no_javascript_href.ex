@@ -24,13 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Links with `javascript:` hrefs are poor for accessibility, predictable
-      navigation, copy/open behavior, and security posture. Use regular links
-      for navigation and buttons or LiveView events for actions.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

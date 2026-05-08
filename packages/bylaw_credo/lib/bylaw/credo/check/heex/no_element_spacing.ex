@@ -29,14 +29,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Prefer parent-owned spacing in HEEx templates. Individual children with
-      margin utilities make layout behavior depend on each child instead of the
-      parent container. Use gap, space-x, or space-y utilities on the parent
-      when expressing sibling spacing.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

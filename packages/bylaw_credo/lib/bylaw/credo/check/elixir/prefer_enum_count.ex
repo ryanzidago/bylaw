@@ -1,25 +1,23 @@
 defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
   @moduledoc """
-  Prefers `Enum.count/1` over `length/1`.
+  Prefer `Enum.count/1` over `length/1`.
+
+  This should be refactored:
+
+      length(items)
+      items |> length()
+
+  Into this:
+
+      Enum.count(items)
+      items |> Enum.count()
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer `Enum.count/1` over `length/1`.
-
-      This should be refactored:
-
-          length(items)
-          items |> length()
-
-      Into this:
-
-          Enum.count(items)
-          items |> Enum.count()
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

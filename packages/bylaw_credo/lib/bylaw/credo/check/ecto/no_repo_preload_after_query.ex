@@ -1,42 +1,39 @@
 defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   @moduledoc """
-  Disallows `Repo.preload` after terminal query reads like `Repo.one/2` and
-  `Repo.all/2`. Prefer Ecto's query-time `preload` API instead.
+  Do not call `Repo.preload` after loading records with `Repo.one` or
+  `Repo.all`. Prefer composing the preload into the Ecto query so the
+  preload intent stays visible at the query boundary.
+
+  This should be refactored:
+
+      query
+      |> Repo.one()
+      |> Repo.preload([:message])
+
+  Into this:
+
+      query
+      |> preload([:message])
+      |> Repo.one()
+
+  The same rule applies when a local helper hides the `Repo.preload` call:
+
+      query
+      |> Repo.one()
+      |> preload_message()
+
+  Into this:
+
+      query
+      |> preload([:message])
+      |> Repo.one()
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
     explanations: [
-      check: """
-      Do not call `Repo.preload` after loading records with `Repo.one` or
-      `Repo.all`. Prefer composing the preload into the Ecto query so the
-      preload intent stays visible at the query boundary.
-
-      This should be refactored:
-
-          query
-          |> Repo.one()
-          |> Repo.preload([:message])
-
-      Into this:
-
-          query
-          |> preload([:message])
-          |> Repo.one()
-
-      The same rule applies when a local helper hides the `Repo.preload` call:
-
-          query
-          |> Repo.one()
-          |> preload_message()
-
-      Into this:
-
-          query
-          |> preload([:message])
-          |> Repo.one()
-      """
+      check: @moduledoc
     ]
 
   alias Credo.SourceFile

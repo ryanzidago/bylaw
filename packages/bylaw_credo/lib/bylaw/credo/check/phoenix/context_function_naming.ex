@@ -1,15 +1,26 @@
 defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
   @moduledoc """
-  Enforces consistent naming conventions for context lookup functions based on
-  their return types, staying close to the `Ecto.Repo` conventions
-  (e.g. `Repo.get/2` returns `record | nil`, `Repo.get!/2` raises).
-  `fetch_*` extends this with a tagged-tuple variant for explicit error handling.
+  Context lookup functions must follow a naming convention that signals their
+  return type, consistent with `Ecto.Repo` (e.g. `Repo.get/2`, `Repo.get!/2`):
 
-  The convention is:
+  - `get_*`   functions return `record | nil`
+  - `get_*!`  functions return `record` (raise on not found)
+  - `fetch_*` functions return `{:ok, record} | {:error, reason}`
 
-  - `get_*`   -> returns `record | nil`   (like `Repo.get/2`)
-  - `get_*!`  -> returns `record` / raises (like `Repo.get!/2`)
-  - `fetch_*` -> returns `{:ok, record} | {:error, reason}`
+  This should be refactored:
+
+      @spec get_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
+      def get_workspace(id), do: ...
+
+  Into this:
+
+      @spec fetch_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
+      def fetch_workspace(id), do: ...
+
+  Or this:
+
+      @spec get_workspace(binary()) :: Workspace.t() | nil
+      def get_workspace(id), do: ...
   """
 
   use Credo.Check,
@@ -17,29 +28,7 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
     category: :design,
     param_defaults: [excluded_paths: []],
     explanations: [
-      check: """
-      Context lookup functions must follow a naming convention that signals their
-      return type, consistent with `Ecto.Repo` (e.g. `Repo.get/2`, `Repo.get!/2`):
-
-      - `get_*`   functions return `record | nil`
-      - `get_*!`  functions return `record` (raise on not found)
-      - `fetch_*` functions return `{:ok, record} | {:error, reason}`
-
-      This should be refactored:
-
-          @spec get_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
-          def get_workspace(id), do: ...
-
-      Into this:
-
-          @spec fetch_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
-          def fetch_workspace(id), do: ...
-
-      Or this:
-
-          @spec get_workspace(binary()) :: Workspace.t() | nil
-          def get_workspace(id), do: ...
-      """,
+      check: @moduledoc,
       params: [
         excluded_paths: "List of paths or regex to exclude from this check"
       ]

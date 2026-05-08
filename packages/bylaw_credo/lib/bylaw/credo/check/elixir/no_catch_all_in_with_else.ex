@@ -1,34 +1,32 @@
 defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
   @moduledoc """
-  Disallows catch-all patterns in `with` else clauses.
+  Prefer explicit pattern matches in `with` else clauses over catch-all variables.
+
+  Each `else` branch should match a specific pattern so that success and failure
+  paths are clearly separated.
+
+  This should be refactored:
+
+      with {:ok, user} <- fetch_user(id) do
+        {:ok, user}
+      else
+        error -> error
+      end
+
+  Into this:
+
+      with {:ok, user} <- fetch_user(id) do
+        {:ok, user}
+      else
+        {:error, error} -> {:error, error}
+      end
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer explicit pattern matches in `with` else clauses over catch-all variables.
-
-      Each `else` branch should match a specific pattern so that success and failure
-      paths are clearly separated.
-
-      This should be refactored:
-
-          with {:ok, user} <- fetch_user(id) do
-            {:ok, user}
-          else
-            error -> error
-          end
-
-      Into this:
-
-          with {:ok, user} <- fetch_user(id) do
-            {:ok, user}
-          else
-            {:error, error} -> {:error, error}
-          end
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

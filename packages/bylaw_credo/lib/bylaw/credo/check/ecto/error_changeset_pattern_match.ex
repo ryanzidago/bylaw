@@ -1,9 +1,39 @@
 defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
   @moduledoc """
-  Requires explicit changeset struct matches in `{:error, ...}` case clauses.
+  Match changeset errors explicitly when handling tagged `{:error, ...}`
+  results.
+
+  ### Bad
+
+      case Accounts.create_user(attrs) do
+        {:ok, user} -> user
+        {:error, changeset} -> changeset
+      end
+
+  ### Why?
+
+  A bare `{:error, changeset}` pattern only communicates a variable name.
+  It does not prove the error value is an Ecto changeset, so readers have
+  to inspect the called function before they know what the branch handles.
+
+  ### Better
+
+      case Accounts.create_user(attrs) do
+        {:ok, user} -> user
+        {:error, %Ecto.Changeset{} = changeset} -> changeset
+      end
+
+  The struct match documents the expected error shape at the branch that
+  handles it, and it prevents unrelated `{:error, reason}` values from
+  being treated like changesets.
   """
 
-  use Credo.Check, base_priority: :higher, category: :warning
+  use Credo.Check,
+    base_priority: :higher,
+    category: :warning,
+    explanations: [
+      check: @moduledoc
+    ]
 
   @changeset_var_names ~w(changeset cs)a
 

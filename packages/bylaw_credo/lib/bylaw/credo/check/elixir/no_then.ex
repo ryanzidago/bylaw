@@ -1,31 +1,29 @@
 defmodule Bylaw.Credo.Check.Elixir.NoThen do
   @moduledoc """
-  Disallows `then/2` to keep control flow explicit.
+  Prefer explicit control flow over `then/2`.
+
+  This should be refactored:
+
+      value
+      |> transform()
+      |> then(&{:ok, &1})
+
+      then(value, &{:ok, &1})
+
+  Into this:
+
+      value =
+        value
+        |> transform()
+
+      {:ok, value}
   """
 
   use Credo.Check,
     base_priority: :high,
     category: :readability,
     explanations: [
-      check: """
-      Prefer explicit control flow over `then/2`.
-
-      This should be refactored:
-
-          value
-          |> transform()
-          |> then(&{:ok, &1})
-
-          then(value, &{:ok, &1})
-
-      Into this:
-
-          value =
-            value
-            |> transform()
-
-          {:ok, value}
-      """
+      check: @moduledoc
     ]
 
   @impl Credo.Check

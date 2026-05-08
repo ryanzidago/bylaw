@@ -30,14 +30,7 @@ defmodule Bylaw.Credo.Check.Phoenix.NoRepoInController do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
-    explanations: [
-      check: """
-      Controllers should not call `Repo` directly. Use a context module instead.
-
-      Direct `Repo` calls in controllers bypass the context boundary and make it
-      harder to test, reuse, and reason about data access.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do

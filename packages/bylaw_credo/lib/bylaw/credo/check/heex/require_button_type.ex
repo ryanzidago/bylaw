@@ -24,13 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireButtonType do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
-    explanations: [
-      check: """
-      Buttons in HEEx templates should always define `type`. HTML buttons
-      default to `type="submit"` inside forms, which can cause accidental
-      submissions for buttons intended to run client-side actions.
-      """
-    ]
+    explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex
 

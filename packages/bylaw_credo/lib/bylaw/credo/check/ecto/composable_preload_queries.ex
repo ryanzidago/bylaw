@@ -1,35 +1,33 @@
 defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
   @moduledoc """
-  Requires reusable Ecto preload query helpers to accept dynamic preloads.
+  Query helpers named `*_preload_query` should not hard-code their own
+  Ecto preload expression. Accept a `preloads:` option, bind it to a local
+  `preloads` variable, and pass it to Ecto with `preload(^preloads)`.
+
+  This should be refactored:
+
+      defp input_file_preload_query do
+        ToolCallFile
+        |> from(as: :tool_file)
+        |> preload([:file])
+      end
+
+  Into this:
+
+      defp input_file_preload_query(opts) do
+        preloads = Keyword.get(opts, :preloads, [])
+
+        ToolCallFile
+        |> from(as: :tool_file)
+        |> preload(^preloads)
+      end
   """
 
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
     explanations: [
-      check: """
-      Query helpers named `*_preload_query` should not hard-code their own
-      Ecto preload expression. Accept a `preloads:` option, bind it to a local
-      `preloads` variable, and pass it to Ecto with `preload(^preloads)`.
-
-      This should be refactored:
-
-          defp input_file_preload_query do
-            ToolCallFile
-            |> from(as: :tool_file)
-            |> preload([:file])
-          end
-
-      Into this:
-
-          defp input_file_preload_query(opts) do
-            preloads = Keyword.get(opts, :preloads, [])
-
-            ToolCallFile
-            |> from(as: :tool_file)
-            |> preload(^preloads)
-          end
-      """
+      check: @moduledoc
     ]
 
   alias Credo.SourceFile
