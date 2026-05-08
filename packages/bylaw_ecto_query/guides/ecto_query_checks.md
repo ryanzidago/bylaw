@@ -336,7 +336,9 @@ Some checks can return multiple issues when a query violates the same rule in
 multiple places.
 
 Use `Bylaw.Ecto.Query.Issue.format/1` or
-`Bylaw.Ecto.Query.Issue.format_many/1` for human-readable output.
+`Bylaw.Ecto.Query.Issue.format_many/1` for human-readable output. These
+formatters omit metadata by default; pass `meta: true` when debugging needs the
+full structured metadata.
 
 ## Ecto Query Opacity
 

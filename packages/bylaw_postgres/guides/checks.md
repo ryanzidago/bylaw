@@ -127,6 +127,9 @@ Bylaw.Db.Adapters.Postgres.validate(
 
 Both forms return raw `Bylaw.Db.Issue` structs in `{:error, issues}`, so tests
 can assert on issue metadata directly without formatting adapter code.
+Use `Bylaw.Db.Issue.format_many/1` for human-readable output. The formatter
+omits metadata by default; pass `meta: true` when debugging needs the full
+structured metadata.
 
 ### Consumer test integration
 
@@ -222,15 +225,8 @@ defmodule MyApp.BylawDbTest do
   test "database structure satisfies Bylaw checks" do
     case Bylaw.Db.Adapters.Postgres.validate() do
       :ok -> :ok
-      {:error, issues} -> flunk(format_issues(issues))
+      {:error, issues} -> flunk(Bylaw.Db.Issue.format_many(issues))
     end
-  end
-
-  defp format_issues(issues) do
-    issues
-    |> Enum.map_join("\n", fn issue ->
-      "#{inspect(issue.check)}: #{issue.message} #{inspect(issue.meta)}"
-    end)
   end
 end
 ```
