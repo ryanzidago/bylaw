@@ -8,24 +8,41 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
 
   ## Examples
 
-  Hard-deleting rows from a soft-delete schema bypasses the lifecycle field:
+  Bad:
 
-      # Bad: archived posts are permanently removed.
       query =
         from post in Post,
           where: post.status == ^:archived
 
       Repo.delete_all(query)
 
+  Why this is bad:
+
+  If `Post` has a persisted `:deleted_at` or `:archived_at` field, hard-deleting
+  rows bypasses the lifecycle model and permanently removes records the schema
+  normally treats as soft-deletable.
+
+  Better:
+
   Prefer `Repo.update_all/3` setting `:deleted_at` or `:archived_at` instead of
   `Repo.delete_all/2` when this check reports an issue.
 
-      # Better: removal is represented in the soft-delete field.
       query =
         from post in Post,
           where: post.status == ^:archived
 
       Repo.update_all(query, set: [deleted_at: DateTime.utc_now()])
+
+  Why this is better:
+
+  Removal is represented in the soft-delete field, preserving the schema's
+  lifecycle convention.
+
+  Limitations:
+
+  This check uses persisted root schema fields as the signal. It ignores
+  schema-less queries, virtual fields, source subqueries, and soft-delete fields
+  on joined schemas.
 
   The check is zero-config. Field presence in `__schema__(:fields)` is the
   signal.

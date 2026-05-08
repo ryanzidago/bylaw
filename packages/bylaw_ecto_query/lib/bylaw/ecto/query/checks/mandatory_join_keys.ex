@@ -6,22 +6,35 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   ## Examples
 
-  If `:organisation_id` is configured as mandatory, joining only by the row
-  relationship can cross tenant boundaries:
+  Bad:
 
-      # Bad: the join does not preserve the tenant key.
       from post in Post,
         join: comment in Comment,
         on: comment.post_id == post.id
 
-  Preserve the configured key in the join predicate:
+  Why this is bad:
 
-      # Better: both the row relationship and tenant key must match.
+  If `:organisation_id` is configured as mandatory, the join preserves the row
+  relationship but not the tenant key. Bad or inconsistent foreign-key data can
+  cross tenant boundaries.
+
+  Better:
+
       from post in Post,
         join: comment in Comment,
         on:
           comment.post_id == post.id and
             comment.organisation_id == post.organisation_id
+
+  Why this is better:
+
+  The join requires both the row relationship and the configured key to match.
+
+  Limitations:
+
+  This check only validates direct explicit schema joins and supported equality
+  predicates in the join `on` expression. Association joins, subqueries,
+  fragments, and schema-less joins are ignored.
 
   Association joins, subqueries, fragments, and schema-less joins are not
   validated by this check.

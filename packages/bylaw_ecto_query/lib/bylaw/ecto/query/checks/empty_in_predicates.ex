@@ -7,22 +7,35 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
 
   ## Examples
 
-  An empty candidate list usually means the caller can skip the database:
+  Bad:
 
       ids = []
 
-      # Bad: the query can never match a row.
       from thing in Thing,
         where: thing.id in ^ids
 
-  Return early before building or running the query:
+  Why this is bad:
 
-      # Better: use a cheap application fast path.
+  The query can never match a row because the candidate list has no non-nil
+  values. Running it still spends database work on a known-empty result.
+
+  Better:
+
       if Enum.empty?(ids) do
         []
       else
         Repo.all(from thing in Thing, where: thing.id in ^ids)
       end
+
+  Why this is better:
+
+  The caller uses a cheap application fast path and only queries the database
+  when there are candidates to match.
+
+  Limitations:
+
+  This check only trusts supported root `in` predicates. It intentionally leaves
+  broader contradictory business logic to `ConflictingWherePredicates`.
 
   Such queries usually have a cheaper fast path: return `[]` before calling the
   repo. This check is separate from
