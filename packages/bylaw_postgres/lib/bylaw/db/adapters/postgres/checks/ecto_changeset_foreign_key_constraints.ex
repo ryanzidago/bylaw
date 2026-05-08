@@ -12,11 +12,42 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   parse source AST for user-defined changeset functions. When the repo can
   report `config()[:otp_app]`, schema module discovery is derived from it:
 
-      assert :ok =
-               Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints.validate(
-                 repo: MyApp.Repo,
-                 paths: ["lib/my_app"]
-               )
+  ```elixir
+  assert :ok =
+           Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints.validate(
+             repo: MyApp.Repo,
+             paths: ["lib/my_app"]
+           )
+  ```
+
+  With a foreign key on `orders.account_id`, before:
+
+  ```elixir
+  def changeset(order, attrs) do
+    order
+    |> Ecto.Changeset.cast(attrs, [:account_id])
+    |> Ecto.Changeset.validate_required([:account_id])
+  end
+  ```
+
+  The database rejects missing accounts, but the caller may see a low-level
+  constraint error instead of an `:account_id` changeset error.
+
+  After, annotate the changeset with the matching constraint:
+
+  ```elixir
+  def changeset(order, attrs) do
+    order
+    |> Ecto.Changeset.cast(attrs, [:account_id])
+    |> Ecto.Changeset.validate_required([:account_id])
+    |> Ecto.Changeset.foreign_key_constraint(:account_id)
+  end
+  ```
+
+  Ecto can report the invalid relationship through the changeset API.
+
+  The check skips dynamic `cast` or `change` field lists and foreign keys whose
+  columns cannot be mapped to Ecto schema fields.
   """
 
   @behaviour Bylaw.Db.Check

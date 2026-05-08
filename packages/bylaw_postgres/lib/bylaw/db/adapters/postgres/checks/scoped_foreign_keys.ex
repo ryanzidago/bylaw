@@ -7,13 +7,55 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   columns on both sides so a child row cannot point at a parent row from another
   scope:
 
-      {ScopedForeignKeys,
-       rules: [
-         [
-           scope_columns: ["tenant_id", "workspace_id"],
-           except: [[referenced_table: "global_settings"]]
-         ]
-       ]}
+  ```elixir
+  {ScopedForeignKeys,
+   rules: [
+     [
+       scope_columns: ["tenant_id", "workspace_id"],
+       except: [[referenced_table: "global_settings"]]
+     ]
+   ]}
+  ```
+
+  Before, both tables are tenant-scoped, but the foreign key only references
+  `conversations(id)`:
+
+  ```sql
+  CREATE TABLE conversations (
+    tenant_id uuid NOT NULL,
+    id uuid NOT NULL,
+    PRIMARY KEY (tenant_id, id),
+    UNIQUE (id)
+  );
+
+  CREATE TABLE messages (
+    tenant_id uuid NOT NULL,
+    conversation_id uuid NOT NULL,
+    FOREIGN KEY (conversation_id) REFERENCES conversations(id)
+  );
+  ```
+
+  A message can point at a conversation with the same `id` in another tenant if
+  application code passes the wrong identifier.
+
+  After, include the scope columns in the foreign key:
+
+  ```sql
+  CREATE TABLE messages (
+    tenant_id uuid NOT NULL,
+    conversation_id uuid NOT NULL,
+    FOREIGN KEY (tenant_id, conversation_id)
+      REFERENCES conversations(tenant_id, id)
+  );
+  ```
+
+  Postgres now enforces that the child and parent rows belong to the same
+  tenant, instead of relying on every query and write path to remember it.
+
+  The check only applies when the child table and referenced table both have
+  every configured `scope_columns` column. Shared lookup tables that
+  intentionally have no tenant column are not flagged unless they match a
+  different rule.
   """
 
   @behaviour Bylaw.Db.Check

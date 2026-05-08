@@ -5,24 +5,61 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   Use a rule without `:only` when every foreign key in scope should use the same
   action:
 
-      {ForeignKeyActions,
-       rules: [[on_delete: :cascade]]}
+  ```elixir
+  {ForeignKeyActions,
+   rules: [[on_delete: :cascade]]}
+  ```
 
   Use `rules: [...]` for scoped policy. A foreign key can match more than one
   rule, and matching rules accumulate.
 
-      {ForeignKeyActions,
-       rules: [
-         [
-          only: [[table: "messages"], [referenced_table: "conversations"]],
-           on_delete: :cascade
-         ],
-         [
-          only: [referenced_table: "lookup_statuses"],
-           on_delete: :restrict,
-           on_update: :restrict
-         ]
-       ]}
+  ```elixir
+  {ForeignKeyActions,
+   rules: [
+     [
+       only: [[table: "messages"], [referenced_table: "conversations"]],
+       on_delete: :cascade
+     ],
+     [
+       only: [referenced_table: "lookup_statuses"],
+       on_delete: :restrict,
+       on_update: :restrict
+     ]
+   ]}
+  ```
+
+  With this rule:
+
+  ```elixir
+  [only: [referenced_table: "accounts"], on_delete: :restrict]
+  ```
+
+  Before, the foreign key deletes orders when an account is deleted:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES accounts(id) ON DELETE CASCADE
+  );
+  ```
+
+  That may silently remove business records that should survive account cleanup
+  or require an explicit archival flow.
+
+  After, use the action required by the rule:
+
+  ```sql
+  CREATE TABLE orders (
+    id uuid PRIMARY KEY,
+    account_id uuid NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT
+  );
+  ```
+
+  Postgres now blocks accidental parent deletion until the application handles
+  dependent rows intentionally.
+
+  This check only validates actions you configure. If a rule only sets
+  `on_delete`, the `ON UPDATE` action is ignored for that rule.
   """
 
   @behaviour Bylaw.Db.Check
