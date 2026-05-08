@@ -6,6 +6,7 @@ defmodule Bylaw.Db do
   This module holds the shared check runner.
   """
 
+  alias Bylaw.CheckRunner
   alias Bylaw.Db.Check
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -55,11 +56,9 @@ defmodule Bylaw.Db do
 
   defp check_issues(target, check_spec) do
     {check, opts} = normalize_check!(check_spec)
+    result = check.validate(target, opts)
 
-    case check.validate(target, opts) do
-      :ok -> []
-      {:error, issues} = result when is_list(issues) -> valid_issues!(check, issues, result)
-    end
+    apply(CheckRunner, :result!, [check, result, Issue, 2])
   end
 
   defp normalize_check!({check, opts}) when is_atom(check) do
@@ -74,19 +73,6 @@ defmodule Bylaw.Db do
 
   defp normalize_check!(check) do
     raise ArgumentError, "expected a check module or {check, opts}, got: #{inspect(check)}"
-  end
-
-  defp invalid_check_result!(check, result) do
-    raise ArgumentError,
-          "expected #{inspect(check)}.validate/2 to return :ok or {:error, non_empty_issue_list}, got: #{inspect(result)}"
-  end
-
-  defp valid_issues!(check, issues, result) do
-    if Enum.any?(issues) and Enum.all?(issues, &match?(%Issue{}, &1)) do
-      issues
-    else
-      invalid_check_result!(check, result)
-    end
   end
 
   defp result([]), do: :ok
