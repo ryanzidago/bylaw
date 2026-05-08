@@ -1,0 +1,65 @@
+defmodule Bylaw.Credo.Check.HEEx.RequireLinkHref do
+  @moduledoc """
+  Requires static HEEx/HTML anchor tags to define an `href` attribute.
+
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+
+  ## Bad
+
+      ~H\"\"\"
+      <a>Read more</a>
+      \"\"\"
+
+  ## Good
+
+      ~H\"\"\"
+      <a href="/articles">Read more</a>
+      <a href={@path}>Read more</a>
+      <a {@attrs}>Read more</a>
+      \"\"\"
+  """
+
+  use Credo.Check,
+    base_priority: :high,
+    category: :warning,
+    explanations: [
+      check: """
+      Anchors in HEEx templates should define `href` so they behave as real
+      links for keyboard navigation and assistive technology. Use a button when
+      the element performs an action instead of navigation.
+      """
+    ]
+
+  alias Bylaw.Credo.Heex
+
+  @message "Anchor tags must define an href attribute. Use a button for actions."
+
+  @impl Credo.Check
+  def run(%Credo.SourceFile{} = source_file, params \\ []) do
+    issue_meta = IssueMeta.for(source_file, params)
+
+    source_file
+    |> Heex.templates()
+    |> Enum.flat_map(&Heex.tags/1)
+    |> Enum.filter(&missing_href?/1)
+    |> Enum.map(&issue_for(issue_meta, &1))
+  end
+
+  defp missing_href?(%Heex.Tag{type: :tag, name: "a"} = tag) do
+    not Heex.has_attr?(tag, "href") and not Heex.has_attr?(tag, :root)
+  end
+
+  defp missing_href?(_tag), do: false
+
+  defp issue_for(issue_meta, %Heex.Tag{} = tag) do
+    format_issue(
+      issue_meta,
+      message: @message,
+      trigger: "<a",
+      line_no: tag.line,
+      column: tag.column
+    )
+  end
+end
