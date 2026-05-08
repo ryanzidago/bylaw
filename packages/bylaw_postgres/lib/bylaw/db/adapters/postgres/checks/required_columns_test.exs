@@ -85,6 +85,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
       assert_received {:query, _sql, [["actor_id"]], []}
     end
 
+    test "supports where as a rule scope alias" do
+      target =
+        target(
+          {:ok,
+           result([
+             ["public", "orders", ["tenant_id"]],
+             ["billing", "invoice_items", ["tenant_id"]]
+           ])}
+        )
+
+      assert {:error, [%Issue{} = issue]} =
+               RequiredColumns.validate(target,
+                 rules: [
+                   [where: [schema: "public", table: "orders"], columns: ["tenant_id"]]
+                 ]
+               )
+
+      assert issue.meta.schema == "public"
+      assert issue.meta.table == "orders"
+      assert issue.meta.rule.only == [[schema: "public", table: "orders"]]
+    end
+
     test "applies global and rule-level exceptions" do
       target =
         target(
@@ -261,6 +283,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsTest do
                      RequiredColumns.validate(target,
                        columns: ["tenant_id"],
                        except: [[schema: "public"], [tables: [""]]]
+                     )
+                   end
+    end
+
+    test "rejects rules that use only and where together" do
+      target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/expected required_columns rule to include :only or :where, not both/,
+                   fn ->
+                     RequiredColumns.validate(target,
+                       rules: [
+                         [
+                           only: [schema: "public"],
+                           where: [table: "orders"],
+                           columns: ["tenant_id"]
+                         ]
+                       ]
                      )
                    end
     end

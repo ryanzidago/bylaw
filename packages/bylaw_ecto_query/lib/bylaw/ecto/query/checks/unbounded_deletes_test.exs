@@ -123,6 +123,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
       assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
     end
 
+    test "passes when delete_all has a literal false where clause" do
+      query = from(post in Post, where: false)
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "passes when delete_all has a negated literal true where clause" do
+      query = from(post in Post, where: not true)
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
     test "passes when delete_all has a where clause added through composition" do
       query = where(Post, [post], post.status == "archived")
 
@@ -190,6 +202,18 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletesTest do
 
       assert issue.check == UnboundedDeletes
       assert issue.meta.operation == :delete_all
+    end
+
+    test "passes supported raw query maps with false where entries" do
+      query = %{wheres: [%{expr: false, op: :and, params: []}]}
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
+    end
+
+    test "passes supported raw query maps with negated true where entries" do
+      query = %{wheres: [%{expr: {:not, [], [true]}, op: :and, params: []}]}
+
+      assert :ok = UnboundedDeletes.validate(:delete_all, query, [])
     end
 
     test "returns an issue for supported raw query maps without where entries" do
