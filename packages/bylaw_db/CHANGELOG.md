@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add `Bylaw.Db.Issue.format/1`, `format/2`, `format_many/1`, and `format_many/2` for human-readable database issue output.
+- Omit issue metadata from formatted database issue output by default, with `meta: true` for verbose debugging.
+
 ## 0.1.0 - 2026-05-02
 
 Initial package release.
