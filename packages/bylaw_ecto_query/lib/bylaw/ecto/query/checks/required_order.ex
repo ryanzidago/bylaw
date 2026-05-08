@@ -17,6 +17,49 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   `order_by` clause. If any `order_by` exists, this check passes and leaves
   deterministic tie-breaker validation to `DeterministicOrder`.
 
+  ## Examples
+
+  A limited query without an explicit order is unstable:
+
+      # Bad: the database may return any matching 10 rows.
+      from(post in Post, limit: 10)
+
+  Add `order_by` so the selected window has a defined order:
+
+      # Better: the first 10 rows are selected from a known order.
+      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+
+  Offsets have the same problem. Without ordering, the skipped rows are
+  undefined:
+
+      # Bad: page boundaries can shift between executions.
+      from(post in Post, offset: 50, limit: 25)
+
+      # Better: rows are skipped from a known order.
+      from(post in Post,
+        order_by: [desc: post.inserted_at],
+        offset: 50,
+        limit: 25
+      )
+
+  Streaming also needs an explicit order when callers depend on stable
+  traversal:
+
+      # Bad: traversal order is database-dependent.
+      Repo.stream(from(post in Post))
+
+      # Better: traversal follows an explicit order.
+      Repo.stream(from(post in Post, order_by: [asc: post.id]))
+
+  This check only requires that some `order_by` exists. If rows can tie on the
+  ordered field, pair this check with `DeterministicOrder` to require a
+  primary-key tie-breaker:
+
+      from(post in Post,
+        order_by: [desc: post.inserted_at, asc: post.id],
+        limit: 10
+      )
+
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
   synthetic limit is ignored because existence checks do not depend on which row
   is returned. A preserved `offset` still requires ordering because the skipped
