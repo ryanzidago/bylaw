@@ -1,16 +1,16 @@
 defmodule Bylaw.Credo.Heex do
-  @moduledoc """
-  Small HEEx helpers for Bylaw Credo checks.
+  @moduledoc false
 
-  This module owns the optional Phoenix LiveView tokenizer boundary. Checks should
-  consume the normalized templates and tags from this module instead of calling
-  Phoenix tokenizer modules directly.
-  """
+  # Internal HEEx helpers for Bylaw Credo checks.
+  #
+  # This module owns the optional Phoenix LiveView tokenizer boundary. Checks
+  # consume the normalized templates and tags from here instead of calling
+  # Phoenix tokenizer modules directly.
 
   defmodule Template do
-    @moduledoc """
-    A HEEx template extracted from a source file.
-    """
+    @moduledoc false
+
+    # A HEEx template extracted from a source file.
 
     @enforce_keys [:source, :line, :column]
     defstruct [:source, :line, :column]
@@ -23,9 +23,9 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defmodule Tag do
-    @moduledoc """
-    A normalized HEEx tag.
-    """
+    @moduledoc false
+
+    # A normalized HEEx tag.
 
     @enforce_keys [:type, :name, :attrs, :line, :column]
     defstruct [:type, :name, :attrs, :line, :column, :closing]
@@ -48,9 +48,9 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defmodule Text do
-    @moduledoc """
-    Normalized HEEx text content.
-    """
+    @moduledoc false
+
+    # Normalized HEEx text content.
 
     @enforce_keys [:content]
     defstruct [:content]
@@ -61,9 +61,9 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defmodule Expression do
-    @moduledoc """
-    A normalized dynamic HEEx expression.
-    """
+    @moduledoc false
+
+    # A normalized dynamic HEEx expression.
 
     @enforce_keys [:source, :line, :column]
     defstruct [:source, :line, :column]
@@ -76,9 +76,9 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defmodule CloseTag do
-    @moduledoc """
-    A normalized HEEx closing tag.
-    """
+    @moduledoc false
+
+    # A normalized HEEx closing tag.
 
     @enforce_keys [:name, :line, :column]
     defstruct [:name, :line, :column]
@@ -98,17 +98,15 @@ defmodule Bylaw.Credo.Heex do
   @tokenizer Module.concat([Phoenix, LiveView, Tokenizer])
   @html_engine Module.concat([Phoenix, LiveView, HTMLEngine])
 
-  @doc """
-  Returns whether a compatible Phoenix LiveView tokenizer is available.
-  """
+  # Returns whether a compatible Phoenix LiveView tokenizer is available.
+  @doc false
   @spec available?() :: boolean()
   def available? do
     not is_nil(tokenizer_module()) and Code.ensure_loaded?(@html_engine)
   end
 
-  @doc """
-  Extracts HEEx templates from a Credo source file.
-  """
+  # Extracts HEEx templates from a Credo source file.
+  @doc false
   @spec templates(Credo.SourceFile.t()) :: list(Template.t())
   def templates(%Credo.SourceFile{} = source_file) do
     source = Credo.SourceFile.source(source_file)
@@ -125,12 +123,8 @@ defmodule Bylaw.Credo.Heex do
     end
   end
 
-  @doc """
-  Tokenizes a HEEx template into normalized tags.
-
-  Returns an empty list if Phoenix LiveView is unavailable or the template cannot
-  be tokenized.
-  """
+  # Tokenizes a HEEx template into normalized tags.
+  @doc false
   @spec tags(Template.t() | String.t()) :: list(Tag.t())
   def tags(%Template{} = template) do
     template
@@ -142,12 +136,11 @@ defmodule Bylaw.Credo.Heex do
     tags(%Template{source: source, line: 1, column: 1})
   end
 
-  @doc """
-  Tokenizes a HEEx template into normalized tokens.
-
-  Returns an empty list if Phoenix LiveView is unavailable or the template cannot
-  be tokenized.
-  """
+  # Tokenizes a HEEx template into normalized tokens.
+  #
+  # Returns an empty list if Phoenix LiveView is unavailable or the template
+  # cannot be tokenized.
+  @doc false
   @spec tokens(Template.t() | String.t()) :: list(token())
   def tokens(%Template{} = template) do
     if available?() do
@@ -161,9 +154,8 @@ defmodule Bylaw.Credo.Heex do
     tokens(%Template{source: source, line: 1, column: 1})
   end
 
-  @doc """
-  Returns whether a normalized tag contains the given attribute.
-  """
+  # Returns whether a normalized tag contains the given attribute.
+  @doc false
   @spec has_attr?(Tag.t(), String.t() | atom()) :: boolean()
   def has_attr?(%Tag{attrs: attrs}, name) do
     Enum.any?(attrs, &(&1.name == name))
