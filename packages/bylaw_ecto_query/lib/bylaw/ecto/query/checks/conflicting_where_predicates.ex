@@ -2,15 +2,42 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @moduledoc """
   Validates that root `where` predicates can all be satisfied.
 
-  This catches impossible filters such as:
+  This catches impossible filters.
+
+  ## Examples
+
+  Bad:
 
       from post in Post,
         where: post.status == ^:draft,
         where: post.status == ^:published
 
+  Why this is bad:
+
+  No row can satisfy both equality predicates for the same field. The query is
+  guaranteed to return no rows, which usually means a filter was composed
+  incorrectly.
+
+  Better:
+
+      from post in Post,
+        where: post.status in ^[:draft, :published]
+
+  Why this is better:
+
+  The allowed values are represented in one satisfiable predicate.
+
+  Bad:
+
       from post in Post,
         where: post.sequence == ^1,
         where: post.sequence == ^2
+
+  Limitations:
+
+  This check is intentionally narrow. It evaluates supported root `where`
+  predicates and ignores fragments, subqueries, non-root bindings, and most
+  arbitrary expressions.
 
   The check is intentionally narrow. It evaluates root schema fields and only
   trusts direct `==`, `in`, and `is_nil` predicates in `AND` where expressions.

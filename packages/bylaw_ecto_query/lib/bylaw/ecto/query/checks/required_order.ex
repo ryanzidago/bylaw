@@ -17,6 +17,68 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   `order_by` clause. If any `order_by` exists, this check passes and leaves
   deterministic tie-breaker validation to `DeterministicOrder`.
 
+  ## Examples
+
+  Bad:
+
+      from(post in Post, limit: 10)
+
+  Why this is bad:
+
+  A limited query without `order_by` asks the database for any matching 10 rows.
+  Pagination, retries, and repeated calls can see rows appear, disappear, or
+  move because the selected window has no stable order.
+
+  Better:
+
+      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+
+  Why this is better:
+
+  The selected window is taken from a declared order, so callers can reason
+  about which rows are first.
+
+  Bad:
+
+      from(post in Post, offset: 50, limit: 25)
+
+  Why this is bad:
+
+  `offset` skips an undefined set of rows when no order exists. Page boundaries
+  can shift between executions.
+
+  Better:
+
+      from(post in Post,
+        order_by: [desc: post.inserted_at],
+        offset: 50,
+        limit: 25
+      )
+
+  Why this is better:
+
+  Rows are skipped from a known order, so the page boundary has a defined
+  meaning.
+
+  Bad:
+
+      Repo.stream(from(post in Post))
+
+  Better:
+
+      Repo.stream(from(post in Post, order_by: [asc: post.id]))
+
+  Limitations:
+
+  This check only requires that some `order_by` exists. It does not prove that
+  the order is deterministic. If rows can tie on the ordered field, pair this
+  check with `DeterministicOrder` to require a primary-key tie-breaker:
+
+      from(post in Post,
+        order_by: [desc: post.inserted_at, asc: post.id],
+        limit: 10
+      )
+
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
   synthetic limit is ignored because existence checks do not depend on which row
   is returned. A preserved `offset` still requires ordering because the skipped

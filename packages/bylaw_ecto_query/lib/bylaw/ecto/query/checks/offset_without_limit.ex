@@ -4,18 +4,39 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Offset without limit skips rows and then returns every remaining row. That can
   create an unbounded scan from an arbitrary position, which is usually an
-  accidental pagination shape:
+  accidental pagination shape.
+
+  ## Examples
+
+  Bad:
 
       from post in Post,
         order_by: post.inserted_at,
         offset: 10_000
 
-  Prefer pairing offset with a limit:
+  Why this is bad:
+
+  The query skips 10,000 rows and then returns every remaining row. That is
+  usually an accidental unbounded pagination query.
+
+  Better:
 
       from post in Post,
         order_by: post.inserted_at,
         limit: 50,
         offset: 10_000
+
+  Why this is better:
+
+  `limit` gives the page a bounded size. Pair this with
+  `Bylaw.Ecto.Query.Checks.RequiredOrder` when the page also needs stable row
+  order.
+
+  Limitations:
+
+  This check only verifies that `offset` has a paired `limit`. It does not prove
+  the order is deterministic or that offset pagination is the best strategy for
+  a large table.
 
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.

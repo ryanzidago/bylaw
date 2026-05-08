@@ -4,18 +4,36 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   This catches queries where a field backed by `:date` is compared directly to
   a field backed by `:utc_datetime`, `:utc_datetime_usec`, `:naive_datetime`, or
-  `:naive_datetime_usec`:
+  `:naive_datetime_usec`.
+
+  ## Examples
+
+  Bad:
 
       from event in Event,
         where: event.event_date <= event.inserted_at
 
+  Why this is bad:
+
   PostgreSQL can implicitly cast across date and timestamp types. With UTC
-  timestamp fields, that cast may depend on the database session timezone.
-  Prefer an explicit date truncation or cast on the datetime side so the
-  boundary decision is visible in the query:
+  timestamp fields, that cast may depend on the database session timezone. The
+  date boundary is not visible in the query.
+
+  Better:
 
       from event in Event,
         where: event.event_date <= type(event.inserted_at, :date)
+
+  Why this is better:
+
+  The datetime side is explicitly treated as a date, so the boundary decision is
+  visible to reviewers.
+
+  Limitations:
+
+  This check inspects supported direct field-to-field comparisons and `in`
+  predicates. It ignores values, schema-less sources, hidden fragment access,
+  and subqueries.
 
   For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
   See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.

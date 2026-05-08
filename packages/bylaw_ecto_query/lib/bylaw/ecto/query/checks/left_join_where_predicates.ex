@@ -5,11 +5,39 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   A `where` predicate on a left-joined binding usually turns the join into an
   inner join because rows without a matching joined record have `NULL` values
   for that binding. Optional joined-record filters belong in the join `on`
-  clause instead:
+  clause instead.
+
+  ## Examples
+
+  Bad:
+
+      from post in Post,
+        left_join: comment in Comment,
+        on: comment.post_id == post.id,
+        where: comment.status == ^:published
+
+  Why this is bad:
+
+  Rows without a matching comment have `NULL` values for the joined binding.
+  The root `where` predicate rejects those rows, so the left join behaves like
+  an inner join.
+
+  Better:
 
       from post in Post,
         left_join: comment in Comment,
         on: comment.post_id == post.id and comment.status == ^:published
+
+  Why this is better:
+
+  The optional comment filter stays in the join predicate. Posts are preserved
+  even when no matching published comment exists.
+
+  Limitations:
+
+  This check detects supported direct field predicates on left-join bindings. It
+  does not prove predicates hidden inside fragments, subqueries, or arbitrary
+  functions.
 
   Supported options:
 

@@ -2,13 +2,39 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @moduledoc """
   Validates that explicit schema joins preserve configured mandatory keys.
 
-  This check is intentionally narrow. It handles direct schema joins such as:
+  This check is intentionally narrow. It handles direct schema joins.
+
+  ## Examples
+
+  Bad:
+
+      from post in Post,
+        join: comment in Comment,
+        on: comment.post_id == post.id
+
+  Why this is bad:
+
+  If `:organisation_id` is configured as mandatory, the join preserves the row
+  relationship but not the tenant key. Bad or inconsistent foreign-key data can
+  cross tenant boundaries.
+
+  Better:
 
       from post in Post,
         join: comment in Comment,
         on:
           comment.post_id == post.id and
             comment.organisation_id == post.organisation_id
+
+  Why this is better:
+
+  The join requires both the row relationship and the configured key to match.
+
+  Limitations:
+
+  This check only validates direct explicit schema joins and supported equality
+  predicates in the join `on` expression. Association joins, subqueries,
+  fragments, and schema-less joins are ignored.
 
   Association joins, subqueries, fragments, and schema-less joins are not
   validated by this check.

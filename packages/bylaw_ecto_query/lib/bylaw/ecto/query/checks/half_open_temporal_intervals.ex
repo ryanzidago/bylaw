@@ -3,11 +3,40 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   Validates that root temporal interval predicates are half-open.
 
   Half-open temporal intervals include the start boundary and exclude the end
-  boundary:
+  boundary.
+
+  ## Examples
+
+  Bad:
+
+      from event in Event,
+        where: event.occurred_at > ^start_at,
+        where: event.occurred_at <= ^end_at
+
+  Why this is bad:
+
+  The query excludes events exactly at `start_at` and includes events exactly at
+  `end_at`. Adjacent windows built this way leave a gap at the start boundary
+  and can double-count rows at the end boundary.
+
+  Better:
 
       from event in Event,
         where: event.occurred_at >= ^start_at,
         where: event.occurred_at < ^end_at
+
+  Why this is better:
+
+  The query uses a half-open interval, `[start_at, end_at)`. Adjacent windows
+  compose without gaps or overlap because each boundary value belongs to exactly
+  one window.
+
+  Limitations:
+
+  This check inspects direct root temporal field comparisons in `where`
+  expressions. It does not prove interval correctness when boundaries are hidden
+  inside fragments, non-root bindings, subqueries, or field-to-field
+  comparisons.
 
   This catches the common off-by-one interval boundary shapes `>` for a lower
   bound and `<=` for an upper bound on root temporal fields.
