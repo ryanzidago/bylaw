@@ -53,20 +53,24 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
 
   defp javascript_href_attrs(_tag), do: []
 
-  defp javascript_href?(%{name: "href", value: {:string, value, _meta}}) do
+  defp javascript_href?(%{name: name, value: {:string, value, _meta}}) when is_binary(name) do
+    String.downcase(name) == "href" and javascript_href_value?(value)
+  end
+
+  defp javascript_href?(_attr), do: false
+
+  defp javascript_href_value?(value) do
     value
     |> String.trim_leading()
     |> String.downcase()
     |> String.starts_with?("javascript:")
   end
 
-  defp javascript_href?(_attr), do: false
-
-  defp issue_for(issue_meta, %{line: line, column: column}) do
+  defp issue_for(issue_meta, %{name: name, line: line, column: column}) do
     format_issue(
       issue_meta,
       message: @message,
-      trigger: "href",
+      trigger: name,
       line_no: line,
       column: column
     )

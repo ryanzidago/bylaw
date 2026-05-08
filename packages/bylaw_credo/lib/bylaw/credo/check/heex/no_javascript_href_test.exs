@@ -40,6 +40,36 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHrefTest do
     |> assert_issue(%{line_no: 4, trigger: "href"})
   end
 
+  test "reports single-quoted javascript href" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <a href='javascript:alert("x")'>Delete</a>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoJavascriptHref)
+    |> assert_issue(%{line_no: 4, trigger: "href"})
+  end
+
+  test "reports case-insensitive href attribute names" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <a HREF="javascript:alert('x')">Delete</a>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoJavascriptHref)
+    |> assert_issue(%{line_no: 4, trigger: "HREF"})
+  end
+
   test "does not report non-javascript hrefs" do
     """
     defmodule Example do
