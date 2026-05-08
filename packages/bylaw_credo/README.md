@@ -17,6 +17,7 @@ Then enable the checks you want in your Credo configuration:
     %{
       name: "default",
       checks: [
+        {Bylaw.Credo.Check.RequireImageAlt, []},
         {Bylaw.Credo.Check.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.PreferListTypeSyntax, []}
       ]
@@ -24,3 +25,6 @@ Then enable the checks you want in your Credo configuration:
   ]
 }
 ```
+
+`Bylaw.Credo.Check.RequireImageAlt` uses Phoenix LiveView's HEEx tokenizer when
+available. Add `phoenix_live_view` to applications that enable this check.
