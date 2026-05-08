@@ -76,8 +76,9 @@ defmodule BylawPostgres.MixProject do
       source_ref: "v#{@version}",
       extras: ["README.md", "guides/checks.md": [title: "Checks Overview"]],
       groups_for_modules: [
-        "Bylaw.Db adapters": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\./,
-        "Bylaw.Db adapter checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\..*\.Checks\./
+        "Postgres adapter": [Bylaw.Db.Adapters.Postgres],
+        "Postgres checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\.Postgres\.Checks\./,
+        "Ecto helpers": ~r/^(Elixir\.)?Bylaw\.Ecto\./
       ],
       nest_modules_by_prefix: [Bylaw.Db.Adapters.Postgres.Checks]
     ]
