@@ -1,10 +1,17 @@
 defmodule Bylaw.Db.Issue do
   @moduledoc """
-  Describes a database validation issue found by a check.
+  Issue returned by a failed database validation check.
   """
 
   alias Bylaw.Db.Target
 
+  @typedoc """
+  A database validation issue.
+
+  `check` identifies the check module that produced the issue, `message` is the
+  human-readable failure text, `target` is the target that failed when available,
+  and `meta` holds structured adapter- or check-specific details.
+  """
   @type t :: %__MODULE__{
           check: module(),
           message: String.t(),
@@ -12,7 +19,14 @@ defmodule Bylaw.Db.Issue do
           meta: map()
         }
 
+  @typedoc """
+  Formatting option.
+  """
   @type format_opt :: {:meta, boolean()}
+
+  @typedoc """
+  Formatting options.
+  """
   @type format_opts :: list(format_opt())
 
   defstruct check: nil,

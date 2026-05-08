@@ -1,10 +1,9 @@
 defmodule Bylaw.Db.Check do
   @moduledoc """
-  Behaviour for checks that validate database internals.
+  Behaviour implemented by database validation checks.
 
-  Database checks receive a single `t:Bylaw.Db.Target.t/0`. A target represents
-  one adapter/database query source, so checks can stay narrow and avoid
-  discovering their own execution context.
+  A check receives one `t:Bylaw.Db.Target.t/0` and any check-specific options.
+  Scope such as schemas, tables, or indexes belongs in the check options.
   """
 
   alias Bylaw.Db.Issue
@@ -26,10 +25,10 @@ defmodule Bylaw.Db.Check do
   @type check_opts :: list(check_opt())
 
   @doc """
-  Validates a database target.
+  Validates one database target.
 
   Return `:ok` when the target passes, or `{:error, issues}` with a non-empty
-  list of issues when it fails.
+  list of `t:Bylaw.Db.Issue.t/0` values when it fails.
   """
   @callback validate(target :: Target.t(), opts :: check_opts()) :: result()
 end

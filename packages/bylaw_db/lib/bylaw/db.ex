@@ -1,9 +1,9 @@
 defmodule Bylaw.Db do
   @moduledoc """
-  Validation entrypoint for database checks.
+  Runs database validation checks against explicit targets.
 
-  Adapter modules usually provide the public entrypoint callers use directly.
-  This module holds the shared check runner.
+  Adapter packages usually expose their own `validate/2` function and delegate
+  to this module after building `t:Bylaw.Db.Target.t/0` structs.
   """
 
   alias Bylaw.CheckRunner
@@ -19,8 +19,10 @@ defmodule Bylaw.Db do
   @doc """
   Runs `checks` against a non-empty list of targets.
 
-  Checks run independently for each explicit target. Returns `:ok` when every
-  check passes, or `{:error, issues}` with a non-empty list of issues.
+  Each check runs independently for each target. Returns `:ok` when every check
+  passes, or `{:error, issues}` with a non-empty list of
+  `t:Bylaw.Db.Issue.t/0` values.
+
   Invalid target and check arguments raise `ArgumentError`.
   """
   @spec validate(targets :: list(Target.t()), checks :: list(check_spec())) :: Check.result()
