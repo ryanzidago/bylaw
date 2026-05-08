@@ -21,6 +21,7 @@ Then enable the checks you want in your Credo configuration:
       ],
       checks: [
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
         {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []},
         {Bylaw.Credo.Check.HEEx.NoJavascriptHref, []},
@@ -37,7 +38,8 @@ Then enable the checks you want in your Credo configuration:
 }
 ```
 
-HEEx checks, including `Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement`,
+HEEx checks, including `Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds`,
+`Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement`,
 `Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText`,
 `Bylaw.Credo.Check.HEEx.NoJavascriptHref`,
 `Bylaw.Credo.Check.HEEx.RequireButtonType`,
