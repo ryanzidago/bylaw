@@ -2,7 +2,7 @@
 
 ## 0.1.0 - 2026-05-02
 
-Initial Hex package release.
+Initial package release.
 
 - Add the `Bylaw.Ecto.Query` check family for validating prepared Ecto queries.
 - Add built-in query checks for ordering, bounded writes, joins, visibility predicates, tenant keys, temporal comparisons, and related query constraints.

@@ -16,7 +16,7 @@ run them with `Bylaw.Ecto.Query.validate/3` from Ecto's
 Recommended dependency:
 
 ```elixir
-{:bylaw, "~> 0.1.0"}
+{:bylaw_ecto_query, "~> 0.1.0"}
 ```
 
 Enable validation in the environments where you want checks to run:
@@ -29,8 +29,9 @@ config :my_app, :bylaw, validate_ecto_queries?: true
 config :my_app, :bylaw, validate_ecto_queries?: false
 ```
 
-Keep Bylaw as a normal dependency for repo integration. The production config
-above keeps query checks disabled unless you explicitly turn them on.
+Keep `bylaw_ecto_query` as a normal dependency for repo integration. The
+production config above keeps query checks disabled unless you explicitly turn
+them on.
 
 Start with the checks you want to enforce. When validation is enabled, pass
 that list to `Bylaw.Ecto.Query.validate/3`.
