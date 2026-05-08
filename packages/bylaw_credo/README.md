@@ -16,11 +16,22 @@ Then enable the checks you want in your Credo configuration:
   configs: [
     %{
       name: "default",
+      plugins: [
+        {Bylaw.Credo.Plugin.HEExSources, []}
+      ],
       checks: [
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.HEEx.RequireImageAlt, []},
         {Bylaw.Credo.Check.PreferListTypeSyntax, []}
       ]
     }
   ]
 }
 ```
+
+`Bylaw.Credo.Check.HEEx.RequireImageAlt` uses Phoenix LiveView's HEEx tokenizer
+when available. Add `phoenix_live_view` to applications that enable this check.
+
+Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
+To check standalone Phoenix `.html.heex` templates, enable
+`Bylaw.Credo.Plugin.HEExSources` as shown above.
