@@ -2,6 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   @moduledoc false
 
   alias Bylaw.Db.Adapters.Postgres
+  alias Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptions
   alias Bylaw.Db.Adapters.Postgres.Result
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
   alias Bylaw.Db.Check
@@ -35,7 +36,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(keyword())}
+          | {:rules, list(Keyword.t())}
 
   @type check_opts :: list(check_opt())
 
@@ -60,7 +61,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   @doc false
   @spec validate(target :: Target.t(), opts :: check_opts(), config :: config()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts, config) when is_list(opts) do
-    opts = check_opts!(target, opts, config.name)
+    opts = EctoChangesetConstraintOptions.normalize!(target, opts, config.name)
 
     if Keyword.get(opts, :validate, true) == true do
       validate_enabled(target, opts, config)
@@ -117,7 +118,13 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   end
 
   defp validate_enabled(target, opts, config) do
-    rules = RuleOptions.default_rules!(opts, config.name, allowed_matcher_keys())
+    rules =
+      RuleOptions.default_rules!(
+        opts,
+        config.name,
+        EctoChangesetConstraintOptions.allowed_matcher_keys()
+      )
+
     schemas = RuleOptions.filter(opts, :schemas, config.name)
     tables = RuleOptions.filter(opts, :tables, config.name)
 
@@ -322,117 +329,6 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     }
   end
 
-  defp check_opts!(target, opts, name) do
-    if not Keyword.keyword?(opts) do
-      raise ArgumentError, "expected #{name} opts to be a keyword list, got: #{inspect(opts)}"
-    end
-
-    allowed_keys = [:validate, :otp_app, :paths, :schema_modules, :rules, :schemas, :tables]
-
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown #{name} option: #{inspect(key)}"
-      end
-    end)
-
-    opts = maybe_put_repo_otp_app(target, opts)
-
-    validate_boolean_option!(opts, :validate, name)
-
-    if Keyword.get(opts, :validate, true) == true do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], name)
-      validate_schema_discovery_opts!(opts, name)
-      validate_required_option!(opts, :paths, name)
-      validate_schema_modules_option!(opts, name)
-      validate_paths_option!(opts, name)
-      RuleOptions.default_rules!(opts, name, allowed_matcher_keys())
-      RuleOptions.filter(opts, :schemas, name)
-      RuleOptions.filter(opts, :tables, name)
-    end
-
-    opts
-  end
-
-  defp maybe_put_repo_otp_app(%{repo: repo}, opts) when is_atom(repo) and not is_nil(repo) do
-    if Keyword.has_key?(opts, :otp_app) or Keyword.has_key?(opts, :schema_modules) do
-      opts
-    else
-      case repo_otp_app(repo) do
-        nil -> opts
-        otp_app -> Keyword.put(opts, :otp_app, otp_app)
-      end
-    end
-  end
-
-  defp maybe_put_repo_otp_app(_target, opts), do: opts
-
-  defp repo_otp_app(repo) do
-    if Code.ensure_loaded?(repo) and function_exported?(repo, :config, 0) do
-      repo.config()[:otp_app]
-    end
-  end
-
-  defp validate_boolean_option!(opts, key, name) do
-    case Keyword.fetch(opts, key) do
-      {:ok, value} when is_boolean(value) ->
-        :ok
-
-      {:ok, value} ->
-        raise ArgumentError,
-              "expected #{name} #{inspect(key)} to be a boolean, got: #{inspect(value)}"
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp validate_schema_discovery_opts!(opts, name) do
-    if not Keyword.has_key?(opts, :otp_app) and not Keyword.has_key?(opts, :schema_modules) do
-      raise ArgumentError, "expected #{name} opts to include :otp_app or :schema_modules"
-    end
-  end
-
-  defp validate_required_option!(opts, key, name) do
-    if not Keyword.has_key?(opts, key) do
-      raise ArgumentError, "expected #{name} opts to include #{inspect(key)}"
-    end
-  end
-
-  defp validate_schema_modules_option!(opts, name) do
-    case Keyword.fetch(opts, :schema_modules) do
-      {:ok, modules} when is_list(modules) ->
-        if Enum.empty?(modules) or Enum.any?(modules, &(not is_atom(&1))) do
-          raise_schema_modules_error!(name)
-        end
-
-      {:ok, _modules} ->
-        raise_schema_modules_error!(name)
-
-      :error ->
-        :ok
-    end
-  end
-
-  defp validate_paths_option!(opts, name) do
-    case Keyword.fetch!(opts, :paths) do
-      paths when is_list(paths) ->
-        if Enum.empty?(paths) or Enum.any?(paths, &(not is_binary(&1))) do
-          raise_paths_error!(name)
-        end
-
-      _paths ->
-        raise_paths_error!(name)
-    end
-  end
-
-  defp raise_paths_error!(name) do
-    raise ArgumentError, "expected #{name} :paths to be a non-empty list of strings"
-  end
-
-  defp raise_schema_modules_error!(name) do
-    raise ArgumentError, "expected #{name} :schema_modules to be a non-empty list of modules"
-  end
-
   defp matches_rules?(row, rules),
     do: Enum.any?(rules, fn rule -> RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) end)
 
@@ -440,8 +336,6 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
   defp matcher_value(row, :constraint), do: Result.value(row, "constraint_name", @row_keys)
   defp matcher_value(row, :column), do: Result.value(row, "column_names", @row_keys)
-
-  defp allowed_matcher_keys, do: [:schema, :table, :constraint, :column]
 
   defp query_error_issue(target, rules, reason, config) do
     %Issue{
