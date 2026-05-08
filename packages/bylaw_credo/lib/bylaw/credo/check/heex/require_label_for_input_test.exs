@@ -22,6 +22,21 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     })
   end
 
+  test "reports placeholder-only input" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <input id="email" name="email" placeholder="Email">
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireLabelForInput)
+    |> assert_issue(%{line_no: 4, trigger: "<input"})
+  end
+
   test "reports unlabelled select and textarea" do
     """
     defmodule Example do
@@ -64,6 +79,22 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     |> refute_issues()
   end
 
+  test "does not report controls with explicit labels declared later" do
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <input id="email" name="email">
+        <label for="email">Email</label>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireLabelForInput)
+    |> refute_issues()
+  end
+
   test "does not report aria labels" do
     """
     defmodule Example do
@@ -95,6 +126,27 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     |> to_source_file("lib/example.ex")
     |> run_check(RequireLabelForInput)
     |> refute_issues()
+  end
+
+  test "does not use labels from separate H sigils" do
+    """
+    defmodule Example do
+      def label(assigns) do
+        ~H\"\"\"
+        <label for="email">Email</label>
+        \"\"\"
+      end
+
+      def input(assigns) do
+        ~H\"\"\"
+        <input id="email" name="email">
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(RequireLabelForInput)
+    |> assert_issue(%{line_no: 10, trigger: "<input"})
   end
 
   test "does not report controls with dynamic root attributes" do
@@ -156,5 +208,22 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInputTest do
     |> Credo.SourceFile.parse("lib/example/form.html.heex")
     |> run_check(RequireLabelForInput)
     |> assert_issue(%{line_no: 4, trigger: "<input"})
+  end
+
+  test "does not report named controls in html.heex files" do
+    """
+    <section>
+      <label for="email">Email</label>
+      <input id="email" name="email">
+
+      <select aria-label="Role"></select>
+      <textarea aria-labelledby="bio-label"></textarea>
+      <input type="hidden" name="token" value={@token}>
+      <input {@input_attrs}>
+    </section>
+    """
+    |> Credo.SourceFile.parse("lib/example/form.html.heex")
+    |> run_check(RequireLabelForInput)
+    |> refute_issues()
   end
 end
