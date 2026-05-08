@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireImageAlt do
+defmodule Bylaw.Credo.Check.HEEx.RequireImageAlt do
   @moduledoc """
   Requires static HEEx/HTML image tags to define an `alt` attribute.
 

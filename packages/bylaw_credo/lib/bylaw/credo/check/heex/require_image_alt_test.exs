@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireImageAltTest do
+defmodule Bylaw.Credo.Check.HEEx.RequireImageAltTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.PhoenixLiveView.RequireImageAlt
+  alias Bylaw.Credo.Check.HEEx.RequireImageAlt
   alias Bylaw.Credo.Plugin.HEExSources
 
   test "reports missing alt in H sigil" do
