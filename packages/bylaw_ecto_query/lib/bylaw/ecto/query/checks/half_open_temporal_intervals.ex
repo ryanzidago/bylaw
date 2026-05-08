@@ -3,8 +3,20 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   Validates that root temporal interval predicates are half-open.
 
   Half-open temporal intervals include the start boundary and exclude the end
-  boundary:
+  boundary.
 
+  ## Examples
+
+  Inclusive end bounds can double-count records that sit exactly on a boundary:
+
+      # Bad: the end boundary is inclusive.
+      from event in Event,
+        where: event.occurred_at > ^start_at,
+        where: event.occurred_at <= ^end_at
+
+  Use `>=` for the lower bound and `<` for the upper bound:
+
+      # Better: [start_at, end_at) composes without overlap.
       from event in Event,
         where: event.occurred_at >= ^start_at,
         where: event.occurred_at < ^end_at

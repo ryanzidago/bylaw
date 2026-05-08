@@ -4,14 +4,20 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Offset without limit skips rows and then returns every remaining row. That can
   create an unbounded scan from an arbitrary position, which is usually an
-  accidental pagination shape:
+  accidental pagination shape.
 
+  ## Examples
+
+  Offset without a limit still returns all rows after the skipped window:
+
+      # Bad: skips 10,000 rows, then returns every remaining row.
       from post in Post,
         order_by: post.inserted_at,
         offset: 10_000
 
   Prefer pairing offset with a limit:
 
+      # Better: the page size is bounded.
       from post in Post,
         order_by: post.inserted_at,
         limit: 50,

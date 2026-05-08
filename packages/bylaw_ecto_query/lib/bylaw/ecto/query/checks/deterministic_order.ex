@@ -21,6 +21,33 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
+  ## Examples
+
+  Ordering by a non-unique field leaves tied rows free to move between
+  executions:
+
+      # Bad: posts with the same timestamp have no stable relative order.
+      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+
+  Include the root primary key as a tie-breaker:
+
+      # Better: timestamp ties are resolved by the primary key.
+      from(post in Post,
+        order_by: [desc: post.inserted_at, asc: post.id],
+        limit: 10
+      )
+
+  For a composite primary key, every primary-key field must be present:
+
+      # Better for a schema whose primary key is [:organisation_id, :sequence].
+      from(membership in Membership,
+        order_by: [
+          asc: membership.inserted_at,
+          asc: membership.organisation_id,
+          asc: membership.sequence
+        ]
+      )
+
   The check is static. It infers root schema primary keys with Ecto schema
   reflection. Schema-less queries and schemas without primary keys cannot be
   proven deterministic by this check, so ordered queries in those cases return

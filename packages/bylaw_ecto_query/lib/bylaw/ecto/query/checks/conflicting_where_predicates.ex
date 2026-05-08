@@ -2,12 +2,26 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @moduledoc """
   Validates that root `where` predicates can all be satisfied.
 
-  This catches impossible filters such as:
+  This catches impossible filters.
 
+  ## Examples
+
+  A query cannot satisfy two different equality predicates for the same field:
+
+      # Bad: no post can be both draft and published.
       from post in Post,
         where: post.status == ^:draft,
         where: post.status == ^:published
 
+  Keep a single intended value, or use `in` when several values are acceptable:
+
+      # Better: the allowed statuses are represented in one satisfiable predicate.
+      from post in Post,
+        where: post.status in ^[:draft, :published]
+
+  Conflicting numeric values are caught the same way:
+
+      # Bad: no row can have both sequence values.
       from post in Post,
         where: post.sequence == ^1,
         where: post.sequence == ^2

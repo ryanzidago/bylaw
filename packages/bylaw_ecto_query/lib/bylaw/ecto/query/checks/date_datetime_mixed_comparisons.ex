@@ -4,8 +4,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   This catches queries where a field backed by `:date` is compared directly to
   a field backed by `:utc_datetime`, `:utc_datetime_usec`, `:naive_datetime`, or
-  `:naive_datetime_usec`:
+  `:naive_datetime_usec`.
 
+  ## Examples
+
+  Direct date/datetime comparisons rely on database casting rules:
+
+      # Bad: the timestamp-to-date boundary is implicit.
       from event in Event,
         where: event.event_date <= event.inserted_at
 
@@ -14,6 +19,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   Prefer an explicit date truncation or cast on the datetime side so the
   boundary decision is visible in the query:
 
+      # Better: the datetime side is explicitly treated as a date.
       from event in Event,
         where: event.event_date <= type(event.inserted_at, :date)
 
