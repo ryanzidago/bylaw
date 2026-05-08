@@ -7,4 +7,4 @@ if [ "$command" != "rebase" ]; then
   exit 0
 fi
 
-mix qa
+scripts/qa.sh

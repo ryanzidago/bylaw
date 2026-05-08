@@ -26,10 +26,10 @@ Bylaw is an Elixir library for validating code, database, query, schema, and wor
 
 ## Validation
 
-Run `mix qa` before committing, before pushing, and before opening or updating a PR:
+Run `scripts/qa.sh` before committing, before pushing, and before opening or updating a PR:
 
 ```sh
-mix qa
+scripts/qa.sh
 ```
 
 This repository keeps commit-ready Git hooks in `.githooks/` for `pre-commit`, `pre-push`, `post-merge`, and rebase `post-rewrite` checks. Enable them once per worktree:
@@ -51,13 +51,15 @@ Many packages have usage rules, which you should *thoroughly* consult before tak
 action. These usage rules contain guidelines and rules *directly from the package authors*.
 They are your best source of knowledge for making decisions.
 
-## Modules & functions in the current app and dependencies
+## Modules & functions in the current package and dependencies
 
-When looking for docs for modules & functions that are dependencies of the current project,
-or for Elixir itself, use `mix usage_rules.docs`
+There is no root Mix project. When looking for docs for modules & functions that
+are dependencies of a package, or for Elixir itself, run documentation commands
+from that package directory when the package has the relevant tooling available.
 
 ```
 # Search a whole module
+cd packages/bylaw_ecto_query
 mix usage_rules.docs Enum
 
 # Search a specific function
@@ -71,11 +73,13 @@ mix usage_rules.docs Enum.zip/1
 ## Searching Documentation
 
 You should also consult the documentation of any tools you are using, early and often. The best 
-way to accomplish this is to use the `usage_rules.search_docs` mix task. Once you have
-found what you are looking for, use the links in the search results to get more detail. For example:
+way to accomplish this is to use the `usage_rules.search_docs` mix task from the
+relevant package when available. Once you have found what you are looking for,
+use the links in the search results to get more detail. For example:
 
 ```
 # Search docs for all packages in the current application, including Elixir
+cd packages/bylaw_ecto_query
 mix usage_rules.search_docs Enum.zip
 
 # Search docs for specific packages
