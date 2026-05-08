@@ -1,14 +1,9 @@
 defmodule Bylaw.Ecto.Query.Branches do
   @moduledoc false
 
-  @doc """
-  Merges two branch lists by combining every left branch with every right branch.
-
-  Use this for `and` expressions, where facts from both sides are true together.
-  When the left side is `nil`, the right branches are returned unchanged. This
-  is useful while reducing a list of query clauses before the first branch set
-  has been initialized.
-  """
+  # `and` expressions combine facts from both sides into the same branch. `nil`
+  # lets reducers initialize branch state from the first expression while
+  # reducing a list of query clauses.
   @spec merge(list(term()) | nil, list(term()), (term(), term() -> term())) :: list(term())
   def merge(nil, branches, _merge_fun), do: branches
 
@@ -18,33 +13,21 @@ defmodule Bylaw.Ecto.Query.Branches do
     end
   end
 
-  @doc """
-  Appends one branch list to another.
-
-  Use this for `or` expressions, where each side represents an alternative path
-  through the query. When the left side is `nil`, the right branches are returned
-  unchanged so reducers can initialize branch state lazily.
-  """
+  # `or` expressions append alternate paths through the query instead of
+  # merging facts into a single branch. `nil` again means the branch accumulator
+  # has not been initialized yet.
   @spec concat(list(term()) | nil, list(term())) :: list(term())
   def concat(nil, branches), do: branches
   def concat(left_branches, right_branches), do: left_branches ++ right_branches
 
-  @doc """
-  Returns the set members present in every branch set.
-
-  This is the usual final reduction for checks that track fields through boolean
-  branches. If there are no branches, an empty set is returned.
-  """
+  # Checks use this after boolean branch analysis to keep only facts guaranteed
+  # by every possible branch. No branches means no guaranteed set members.
   @spec guaranteed_sets(list(MapSet.t(term()))) :: MapSet.t(term())
   def guaranteed_sets([first | rest]), do: Enum.reduce(rest, first, &MapSet.intersection/2)
   def guaranteed_sets([]), do: MapSet.new()
 
-  @doc """
-  Returns the values present in every branch list.
-
-  Values are compared with `MapSet`, so duplicates are discarded. If there are
-  no branches, an empty list is returned.
-  """
+  # Values are compared through MapSet so duplicate observations do not affect
+  # the guaranteed value list. No branches means no guaranteed values.
   @spec guaranteed_values(list(list(term()))) :: list(term())
   def guaranteed_values([first | rest]) do
     rest

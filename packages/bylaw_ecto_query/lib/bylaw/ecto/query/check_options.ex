@@ -1,12 +1,8 @@
 defmodule Bylaw.Ecto.Query.CheckOptions do
   @moduledoc false
 
-  @doc """
-  Returns `opts` when it is a keyword list, otherwise raises `ArgumentError`.
-
-  `label` is used in the exception message so callers can distinguish the
-  top-level Bylaw option list from a nested check-specific option list.
-  """
+  # `label` distinguishes top-level Bylaw option lists from nested check option
+  # lists in exception messages.
   @spec keyword_list!(term(), String.t()) :: keyword()
   def keyword_list!(opts, label) when is_list(opts) do
     if Keyword.keyword?(opts) do
@@ -20,16 +16,8 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
     raise ArgumentError, "expected #{label} to be a keyword list, got: #{inspect(opts)}"
   end
 
-  @doc """
-  Returns validated check-specific options.
-
-  `allowed_keys` controls option validation:
-
-    * pass a list of atoms to reject unknown option keys
-    * pass `:any` when the check performs more detailed option validation itself
-
-  A malformed option list or unknown key raises `ArgumentError`.
-  """
+  # Most checks can reject unknown options centrally. Checks with more detailed
+  # option validation pass `:any` and validate their own shape.
   @spec normalize!(term(), :any | list(atom())) :: keyword()
   def normalize!(opts, allowed_keys) when is_list(opts) do
     if Keyword.keyword?(opts) do
@@ -44,21 +32,13 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  @doc """
-  Returns whether a check should run for the given check-specific options.
-
-  Only `validate: false` disables a check. Missing `:validate`, `validate: true`,
-  and other values keep the check enabled.
-  """
+  # Only explicit `validate: false` disables a check; missing or truthy values
+  # keep validation enabled.
   @spec enabled?(keyword()) :: boolean()
   def enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
-  @doc """
-  Returns the configured match mode.
-
-  The accepted values are `:any` and `:all`; the default is `:any`. Any other
-  value raises `ArgumentError`.
-  """
+  # Configured checks use `:any` by default and may opt into `:all` when every
+  # configured key must match. Any other value is treated as invalid config.
   @spec match!(keyword()) :: :any | :all
   def match!(opts) do
     case Keyword.get(opts, :match, :any) do
@@ -70,13 +50,8 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
     end
   end
 
-  @doc """
-  Fetches `key` from `opts` and validates it as a non-empty list of atoms.
-
-  This is useful for check options such as `:keys` or `:fields`, where an empty
-  list would make the check configuration ambiguous. Missing keys and invalid
-  values raise `ArgumentError`.
-  """
+  # Required field/key options must be non-empty so a configured check cannot
+  # silently become a no-op through ambiguous empty input.
   @spec fetch_non_empty_atoms!(keyword(), atom()) :: list(atom())
   def fetch_non_empty_atoms!(opts, key) do
     case Keyword.fetch(opts, key) do
@@ -88,12 +63,8 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
     end
   end
 
-  @doc """
-  Validates `values` as a non-empty list of atoms.
-
-  Returns the atom list unchanged when valid. Empty lists, non-lists, and lists
-  containing non-atoms raise `ArgumentError`.
-  """
+  # Shared validator for `:keys` and `:fields` style options. Empty lists,
+  # non-lists, and non-atom members are all configuration errors.
   @spec non_empty_atoms!(term(), atom()) :: list(atom())
   def non_empty_atoms!([], key) do
     raise ArgumentError,
@@ -107,11 +78,8 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
           "expected #{inspect(key)} to be a non-empty list of atoms, got: #{inspect(values)}"
   end
 
-  @doc """
-  Raises when `opts` contains keys outside `allowed_keys`.
-
-  Returns `:ok` when every option key is allowed. Pass `:any` to allow all keys.
-  """
+  # Pass `:any` when a check validates its own option keys; otherwise reject
+  # unknown keys early so typos do not silently disable enforcement.
   @spec validate_allowed_keys!(keyword(), :any | list(atom())) :: :ok
   def validate_allowed_keys!(_opts, :any), do: :ok
 

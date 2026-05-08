@@ -59,6 +59,7 @@ defmodule BylawEctoQuery.MixProject do
         "Bylaw.Ecto.Query": [
           Bylaw.Ecto.Query,
           Bylaw.Ecto.Query.Check,
+          Bylaw.Ecto.Query.Checks,
           Bylaw.Ecto.Query.Issue
         ],
         "Bylaw.Ecto.Query checks": ~r/^(Elixir\.)?Bylaw\.Ecto\.Query\.Checks\./
