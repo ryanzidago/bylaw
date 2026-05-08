@@ -17,18 +17,18 @@ Postgres checks live under `Bylaw.Db.Adapters.Postgres.Checks` and implement
 
 | Check | Purpose |
 | --- | --- |
-| `MissingForeignKeyIndexes` | Requires supporting indexes for foreign keys. |
-| `MissingForeignKeyConstraints` | Flags columns that look like foreign keys but do not have constraints. |
-| `ForeignKeyNullability` | Requires foreign key columns to be non-nullable. |
-| `ScopedForeignKeys` | Requires tenant, workspace, or similar scope columns in scoped foreign keys. |
-| `DuplicateIndexes` | Flags equivalent indexes on the same table. |
-| `ForeignKeyActions` | Validates `ON DELETE` and `ON UPDATE` actions. |
-| `RequiredColumns` | Requires configured columns on matching tables. |
-| `PrimaryKeyType` | Requires configured primary key types. |
-| `ForbiddenColumnTypes` | Flags configured column types and suggests preferred alternatives. |
-| `EctoChangesetUniqueConstraints` | Requires matching `unique_constraint/3` calls for unique indexes. |
-| `EctoChangesetForeignKeyConstraints` | Requires matching `foreign_key_constraint/3` calls for foreign keys. |
-| `EctoChangesetCheckConstraints` | Requires matching `check_constraint/3` calls for check constraints when fields can be inferred. |
+| [`MissingForeignKeyIndexes`](Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes.html) | Requires supporting indexes for foreign keys. |
+| [`MissingForeignKeyConstraints`](Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints.html) | Flags columns that look like foreign keys but do not have constraints. |
+| [`ForeignKeyNullability`](Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability.html) | Requires foreign key columns to be non-nullable. |
+| [`ScopedForeignKeys`](Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys.html) | Requires tenant, workspace, or similar scope columns in scoped foreign keys. |
+| [`DuplicateIndexes`](Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes.html) | Flags equivalent indexes on the same table. |
+| [`ForeignKeyActions`](Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions.html) | Validates `ON DELETE` and `ON UPDATE` actions. |
+| [`RequiredColumns`](Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns.html) | Requires configured columns on matching tables. |
+| [`PrimaryKeyType`](Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType.html) | Requires configured primary key types. |
+| [`ForbiddenColumnTypes`](Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes.html) | Flags configured column types and suggests preferred alternatives. |
+| [`EctoChangesetUniqueConstraints`](Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints.html) | Requires matching `unique_constraint/3` calls for unique indexes. |
+| [`EctoChangesetForeignKeyConstraints`](Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints.html) | Requires matching `foreign_key_constraint/3` calls for foreign keys. |
+| [`EctoChangesetCheckConstraints`](Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints.html) | Requires matching `check_constraint/3` calls for check constraints when fields can be inferred. |
 
 ## Postgres Database Checks
 
