@@ -197,6 +197,18 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
     end
   end
 
+  defp public_definition_signatures({:defdelegate, _meta, [head | _opts]}) do
+    case definition_head(head) do
+      {:ok, name, meta, params} ->
+        params
+        |> public_arities()
+        |> Enum.map(&%{name: name, arity: &1, line_no: meta[:line] || 0})
+
+      :error ->
+        []
+    end
+  end
+
   defp public_definition_signatures(_ast), do: []
 
   defp definition_head({:when, _meta, [call | _guards]}), do: definition_head(call)
