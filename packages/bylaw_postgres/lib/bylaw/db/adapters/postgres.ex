@@ -76,7 +76,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   @doc """
-  Builds one Postgres target and runs checks against it.
+  Runs checks against one Postgres repo.
 
   Pass the repo and checks. Use `:dynamic_repo` when validating a specific
   dynamic repo with `validate/3`. To validate multiple repos, call this function
@@ -103,7 +103,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   @doc """
-  Builds one Postgres target with options and runs checks against it.
+  Runs checks against one Postgres repo with options.
 
   The only supported option is `:dynamic_repo`.
   """
