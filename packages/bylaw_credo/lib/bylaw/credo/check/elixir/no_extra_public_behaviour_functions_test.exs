@@ -197,6 +197,46 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest do
     |> refute_issues()
   end
 
+  test "supports aliased behaviour attributes" do
+    """
+    defmodule Example do
+      alias Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+
+      @behaviour PrimaryBehaviour
+
+      @impl PrimaryBehaviour
+      def run(value), do: value
+
+      def helper(value), do: value
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoExtraPublicBehaviourFunctions, behaviours: [@primary_behaviour])
+    |> assert_issue(%{
+      line_no: 9,
+      trigger: "helper/1"
+    })
+  end
+
+  test "reports one issue for each extra public signature with multiple clauses" do
+    issues =
+      """
+      defmodule Example do
+        @behaviour Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+
+        @impl Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+        def run(value), do: value
+
+        def helper(nil), do: nil
+        def helper(value), do: value
+      end
+      """
+      |> to_source_file()
+      |> run_check(NoExtraPublicBehaviourFunctions, behaviours: [@primary_behaviour])
+
+    assert [%Credo.Issue{trigger: "helper/1"}] = issues
+  end
+
   test "handles guarded callback function heads" do
     """
     defmodule Example do
