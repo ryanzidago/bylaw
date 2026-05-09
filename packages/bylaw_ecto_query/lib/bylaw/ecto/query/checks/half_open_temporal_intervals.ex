@@ -9,9 +9,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   Bad:
 
-      from event in Event,
-        where: event.occurred_at > ^start_at,
-        where: event.occurred_at <= ^end_at
+      from(Event, as: :event)
+      |> where([event: e], e.occurred_at > ^start_at)
+      |> where([event: e], e.occurred_at <= ^end_at)
 
   Why this is bad:
 
@@ -21,9 +21,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   Better:
 
-      from event in Event,
-        where: event.occurred_at >= ^start_at,
-        where: event.occurred_at < ^end_at
+      from(Event, as: :event)
+      |> where([event: e], e.occurred_at >= ^start_at)
+      |> where([event: e], e.occurred_at < ^end_at)
 
   Why this is better:
 
@@ -31,7 +31,7 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   compose without gaps or overlap because each boundary value belongs to exactly
   one window.
 
-  Limitations:
+  ## Notes
 
   This check inspects direct root temporal field comparisons in `where`
   expressions. It does not prove interval correctness when boundaries are hidden
@@ -41,20 +41,27 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   This catches the common off-by-one interval boundary shapes `>` for a lower
   bound and `<=` for an upper bound on root temporal fields.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:fields` - optional non-empty list of root fields to validate. When
       omitted, the check validates temporal fields reflected from the root Ecto
       schema.
 
+  Example check spec:
+
+      {Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals,
+       fields: [:inserted_at, :updated_at]}
+
   The check is static. It inspects direct root field comparisons in `where`
   expressions and ignores field-to-field comparisons, non-root bindings,
   fragments that hide field access, and schema-less queries without configured
   fields.
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -74,25 +81,26 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
     :utc_datetime_usec
   ]
 
+  @typedoc false
   @type boundary :: :lower | :upper
+  @typedoc false
   @type boundary_violation :: %{
           boundary: boundary(),
           field: atom(),
           operator: atom(),
           expected_operator: atom()
         }
+  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:fields, list(atom())}
           )
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates half-open temporal intervals for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same static
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

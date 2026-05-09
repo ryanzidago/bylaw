@@ -9,9 +9,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Bad:
 
-      from post in Post,
-        join: comment in Comment,
+      from(Post, as: :post)
+      |> join(:inner, [post: p], c in Comment,
+        as: :comment,
         on: true
+      )
 
   Why this is bad:
 
@@ -21,9 +23,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Better:
 
-      from post in Post,
-        join: comment in Comment,
-        on: comment.post_id == post.id
+      from(Post, as: :post)
+      |> join(:inner, [post: p], c in Comment,
+        as: :comment,
+        on: c.post_id == p.id
+      )
 
   Why this is better:
 
@@ -32,11 +36,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Bad:
 
-      from plan in Plan,
-        cross_join: feature in Feature,
-        where: feature.enabled == true
+      from(Plan, as: :plan)
+      |> join(:cross, [plan: pl], f in Feature, as: :feature)
+      |> where([feature: f], f.enabled == true)
 
-  Limitations:
+  ## Notes
 
   This check catches obvious cartesian joins: `cross_join`, uncorrelated
   `cross_lateral_join`, and non-association joins whose `on` expression is
@@ -49,10 +53,7 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   depends on both a local subquery binding and a previous parent binding, or
   when a lateral fragment source exposes a previous parent binding reference.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -67,6 +68,11 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   Ecto-visible reference to a previous binding is treated as dependency
   evidence; opaque SQL that needs stricter review should be handled in the
   application query or by disabling the check for that call site.
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -75,17 +81,17 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type reason :: :cross_join | :cross_lateral_join | :literal_true_on
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
   @lateral_quals [:cross_lateral, :inner_lateral, :left_lateral]
 
   @doc """
-  Validates that a prepared Ecto query does not contain cartesian joins.
-
-  The operation is kept as issue metadata. This check applies the same join
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

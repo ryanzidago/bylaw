@@ -3,42 +3,33 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   Validates that a query has a root `where` predicate referencing configured keys.
 
   This is useful for tenant boundaries where every query should include a
-  predicate for fields such as `:organisation_id` or `:user_id`.
-
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-    * `:keys` - required non-empty list of field names when the check runs.
-    * `:match` - `:any` or `:all`. Defaults to `:any`.
+  predicate for fields such as `:organization_id` or `:user_id`.
 
   ## Examples
 
   Bad:
 
-      from post in Post,
-        where: post.status == ^:published
+      from(Post, as: :post)
+      |> where([post: p], p.status == ^:published)
 
   Why this is bad:
 
-  If `:organisation_id` is configured as mandatory, this query has no visible
+  If `:organization_id` is configured as mandatory, this query has no visible
   tenant boundary in the root `where` clause. It can read rows across
-  organisations.
+  organizations.
 
   Better:
 
-      from post in Post,
-        where: post.organisation_id == ^organisation_id,
-        where: post.status == ^:published
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
+      |> where([post: p], p.status == ^:published)
 
   Why this is better:
 
   The configured key appears in a supported root predicate, so the query is
-  explicitly scoped to one organisation.
+  explicitly scoped to one organization.
 
-  Limitations:
+  ## Notes
 
   This check accepts supported direct root `==` and `in` predicates. It does not
   prove tenant safety when keys are hidden inside fragments or field-to-field
@@ -54,6 +45,23 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   to fields that exist on that schema. If none of the configured keys exist, the
   check is not applicable and returns `:ok`. Schema-less sources are still
   validated because there is no schema reflection signal.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:keys` - required non-empty list of field names when the check runs.
+    * `:match` - `:any` or `:all`. Defaults to `:any`.
+
+  Example check spec:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+       keys: [:organization_id],
+       match: :all}
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -63,20 +71,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type match :: :any | :all
+  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:keys, list(atom())}
             | {:match, match()}
           )
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates mandatory root `where` predicates for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same query
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

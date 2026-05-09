@@ -14,18 +14,13 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   intentionally ordered by another unique database key, use the explicit escape
   hatch until a DB-aware check can verify those constraints directly.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
   ## Examples
 
   Bad:
 
-      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> limit(10)
 
   Why this is bad:
 
@@ -35,10 +30,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   Better:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at, asc: post.id],
-        limit: 10
-      )
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> order_by([post: p], asc: p.id)
+      |> limit(10)
 
   Why this is better:
 
@@ -47,15 +42,12 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   Better for a composite primary key:
 
-      from(membership in Membership,
-        order_by: [
-          asc: membership.inserted_at,
-          asc: membership.organisation_id,
-          asc: membership.sequence
-        ]
-      )
+      from(Membership, as: :membership)
+      |> order_by([membership: mem], asc: mem.inserted_at)
+      |> order_by([membership: mem], asc: mem.organization_id)
+      |> order_by([membership: mem], asc: mem.sequence)
 
-  Limitations:
+  ## Notes
 
   This check only trusts the root Ecto schema primary key. It cannot verify
   arbitrary unique database indexes or schema-less query sources.
@@ -64,6 +56,15 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   reflection. Schema-less queries and schemas without primary keys cannot be
   proven deterministic by this check, so ordered queries in those cases return
   an issue unless validation is explicitly disabled.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -72,15 +73,15 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type field_set :: list(atom())
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates deterministic root `order_by` keys for a prepared Ecto query.
-
-  Queries without `order_by` clauses are ignored. For ordered queries, the root
-  ordered fields must include every field in the root schema primary key.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

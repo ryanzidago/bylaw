@@ -1,17 +1,18 @@
 defmodule Bylaw.Ecto.Query do
   @moduledoc """
-  Runs Ecto query checks from module-based check specs.
+  Runs Ecto query checks from an explicit list of check specs.
 
-  Use this module from `c:Ecto.Repo.prepare_query/3` when you want Bylaw to own
-  check orchestration while keeping check selection explicit:
+  `Bylaw.Ecto.Query.validate/3` is the public entry point for end-user query
+  validation. Use it from `c:Ecto.Repo.prepare_query/3` when you want repo-wide
+  enforcement while keeping check selection explicit:
 
-      @bylaw [
+      @query_checks [
         Bylaw.Ecto.Query.Checks.RequiredOrder,
-        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organisation_id]}
+        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
       ]
 
       def prepare_query(operation, query, opts) do
-        case Bylaw.Ecto.Query.validate(operation, query, @bylaw) do
+        case Bylaw.Ecto.Query.validate(operation, query, @query_checks) do
           :ok -> {query, opts}
           {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
         end
@@ -23,7 +24,7 @@ defmodule Bylaw.Ecto.Query do
   ## Examples
 
       iex> import Ecto.Query
-      iex> query = from(post in "posts", limit: 1)
+      iex> query = from("posts", as: :post, limit: 1)
       iex> {:error, [issue]} =
       ...>   Bylaw.Ecto.Query.validate(:all, query, [
       ...>     Bylaw.Ecto.Query.Checks.RequiredOrder
@@ -44,18 +45,14 @@ defmodule Bylaw.Ecto.Query do
   @type checks :: list(check_spec())
 
   @doc """
-  Runs the configured query checks.
+  Runs the given query checks against a prepared Ecto query.
 
   Returns `:ok` when every enabled check passes. Returns `{:error, issues}`
   when one or more checks fail.
 
   `checks` accepts modules and `{module, opts}` tuples. Duplicate check modules
-  raise `ArgumentError`.
-
-  ## Examples
-
-      iex> Bylaw.Ecto.Query.validate(:all, :query, [:not_a_check])
-      ** (ArgumentError) expected :not_a_check to be a query check module
+  raise `ArgumentError`. Bylaw does not read check lists from application
+  config; callers pass checks explicitly.
   """
   @spec validate(Check.operation(), Check.query(), checks()) ::
           :ok | {:error, nonempty_list(Issue.t())}

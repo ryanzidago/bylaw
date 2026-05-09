@@ -41,7 +41,7 @@ defmodule BylawEctoQuery.MixProject do
     [
       files:
         Path.wildcard("lib/**/*.ex") ++
-          ~w(guides .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+          ~w(.formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url}
     ]
@@ -49,12 +49,9 @@ defmodule BylawEctoQuery.MixProject do
 
   defp docs do
     [
-      main: "ecto_query_checks",
+      main: "readme",
       source_ref: "v#{@version}",
-      extras: [
-        "README.md",
-        "guides/ecto_query_checks.md": [title: "Bylaw.Ecto.Query Checks"]
-      ],
+      extras: ["README.md"],
       groups_for_modules: [
         "Bylaw.Ecto.Query": [
           Bylaw.Ecto.Query,

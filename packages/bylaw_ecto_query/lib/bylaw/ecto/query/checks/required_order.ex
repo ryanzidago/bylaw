@@ -6,22 +6,12 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   It intentionally does not decide whether the existing order is deterministic;
   use `Bylaw.Ecto.Query.Checks.DeterministicOrder` for that separate question.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
-  Queries with `limit`, `offset`, or the `:stream` operation require an
-  `order_by` clause. If any `order_by` exists, this check passes and leaves
-  deterministic tie-breaker validation to `DeterministicOrder`.
-
   ## Examples
 
   Bad:
 
-      from(post in Post, limit: 10)
+      from(Post, as: :post)
+      |> limit(10)
 
   Why this is bad:
 
@@ -31,7 +21,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> limit(10)
 
   Why this is better:
 
@@ -40,7 +32,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      from(post in Post, offset: 50, limit: 25)
+      from(Post, as: :post)
+      |> offset(50)
+      |> limit(25)
 
   Why this is bad:
 
@@ -49,11 +43,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at],
-        offset: 50,
-        limit: 25
-      )
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> offset(50)
+      |> limit(25)
 
   Why this is better:
 
@@ -62,27 +55,43 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      Repo.stream(from(post in Post))
+      from(Post, as: :post)
+      |> Repo.stream()
 
   Better:
 
-      Repo.stream(from(post in Post, order_by: [asc: post.id]))
+      from(Post, as: :post)
+      |> order_by([post: p], asc: p.id)
+      |> Repo.stream()
 
-  Limitations:
+  ## Notes
 
   This check only requires that some `order_by` exists. It does not prove that
   the order is deterministic. If rows can tie on the ordered field, pair this
   check with `DeterministicOrder` to require a primary-key tie-breaker:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at, asc: post.id],
-        limit: 10
-      )
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> order_by([post: p], asc: p.id)
+      |> limit(10)
 
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
   synthetic limit is ignored because existence checks do not depend on which row
   is returned. A preserved `offset` still requires ordering because the skipped
   rows are otherwise undefined.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  Queries with `limit`, `offset`, or the `:stream` operation require an
+  `order_by` clause. If any `order_by` exists, this check passes and leaves
+  deterministic tie-breaker validation to `DeterministicOrder`.
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -91,16 +100,15 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type reason :: :limit | :offset | :stream
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates required `order_by` presence for a prepared Ecto query.
-
-  Queries with `limit`, `offset`, or the `:stream` operation must include an
-  `order_by` clause. Existing `order_by` clauses are accepted without checking
-  whether they are deterministic.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check
