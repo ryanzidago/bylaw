@@ -44,9 +44,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   `unique_constraint/3` when a candidate casts all fields covered by a unique
   Postgres index. Dynamic cast/change field lists are skipped for v1.
 
-
-  The check needs source paths so Bylaw can parse source AST for user-defined
-  changeset functions:
+  Pass `paths: [...]` so Bylaw can parse source AST for user-defined changeset
+  functions:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
@@ -54,7 +53,27 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   ```
 
   When the repo can report `config()[:otp_app]`, schema module discovery is
-  derived from it.
+  derived from it. Use `schema_modules: [...]` when the check should inspect an
+  explicit set of schemas instead:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
+   paths: ["lib/my_app/accounts"],
+   schema_modules: [MyApp.Accounts.User, MyApp.Accounts.Organization]}
+  ```
+
+  Use `rules: [...]` to scope the Postgres constraints considered by the check:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
+   paths: ["lib/my_app"],
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "legacy_users", constraint: "legacy_users_email_index"]]
+     ]
+   ]}
+  ```
 
   ## Usage
 

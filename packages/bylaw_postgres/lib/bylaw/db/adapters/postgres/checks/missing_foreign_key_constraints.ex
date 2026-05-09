@@ -38,10 +38,33 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A column is treated
-  as a candidate when it ends in `_id`, is not named `id`, is not part of a
-  primary key, and is not covered by a declared foreign key constraint.
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {MissingForeignKeyConstraints,
+   schemas: ["public"],
+   tables: ["orders", "line_items"]}
+  ```
+
+  Use `rules: [...]` when the scope needs column matchers or exclusions:
+
+  ```elixir
+  {MissingForeignKeyConstraints,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [
+         [table: "events", column: "actor_id"],
+         [column: ~r/_external_id$/]
+       ]
+     ]
+   ]}
+  ```
+
+  A column is treated as a candidate when it ends in `_id`, is not named `id`,
+  is not part of a primary key, and is not covered by a declared foreign key
+  constraint.
 
   ## Usage
 

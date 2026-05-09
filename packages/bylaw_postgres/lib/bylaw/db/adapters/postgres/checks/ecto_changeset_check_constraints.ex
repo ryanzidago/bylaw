@@ -44,9 +44,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   fields that a candidate casts. Dynamic cast/change field lists and check
   expressions without catalog column metadata are skipped for v1.
 
-
-  The check needs source paths so Bylaw can parse source AST for user-defined
-  changeset functions:
+  Pass `paths: [...]` so Bylaw can parse source AST for user-defined changeset
+  functions:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
@@ -54,7 +53,27 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   ```
 
   When the repo can report `config()[:otp_app]`, schema module discovery is
-  derived from it.
+  derived from it. Use `schema_modules: [...]` when the check should inspect an
+  explicit set of schemas instead:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
+   paths: ["lib/my_app/catalog"],
+   schema_modules: [MyApp.Catalog.Product, MyApp.Catalog.Price]}
+  ```
+
+  Use `rules: [...]` to scope the Postgres constraints considered by the check:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
+   paths: ["lib/my_app"],
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "legacy_products", constraint: "legacy_price_check"]]
+     ]
+   ]}
+  ```
 
   ## Usage
 
