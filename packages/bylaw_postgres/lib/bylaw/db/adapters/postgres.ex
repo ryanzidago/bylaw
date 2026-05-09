@@ -34,18 +34,14 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
-  @typedoc """
-  Option accepted by `target/1`.
-  """
+  @typedoc false
   @type target_opt ::
           {:repo, module()}
           | {:dynamic_repo, atom() | pid() | nil}
           | {:query, Target.query_fun()}
           | {:meta, map()}
 
-  @typedoc """
-  Options accepted by `target/1`.
-  """
+  @typedoc false
   @type target_opts :: list(target_opt())
 
   @typedoc """
@@ -58,23 +54,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   """
   @type validate_opts :: list(validate_opt())
 
-  @doc """
-  Builds a single Postgres validation target.
-
-  Pass either `:repo` for an Ecto SQL-backed target or `:query` for a custom
-  query callback used by tests or custom integrations.
-
-  ## Examples
-
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
-      iex> is_function(target.query, 4)
-      true
-
-      iex> Bylaw.Db.Adapters.Postgres.target([])
-      ** (ArgumentError) expected Postgres target to include :repo or a four-arity :query
-  """
-
+  @doc false
   @impl Bylaw.Db.Adapter
   @spec target(opts :: target_opts()) :: Target.t()
   def target(opts) when is_list(opts) do
@@ -150,23 +130,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
           "expected Postgres repo to be a module, got: #{inspect(repo)}"
   end
 
-  @doc """
-  Executes introspection SQL for a Postgres target.
-
-  Repo-backed targets use `Ecto.Adapters.SQL.query/4`. If `:dynamic_repo` is set,
-  the adapter temporarily routes the current process to that dynamic repo and
-  restores the previous value afterward.
-
-  ## Examples
-
-      iex> query = fn target, sql, params, opts ->
-      ...>   {:ok, %{adapter: target.adapter, sql: sql, params: params, opts: opts}}
-      ...> end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
-      iex> Bylaw.Db.Adapters.Postgres.query(target, "select $1", [1], timeout: 1_000)
-      {:ok, %{adapter: Bylaw.Db.Adapters.Postgres, params: [1], sql: "select $1", opts: [timeout: 1000]}}
-  """
-
+  @doc false
   @impl Bylaw.Db.Adapter
   @spec query(
           target :: Target.t(),
