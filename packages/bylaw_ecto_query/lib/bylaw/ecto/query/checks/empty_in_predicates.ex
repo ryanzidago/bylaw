@@ -11,9 +11,8 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
 
       ids = []
 
-      Thing
-      |> from(as: :thing)
-      |> where([thing: thing], thing.id in ^ids)
+      from(Thing, as: :thing)
+      |> where([thing: t], t.id in ^ids)
 
   Why this is bad:
 
@@ -25,9 +24,8 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
       if Enum.empty?(ids) do
         []
       else
-        Thing
-        |> from(as: :thing)
-        |> where([thing: thing], thing.id in ^ids)
+        from(Thing, as: :thing)
+        |> where([thing: t], t.id in ^ids)
         |> Repo.all()
       end
 

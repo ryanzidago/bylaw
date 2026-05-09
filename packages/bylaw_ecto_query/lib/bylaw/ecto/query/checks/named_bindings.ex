@@ -6,7 +6,7 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   and every join to declare an `:as` alias, then rejects field references that
   target bindings without a declared alias.
 
-  Ecto expands named binding lists such as `[post: post]` to the same prepared
+  Ecto expands named binding lists such as `[post: p]` to the same prepared
   query shape as local binding variables such as `post`. Because that source
   syntax is no longer distinguishable from the prepared query struct, this
   check accepts both forms as long as the referenced binding has an alias.
@@ -26,10 +26,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   Bad:
 
-      Post
-      |> from(as: :post)
-      |> join(:inner, [post: post], comment in assoc(post, :comments))
-      |> where([post], post.organization_id == ^organization_id)
+      from(Post, as: :post)
+      |> join(:inner, [post: p], c in assoc(p, :comments))
+      |> where([p], p.organization_id == ^organization_id)
 
   Why this is bad:
 
@@ -40,10 +39,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   Better:
 
       query =
-        Post
-        |> from(as: :post)
-        |> join(:inner, [post: post], comment in assoc(post, :comments), as: :comment)
-        |> where([post: post], post.organization_id == ^organization_id)
+        from(Post, as: :post)
+        |> join(:inner, [post: p], c in assoc(p, :comments), as: :comment)
+        |> where([post: p], p.organization_id == ^organization_id)
 
       Bylaw.Ecto.Query.Checks.NamedBindings.validate(:all, query, [])
 

@@ -9,10 +9,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   Bad:
 
-      Event
-      |> from(as: :event)
-      |> where([event: event], event.occurred_at > ^start_at)
-      |> where([event: event], event.occurred_at <= ^end_at)
+      from(Event, as: :event)
+      |> where([event: e], e.occurred_at > ^start_at)
+      |> where([event: e], e.occurred_at <= ^end_at)
 
   Why this is bad:
 
@@ -22,10 +21,9 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   Better:
 
-      Event
-      |> from(as: :event)
-      |> where([event: event], event.occurred_at >= ^start_at)
-      |> where([event: event], event.occurred_at < ^end_at)
+      from(Event, as: :event)
+      |> where([event: e], e.occurred_at >= ^start_at)
+      |> where([event: e], e.occurred_at < ^end_at)
 
   Why this is better:
 

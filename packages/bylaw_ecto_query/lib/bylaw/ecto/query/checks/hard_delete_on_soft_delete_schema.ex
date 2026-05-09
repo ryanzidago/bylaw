@@ -11,9 +11,8 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   Bad:
 
       query =
-        Post
-        |> from(as: :post)
-        |> where([post: post], post.status == ^:archived)
+        from(Post, as: :post)
+        |> where([post: p], p.status == ^:archived)
 
       Repo.delete_all(query)
 
@@ -29,9 +28,8 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   `Repo.delete_all/2` when this check reports an issue.
 
       query =
-        Post
-        |> from(as: :post)
-        |> where([post: post], post.status == ^:archived)
+        from(Post, as: :post)
+        |> where([post: p], p.status == ^:archived)
 
       Repo.update_all(query, set: [deleted_at: DateTime.utc_now()])
 

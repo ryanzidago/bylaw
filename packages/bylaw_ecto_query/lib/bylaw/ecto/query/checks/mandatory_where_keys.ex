@@ -9,9 +9,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   Bad:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.status == ^:published)
+      from(Post, as: :post)
+      |> where([post: p], p.status == ^:published)
 
   Why this is bad:
 
@@ -21,10 +20,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.organization_id == ^organization_id)
-      |> where([post: post], post.status == ^:published)
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
+      |> where([post: p], p.status == ^:published)
 
   Why this is better:
 

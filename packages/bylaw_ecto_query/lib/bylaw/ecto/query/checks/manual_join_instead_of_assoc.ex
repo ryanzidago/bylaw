@@ -9,11 +9,10 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
 
   Bad:
 
-      Post
-      |> from(as: :post)
-      |> join(:inner, [post: post], comment in Comment,
+      from(Post, as: :post)
+      |> join(:inner, [post: p], c in Comment,
         as: :comment,
-        on: comment.post_id == post.id
+        on: c.post_id == p.id
       )
 
   Why this is bad:
@@ -24,9 +23,8 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> join(:inner, [post: post], comment in assoc(post, :comments),
+      from(Post, as: :post)
+      |> join(:inner, [post: p], c in assoc(p, :comments),
         as: :comment
       )
 

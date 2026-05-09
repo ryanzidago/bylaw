@@ -13,9 +13,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Bad:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.organization_id == ^organization_id)
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
 
   Why this is bad:
 
@@ -25,10 +24,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.organization_id == ^organization_id)
-      |> where([post: post], is_nil(post.deleted_at))
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
+      |> where([post: p], is_nil(p.deleted_at))
 
   Why this is better:
 
@@ -37,9 +35,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Better when archived rows are intentional:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.archived_at <= ^cutoff)
+      from(Post, as: :post)
+      |> where([post: p], p.archived_at <= ^cutoff)
 
   ## Notes
 

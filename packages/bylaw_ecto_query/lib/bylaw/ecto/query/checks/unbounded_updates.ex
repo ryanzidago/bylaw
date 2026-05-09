@@ -9,8 +9,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   Bad:
 
-      Post
-      |> from(as: :post)
+      from(Post, as: :post)
       |> update(set: [archived: true])
 
   Why this is bad:
@@ -20,10 +19,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> where([post: post], post.status == ^:draft)
-      |> where([post: post], post.updated_at < ^cutoff)
+      from(Post, as: :post)
+      |> where([post: p], p.status == ^:draft)
+      |> where([post: p], p.updated_at < ^cutoff)
       |> update(set: [archived: true])
 
   Why this is better:

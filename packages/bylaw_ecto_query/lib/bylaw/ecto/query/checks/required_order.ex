@@ -10,8 +10,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      Post
-      |> from(as: :post)
+      from(Post, as: :post)
       |> limit(10)
 
   Why this is bad:
@@ -22,9 +21,8 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> order_by([post: post], desc: post.inserted_at)
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
       |> limit(10)
 
   Why this is better:
@@ -34,8 +32,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      Post
-      |> from(as: :post)
+      from(Post, as: :post)
       |> offset(50)
       |> limit(25)
 
@@ -46,9 +43,8 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> order_by([post: post], desc: post.inserted_at)
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
       |> offset(50)
       |> limit(25)
 
@@ -59,15 +55,13 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      Post
-      |> from(as: :post)
+      from(Post, as: :post)
       |> Repo.stream()
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> order_by([post: post], asc: post.id)
+      from(Post, as: :post)
+      |> order_by([post: p], asc: p.id)
       |> Repo.stream()
 
   ## Notes
@@ -76,10 +70,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   the order is deterministic. If rows can tie on the ordered field, pair this
   check with `DeterministicOrder` to require a primary-key tie-breaker:
 
-      Post
-      |> from(as: :post)
-      |> order_by([post: post], desc: post.inserted_at)
-      |> order_by([post: post], asc: post.id)
+      from(Post, as: :post)
+      |> order_by([post: p], desc: p.inserted_at)
+      |> order_by([post: p], asc: p.id)
       |> limit(10)
 
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This

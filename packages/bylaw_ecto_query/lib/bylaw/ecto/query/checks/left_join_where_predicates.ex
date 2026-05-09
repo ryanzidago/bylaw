@@ -11,13 +11,12 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   Bad:
 
-      Post
-      |> from(as: :post)
-      |> join(:left, [post: post], comment in Comment,
+      from(Post, as: :post)
+      |> join(:left, [post: p], c in Comment,
         as: :comment,
-        on: comment.post_id == post.id
+        on: c.post_id == p.id
       )
-      |> where([comment: comment], comment.status == ^:published)
+      |> where([comment: c], c.status == ^:published)
 
   Why this is bad:
 
@@ -27,11 +26,10 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   Better:
 
-      Post
-      |> from(as: :post)
-      |> join(:left, [post: post], comment in Comment,
+      from(Post, as: :post)
+      |> join(:left, [post: p], c in Comment,
         as: :comment,
-        on: comment.post_id == post.id and comment.status == ^:published
+        on: c.post_id == p.id and c.status == ^:published
       )
 
   Why this is better:

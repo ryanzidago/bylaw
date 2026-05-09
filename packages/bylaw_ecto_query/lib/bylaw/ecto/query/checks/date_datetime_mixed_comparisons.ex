@@ -10,9 +10,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   Bad:
 
-      Event
-      |> from(as: :event)
-      |> where([event: event], event.event_date <= event.inserted_at)
+      from(Event, as: :event)
+      |> where([event: e], e.event_date <= e.inserted_at)
 
   Why this is bad:
 
@@ -22,9 +21,8 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   Better:
 
-      Event
-      |> from(as: :event)
-      |> where([event: event], event.event_date <= type(event.inserted_at, :date))
+      from(Event, as: :event)
+      |> where([event: e], e.event_date <= type(e.inserted_at, :date))
 
   Why this is better:
 
