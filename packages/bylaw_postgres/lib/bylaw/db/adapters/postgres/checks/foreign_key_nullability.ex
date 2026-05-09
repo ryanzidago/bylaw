@@ -41,7 +41,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   foreign keys:
 
   ```elixir
-  {ForeignKeyNullability,
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
    rules: [
      [
        only: [schema: "public"],
@@ -118,11 +118,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   }
 
   @doc """
-  Validates that foreign key columns in the target scope are `NOT NULL`.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

@@ -41,7 +41,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   Use `schemas: [...]` or `tables: [...]` for simple filtering:
 
   ```elixir
-  {MissingForeignKeyIndexes,
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
    schemas: ["public"],
    tables: ["orders", "line_items"]}
   ```
@@ -49,7 +49,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   Use `rules: [...]` when the scope needs matchers or exclusions:
 
   ```elixir
-  {MissingForeignKeyIndexes,
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
    rules: [
      [
        only: [schema: "public"],
@@ -137,13 +137,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   }
 
   @doc """
-  Validates that foreign keys in the target scope have supporting indexes.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
-
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do

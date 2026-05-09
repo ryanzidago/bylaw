@@ -20,12 +20,12 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   ## Examples
 
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: [[1]]}} end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query, meta: %{database: :primary})
-      iex> target.adapter
-      Bylaw.Db.Adapters.Postgres
-      iex> target.meta
-      %{database: :primary}
+      Bylaw.Db.Adapters.Postgres.validate(
+        MyApp.Repo,
+        [
+          Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes
+        ]
+      )
   """
 
   @behaviour Bylaw.Db.Adapter

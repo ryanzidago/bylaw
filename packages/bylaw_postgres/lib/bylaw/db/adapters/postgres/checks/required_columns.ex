@@ -42,7 +42,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   more than one rule.
 
   ```elixir
-  {RequiredColumns,
+  {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
    rules: [
      [
        columns: ["inserted_at", "updated_at"],
@@ -133,12 +133,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   }
 
   @doc """
-  Validates that tables matched by each rule include the rule's columns.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires either `columns: [...]` for a single global rule or `rules: [...]` for
-  one or more scoped rules.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

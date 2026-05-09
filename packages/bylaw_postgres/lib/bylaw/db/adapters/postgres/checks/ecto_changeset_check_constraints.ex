@@ -126,8 +126,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   @type check_opts :: list(check_opt())
 
   @doc """
-  Validates changeset check-constraint helpers for a Postgres target.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
