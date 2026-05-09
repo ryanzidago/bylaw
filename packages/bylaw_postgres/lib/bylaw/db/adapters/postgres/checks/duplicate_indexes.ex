@@ -2,15 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   @moduledoc """
   Flags equivalent Postgres indexes on the same table.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. Indexes are treated as duplicates
-  when they have the same table, access method, uniqueness,
-  validity, key and included columns, operator classes, collations, sort options,
-  expressions, and predicate.
-
-  ## Example
+  ## Examples
 
   Before, the table has two indexes with the same definition:
 
@@ -35,6 +27,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   A plain index and a partial index on the same column are not treated as
   duplicates because their predicates differ.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope. Indexes are treated as duplicates
+  when they have the same table, access method, uniqueness,
+  validity, key and included columns, operator classes, collations, sort options,
+  expressions, and predicate.
 
   ## Usage
 

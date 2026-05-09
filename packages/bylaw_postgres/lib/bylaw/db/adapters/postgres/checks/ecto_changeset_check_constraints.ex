@@ -2,27 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   @moduledoc """
   Validates `Ecto.Changeset.check_constraint/3` annotations for Postgres checks.
 
-  ## Options
-
-  The check discovers compiled Ecto schemas through reflection, parses source
-  files for conservative changeset candidates, and only requires
-  `check_constraint/3` when Postgres can associate a check constraint with
-  fields that a candidate casts. Dynamic cast/change field lists and check
-  expressions without catalog column metadata are skipped for v1.
-
-
-  The check needs source paths so Bylaw can parse source AST for user-defined
-  changeset functions:
-
-  ```elixir
-  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
-   paths: ["lib/my_app"]}
-  ```
-
-  When the repo can report `config()[:otp_app]`, schema module discovery is
-  derived from it.
-
-  ## Example
+  ## Examples
 
   With a check constraint on `users.age`, before:
 
@@ -55,6 +35,26 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   The check skips dynamic `cast` or `change` field lists, check expressions
   without catalog column metadata, and constraints whose columns cannot be
   mapped to Ecto schema fields.
+
+  ## Options
+
+  The check discovers compiled Ecto schemas through reflection, parses source
+  files for conservative changeset candidates, and only requires
+  `check_constraint/3` when Postgres can associate a check constraint with
+  fields that a candidate casts. Dynamic cast/change field lists and check
+  expressions without catalog column metadata are skipped for v1.
+
+
+  The check needs source paths so Bylaw can parse source AST for user-defined
+  changeset functions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
+   paths: ["lib/my_app"]}
+  ```
+
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it.
 
   ## Usage
 

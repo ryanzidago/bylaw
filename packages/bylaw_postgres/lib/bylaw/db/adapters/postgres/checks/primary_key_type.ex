@@ -2,23 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   @moduledoc """
   Validates that Postgres primary key columns use configured data types.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [...]` to configure allowed types for scoped groups of tables:
-
-  ```elixir
-  {PrimaryKeyType,
-   rules: [
-     [
-       only: [schema: "public"],
-       types: ["uuid"],
-       except: [[table: "schema_migrations"]]
-     ]
-   ]}
-  ```
-
-  ## Example
+  ## Examples
 
   With `rules: [[only: [schema: "public"], types: ["uuid"]]]`, before:
 
@@ -51,6 +35,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   Tables with no primary key fail, and composite primary keys pass only when
   every primary key column has an allowed type. Exclude tables such as
   `schema_migrations` when they intentionally use a different convention.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [...]` to configure allowed types for scoped groups of tables:
+
+  ```elixir
+  {PrimaryKeyType,
+   rules: [
+     [
+       only: [schema: "public"],
+       types: ["uuid"],
+       except: [[table: "schema_migrations"]]
+     ]
+   ]}
+  ```
 
   ## Usage
 

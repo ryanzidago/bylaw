@@ -2,14 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   @moduledoc """
   Flags Postgres columns that look like foreign keys but have no constraint.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A column is treated
-  as a candidate when it ends in `_id`, is not named `id`, is not part of a
-  primary key, and is not covered by a declared foreign key constraint.
-
-  ## Example
+  ## Examples
 
   Before, `account_id` looks like a relationship but the database does not
   enforce it:
@@ -42,6 +35,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   `_id`, and it does not validate whether the referenced table name matches the
   column name. It only checks whether a candidate column is covered by a
   Postgres foreign key constraint.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope. A column is treated
+  as a candidate when it ends in `_id`, is not named `id`, is not part of a
+  primary key, and is not covered by a declared foreign key constraint.
 
   ## Usage
 
