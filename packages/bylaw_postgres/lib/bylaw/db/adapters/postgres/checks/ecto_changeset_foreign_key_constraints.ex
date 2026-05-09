@@ -2,23 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   @moduledoc """
   Validates `Ecto.Changeset.foreign_key_constraint/3` annotations for Postgres FKs.
 
-  The check discovers compiled Ecto schemas through reflection, parses source
-  files for conservative changeset candidates, and only requires
-  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
-  Dynamic cast/change field lists are skipped for v1.
-
-  The common ExUnit setup only needs a repo and source paths. The repo is used
-  to query the live test database catalog, and `paths` tells Bylaw where to
-  parse source AST for user-defined changeset functions. When the repo can
-  report `config()[:otp_app]`, schema module discovery is derived from it:
-
-  ```elixir
-  assert :ok =
-           Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints.validate(
-             repo: MyApp.Repo,
-             paths: ["lib/my_app"]
-           )
-  ```
+  ## Examples
 
   With a foreign key on `orders.account_id`, before:
 
@@ -46,13 +30,58 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
 
   Ecto can report the invalid relationship through the changeset API.
 
+  ## Notes
+
   The check skips dynamic `cast` or `change` field lists and foreign keys whose
   columns cannot be mapped to Ecto schema fields.
+
+  ## Options
+
+  The check discovers compiled Ecto schemas through reflection, parses source
+  files for conservative changeset candidates, and only requires
+  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
+  Dynamic cast/change field lists are skipped for v1.
+
+  Pass `paths: [...]` so Bylaw can parse source AST for user-defined changeset
+  functions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
+   paths: ["lib/my_app"]}
+  ```
+
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it. Use `schema_modules: [...]` when the check should inspect an
+  explicit set of schemas instead:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
+   paths: ["lib/my_app/billing"],
+   schema_modules: [MyApp.Billing.Invoice, MyApp.Billing.Payment]}
+  ```
+
+  Use `rules: [...]` to scope the Postgres constraints considered by the check:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
+   paths: ["lib/my_app"],
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "events", column: "actor_id"]]
+     ]
+   ]}
+  ```
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
 
-  alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
@@ -81,6 +110,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
     AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
     AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ORDER BY schema_name, table_name, constraint_name
+
   """
 
   @type check_opt ::
@@ -93,17 +123,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   @type check_opts :: list(check_opt())
 
   @doc """
-  Validates changeset foreign-key constraint helpers for a Postgres target.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(target, opts), do: EctoChangesetConstraints.validate(target, opts, config())
-
-  @doc """
-  Builds a Postgres target from options and validates foreign-key helpers.
-  """
-  @spec validate(opts :: Postgres.validate_opts() | check_opts()) :: Check.result()
-  def validate(opts), do: EctoChangesetConstraints.validate_from_opts(opts, config())
 
   defp config do
     %{

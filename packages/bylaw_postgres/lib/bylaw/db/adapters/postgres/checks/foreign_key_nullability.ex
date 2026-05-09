@@ -2,22 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   @moduledoc """
   Validates that Postgres foreign key columns are not nullable.
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
-  foreign keys:
-
-  ```elixir
-  {ForeignKeyNullability,
-   rules: [
-     [
-       only: [schema: "public"],
-       except: [
-         [table: "runs", column: "assistant_message_id"],
-         [constraint: "messages_parent_message_id_fkey"]
-       ]
-     ]
-   ]}
-  ```
+  ## Examples
 
   Before, the foreign key allows missing parents:
 
@@ -43,9 +28,36 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   The database shape now matches the domain model, and callers can rely on the
   relationship being present.
 
+  ## Notes
+
   This check only inspects columns that are already part of a foreign key
   constraint. Optional relationships should be excluded with an `except`
   matcher.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
+  foreign keys:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [
+         [table: "runs", column: "assistant_message_id"],
+         [constraint: "messages_parent_message_id_fkey"]
+       ]
+     ]
+   ]}
+  ```
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -80,6 +92,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
     AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
     AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ORDER BY schema_name, table_name, constraint_name, column_name
+
   """
 
   @type matcher_value :: String.t() | Regex.t()
@@ -105,10 +118,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   }
 
   @doc """
-  Validates that foreign key columns in the target scope are `NOT NULL`.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

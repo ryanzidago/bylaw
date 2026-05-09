@@ -2,29 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   @moduledoc """
   Validates that Postgres tables include required columns.
 
-  Use `rules: [...]` to require columns for scoped groups of tables. A rule
-  applies when a table matches any matcher in `only`; keys inside one matcher
-  are combined. Matching rules accumulate, so the same table can be validated by
-  more than one rule.
-
-  ```elixir
-  {RequiredColumns,
-   rules: [
-     [
-       columns: ["inserted_at", "updated_at"],
-       except: [[table: "schema_migrations"]]
-     ],
-     [
-       only: [
-         [schema: "audit"],
-         [schema: "billing", table: ~r/^invoice_/]
-       ],
-       columns: ["tenant_id"]
-     ]
-   ]}
-  ```
-
-  Use rule-level `except: [...]` for exclusions.
+  ## Examples
 
   With `rules: [[only: [schema: "public"], columns: ["tenant_id"]]]`, before:
 
@@ -51,8 +29,42 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   The table can participate in the same scoping, authorization, and cleanup
   patterns as the rest of the schema.
 
+  ## Notes
+
   The check only verifies column presence. It does not validate type,
   nullability, indexes, or constraints for required columns.
+
+  ## Options
+
+  Use `rules: [...]` to require columns for scoped groups of tables. A rule
+  applies when a table matches any matcher in `only`; keys inside one matcher
+  are combined. Matching rules accumulate, so the same table can be validated by
+  more than one rule.
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+   rules: [
+     [
+       columns: ["inserted_at", "updated_at"],
+       except: [[table: "schema_migrations"]]
+     ],
+     [
+       only: [
+         [schema: "audit"],
+         [schema: "billing", table: ~r/^invoice_/]
+       ],
+       columns: ["tenant_id"]
+     ]
+   ]}
+  ```
+
+  Use rule-level `except: [...]` for exclusions.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -91,6 +103,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   WHERE attribute.attnum IS NULL
   GROUP BY scoped_tables.schema_name, scoped_tables.table_name
   ORDER BY scoped_tables.schema_name, scoped_tables.table_name
+
   """
 
   @type matcher_value :: String.t() | Regex.t()
@@ -120,11 +133,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   }
 
   @doc """
-  Validates that tables matched by each rule include the rule's columns.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires either `columns: [...]` for a single global rule or `rules: [...]` for
-  one or more scoped rules.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

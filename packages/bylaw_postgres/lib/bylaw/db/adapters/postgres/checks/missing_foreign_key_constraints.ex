@@ -2,10 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   @moduledoc """
   Flags Postgres columns that look like foreign keys but have no constraint.
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A column is treated
-  as a candidate when it ends in `_id`, is not named `id`, is not part of a
-  primary key, and is not covered by a declared foreign key constraint.
+  ## Examples
 
   Before, `account_id` looks like a relationship but the database does not
   enforce it:
@@ -32,10 +29,48 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   The database now rejects orphaned rows no matter which code path writes to the
   table.
 
+  ## Notes
+
   This check does not infer relationships from column names that do not end in
   `_id`, and it does not validate whether the referenced table name matches the
   column name. It only checks whether a candidate column is covered by a
   Postgres foreign key constraint.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
+   schemas: ["public"],
+   tables: ["orders", "line_items"]}
+  ```
+
+  Use `rules: [...]` when the scope needs column matchers or exclusions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [
+         [table: "events", column: "actor_id"],
+         [column: ~r/_external_id$/]
+       ]
+     ]
+   ]}
+  ```
+
+  A column is treated as a candidate when it ends in `_id`, is not named `id`,
+  is not part of a primary key, and is not covered by a declared foreign key
+  constraint.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -81,6 +116,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
         AND attribute.attnum = ANY(constraint_record.conkey)
     )
   ORDER BY schema_name, table_name, column_name
+
   """
 
   @type check_opt :: {:validate, boolean()} | {:rules, list(keyword())}
@@ -94,10 +130,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   }
 
   @doc """
-  Validates that foreign-key-shaped columns have foreign key constraints.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

@@ -2,31 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @moduledoc """
   Validates Postgres foreign key `ON DELETE` and `ON UPDATE` actions.
 
-  Use a rule without `:only` when every foreign key in scope should use the same
-  action:
-
-  ```elixir
-  {ForeignKeyActions,
-   rules: [[on_delete: :cascade]]}
-  ```
-
-  Use `rules: [...]` for scoped policy. A foreign key can match more than one
-  rule, and matching rules accumulate.
-
-  ```elixir
-  {ForeignKeyActions,
-   rules: [
-     [
-       only: [[table: "messages"], [referenced_table: "conversations"]],
-       on_delete: :cascade
-     ],
-     [
-       only: [referenced_table: "lookup_statuses"],
-       on_delete: :restrict,
-       on_update: :restrict
-     ]
-   ]}
-  ```
+  ## Examples
 
   With this rule:
 
@@ -58,8 +34,44 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   Postgres now blocks accidental parent deletion until the application handles
   dependent rows intentionally.
 
+  ## Notes
+
   This check only validates actions you configure. If a rule only sets
   `on_delete`, the `ON UPDATE` action is ignored for that rule.
+
+  ## Options
+
+  Use a rule without `:only` when every foreign key in scope should use the same
+  action:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+   rules: [[on_delete: :cascade]]}
+  ```
+
+  Use `rules: [...]` for scoped policy. A foreign key can match more than one
+  rule, and matching rules accumulate.
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+   rules: [
+     [
+       only: [[table: "messages"], [referenced_table: "conversations"]],
+       on_delete: :cascade
+     ],
+     [
+       only: [referenced_table: "lookup_statuses"],
+       on_delete: :restrict,
+       on_update: :restrict
+     ]
+   ]}
+  ```
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -111,6 +123,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
     AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
     AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ORDER BY schema_name, table_name, constraint_name
+
   """
 
   @actions [:no_action, :restrict, :cascade, :set_null, :set_default]
@@ -166,12 +179,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   }
 
   @doc """
-  Validates that foreign keys in the target scope use configured actions.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires either global `:on_delete` and/or `:on_update` policy, or `rules:
-  [...]` for scoped policy. Use rule-level `:only` and `:except` matchers to
-  narrow or exclude the inspected foreign keys.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

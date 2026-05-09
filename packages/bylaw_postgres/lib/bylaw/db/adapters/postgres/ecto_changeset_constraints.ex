@@ -84,23 +84,6 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   end
 
   @doc false
-  @spec validate_from_opts(opts :: Postgres.validate_opts() | check_opts(), config :: config()) ::
-          Check.result()
-  def validate_from_opts(opts, config) when is_list(opts) do
-    target =
-      opts
-      |> Keyword.take([:repo, :dynamic_repo, :query, :meta])
-      |> Postgres.target()
-
-    validate(target, Keyword.drop(opts, [:repo, :dynamic_repo, :query, :meta]), config)
-  end
-
-  def validate_from_opts(opts, config) do
-    raise ArgumentError,
-          "expected #{config.name} opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  @doc false
   @spec compare(
           target :: Target.t(),
           schemas :: list(Schema.info()),

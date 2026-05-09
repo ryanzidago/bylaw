@@ -2,19 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   @moduledoc """
   Validates that Postgres primary key columns use configured data types.
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [...]` to configure allowed types for scoped groups of tables:
-
-  ```elixir
-  {PrimaryKeyType,
-   rules: [
-     [
-       only: [schema: "public"],
-       types: ["uuid"],
-       except: [[table: "schema_migrations"]]
-     ]
-   ]}
-  ```
+  ## Examples
 
   With `rules: [[only: [schema: "public"], types: ["uuid"]]]`, before:
 
@@ -42,9 +30,33 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   Tables now follow one identifier convention, and every scoped table has a
   stable row identity.
 
+  ## Notes
+
   Tables with no primary key fail, and composite primary keys pass only when
   every primary key column has an allowed type. Exclude tables such as
   `schema_migrations` when they intentionally use a different convention.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [...]` to configure allowed types for scoped groups of tables:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+   rules: [
+     [
+       only: [schema: "public"],
+       types: ["uuid"],
+       except: [[table: "schema_migrations"]]
+     ]
+   ]}
+  ```
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -112,6 +124,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   FROM primary_key_columns
   WHERE primary_key_columns.actual_type <> ALL($3::text[])
   ORDER BY schema_name, table_name, column_name NULLS FIRST
+
   """
 
   @type matcher_value :: String.t() | Regex.t()
@@ -143,11 +156,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   }
 
   @doc """
-  Validates that every table in scope has a primary key using allowed types.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires `rules: [[types: [...]]]`, such as
-  `rules: [[types: ["uuid"]]]`.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
