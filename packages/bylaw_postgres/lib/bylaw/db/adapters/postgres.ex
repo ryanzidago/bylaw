@@ -2,45 +2,30 @@ defmodule Bylaw.Db.Adapters.Postgres do
   @moduledoc """
   Postgres database adapter entrypoint.
 
-  This adapter validates explicit targets. Each target represents one Postgres
-  query source:
+  This adapter validates one Postgres repo per call:
 
       Bylaw.Db.Adapters.Postgres.validate(
-        repo: MyApp.Repo,
-        checks: [
+        MyApp.Repo,
+        [
           Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes
         ]
       )
 
-  Or configure the target and checks once:
+  Pass `:dynamic_repo` when the call should run against one dynamic repo.
+  Validate multiple repos by calling `validate/2` or `validate/3` once per repo.
 
-      config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
-        repo: MyApp.Repo,
-        checks: [
-          {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
-           rules: [
-             [
-               only: [schema: "public"],
-               columns: ["tenant_id"],
-               except: [[table: "schema_migrations"]]
-             ]
-           ]}
-        ]
-
-      Bylaw.Db.Adapters.Postgres.validate()
-
-  The `:repo` option expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
+  The repo argument expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
   an optional integration; callers must have `ecto_sql` and a Postgres driver in
   their application when they use repo-backed targets.
 
   ## Examples
 
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: [[1]]}} end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query, meta: %{database: :primary})
-      iex> target.adapter
-      Bylaw.Db.Adapters.Postgres
-      iex> target.meta
-      %{database: :primary}
+      Bylaw.Db.Adapters.Postgres.validate(
+        MyApp.Repo,
+        [
+          Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes
+        ]
+      )
   """
 
   @behaviour Bylaw.Db.Adapter
@@ -49,51 +34,27 @@ defmodule Bylaw.Db.Adapters.Postgres do
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
 
-  @typedoc """
-  Option accepted by `target/1`.
-  """
+  @typedoc false
   @type target_opt ::
           {:repo, module()}
           | {:dynamic_repo, atom() | pid() | nil}
           | {:query, Target.query_fun()}
           | {:meta, map()}
 
-  @typedoc """
-  Options accepted by `target/1`.
-  """
+  @typedoc false
   @type target_opts :: list(target_opt())
 
   @typedoc """
-  Option accepted by configured validation.
+  Option accepted by `validate/3`.
   """
-  @type validate_opt ::
-          {:checks, list(Db.check_spec())}
-          | target_opt()
-          | {:target, target_opts() | Target.t()}
-          | {:targets, list(target_opts() | Target.t())}
+  @type validate_opt :: {:dynamic_repo, atom() | pid() | nil}
 
   @typedoc """
-  Options accepted by configured validation.
+  Options accepted by `validate/3`.
   """
   @type validate_opts :: list(validate_opt())
 
-  @doc """
-  Builds a single Postgres validation target.
-
-  Pass either `:repo` for an Ecto SQL-backed target or `:query` for a custom
-  query callback used by tests or custom integrations.
-
-  ## Examples
-
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
-      iex> is_function(target.query, 4)
-      true
-
-      iex> Bylaw.Db.Adapters.Postgres.target([])
-      ** (ArgumentError) expected Postgres target to include :repo or a four-arity :query
-  """
-
+  @doc false
   @impl Bylaw.Db.Adapter
   @spec target(opts :: target_opts()) :: Target.t()
   def target(opts) when is_list(opts) do
@@ -115,64 +76,19 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   @doc """
-  Runs checks from `config :bylaw_postgres, Bylaw.Db.Adapters.Postgres`.
+  Runs checks against one Postgres repo.
 
-  The configured value must include `:checks` and either top-level target
-  options like `repo: MyApp.Repo`, a single `:target`, or a non-empty `:targets`
-  list.
+  Pass the repo and checks. Use `:dynamic_repo` when validating a specific
+  dynamic repo with `validate/3`. To validate multiple repos, call this function
+  once per repo.
   """
-  @spec validate() :: Check.result()
-  def validate do
-    config =
-      Application.get_env(:bylaw_postgres, __MODULE__) ||
-        Application.get_env(:bylaw, __MODULE__, [])
-
-    validate(config)
-  end
-
-  @doc """
-  Builds Postgres targets from configuration and runs configured checks.
-
-  This is the convenient consumer-facing entrypoint for one-off validation.
-  Pass `:checks` plus either top-level target options, `:target`, or `:targets`.
-
-  ## Examples
-
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
-      iex> Bylaw.Db.Adapters.Postgres.validate(query: query, checks: [])
-      :ok
-  """
-  @spec validate(opts :: validate_opts()) :: Check.result()
-  def validate(opts) when is_list(opts) do
-    keyword_list!(opts, "Postgres validation config")
-    validate_config_opts!(opts)
-
-    opts
-    |> config_targets!()
-    |> validate(config_checks!(opts))
-  end
-
-  def validate(opts) do
-    raise ArgumentError,
-          "expected Postgres validation config to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  @doc """
-  Runs checks against a non-empty list of Postgres targets.
-
-  Invalid target and check arguments raise `ArgumentError`.
-
-  ## Examples
-
-      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
-      iex> Bylaw.Db.Adapters.Postgres.validate([target], [])
-      :ok
-  """
-
   @impl Bylaw.Db.Adapter
-  @spec validate(targets :: list(Target.t()), checks :: list(Db.check_spec())) :: Check.result()
-  def validate(targets, checks) do
+  @spec validate(repo :: module(), checks :: list(Db.check_spec())) :: Check.result()
+  def validate(repo, checks) when is_atom(repo) and not is_nil(repo) do
+    validate(repo, checks, [])
+  end
+
+  def validate(targets, checks) when is_list(targets) do
     checks = validate_checks!(checks)
 
     validate_postgres_targets!(targets)
@@ -181,23 +97,36 @@ defmodule Bylaw.Db.Adapters.Postgres do
     Db.validate(targets, checks)
   end
 
+  def validate(repo, _checks) do
+    raise ArgumentError,
+          "expected Postgres repo to be a module or Postgres targets to be a list, got: #{inspect(repo)}"
+  end
+
   @doc """
-  Executes introspection SQL for a Postgres target.
+  Runs checks against one Postgres repo with options.
 
-  Repo-backed targets use `Ecto.Adapters.SQL.query/4`. If `:dynamic_repo` is set,
-  the adapter temporarily routes the current process to that dynamic repo and
-  restores the previous value afterward.
-
-  ## Examples
-
-      iex> query = fn target, sql, params, opts ->
-      ...>   {:ok, %{adapter: target.adapter, sql: sql, params: params, opts: opts}}
-      ...> end
-      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
-      iex> Bylaw.Db.Adapters.Postgres.query(target, "select $1", [1], timeout: 1_000)
-      {:ok, %{adapter: Bylaw.Db.Adapters.Postgres, params: [1], sql: "select $1", opts: [timeout: 1000]}}
+  The only supported option is `:dynamic_repo`.
   """
+  @spec validate(repo :: module(), checks :: list(Db.check_spec()), opts :: validate_opts()) ::
+          Check.result()
+  def validate(repo, checks, opts) when is_atom(repo) and not is_nil(repo) do
+    keyword_list!(opts, "Postgres validation opts")
+    validate_validate_opts!(opts)
 
+    target =
+      opts
+      |> Keyword.put(:repo, repo)
+      |> target()
+
+    validate([target], validate_checks!(checks))
+  end
+
+  def validate(repo, _checks, _opts) do
+    raise ArgumentError,
+          "expected Postgres repo to be a module, got: #{inspect(repo)}"
+  end
+
+  @doc false
   @impl Bylaw.Db.Adapter
   @spec query(
           target :: Target.t(),
@@ -250,8 +179,8 @@ defmodule Bylaw.Db.Adapters.Postgres do
     end
   end
 
-  defp validate_config_opts!(opts) do
-    allowed_keys = [:checks, :repo, :dynamic_repo, :query, :meta, :target, :targets]
+  defp validate_validate_opts!(opts) do
+    allowed_keys = [:dynamic_repo]
 
     Enum.each(opts, fn {key, _value} ->
       if key not in allowed_keys do
@@ -259,81 +188,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
       end
     end)
 
-    has_top_level_target_opts? =
-      opts
-      |> Keyword.take([:repo, :dynamic_repo, :query, :meta])
-      |> Enum.any?()
-
-    target_source_count =
-      Enum.count(
-        [
-          Keyword.has_key?(opts, :target),
-          Keyword.has_key?(opts, :targets),
-          has_top_level_target_opts?
-        ],
-        & &1
-      )
-
-    if target_source_count != 1 do
-      raise ArgumentError,
-            "expected Postgres validation config to include exactly one target source"
-    end
-
     :ok
-  end
-
-  defp config_targets!(opts) do
-    cond do
-      Keyword.has_key?(opts, :target) ->
-        [config_target!(Keyword.fetch!(opts, :target))]
-
-      Keyword.has_key?(opts, :targets) ->
-        opts
-        |> Keyword.fetch!(:targets)
-        |> config_targets_from_list!()
-
-      true ->
-        opts
-        |> Keyword.take([:repo, :dynamic_repo, :query, :meta])
-        |> target()
-        |> List.wrap()
-    end
-  end
-
-  defp config_target!(%Target{adapter: __MODULE__} = target), do: target
-
-  defp config_target!(%Target{} = target) do
-    raise ArgumentError, "expected a Postgres target, got: #{inspect(target)}"
-  end
-
-  defp config_target!(opts) when is_list(opts) do
-    keyword_list!(opts, "Postgres validation target opts")
-    target(opts)
-  end
-
-  defp config_target!(target) do
-    raise ArgumentError,
-          "expected Postgres validation target to be a target or keyword list, got: #{inspect(target)}"
-  end
-
-  defp config_targets_from_list!(targets) when is_list(targets) do
-    if Enum.empty?(targets) do
-      raise ArgumentError, "expected Postgres validation :targets to be a non-empty list"
-    end
-
-    Enum.map(targets, &config_target!/1)
-  end
-
-  defp config_targets_from_list!(targets) do
-    raise ArgumentError,
-          "expected Postgres validation :targets to be a non-empty list, got: #{inspect(targets)}"
-  end
-
-  defp config_checks!(opts) do
-    case Keyword.fetch(opts, :checks) do
-      {:ok, checks} -> validate_checks!(checks)
-      :error -> raise(ArgumentError, "expected Postgres validation config to include :checks")
-    end
   end
 
   defp valid_repo?(repo), do: is_atom(repo) and not is_nil(repo)
@@ -343,7 +198,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   end
 
   defp keyword_list!(opts, label) do
-    if not Keyword.keyword?(opts) do
+    if not is_list(opts) or not Keyword.keyword?(opts) do
       raise ArgumentError, "expected #{label} to be a keyword list, got: #{inspect(opts)}"
     end
   end

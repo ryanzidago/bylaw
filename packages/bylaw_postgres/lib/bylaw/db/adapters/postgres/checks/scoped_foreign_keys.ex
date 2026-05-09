@@ -2,20 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   @moduledoc """
   Validates that scoped Postgres foreign keys include configured scope columns.
 
-  A foreign key is checked when both the child table and referenced table have
-  every configured `:scope_columns` column. The foreign key must include those
-  columns on both sides so a child row cannot point at a parent row from another
-  scope:
-
-  ```elixir
-  {ScopedForeignKeys,
-   rules: [
-     [
-       scope_columns: ["tenant_id", "workspace_id"],
-       except: [[referenced_table: "global_settings"]]
-     ]
-   ]}
-  ```
+  ## Examples
 
   Before, both tables are tenant-scoped, but the foreign key only references
   `conversations(id)`:
@@ -52,10 +39,35 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   Postgres now enforces that the child and parent rows belong to the same
   tenant, instead of relying on every query and write path to remember it.
 
+  ## Notes
+
   The check only applies when the child table and referenced table both have
   every configured `scope_columns` column. Shared lookup tables that
   intentionally have no tenant column are not flagged unless they match a
   different rule.
+
+  ## Options
+
+  A foreign key is checked when both the child table and referenced table have
+  every configured `:scope_columns` column. The foreign key must include those
+  columns on both sides so a child row cannot point at a parent row from another
+  scope:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
+   rules: [
+     [
+       scope_columns: ["tenant_id", "workspace_id"],
+       except: [[referenced_table: "global_settings"]]
+     ]
+   ]}
+  ```
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -150,6 +162,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
     AND referenced_column_names @> $3::text[]
   )
   ORDER BY schema_name, table_name, constraint_name
+
   """
 
   @type matcher_value :: String.t() | Regex.t()
@@ -184,10 +197,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   }
 
   @doc """
-  Validates that scoped foreign keys include configured scope columns.
-
-  The check is enabled by default and requires `rules: [[scope_columns: [...]]]`.
-  Pass `validate: false` to skip it.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

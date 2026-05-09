@@ -2,10 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A foreign key passes when the
-  referencing table has a valid, non-partial index whose leading columns contain
-  the foreign key columns.
+  ## Examples
 
   Before, the foreign key exists but the referencing column has no index:
 
@@ -32,9 +29,43 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   Postgres can enforce the relationship with an index lookup instead of a table
   scan.
 
+  ## Notes
+
   The supporting index does not have to be unique, and it may include extra
   trailing columns such as `(account_id, inserted_at)`. Partial indexes such as
   `WHERE deleted_at IS NULL` do not count as support for the foreign key.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+   schemas: ["public"],
+   tables: ["orders", "line_items"]}
+  ```
+
+  Use `rules: [...]` when the scope needs matchers or exclusions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "audit_events"]]
+     ]
+   ]}
+  ```
+
+  A foreign key passes when the referencing table has a valid, non-partial index
+  whose leading columns contain the foreign key columns.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -89,6 +120,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
         index_record.indkey[0:array_length(foreign_key.key_attnums, 1) - 1]
   )
   ORDER BY schema_name, table_name, constraint_name
+
   """
 
   @type check_opt ::
@@ -105,12 +137,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   }
 
   @doc """
-  Validates that foreign keys in the target scope have supporting indexes.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
-
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(%Target{adapter: Postgres} = target, opts) when is_list(opts) do

@@ -55,21 +55,23 @@ end
 
 The common application workflow is:
 
-1. Configure an adapter and the checks your database must satisfy.
+1. Define the checks your database must satisfy in an ExUnit module.
 2. Add an ExUnit test that calls the adapter's validation entrypoint.
 3. Let CI fail when the migrated test database drifts from those rules.
 
-For example, a Postgres application can configure checks in `config/test.exs`:
+For example, a Postgres application can define checks beside its database
+schema test:
 
 ```elixir
-import Config
+defmodule MyApp.DatabaseSchemaTest do
+  use MyApp.DataCase, async: true
 
-config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
-  repo: MyApp.Repo,
-  checks: [
-    Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
-    Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
-    {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+  alias Bylaw.Db.Adapters.Postgres
+
+  @checks [
+    Postgres.Checks.MissingForeignKeyIndexes,
+    Postgres.Checks.DuplicateIndexes,
+    {Postgres.Checks.RequiredColumns,
      rules: [
        [
          where: [schema: "public"],
@@ -78,61 +80,35 @@ config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
        ]
      ]}
   ]
-```
-
-Then call validation from a database schema test:
-
-```elixir
-defmodule MyApp.DatabaseSchemaTest do
-  use MyApp.DataCase, async: true
-
-  alias Bylaw.Db.Adapters.Postgres
 
   describe "database schema guardrails" do
     test "database structure satisfies Bylaw checks" do
-      assert :ok = Postgres.validate()
+      assert :ok = Postgres.validate(MyApp.Repo, @checks)
     end
   end
 end
 ```
 
-`Postgres.validate/0` reads the configured repo and checks, builds a database
-target, and delegates to `Bylaw.Db.validate/2`.
+`Postgres.validate/2` builds one database target from the repo and checks, then
+delegates to `Bylaw.Db.validate/2`. Use `Postgres.validate/3` with
+`dynamic_repo:` when validating a specific dynamic repo.
 
-### Running checks against multiple targets
+### Running checks against multiple repos
 
-A target is one database or query source that checks can inspect. Targets are
-passed as a list because the same checks often need to protect more than one
-database boundary.
+Postgres validates one repo per call. If an application has more than one repo,
+run the same checks once for each repo:
 
 ```elixir
-alias Bylaw.Db
 alias Bylaw.Db.Adapters.Postgres
 
-targets = [
-  Postgres.target(repo: MyApp.Repo, meta: %{name: :primary}),
-  Postgres.target(repo: MyApp.AnalyticsRepo, meta: %{name: :analytics})
+@checks [
+  Postgres.Checks.MissingForeignKeyIndexes,
+  Postgres.Checks.DuplicateIndexes
 ]
 
-checks = [
-  Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
-  Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
-]
-
-assert :ok = Db.validate(targets, checks)
-```
-
-Each check runs independently against each target. `Bylaw.Db.validate/2` returns
-`:ok` when all targets pass, or `{:error, issues}` when any check finds a
-problem. Each issue is a `Bylaw.Db.Issue` struct.
-
-```elixir
-case Db.validate(targets, checks) do
-  :ok ->
-    :ok
-
-  {:error, issues} ->
-    flunk(Bylaw.Db.Issue.format_many(issues))
+test "database structure satisfies Bylaw checks" do
+  assert :ok = Postgres.validate(MyApp.Repo, @checks)
+  assert :ok = Postgres.validate(MyApp.AnalyticsRepo, @checks)
 end
 ```
 
@@ -144,7 +120,7 @@ the check spec.
 This example rejects tables in the public schema that do not have a primary key.
 
 ```elixir
-defmodule MyApp.DatabaseChecks.RequirePrimaryKeys do
+defmodule MyApp.Bylaw.Db.Checks.RequirePrimaryKeys do
   @behaviour Bylaw.Db.Check
 
   alias Bylaw.Db.Issue
@@ -201,21 +177,19 @@ defmodule MyApp.DatabaseChecks.RequirePrimaryKeys do
 end
 ```
 
-Add the check to your adapter configuration:
+Add the check to the test module's check list:
 
 ```elixir
-config :bylaw_postgres, Bylaw.Db.Adapters.Postgres,
-  repo: MyApp.Repo,
-  checks: [
-    {MyApp.DatabaseChecks.RequirePrimaryKeys, schema: "public"}
-  ]
+@checks [
+  {MyApp.Bylaw.Db.Checks.RequirePrimaryKeys, schema: "public"}
+]
 ```
 
 Then run it through the same test entrypoint:
 
 ```elixir
 test "database structure satisfies Bylaw checks" do
-  assert :ok = Bylaw.Db.Adapters.Postgres.validate()
+  assert :ok = Bylaw.Db.Adapters.Postgres.validate(MyApp.Repo, @checks)
 end
 ```
 

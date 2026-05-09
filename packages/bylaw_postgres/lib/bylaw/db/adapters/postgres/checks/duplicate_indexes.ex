@@ -2,11 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   @moduledoc """
   Flags equivalent Postgres indexes on the same table.
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. Indexes are treated as duplicates
-  when they have the same table, access method, uniqueness,
-  validity, key and included columns, operator classes, collations, sort options,
-  expressions, and predicate.
+  ## Examples
 
   Before, the table has two indexes with the same definition:
 
@@ -27,8 +23,43 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   This preserves the read plan while removing duplicate write overhead and
   schema noise.
 
+  ## Notes
+
   A plain index and a partial index on the same column are not treated as
   duplicates because their predicates differ.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+   schemas: ["public"],
+   tables: ["users", "accounts"]}
+  ```
+
+  Use `rules: [...]` when the scope needs matchers or exclusions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "spatial_ref_sys"]]
+     ]
+   ]}
+  ```
+
+  Indexes are treated as duplicates when they have the same table, access
+  method, uniqueness, validity, key and included columns, operator classes,
+  collations, sort options, expressions, and predicate.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -82,6 +113,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   ) AS duplicate_group
   WHERE index_count > 1
   ORDER BY schema_name, table_name, index_names
+
   """
 
   @type check_opt ::
@@ -97,10 +129,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   }
 
   @doc """
-  Validates that tables do not have duplicate indexes.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
