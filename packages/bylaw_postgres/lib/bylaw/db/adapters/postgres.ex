@@ -17,6 +17,15 @@ defmodule Bylaw.Db.Adapters.Postgres do
   The `:repo` option expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
   an optional integration; callers must have `ecto_sql` and a Postgres driver in
   their application when they use repo-backed targets.
+
+  ## Examples
+
+      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: [[1]]}} end
+      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query, meta: %{database: :primary})
+      iex> target.adapter
+      Bylaw.Db.Adapters.Postgres
+      iex> target.meta
+      %{database: :primary}
   """
 
   @behaviour Bylaw.Db.Adapter
@@ -54,6 +63,16 @@ defmodule Bylaw.Db.Adapters.Postgres do
 
   Pass either `:repo` for an Ecto SQL-backed target or `:query` for a custom
   query callback used by tests or custom integrations.
+
+  ## Examples
+
+      iex> query = fn _target, _sql, _params, _opts -> {:ok, %{rows: []}} end
+      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
+      iex> is_function(target.query, 4)
+      true
+
+      iex> Bylaw.Db.Adapters.Postgres.target([])
+      ** (ArgumentError) expected Postgres target to include :repo or a four-arity :query
   """
 
   @impl Bylaw.Db.Adapter
@@ -137,6 +156,15 @@ defmodule Bylaw.Db.Adapters.Postgres do
   Repo-backed targets use `Ecto.Adapters.SQL.query/4`. If `:dynamic_repo` is set,
   the adapter temporarily routes the current process to that dynamic repo and
   restores the previous value afterward.
+
+  ## Examples
+
+      iex> query = fn target, sql, params, opts ->
+      ...>   {:ok, %{adapter: target.adapter, sql: sql, params: params, opts: opts}}
+      ...> end
+      iex> target = Bylaw.Db.Adapters.Postgres.target(query: query)
+      iex> Bylaw.Db.Adapters.Postgres.query(target, "select $1", [1], timeout: 1_000)
+      {:ok, %{adapter: Bylaw.Db.Adapters.Postgres, params: [1], sql: "select $1", opts: [timeout: 1000]}}
   """
 
   @impl Bylaw.Db.Adapter

@@ -4,6 +4,14 @@ defmodule Bylaw.Db.Target do
 
   A target represents one adapter/database query source. Adapter packages build
   targets from their own options, and checks receive targets from `Bylaw.Db`.
+
+  ## Examples
+
+      iex> target = %Bylaw.Db.Target{adapter: MyApp.DbAdapter, meta: %{database: :primary}}
+      iex> target.adapter
+      MyApp.DbAdapter
+      iex> target.meta
+      %{database: :primary}
   """
 
   @typedoc """

@@ -6,6 +6,10 @@ Guidance for humans and LLM agents working in Bylaw.
 
 Bylaw is an Elixir library for validating code, database, query, schema, and workflow constraints. Keep public APIs small until repeated usage proves a larger abstraction is needed.
 
+Bylaw should stay as zero-config as practical. Prefer explicit arguments and data passed by callers over reading from application config. Callers may load configuration however they like, but Bylaw should not expect checks, rules, or validation inputs to be registered in application config.
+
+Keep APIs minimal and direct. Add only the surface area needed to get the job done, and avoid complex orchestration unless repeated usage shows the need.
+
 ## Workflow
 
 - Do all task work in a linked git worktree under `.worktrees/`.

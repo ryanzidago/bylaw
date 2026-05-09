@@ -1,6 +1,8 @@
 defmodule Bylaw.Ecto.Query.IssueTest do
   use ExUnit.Case, async: true
 
+  doctest Bylaw.Ecto.Query.Issue
+
   alias Bylaw.Ecto.Query.Issue
 
   describe "format/1" do
