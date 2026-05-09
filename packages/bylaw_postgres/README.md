@@ -64,5 +64,4 @@ test "database structure satisfies Bylaw checks" do
 end
 ```
 
-See the HexDocs checks guide for the built-in check list, rule options, and
-Ecto changeset constraint examples.
+See each check module's documentation for its examples, notes, and options.
