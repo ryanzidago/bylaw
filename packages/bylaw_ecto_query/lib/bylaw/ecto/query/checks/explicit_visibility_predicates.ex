@@ -9,20 +9,12 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   against configured schemas mention those fields in supported root `where`
   predicates.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-    * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
-
   ## Examples
 
   Bad:
 
-      from post in Post,
-        where: post.organisation_id == ^organisation_id
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
 
   Why this is bad:
 
@@ -32,9 +24,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Better:
 
-      from post in Post,
-        where: post.organisation_id == ^organisation_id,
-        where: is_nil(post.deleted_at)
+      from(Post, as: :post)
+      |> where([post: p], p.organization_id == ^organization_id)
+      |> where([post: p], is_nil(p.deleted_at))
 
   Why this is better:
 
@@ -43,10 +35,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Better when archived rows are intentional:
 
-      from post in Post,
-        where: post.archived_at <= ^cutoff
+      from(Post, as: :post)
+      |> where([post: p], p.archived_at <= ^cutoff)
 
-  Limitations:
+  ## Notes
 
   This check verifies explicitness, not visibility correctness. It accepts
   supported root predicates that mention configured fields, but it cannot prove
@@ -64,6 +56,21 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   When the root query schema is not configured, the check returns `:ok`.
   Configured fields that do not exist on the root schema are ignored. If no
   applicable configured fields remain, the check returns `:ok`.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
+
+  Example check spec:
+
+      {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+       schemas: [{Post, fields: [:deleted_at, :archived_at]}]}
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -75,19 +82,19 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
 
+  @typedoc false
   @type schema_config :: {module(), list({:fields, list(atom())})}
+  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:schemas, list(schema_config())}
           )
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates explicit visibility-sensitive root `where` predicates.
-
-  The operation is kept as issue metadata. This check applies the same query
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

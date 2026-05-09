@@ -2,11 +2,9 @@ defmodule Bylaw.Ecto.Query.Check do
   @moduledoc """
   Behaviour for checks that validate an `Ecto.Query` before it runs.
 
-  Checks are intentionally small and directly callable. `Bylaw.Ecto.Query`
-  composes them from module-based check specs for `c:Ecto.Repo.prepare_query/3`.
-
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for the
-  built-in check list, repo wiring, and option examples.
+  Every built-in check implements this callback contract. End users should
+  usually call `Bylaw.Ecto.Query.validate/3` with an explicit check list instead
+  of calling check modules directly.
   """
 
   alias Bylaw.Ecto.Query.Issue
@@ -39,10 +37,7 @@ defmodule Bylaw.Ecto.Query.Check do
   @type result :: :ok | {:error, nonempty_list(Issue.t())}
 
   @doc """
-  Validates a prepared Ecto query.
-
-  Return `:ok` when the query passes, or `{:error, issues}` when the check
-  rejects it.
+  Validates a prepared Ecto query for one check.
   """
   @callback validate(operation(), query(), opts()) :: result()
 end

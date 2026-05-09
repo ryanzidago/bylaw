@@ -10,9 +10,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Bad:
 
-      from post in Post,
-        order_by: post.inserted_at,
-        offset: 10_000
+      from(Post, as: :post)
+      |> order_by([post: p], asc: p.inserted_at)
+      |> offset(10_000)
 
   Why this is bad:
 
@@ -21,10 +21,10 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Better:
 
-      from post in Post,
-        order_by: post.inserted_at,
-        limit: 50,
-        offset: 10_000
+      from(Post, as: :post)
+      |> order_by([post: p], asc: p.inserted_at)
+      |> limit(50)
+      |> offset(10_000)
 
   Why this is better:
 
@@ -32,21 +32,23 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   `Bylaw.Ecto.Query.Checks.RequiredOrder` when the page also needs stable row
   order.
 
-  Limitations:
+  ## Notes
 
   This check only verifies that `offset` has a paired `limit`. It does not prove
   the order is deterministic or that offset pagination is the best strategy for
   a large table.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
   The check applies to the root query and nested source subqueries, join
   subqueries, CTE queries, combination branches, and expression subqueries.
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -55,14 +57,13 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates that a prepared Ecto query does not use `offset` without `limit`.
-
-  The operation is kept as issue metadata. This check applies the same static
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check
