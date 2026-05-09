@@ -70,8 +70,7 @@ defmodule MyApp.Repo do
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    if Application.get_env(:my_app, :bylaw, [])
-       |> Keyword.get(:validate_ecto_queries?, false) do
+    if bylaw_ecto_query_enabled?() do
       validate_query!(operation, query)
     end
 
@@ -83,6 +82,12 @@ defmodule MyApp.Repo do
       :ok -> :ok
       {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
     end
+  end
+
+  defp bylaw_ecto_query_enabled? do
+    :my_app
+    |> Application.get_env(:bylaw, [])
+    |> Keyword.get(:validate_ecto_queries?, false)
   end
 end
 ```
