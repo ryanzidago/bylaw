@@ -1,6 +1,8 @@
 defmodule Bylaw.Db.IssueTest do
   use ExUnit.Case, async: true
 
+  doctest Bylaw.Db.Issue
+
   alias Bylaw.Db.Issue
 
   describe "format/1" do

@@ -1,6 +1,9 @@
 defmodule Bylaw.DbTest do
   use ExUnit.Case, async: true
 
+  doctest Bylaw.Db
+  doctest Bylaw.Db.Target
+
   alias Bylaw.Db
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
