@@ -130,12 +130,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.R
   end
 end
 
-defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.Repo do
-  @doc false
-  @spec config() :: keyword()
-  def config, do: [otp_app: :bylaw_postgres]
-end
-
 defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest do
   use ExUnit.Case, async: true
 
@@ -147,7 +141,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.PrefixMatchingUser
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.ProfileOnlyUser
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.RegexMatchingUser
-  alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.Repo
   alias Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest.SuffixMatchingUser
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
@@ -319,24 +312,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
           schema_modules: [MissingUser]
         )
       end
-    end
-  end
-
-  describe "validate/1" do
-    test "derives otp_app from the repo when schema modules are not passed" do
-      parent = self()
-
-      assert :ok =
-               EctoChangesetUniqueConstraints.validate(
-                 repo: Repo,
-                 query: fn _target, _sql, _params, _opts ->
-                   send(parent, :queried)
-                   {:ok, result([])}
-                 end,
-                 paths: [__ENV__.file]
-               )
-
-      assert_received :queried
     end
   end
 

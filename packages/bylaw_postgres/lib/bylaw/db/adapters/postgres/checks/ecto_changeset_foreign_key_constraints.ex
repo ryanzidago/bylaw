@@ -63,7 +63,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
 
   @behaviour Bylaw.Db.Check
 
-  alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints
   alias Bylaw.Db.Check
   alias Bylaw.Db.Target
@@ -111,13 +110,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
   def validate(target, opts), do: EctoChangesetConstraints.validate(target, opts, config())
-
-  @doc """
-  Builds a Postgres target from options and validates foreign-key helpers.
-
-  """
-  @spec validate(opts :: Postgres.target_opts() | check_opts()) :: Check.result()
-  def validate(opts), do: EctoChangesetConstraints.validate_from_opts(opts, config())
 
   defp config do
     %{
