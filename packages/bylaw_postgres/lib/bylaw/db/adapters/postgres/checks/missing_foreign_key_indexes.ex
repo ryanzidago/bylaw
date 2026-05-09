@@ -37,10 +37,29 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A foreign key passes when the
-  referencing table has a valid, non-partial index whose leading columns contain
-  the foreign key columns.
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {MissingForeignKeyIndexes,
+   schemas: ["public"],
+   tables: ["orders", "line_items"]}
+  ```
+
+  Use `rules: [...]` when the scope needs matchers or exclusions:
+
+  ```elixir
+  {MissingForeignKeyIndexes,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "audit_events"]]
+     ]
+   ]}
+  ```
+
+  A foreign key passes when the referencing table has a valid, non-partial index
+  whose leading columns contain the foreign key columns.
 
   ## Usage
 

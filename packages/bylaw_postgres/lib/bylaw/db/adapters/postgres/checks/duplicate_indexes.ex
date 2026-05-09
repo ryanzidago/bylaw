@@ -30,11 +30,30 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. Indexes are treated as duplicates
-  when they have the same table, access method, uniqueness,
-  validity, key and included columns, operator classes, collations, sort options,
-  expressions, and predicate.
+  By default the check inspects all non-system schemas in a Postgres target.
+  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+
+  ```elixir
+  {DuplicateIndexes,
+   schemas: ["public"],
+   tables: ["users", "accounts"]}
+  ```
+
+  Use `rules: [...]` when the scope needs matchers or exclusions:
+
+  ```elixir
+  {DuplicateIndexes,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [[table: "spatial_ref_sys"]]
+     ]
+   ]}
+  ```
+
+  Indexes are treated as duplicates when they have the same table, access
+  method, uniqueness, validity, key and included columns, operator classes,
+  collations, sort options, expressions, and predicate.
 
   ## Usage
 
