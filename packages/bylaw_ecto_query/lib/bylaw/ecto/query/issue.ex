@@ -22,6 +22,24 @@ defmodule Bylaw.Ecto.Query.Issue do
   Metadata is omitted by default because issue messages are meant for humans and
   often already contain the actionable details. Pass `meta: true` to include the
   structured metadata for debugging.
+
+  ## Examples
+
+      iex> issue = %Bylaw.Ecto.Query.Issue{
+      ...>   check: MyApp.RequiredOrder,
+      ...>   message: "queries with limit require order_by",
+      ...>   meta: %{operation: :all}
+      ...> }
+      iex> Bylaw.Ecto.Query.Issue.format(issue)
+      "MyApp.RequiredOrder: queries with limit require order_by"
+
+      iex> issue = %Bylaw.Ecto.Query.Issue{
+      ...>   check: MyApp.RequiredOrder,
+      ...>   message: "queries with limit require order_by",
+      ...>   meta: %{operation: :all}
+      ...> }
+      iex> Bylaw.Ecto.Query.Issue.format(issue, meta: true)
+      "MyApp.RequiredOrder: queries with limit require order_by %{operation: :all}"
   """
   @spec format(t()) :: String.t()
   def format(%__MODULE__{} = issue), do: format(issue, [])
@@ -42,6 +60,15 @@ defmodule Bylaw.Ecto.Query.Issue do
 
   @doc """
   Formats many query issues for human-readable error output.
+
+  ## Examples
+
+      iex> issues = [
+      ...>   %Bylaw.Ecto.Query.Issue{check: MyApp.RequiredOrder, message: "missing order"},
+      ...>   %Bylaw.Ecto.Query.Issue{check: MyApp.EmptyInPredicates, message: "empty in predicate"}
+      ...> ]
+      iex> Bylaw.Ecto.Query.Issue.format_many(issues)
+      "MyApp.RequiredOrder: missing order\\nMyApp.EmptyInPredicates: empty in predicate"
   """
   @spec format_many(list(t())) :: String.t()
   def format_many(issues) when is_list(issues), do: format_many(issues, [])

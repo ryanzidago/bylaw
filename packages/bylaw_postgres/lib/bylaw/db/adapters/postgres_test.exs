@@ -1,6 +1,8 @@
 defmodule Bylaw.Db.Adapters.PostgresTest do
   use ExUnit.Case, async: false
 
+  doctest Bylaw.Db.Adapters.Postgres
+
   alias Bylaw.Db.Adapters.Postgres
   alias Bylaw.Db.Issue
   alias Bylaw.Db.Target
