@@ -19,6 +19,20 @@ defmodule Bylaw.Ecto.Query do
 
   A check spec is either a check module or `{check_module, opts}`. Each check
   module may appear at most once.
+
+  ## Examples
+
+      iex> import Ecto.Query
+      iex> query = from(post in "posts", limit: 1)
+      iex> {:error, [issue]} =
+      ...>   Bylaw.Ecto.Query.validate(:all, query, [
+      ...>     Bylaw.Ecto.Query.Checks.RequiredOrder
+      ...>   ])
+      iex> issue.check
+      Bylaw.Ecto.Query.Checks.RequiredOrder
+
+      iex> Bylaw.Ecto.Query.validate(:all, :query, [])
+      :ok
   """
 
   alias Bylaw.CheckRunner
@@ -37,6 +51,11 @@ defmodule Bylaw.Ecto.Query do
 
   `checks` accepts modules and `{module, opts}` tuples. Duplicate check modules
   raise `ArgumentError`.
+
+  ## Examples
+
+      iex> Bylaw.Ecto.Query.validate(:all, :query, [:not_a_check])
+      ** (ArgumentError) expected :not_a_check to be a query check module
   """
   @spec validate(Check.operation(), Check.query(), checks()) ::
           :ok | {:error, nonempty_list(Issue.t())}

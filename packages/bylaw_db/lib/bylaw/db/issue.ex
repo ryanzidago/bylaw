@@ -40,6 +40,24 @@ defmodule Bylaw.Db.Issue do
   Metadata is omitted by default because issue messages are meant for humans and
   often already contain the actionable details. Pass `meta: true` to include the
   structured metadata for debugging.
+
+  ## Examples
+
+      iex> issue = %Bylaw.Db.Issue{
+      ...>   check: MyApp.RequiredColumns,
+      ...>   message: "users.email is nullable",
+      ...>   meta: %{table: :users}
+      ...> }
+      iex> Bylaw.Db.Issue.format(issue)
+      "MyApp.RequiredColumns: users.email is nullable"
+
+      iex> issue = %Bylaw.Db.Issue{
+      ...>   check: MyApp.RequiredColumns,
+      ...>   message: "users.email is nullable",
+      ...>   meta: %{table: :users}
+      ...> }
+      iex> Bylaw.Db.Issue.format(issue, meta: true)
+      "MyApp.RequiredColumns: users.email is nullable %{table: :users}"
   """
   @spec format(t()) :: String.t()
   def format(%__MODULE__{} = issue), do: format(issue, [])
@@ -60,6 +78,15 @@ defmodule Bylaw.Db.Issue do
 
   @doc """
   Formats many database issues for human-readable error output.
+
+  ## Examples
+
+      iex> issues = [
+      ...>   %Bylaw.Db.Issue{check: MyApp.RequiredColumns, message: "users.email is nullable"},
+      ...>   %Bylaw.Db.Issue{check: MyApp.RequiredColumns, message: "posts.account_id is nullable"}
+      ...> ]
+      iex> Bylaw.Db.Issue.format_many(issues)
+      "MyApp.RequiredColumns: users.email is nullable\\nMyApp.RequiredColumns: posts.account_id is nullable"
   """
   @spec format_many(list(t())) :: String.t()
   def format_many(issues) when is_list(issues), do: format_many(issues, [])
