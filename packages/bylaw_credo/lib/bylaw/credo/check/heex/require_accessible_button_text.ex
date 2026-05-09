@@ -2,23 +2,50 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   @moduledoc """
   Requires static HEEx/HTML button tags to have an accessible name.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <button type="button"><.icon name="hero-x-mark" /></button>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <button type="button"><.icon name="hero-x-mark" /></button>
-      \"\"\"
+        ~H\"\"\"
+        <button type="button">Close</button>
+        <button type="button" aria-label="Close"><.icon name="hero-x-mark" /></button>
+        <button type="button">{@label}</button>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <button type="button">Close</button>
-      <button type="button" aria-label="Close"><.icon name="hero-x-mark" /></button>
-      <button type="button">{@label}</button>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -29,7 +56,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   alias Bylaw.Credo.Heex
 
   @message "Buttons must have text content, aria-label, or aria-labelledby."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

@@ -3,24 +3,75 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   App-owned module names should use uppercase acronym words such as `API`,
   `CSV`, `HTTP`, `JSON`, `LLM`, and `UUID`.
 
-  This should be refactored:
+  ## Examples
 
-      defmodule BylawWeb.Api.V1.ToolController do
-        alias Bylaw.Accounts.TenantApiKey
-        alias Bylaw.TestSupport.ExAwsHttpClient
-        alias Bylaw.DatabaseCheck.UuidKeys
-      end
+  Avoid:
 
-  Into this:
+        defmodule BylawWeb.Api.V1.ToolController do
+          alias Bylaw.Accounts.TenantApiKey
+          alias Bylaw.TestSupport.ExAwsHttpClient
+          alias Bylaw.DatabaseCheck.UuidKeys
+        end
 
-      defmodule BylawWeb.API.V1.ToolController do
-        alias Bylaw.Accounts.TenantAPIKey
-        alias Bylaw.TestSupport.ExAwsHTTPClient
-        alias Bylaw.DatabaseCheck.UUIDKeys
-      end
+  Prefer:
+
+        defmodule BylawWeb.API.V1.ToolController do
+          alias Bylaw.Accounts.TenantAPIKey
+          alias Bylaw.TestSupport.ExAwsHTTPClient
+          alias Bylaw.DatabaseCheck.UUIDKeys
+        end
 
   Mix task modules are exempt because the project intentionally keeps names
   such as `Mix.Tasks.Qa`.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing,
+           [
+             acronyms: ~w(API CSV HTTP JSON UUID),
+             app_roots: ~w(MyApp MyAppWeb),
+             exempt_prefixes: ~w(Mix.Tasks),
+             relative_roots: ~w(api admin)
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:acronyms` - Uppercase acronym words to enforce in app-owned module names.
+  - `:app_roots` - Absolute app module roots that should be checked.
+  - `:exempt_prefixes` - Module prefixes that should always be ignored.
+  - `:relative_roots` - Relative module roots to check inside app-owned modules.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -42,6 +93,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
       ]
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

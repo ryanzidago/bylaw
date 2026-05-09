@@ -3,21 +3,72 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   Reports public functions on selected behaviour implementations when those
   functions are not callbacks of the implemented behaviours.
 
+  ## Examples
+
   This check is opt-in by behaviour. Configure only the behaviours whose
   implementations should expose a minimal public API:
 
-      {Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
-       [
-         behaviours: [
-           Bylaw.Db.Check,
-           Bylaw.Ecto.Query.Check
-         ],
-         allowed: []
-       ]}
+        {Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
+         [
+           behaviours: [
+             Bylaw.Db.Check,
+             Bylaw.Ecto.Query.Check
+           ],
+           allowed: []
+         ]}
 
   Callback signatures are read from each behaviour module with
   `behaviour_info(:callbacks)`, so the callback list should not be duplicated in
   Credo configuration. Use `:allowed` for intentional extra public functions.
+
+  ## Notes
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
+           [
+             behaviours: [MyApp.Workers.Job],
+             allowed: [child_spec: 1],
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:behaviours` - Behaviours whose implementations should expose only callback public functions.
+  - `:allowed` - Keyword list of intentional extra public functions, such as `[child_spec: 1]`.
+  - `:excluded_paths` - List of path prefixes or regexes to exclude from this check.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

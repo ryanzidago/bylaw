@@ -2,23 +2,50 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAlt do
   @moduledoc """
   Requires static HEEx/HTML image tags to define an `alt` attribute.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <img src="/logo.svg">
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <img src="/logo.svg">
-      \"\"\"
+        ~H\"\"\"
+        <img src="/logo.svg" alt="Company logo">
+        <img src="/spacer.svg" alt="">
+        <img src={@src} alt={@alt}>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <img src="/logo.svg" alt="Company logo">
-      <img src="/spacer.svg" alt="">
-      <img src={@src} alt={@alt}>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireImageAlt, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -29,7 +56,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAlt do
   alias Bylaw.Credo.Heex
 
   @message "Images must define an alt attribute. Use alt=\"\" for decorative images."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

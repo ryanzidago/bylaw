@@ -3,28 +3,52 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
   Prefer `Repo.aggregate(queryable, :count)` over loading rows with `Repo.all`
   and counting them in memory.
 
-  This should be refactored:
+  ## Examples
 
-      Repo.all(query) |> Enum.count()
-      Enum.count(Repo.all(query))
-      query |> Repo.all() |> length()
+  Avoid:
 
-  Into this:
+        Repo.all(query) |> Enum.count()
+        Enum.count(Repo.all(query))
+        query |> Repo.all() |> length()
+  Prefer:
 
-      Repo.aggregate(query, :count)
+        Repo.aggregate(query, :count)
 
   Prefer `Repo.exists?/1` or `not Repo.exists?/1` over comparing
   `Repo.aggregate(query, :count)` to `0` or `1` for existence checks.
+  Avoid:
 
-  This should be refactored:
+        Repo.aggregate(query, :count) > 0
+        Repo.aggregate(query, :count) == 0
+  Prefer:
 
-      Repo.aggregate(query, :count) > 0
-      Repo.aggregate(query, :count) == 0
+        Repo.exists?(query)
+        not Repo.exists?(query)
 
-  Into this:
+  ## Notes
 
-      Repo.exists?(query)
-      not Repo.exists?(query)
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -35,7 +59,7 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
     ]
 
   @comparison_operators [:>, :>=, :<, :<=, :==, :===, :!=, :!==]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

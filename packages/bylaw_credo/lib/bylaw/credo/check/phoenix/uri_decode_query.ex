@@ -3,22 +3,46 @@ defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
   Use `Plug.Conn.Query.decode/1` instead of `URI.decode_query/1` for query
   strings handled by Phoenix or Plug.
 
-  ### Bad
+  ## Examples
 
-      URI.decode_query("ids[]=1&ids[]=2")
+  Avoid:
 
-  ### Why?
-
+        URI.decode_query("ids[]=1&ids[]=2")
+  Notes:
   `URI.decode_query/1` does not decode Plug-style array and nested
   parameters the same way Phoenix controllers and LiveViews receive them.
   That can make hand-parsed query strings disagree with request params.
+  Prefer:
 
-  ### Better
-
-      Plug.Conn.Query.decode("ids[]=1&ids[]=2")
+        Plug.Conn.Query.decode("ids[]=1&ids[]=2")
 
   `Plug.Conn.Query.decode/1` follows Plug's query parser semantics, so the
   decoded data matches the rest of the Phoenix request stack.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Phoenix.URIDecodeQuery, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +54,7 @@ defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
 
   @replacement_module Plug.Conn.Query
   @replacement_function :decode
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

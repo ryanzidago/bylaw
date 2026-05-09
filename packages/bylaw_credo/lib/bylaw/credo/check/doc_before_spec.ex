@@ -2,17 +2,43 @@ defmodule Bylaw.Credo.Check.DocBeforeSpec do
   @moduledoc """
   Requires `@doc` to appear before `@spec` for public function definitions.
 
-  ## Avoid
+  ## Examples
 
-      @spec handle(result :: term()) :: :ok
-      @doc "Handles the result."
-      def handle(result), do: :ok
+  Avoid:
 
-  ## Prefer
+        @spec handle(result :: term()) :: :ok
+        @doc "Handles the result."
+        def handle(result), do: :ok
+  Prefer:
 
-      @doc "Handles the result."
-      @spec handle(result :: term()) :: :ok
-      def handle(result), do: :ok
+        @doc "Handles the result."
+        @spec handle(result :: term()) :: :ok
+        def handle(result), do: :ok
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.DocBeforeSpec, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -21,7 +47,7 @@ defmodule Bylaw.Credo.Check.DocBeforeSpec do
     explanations: [check: @moduledoc]
 
   @public_definitions [:def, :defguard, :defmacro]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

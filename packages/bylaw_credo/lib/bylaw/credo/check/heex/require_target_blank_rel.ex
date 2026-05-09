@@ -2,24 +2,51 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   @moduledoc """
   Requires static HEEx/HTML links with `target="_blank"` to define safe `rel`.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <a href="https://example.com" target="_blank">Example</a>
+        <a href="https://example.com" target="_blank" rel="external">Example</a>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <a href="https://example.com" target="_blank">Example</a>
-      <a href="https://example.com" target="_blank" rel="external">Example</a>
-      \"\"\"
+        ~H\"\"\"
+        <a href="https://example.com" target="_blank" rel="noopener">Example</a>
+        <a href="https://example.com" target="_blank" rel="external noopener noreferrer">Example</a>
+        <a href="https://example.com" target={@target} rel={@rel}>Example</a>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <a href="https://example.com" target="_blank" rel="noopener">Example</a>
-      <a href="https://example.com" target="_blank" rel="external noopener noreferrer">Example</a>
-      <a href="https://example.com" target={@target} rel={@rel}>Example</a>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireTargetBlankRel, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +57,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   alias Bylaw.Credo.Heex
 
   @message ~s(Links with target="_blank" must define rel with noopener.)
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

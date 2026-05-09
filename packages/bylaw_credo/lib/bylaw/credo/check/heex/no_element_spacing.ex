@@ -2,28 +2,55 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   @moduledoc """
   Discourages Tailwind margin utility classes on static HEEx/HTML elements.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   Dynamic class values, component tags, slot tags, and root attributes are
   ignored because their final DOM classes cannot be proven statically.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <div class="mt-4">
+          Content
+        </div>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <div class="mt-4">
-        Content
-      </div>
-      \"\"\"
+        ~H\"\"\"
+        <div class="flex flex-col gap-4">
+          <div>Content</div>
+        </div>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <div class="flex flex-col gap-4">
-        <div>Content</div>
-      </div>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.NoElementSpacing, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -35,7 +62,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
 
   @message "Prefer parent-owned spacing with gap or space utilities instead of margin classes on individual elements."
   @margin_utilities ~w(m mx my ms me mt mr mb ml)
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

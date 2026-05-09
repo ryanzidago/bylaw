@@ -2,6 +2,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
   @moduledoc """
   Disallows direct usage of `Process`, `GenServer`, and `:ets`.
 
+  ## Examples
+
   Stateful and process-based primitives are **exceptions, not
   defaults**. They exist for very specific use cases and should only
   be introduced after gaining explicit approval.
@@ -26,8 +28,53 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
   If the answer to all three is "yes, I really need this", disable the
   check for the call site:
 
-      # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives
-      Process.put(:key, value)
+        # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives
+        Process.put(:key, value)
+
+  ## Notes
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - List of path prefixes or regexes to exclude from this check.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -42,7 +89,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
     ]
 
   @flagged_modules [:Process, :GenServer]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     excluded_paths = Params.get(params, :excluded_paths, __MODULE__)

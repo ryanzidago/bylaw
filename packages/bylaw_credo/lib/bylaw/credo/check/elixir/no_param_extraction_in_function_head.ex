@@ -2,6 +2,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   @moduledoc """
   Prevents destructuring map/struct parameters in function heads just to extract values.
 
+  ## Examples
+
   ## Why
 
   Function heads have two jobs: naming parameters and selecting which clause runs.
@@ -11,7 +13,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   With shallow data this is a minor readability hit, but with nested structures
   the cost compounds quickly. A function head like this:
 
-      def perform(%Oban.Job{args: %{"config" => %Config{retries: retries, timeout: timeout}, "tenant_id" => tenant_id}}) do
+        def perform(%Oban.Job{args: %{"config" => %Config{retries: retries, timeout: timeout}, "tenant_id" => tenant_id}}) do
 
   forces the reader to mentally parse a tree of patterns just to discover which
   variables land in scope. It is no longer obvious which parts of the pattern are
@@ -22,11 +24,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
   Moving extraction into the body eliminates the ambiguity:
 
-      def perform(%Oban.Job{} = job) do
-        config  = job.args["config"]
-        retries = config.retries
-        timeout = config.timeout
-        tenant_id = job.args["tenant_id"]
+        def perform(%Oban.Job{} = job) do
+          config  = job.args["config"]
+          retries = config.retries
+          timeout = config.timeout
+          tenant_id = job.args["tenant_id"]
 
   Now the function head says *what* is accepted (`%Oban.Job{}`), and the body
   says *what is needed* from it. Each concern lives in one place.
@@ -34,62 +36,58 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   Additional reasons to keep extraction out of the head:
 
   - **Brittleness.** Adding one more field means rewriting the clause shape.
-    In the body you just add a line.
+      In the body you just add a line.
   - **Error handling.** Extracting in the head gives you a single `FunctionClauseError`
-    for any missing key. Extracting in the body with `Map.fetch/2` lets you return
-    distinct `{:error, reason}` values per field.
+      for any missing key. Extracting in the body with `Map.fetch/2` lets you return
+      distinct `{:error, reason}` values per field.
   - **Scanning speed.** Clause dispatch should be easy to scan vertically.
-    When heads are short and uniform, the reader can see the dispatch table at a
-    glance. Long heads with inline extraction break that visual rhythm.
-
-  ## Avoid
-
+      When heads are short and uniform, the reader can see the dispatch table at a
+      glance. Long heads with inline extraction break that visual rhythm.
+  Avoid:
   Extracting struct fields in the head:
 
-      def perform(%Oban.Job{args: args, attempt: attempt, max_attempts: max_attempts}) do
-        ...
-      end
+        def perform(%Oban.Job{args: args, attempt: attempt, max_attempts: max_attempts}) do
+          ...
+        end
 
   Extracting map fields in the head:
 
-      def create_user(%{email: email, role: role} = attrs) do
-        ...
-      end
+        def create_user(%{email: email, role: role} = attrs) do
+          ...
+        end
 
   Nested extraction - the worst case, because clause selection and data
   extraction are deeply interleaved:
 
-      def perform(%Oban.Job{args: %{"invoice_id" => invoice_id, "tenant_id" => tenant_id}}) do
-        ...
-      end
+        def perform(%Oban.Job{args: %{"invoice_id" => invoice_id, "tenant_id" => tenant_id}}) do
+          ...
+        end
 
   Anonymous functions have the same problem:
 
-      Enum.map(jobs, fn %Oban.Job{args: args} -> process(args) end)
-
-  ## Prefer
-
+        Enum.map(jobs, fn %Oban.Job{args: args} -> process(args) end)
+  Prefer:
   Accept the struct, extract in the body:
 
-      def perform(%Oban.Job{} = job) do
-        with {:ok, invoice_id} <- fetch_required_arg(job.args, "invoice_id", :missing_invoice_id),
-             {:ok, tenant_id} <- fetch_required_arg(job.args, "tenant_id", :missing_tenant_id) do
-          ...
+        def perform(%Oban.Job{} = job) do
+          with {:ok, invoice_id} <- fetch_required_arg(job.args, "invoice_id", :missing_invoice_id),
+               {:ok, tenant_id} <- fetch_required_arg(job.args, "tenant_id", :missing_tenant_id) do
+            ...
+          end
         end
-      end
 
   Accept the map, extract in the body:
 
-      def create_user(attrs) do
-        with {:ok, email} <- Map.fetch(attrs, :email) do
-          role = Map.get(attrs, :role, :member)
-          ...
+        def create_user(attrs) do
+          with {:ok, email} <- Map.fetch(attrs, :email) do
+            role = Map.get(attrs, :role, :member)
+            ...
+          end
         end
-      end
 
   Anonymous functions too:
 
-      Enum.map(jobs, fn %Oban.Job{} = job -> process(job.args) end)
+        Enum.map(jobs, fn %Oban.Job{} = job -> process(job.args) end)
 
   ## Good uses of function-head pattern matching
 
@@ -98,34 +96,59 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
   Matching on a literal value to select a clause:
 
-      def fetch_user(nil), do: {:error, :missing_user_id}
-      def fetch_user(user_id), do: Accounts.get_user(user_id)
+        def fetch_user(nil), do: {:error, :missing_user_id}
+        def fetch_user(user_id), do: Accounts.get_user(user_id)
 
   Matching on a literal inside a map to select a clause:
 
-      def process(%{type: :email} = notification), do: send_email(notification)
-      def process(%{type: :sms} = notification), do: send_sms(notification)
+        def process(%{type: :email} = notification), do: send_email(notification)
+        def process(%{type: :sms} = notification), do: send_sms(notification)
 
   Checking that a key exists (underscore, no binding) to select a clause:
 
-      def perform(%Oban.Job{args: %{"invoice_id" => _}} = job) do
-        invoice_id = Map.fetch!(job.args, "invoice_id")
-        ...
-      end
+        def perform(%Oban.Job{args: %{"invoice_id" => _}} = job) do
+          invoice_id = Map.fetch!(job.args, "invoice_id")
+          ...
+        end
 
-      def perform(%Oban.Job{}), do: {:discard, :missing_invoice_id}
+        def perform(%Oban.Job{}), do: {:discard, :missing_invoice_id}
 
   Binding a variable that is used in a `when` guard - the binding exists
   to drive clause selection, not to extract data:
 
-      def create(conn, %{"_json" => list}) when is_list(list) do
-        ...
-      end
+        def create(conn, %{"_json" => list}) when is_list(list) do
+          ...
+        end
 
   Tuple dispatch:
 
-      def handle_result({:ok, value}), do: {:ok, value}
-      def handle_result({:error, reason}), do: {:error, reason}
+        def handle_result({:ok, value}), do: {:ok, value}
+        def handle_result({:error, reason}), do: {:error, reason}
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -133,6 +156,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
     category: :readability,
     explanations: [check: @moduledoc]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

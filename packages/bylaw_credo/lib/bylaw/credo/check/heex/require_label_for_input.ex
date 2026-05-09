@@ -2,26 +2,53 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
   @moduledoc """
   Requires static HEEx/HTML form controls to have an accessible name.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <input id="email" name="email">
+        <select id="role"></select>
+        <textarea id="bio"></textarea>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <input id="email" name="email">
-      <select id="role"></select>
-      <textarea id="bio"></textarea>
-      \"\"\"
+        ~H\"\"\"
+        <label for="email">Email</label>
+        <input id="email" name="email">
+        <select aria-label="Role"></select>
+        <textarea aria-labelledby="bio-label"></textarea>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <label for="email">Email</label>
-      <input id="email" name="email">
-      <select aria-label="Role"></select>
-      <textarea aria-labelledby="bio-label"></textarea>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireLabelForInput, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -33,7 +60,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
 
   @control_tags ~w(input select textarea)
   @message "Form controls must have an accessible name."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

@@ -2,35 +2,57 @@ defmodule Bylaw.Credo.Check.Ecto.UseBylawSchema do
   @moduledoc """
   `use Ecto.Schema` should not be used directly. Use `use Bylaw.Schema` instead.
 
-  ## Why?
+  ## Examples
 
+  Notes:
   `Bylaw.Schema` provides project-specific defaults:
   - UUIDv7 primary keys
   - UUIDv7 foreign keys
   - UTC datetime timestamps with microsecond precision
-
-  ## Examples
-
-  Bad:
+  Avoid:
   ```elixir
   defmodule MyApp.User do
-    use Ecto.Schema
+      use Ecto.Schema
 
-    schema "users" do
-      field :name, :string
-    end
+      schema "users" do
+        field :name, :string
+      end
+  end
+  ```
+  Prefer:
+  ```elixir
+  defmodule MyApp.User do
+      use Bylaw.Schema
+
+      schema "users" do
+        field :name, :string
+      end
   end
   ```
 
-  Good:
-  ```elixir
-  defmodule MyApp.User do
-    use Bylaw.Schema
+  ## Notes
 
-    schema "users" do
-      field :name, :string
-    end
-  end
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.UseBylawSchema, []}
+        ]
+      }
+    ]
+  }
   ```
   """
 
@@ -41,6 +63,7 @@ defmodule Bylaw.Credo.Check.Ecto.UseBylawSchema do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     filename = source_file.filename

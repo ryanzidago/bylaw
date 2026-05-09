@@ -3,22 +3,46 @@ defmodule Bylaw.Credo.Check.Testing.NoTestsInTestDir do
   Keep test files colocated with the implementation they cover instead of
   storing them under a separate top-level `test/` directory.
 
-  ### Bad
+  ## Examples
 
-      test/bylaw/example_test.exs
+  Avoid:
 
-  ### Why?
-
+        test/bylaw/example_test.exs
+  Notes:
   A separate test tree makes it harder to find the tests for a module and
   easier to move implementation without noticing stale or missing coverage.
+  Prefer:
 
-  ### Better
-
-      lib/bylaw/example.ex
-      lib/bylaw/example_test.exs
+        lib/bylaw/example.ex
+        lib/bylaw/example_test.exs
 
   Colocation keeps behavior and coverage near each other, which makes
   focused changes and reviews cheaper.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Testing.NoTestsInTestDir, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -28,6 +52,7 @@ defmodule Bylaw.Credo.Check.Testing.NoTestsInTestDir do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     filename = source_file.filename

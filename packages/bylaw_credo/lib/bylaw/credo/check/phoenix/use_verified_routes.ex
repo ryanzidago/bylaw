@@ -2,35 +2,60 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   @moduledoc """
   Enforces Phoenix verified routes (`~p`) for application routes in the web layer.
 
+  ## Examples
+
   This check is intentionally narrow:
 
   - it only runs in `BylawWeb` files and in tests using `BylawWeb.ConnCase`
   - it only flags path strings that normalize to a real router path
   - it ignores OpenAPI URI templates like `"/api/v1/tenants/{tenant_id}/..."`
   - it ignores HEEx route attributes for now
+  Avoid:
 
-  ## Bad
+        conn |> get("/api/v1/openapi")
 
-      conn |> get("/api/v1/openapi")
+        defp workspace_path(tenant_id, workspace_id) do
+          "/api/v1/tenants/\#{tenant_id}/workspaces/\#{workspace_id}"
+        end
 
-      defp workspace_path(tenant_id, workspace_id) do
-        "/api/v1/tenants/\#{tenant_id}/workspaces/\#{workspace_id}"
-      end
+        assert location == "/api/v1/tenants/\#{tenant.id}/workspaces/\#{workspace.id}"
+  Prefer:
 
-      assert location == "/api/v1/tenants/\#{tenant.id}/workspaces/\#{workspace.id}"
+        conn |> get(~p"/api/v1/openapi")
 
-  ## Good
+        defp workspace_path(tenant_id, workspace_id) do
+          ~p"/api/v1/tenants/\#{tenant_id}/workspaces/\#{workspace_id}"
+        end
 
-      conn |> get(~p"/api/v1/openapi")
+        assert location == ~p"/api/v1/tenants/\#{tenant.id}/workspaces/\#{workspace.id}"
 
-      defp workspace_path(tenant_id, workspace_id) do
-        ~p"/api/v1/tenants/\#{tenant_id}/workspaces/\#{workspace_id}"
-      end
+        params = %{filters: %{0 => %{field: "name", op: "==", value: "Staging"}}}
+        conn |> get(~p"/api/v1/tenants/\#{tenant_id}/workspaces?\#{params}")
 
-      assert location == ~p"/api/v1/tenants/\#{tenant.id}/workspaces/\#{workspace.id}"
+  ## Notes
 
-      params = %{filters: %{0 => %{field: "name", op: "==", value: "Staging"}}}
-      conn |> get(~p"/api/v1/tenants/\#{tenant_id}/workspaces?\#{params}")
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -47,7 +72,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   @navigation_functions [:redirect, :push_navigate, :push_patch]
   @request_functions [:get, :post, :put, :patch, :delete, :head, :options]
   @route_helper_suffixes ["_location", "_path", "_url"]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     if web_boundary_file?(source_file) do

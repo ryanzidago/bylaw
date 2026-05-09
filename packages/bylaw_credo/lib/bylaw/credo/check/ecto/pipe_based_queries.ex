@@ -3,20 +3,46 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
   Prefer composing Ecto queries with pipes instead of using keyword clauses
   directly inside `from/2`.
 
-  This should be refactored:
+  ## Examples
 
-      from(u in User, where: u.active, order_by: [asc: u.inserted_at])
+  Avoid:
 
-  Into this:
+        from(u in User, where: u.active, order_by: [asc: u.inserted_at])
+  Prefer:
 
-      User
-      |> where([u], u.active)
-      |> order_by([u], asc: u.inserted_at)
+        User
+        |> where([u], u.active)
+        |> order_by([u], asc: u.inserted_at)
 
   Plain `from/1` usage is still allowed, and `from/2` with only `as:` is
   allowed for named bindings. This check only flags query clauses like
   `where`, `order_by`, joins, `select`, and similar clauses attached
   directly to `from`.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.PipeBasedQueries, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -59,7 +85,7 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
     :union,
     :union_all
   ]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

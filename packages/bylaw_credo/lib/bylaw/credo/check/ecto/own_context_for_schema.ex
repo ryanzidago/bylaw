@@ -2,26 +2,67 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
   @moduledoc """
   Each Ecto schema should live under its own dedicated context module.
 
-  ## Why?
+  ## Examples
 
+  Notes:
   Keeping one schema per context ensures that context modules stay small
   and focused. When a schema is nested under another schema's context
   (e.g. `Bylaw.Runs.ToolCall`), the context tends to accumulate
   unrelated responsibilities.
-
-  ## Examples
-
   Bad - `ToolCall` is nested under the `Runs` context:
 
-      defmodule Bylaw.Runs.ToolCall do
-        use Bylaw.Schema
-      end
+        defmodule Bylaw.Runs.ToolCall do
+          use Bylaw.Schema
+        end
 
   Good - `ToolCall` has its own context:
 
-      defmodule Bylaw.ToolCalls.ToolCall do
-        use Bylaw.Schema
-      end
+        defmodule Bylaw.ToolCalls.ToolCall do
+          use Bylaw.Schema
+        end
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.OwnContextForSchema,
+           [
+             excluded_modules: ["MyApp.Legacy.LegacySchema"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_modules` - List of fully qualified module names (as strings) to exclude from this check.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.OwnContextForSchema, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

@@ -2,27 +2,51 @@ defmodule Bylaw.Credo.Check.Ecto.NoAndInWhere do
   @moduledoc """
   Split combined Ecto `where` predicates into separate `where` clauses.
 
-  ### Bad
+  ## Examples
 
-      User
-      |> where([u], u.active and u.confirmed_at > ^cutoff)
-      |> Repo.all()
+  Avoid:
 
-  ### Why?
-
+        User
+        |> where([u], u.active and u.confirmed_at > ^cutoff)
+        |> Repo.all()
+  Notes:
   Packing multiple predicates into one `where` expression makes query
   composition harder. Separate clauses are easier to add, remove, reorder,
   and conditionally compose with helper functions.
+  Prefer:
 
-  ### Better
-
-      User
-      |> where([u], u.active)
-      |> where([u], u.confirmed_at > ^cutoff)
-      |> Repo.all()
+        User
+        |> where([u], u.active)
+        |> where([u], u.confirmed_at > ^cutoff)
+        |> Repo.all()
 
   Each clause carries one constraint, which keeps incremental query
   building clear and makes diffs smaller when a predicate changes.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.NoAndInWhere, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -32,6 +56,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoAndInWhere do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

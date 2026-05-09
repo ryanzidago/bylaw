@@ -3,24 +3,48 @@ defmodule Bylaw.Credo.Check.Elixir.RejectCount do
   Use `Enum.count/2` instead of rejecting items and then counting the
   remaining list.
 
-  ### Bad
+  ## Examples
 
-      users
-      |> Enum.reject(&(&1.status == :inactive))
-      |> Enum.count()
+  Avoid:
 
-  ### Why?
-
+        users
+        |> Enum.reject(&(&1.status == :inactive))
+        |> Enum.count()
+  Notes:
   `Enum.reject/2` builds an intermediate list just so `Enum.count/1` can
   count it. The callback is also written in the negative, which makes the
   kept values less obvious.
+  Prefer:
 
-  ### Better
-
-      Enum.count(users, &(&1.status != :inactive))
+        Enum.count(users, &(&1.status != :inactive))
 
   `Enum.count/2` performs the count in one pass without allocating the
   rejected list, and the predicate describes the values being counted.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.RejectCount, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,6 +54,7 @@ defmodule Bylaw.Credo.Check.Elixir.RejectCount do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

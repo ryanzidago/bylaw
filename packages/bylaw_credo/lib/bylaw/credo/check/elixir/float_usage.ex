@@ -2,23 +2,49 @@ defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
   @moduledoc """
   Prefer `Decimal` over floats in Ecto migrations, Ecto schemas, and Elixir code.
 
-  This should be refactored:
+  ## Examples
 
-      add :amount, :float
-      field :amount, :float
-      Float.round(value, 2)
-      amount = 1.25
-      @spec amount() :: float()
+  Avoid:
 
-  Into this:
+        add :amount, :float
+        field :amount, :float
+        Float.round(value, 2)
+        amount = 1.25
+        @spec amount() :: float()
+  Prefer:
 
-      add :amount, :decimal
-      field :amount, :decimal
-      Decimal.round(value, 2)
-      amount = Decimal.new("1.25")
-      @spec amount() :: Decimal.t()
+        add :amount, :decimal
+        field :amount, :decimal
+        Decimal.round(value, 2)
+        amount = Decimal.new("1.25")
+        @spec amount() :: Decimal.t()
 
   If a float is genuinely required, document the exception and disable the check locally.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FloatUsage, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +56,7 @@ defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
 
   @migration_functions [:add, :add_if_not_exists, :modify]
   @typespec_attributes [:spec, :type, :typep, :opaque, :callback, :macrocallback]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

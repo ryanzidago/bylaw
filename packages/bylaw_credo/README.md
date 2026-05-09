@@ -2,6 +2,8 @@
 
 Custom Credo checks for Bylaw.
 
+## Installation
+
 Downstream applications should typically include this package only in
 development and test:
 
@@ -9,7 +11,10 @@ development and test:
 {:bylaw_credo, "~> 0.1.0", only: [:dev, :test], runtime: false}
 ```
 
-Then enable the checks you want in your Credo configuration:
+## Usage
+
+Configure Bylaw Credo checks through Credo's normal `.credo.exs` API. Add each
+check you want by listing its fully qualified module in the `checks:` list:
 
 ```elixir
 %{
@@ -40,6 +45,10 @@ Then enable the checks you want in your Credo configuration:
   ]
 }
 ```
+
+There is no separate Bylaw runtime validation API for these checks. Credo loads
+the check modules from `.credo.exs` and passes each check its configured option
+list.
 
 ## Checks
 
@@ -145,3 +154,6 @@ available. Add `phoenix_live_view` to applications that enable these checks.
 Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
 To check standalone Phoenix `.html.heex` templates, enable
 `Bylaw.Credo.Plugin.HEExSources` as shown above.
+
+See each check module's documentation for its examples, notes, options, and
+check-specific `.credo.exs` usage.
