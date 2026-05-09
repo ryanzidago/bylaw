@@ -2,24 +2,27 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   @moduledoc """
   Validates `Ecto.Changeset.check_constraint/3` annotations for Postgres checks.
 
+  ## Options
+
   The check discovers compiled Ecto schemas through reflection, parses source
   files for conservative changeset candidates, and only requires
   `check_constraint/3` when Postgres can associate a check constraint with
   fields that a candidate casts. Dynamic cast/change field lists and check
   expressions without catalog column metadata are skipped for v1.
 
-  The common ExUnit setup only needs a repo and source paths. The repo is used
-  to query the live test database catalog, and `paths` tells Bylaw where to
-  parse source AST for user-defined changeset functions. When the repo can
-  report `config()[:otp_app]`, schema module discovery is derived from it:
+
+  The check needs source paths so Bylaw can parse source AST for user-defined
+  changeset functions:
 
   ```elixir
-  assert :ok =
-           Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints.validate(
-             repo: MyApp.Repo,
-             paths: ["lib/my_app"]
-           )
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
+   paths: ["lib/my_app"]}
   ```
+
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it.
+
+  ## Example
 
   With a check constraint on `users.age`, before:
 
@@ -47,9 +50,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
 
   Ecto can turn the database rejection into a normal changeset error.
 
+  ## Notes
+
   The check skips dynamic `cast` or `change` field lists, check expressions
   without catalog column metadata, and constraints whose columns cannot be
   mapped to Ecto schema fields.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -84,6 +95,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
     AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
     AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ORDER BY schema_name, table_name, constraint_name
+
   """
 
   @type check_opt ::
@@ -97,6 +109,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
 
   @doc """
   Validates changeset check-constraint helpers for a Postgres target.
+
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
@@ -104,8 +117,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
 
   @doc """
   Builds a Postgres target from options and validates check-constraint helpers.
+
   """
-  @spec validate(opts :: Postgres.validate_opts() | check_opts()) :: Check.result()
+  @spec validate(opts :: Postgres.target_opts() | check_opts()) :: Check.result()
   def validate(opts), do: EctoChangesetConstraints.validate_from_opts(opts, config())
 
   defp config do
