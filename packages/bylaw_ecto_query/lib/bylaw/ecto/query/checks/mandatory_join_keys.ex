@@ -8,9 +8,12 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   Bad:
 
-      from post in Post,
-        join: comment in Comment,
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
         on: comment.post_id == post.id
+      )
 
   Why this is bad:
 
@@ -20,11 +23,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   Better:
 
-      from post in Post,
-        join: comment in Comment,
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
         on:
           comment.post_id == post.id and
             comment.organization_id == post.organization_id
+      )
 
   Why this is better:
 

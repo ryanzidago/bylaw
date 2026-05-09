@@ -18,7 +18,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   Bad:
 
-      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], desc: post.inserted_at)
+      |> limit(10)
 
   Why this is bad:
 
@@ -28,10 +31,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   Better:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at, asc: post.id],
-        limit: 10
-      )
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], desc: post.inserted_at)
+      |> order_by([post: post], asc: post.id)
+      |> limit(10)
 
   Why this is better:
 
@@ -40,13 +44,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   Better for a composite primary key:
 
-      from(membership in Membership,
-        order_by: [
-          asc: membership.inserted_at,
-          asc: membership.organization_id,
-          asc: membership.sequence
-        ]
-      )
+      Membership
+      |> from(as: :membership)
+      |> order_by([membership: membership], asc: membership.inserted_at)
+      |> order_by([membership: membership], asc: membership.organization_id)
+      |> order_by([membership: membership], asc: membership.sequence)
 
   ## Notes
 

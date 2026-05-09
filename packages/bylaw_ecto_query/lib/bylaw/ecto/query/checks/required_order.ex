@@ -10,7 +10,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      from(post in Post, limit: 10)
+      Post
+      |> from(as: :post)
+      |> limit(10)
 
   Why this is bad:
 
@@ -20,7 +22,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      from(post in Post, order_by: [desc: post.inserted_at], limit: 10)
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], desc: post.inserted_at)
+      |> limit(10)
 
   Why this is better:
 
@@ -29,7 +34,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      from(post in Post, offset: 50, limit: 25)
+      Post
+      |> from(as: :post)
+      |> offset(50)
+      |> limit(25)
 
   Why this is bad:
 
@@ -38,11 +46,11 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Better:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at],
-        offset: 50,
-        limit: 25
-      )
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], desc: post.inserted_at)
+      |> offset(50)
+      |> limit(25)
 
   Why this is better:
 
@@ -51,11 +59,16 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   Bad:
 
-      Repo.stream(from(post in Post))
+      Post
+      |> from(as: :post)
+      |> Repo.stream()
 
   Better:
 
-      Repo.stream(from(post in Post, order_by: [asc: post.id]))
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], asc: post.id)
+      |> Repo.stream()
 
   ## Notes
 
@@ -63,10 +76,11 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   the order is deterministic. If rows can tie on the ordered field, pair this
   check with `DeterministicOrder` to require a primary-key tie-breaker:
 
-      from(post in Post,
-        order_by: [desc: post.inserted_at, asc: post.id],
-        limit: 10
-      )
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], desc: post.inserted_at)
+      |> order_by([post: post], asc: post.id)
+      |> limit(10)
 
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
   synthetic limit is ignored because existence checks do not depend on which row

@@ -10,9 +10,10 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Bad:
 
-      from post in Post,
-        order_by: post.inserted_at,
-        offset: 10_000
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], asc: post.inserted_at)
+      |> offset(10_000)
 
   Why this is bad:
 
@@ -21,10 +22,11 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   Better:
 
-      from post in Post,
-        order_by: post.inserted_at,
-        limit: 50,
-        offset: 10_000
+      Post
+      |> from(as: :post)
+      |> order_by([post: post], asc: post.inserted_at)
+      |> limit(50)
+      |> offset(10_000)
 
   Why this is better:
 

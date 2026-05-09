@@ -8,9 +8,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   Bad:
 
-      from post in Post,
-        where: post.status == ^:draft,
-        where: post.status == ^:published
+      Post
+      |> from(as: :post)
+      |> where([post: post], post.status == ^:draft)
+      |> where([post: post], post.status == ^:published)
 
   Why this is bad:
 
@@ -20,8 +21,9 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   Better:
 
-      from post in Post,
-        where: post.status in ^[:draft, :published]
+      Post
+      |> from(as: :post)
+      |> where([post: post], post.status in ^[:draft, :published])
 
   Why this is better:
 
@@ -29,9 +31,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   Bad:
 
-      from post in Post,
-        where: post.sequence == ^1,
-        where: post.sequence == ^2
+      Post
+      |> from(as: :post)
+      |> where([post: post], post.sequence == ^1)
+      |> where([post: post], post.sequence == ^2)
 
   ## Notes
 

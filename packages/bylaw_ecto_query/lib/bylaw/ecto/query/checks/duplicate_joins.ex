@@ -12,11 +12,16 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   Bad:
 
-      from post in Post,
-        join: comment in Comment,
-        on: comment.post_id == post.id,
-        join: visible_comment in Comment,
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
+        on: comment.post_id == post.id
+      )
+      |> join(:inner, [post: post], visible_comment in Comment,
+        as: :visible_comment,
         on: visible_comment.post_id == post.id
+      )
 
   Why this is bad:
 
@@ -25,10 +30,13 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   Better:
 
-      from post in Post,
-        join: comment in Comment,
-        on: comment.post_id == post.id,
-        where: comment.visible == true
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
+        on: comment.post_id == post.id
+      )
+      |> where([comment: comment], comment.visible == true)
 
   Why this is better:
 

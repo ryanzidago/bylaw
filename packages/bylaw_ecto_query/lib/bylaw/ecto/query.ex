@@ -24,7 +24,7 @@ defmodule Bylaw.Ecto.Query do
   ## Examples
 
       iex> import Ecto.Query
-      iex> query = from(post in "posts", limit: 1)
+      iex> query = "posts" |> from(as: :post, limit: 1)
       iex> {:error, [issue]} =
       ...>   Bylaw.Ecto.Query.validate(:all, query, [
       ...>     Bylaw.Ecto.Query.Checks.RequiredOrder

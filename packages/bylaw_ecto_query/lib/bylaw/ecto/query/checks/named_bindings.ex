@@ -26,15 +26,16 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
 
   Bad:
 
-      from post in Post,
-        join: comment in assoc(post, :comments),
-        where: post.organization_id == ^organization_id
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in assoc(post, :comments))
+      |> where([post], post.organization_id == ^organization_id)
 
   Why this is bad:
 
-  The root and join bindings have no `:as` aliases, and the predicate relies on
-  positional binding access. As the query grows, it becomes easier to reference
-  the wrong binding.
+  The join binding has no `:as` alias, and the predicate relies on positional
+  binding access. As the query grows, it becomes easier to reference the wrong
+  binding.
 
   Better:
 

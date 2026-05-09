@@ -11,8 +11,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
       naive_datetime = ~N[2026-01-01 00:00:00]
 
-      from event in Event,
-        where: event.inserted_at >= ^naive_datetime
+      Event
+      |> from(as: :event)
+      |> where([event: event], event.inserted_at >= ^naive_datetime)
 
   Why this is bad:
 
@@ -24,8 +25,9 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
       datetime = DateTime.from_naive!(naive_datetime, "Etc/UTC")
 
-      from event in Event,
-        where: event.inserted_at >= ^datetime
+      Event
+      |> from(as: :event)
+      |> where([event: event], event.inserted_at >= ^datetime)
 
   Why this is better:
 

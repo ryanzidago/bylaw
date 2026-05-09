@@ -9,9 +9,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Bad:
 
-      from post in Post,
-        join: comment in Comment,
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
         on: true
+      )
 
   Why this is bad:
 
@@ -21,9 +24,12 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Better:
 
-      from post in Post,
-        join: comment in Comment,
+      Post
+      |> from(as: :post)
+      |> join(:inner, [post: post], comment in Comment,
+        as: :comment,
         on: comment.post_id == post.id
+      )
 
   Why this is better:
 
@@ -32,9 +38,10 @@ defmodule Bylaw.Ecto.Query.Checks.CartesianJoins do
 
   Bad:
 
-      from plan in Plan,
-        cross_join: feature in Feature,
-        where: feature.enabled == true
+      Plan
+      |> from(as: :plan)
+      |> join(:cross, [plan: plan], feature in Feature, as: :feature)
+      |> where([feature: feature], feature.enabled == true)
 
   ## Notes
 

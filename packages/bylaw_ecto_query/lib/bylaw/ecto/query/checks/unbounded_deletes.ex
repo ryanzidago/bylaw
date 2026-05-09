@@ -9,7 +9,8 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
   Bad:
 
-      from session in Session
+      Session
+      |> from(as: :session)
 
   Why this is bad:
 
@@ -18,8 +19,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
   Better:
 
-      from session in Session,
-        where: session.expires_at < ^DateTime.utc_now()
+      Session
+      |> from(as: :session)
+      |> where([session: session], session.expires_at < ^DateTime.utc_now())
 
   Why this is better:
 
