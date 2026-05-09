@@ -1,7 +1,9 @@
 # Checks Overview
 
-Bylaw is organized as independent packages. `bylaw_postgres` provides the
-Postgres database adapter and built-in database-structure checks.
+Use these checks to turn Postgres schema rules into CI failures. Configure the
+rules your application depends on, run them against the migrated test database,
+and catch database drift when a migration changes tables, indexes, constraints,
+or Ecto schema coverage.
 
 ## Related Packages
 
@@ -10,8 +12,9 @@ Postgres database adapter and built-in database-structure checks.
 | `bylaw_db` | Generic database check contracts and result data structures. |
 | `bylaw_postgres` | Postgres adapter and database-structure checks. |
 
-Postgres checks live under `Bylaw.Db.Adapters.Postgres.Checks` and implement
-`Bylaw.Db.Check`.
+Postgres checks live under `Bylaw.Db.Adapters.Postgres.Checks`. Each check can
+be configured as a module or as `{module, opts}` when it needs project-specific
+rules.
 
 ## Built-in Checks
 

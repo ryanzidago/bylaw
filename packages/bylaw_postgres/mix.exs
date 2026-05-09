@@ -72,7 +72,7 @@ defmodule BylawPostgres.MixProject do
 
   defp docs do
     [
-      main: "checks",
+      main: "readme",
       source_ref: "v#{@version}",
       extras: ["README.md", "guides/checks.md": [title: "Checks Overview"]],
       groups_for_modules: [
