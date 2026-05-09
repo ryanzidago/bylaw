@@ -14,7 +14,7 @@ defmodule Bylaw.Db.Adapters.Postgres do
   Pass `:dynamic_repo` when the call should run against one dynamic repo.
   Validate multiple repos by calling `validate/2` or `validate/3` once per repo.
 
-  The `:repo` option expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
+  The repo argument expects an Ecto SQL repo at runtime. Bylaw keeps Ecto SQL as
   an optional integration; callers must have `ecto_sql` and a Postgres driver in
   their application when they use repo-backed targets.
 
@@ -81,13 +81,9 @@ defmodule Bylaw.Db.Adapters.Postgres do
   Pass the repo and checks. Use `:dynamic_repo` when validating a specific
   dynamic repo with `validate/3`. To validate multiple repos, call this function
   once per repo.
-
-  This function also serves the lower-level `Bylaw.Db.Adapter` callback when the
-  first argument is a list of Postgres targets.
   """
   @impl Bylaw.Db.Adapter
   @spec validate(repo :: module(), checks :: list(Db.check_spec())) :: Check.result()
-  @spec validate(targets :: list(Target.t()), checks :: list(Db.check_spec())) :: Check.result()
   def validate(repo, checks) when is_atom(repo) and not is_nil(repo) do
     validate(repo, checks, [])
   end
