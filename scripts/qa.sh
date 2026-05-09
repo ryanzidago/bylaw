@@ -17,5 +17,6 @@ for package in "${packages[@]}"; do
     mix format --check-formatted
     mix compile --warnings-as-errors
     mix test "$@"
+    mix docs
   )
 done
