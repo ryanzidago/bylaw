@@ -95,22 +95,6 @@ end
 This config belongs to `:my_app`. `bylaw_ecto_query` does not read application
 config or register checks globally.
 
-## Built-in checks
-
 Built-in checks live under `Bylaw.Ecto.Query.Checks.*`. Start with the checks
 that match your application invariants; each check module documents its own
-examples, notes, and options.
-
-Common zero-config checks include `Bylaw.Ecto.Query.Checks.RequiredOrder`,
-`Bylaw.Ecto.Query.Checks.DeterministicOrder`,
-`Bylaw.Ecto.Query.Checks.CartesianJoins`,
-`Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`, and
-`Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`.
-
-Configured checks include `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`,
-`Bylaw.Ecto.Query.Checks.MandatoryJoinKeys`,
-`Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`, and
-`Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals`.
-
-See each check module's documentation for copyable check specs and
-check-specific behavior.
+examples, notes, options, and copyable check specs.
