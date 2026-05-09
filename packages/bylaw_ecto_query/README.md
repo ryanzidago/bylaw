@@ -68,15 +68,10 @@ defmodule MyApp.Repo do
     {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
   ]
 
-  @validate_ecto_queries? Application.compile_env(
-                            :my_app,
-                            [:bylaw, :validate_ecto_queries?],
-                            false
-                          )
-
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    if @validate_ecto_queries? do
+    if Application.get_env(:my_app, :bylaw, [])
+       |> Keyword.get(:validate_ecto_queries?, false) do
       validate_query!(operation, query)
     end
 
