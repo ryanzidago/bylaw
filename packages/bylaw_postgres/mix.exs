@@ -64,7 +64,7 @@ defmodule BylawPostgres.MixProject do
     [
       files:
         Path.wildcard("lib/**/*.ex") ++
-          ~w(config guides/checks.md .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
+          ~w(config .formatter.exs mix.exs README.md LICENSE CHANGELOG.md),
       licenses: ["MIT"],
       links: %{"GitHub" => @source_url}
     ]
@@ -72,9 +72,9 @@ defmodule BylawPostgres.MixProject do
 
   defp docs do
     [
-      main: "checks",
+      main: "readme",
       source_ref: "v#{@version}",
-      extras: ["README.md", "guides/checks.md": [title: "Checks Overview"]],
+      extras: ["README.md"],
       groups_for_modules: [
         "Postgres adapter": [Bylaw.Db.Adapters.Postgres],
         "Postgres checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\.Postgres\.Checks\./,

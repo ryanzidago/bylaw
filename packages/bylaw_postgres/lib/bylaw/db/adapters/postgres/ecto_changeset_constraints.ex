@@ -84,7 +84,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
   end
 
   @doc false
-  @spec validate_from_opts(opts :: Postgres.validate_opts() | check_opts(), config :: config()) ::
+  @spec validate_from_opts(opts :: Postgres.target_opts() | check_opts(), config :: config()) ::
           Check.result()
   def validate_from_opts(opts, config) when is_list(opts) do
     target =

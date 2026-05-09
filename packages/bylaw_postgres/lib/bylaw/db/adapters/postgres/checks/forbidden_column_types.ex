@@ -2,6 +2,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   @moduledoc """
   Validates that Postgres columns do not use configured forbidden types.
 
+  ## Options
+
   By default the check inspects all non-system schemas in a Postgres target. Use
   `rules: [...]` to configure forbidden types for scoped groups of columns:
 
@@ -18,6 +20,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
      ]
    ]}
   ```
+
+  ## Example
 
   With `types: [[type: "json", prefer: "jsonb"]]`, before:
 
@@ -44,9 +48,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   The column now follows the project convention and avoids repeating the same
   migration decision in future tables.
 
+  ## Notes
+
   This check is policy-driven and has no built-in opinion about which types are
   bad. Type matchers compare against `pg_catalog.format_type`, so use exact
   strings such as `"json"` or regexes such as `~r/^character\\(/`.
+
+  ## Usage
+
+  Add this module to the checks passed to
+  `Bylaw.Db.Adapters.Postgres.validate/2`. See the
+  [README usage section](readme.html#usage) for the full ExUnit setup.
   """
 
   @behaviour Bylaw.Db.Check
@@ -77,6 +89,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
     AND ($1::text[] IS NULL OR namespace.nspname = ANY($1))
     AND ($2::text[] IS NULL OR table_class.relname = ANY($2))
   ORDER BY schema_name, table_name, attribute.attnum
+
   """
 
   @type type_matcher :: String.t() | Regex.t()
@@ -121,6 +134,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   The check is enabled by default. Pass `validate: false` to skip it. Validation
   requires `rules: [[types: [...]]]`; each type rule can be a string, regex, or
   keyword rule with optional `:prefer` and `:reason` guidance.
+
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

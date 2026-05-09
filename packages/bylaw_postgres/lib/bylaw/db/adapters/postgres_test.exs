@@ -50,7 +50,7 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     end
   end
 
-  describe "validate/2" do
+  describe "validate/2 for target lists" do
     test "delegates check execution for Postgres targets" do
       target = Postgres.target(query: query_fun())
 
@@ -66,8 +66,8 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
       end
     end
 
-    test "rejects missing targets" do
-      assert_raise ArgumentError, ~r/expected Postgres targets to be a list/, fn ->
+    test "rejects invalid repo or target list input" do
+      assert_raise ArgumentError, ~r/expected Postgres repo/, fn ->
         Postgres.validate(nil, [FailingCheck])
       end
     end
@@ -95,72 +95,52 @@ defmodule Bylaw.Db.Adapters.PostgresTest do
     end
   end
 
-  describe "validate/1" do
-    test "builds a target from top-level config and returns raw issues" do
+  describe "validate/2 and validate/3" do
+    test "builds one target from repo and checks" do
       assert {:error, [%Issue{} = issue]} =
-               Postgres.validate(query: query_fun(), checks: [FailingCheck])
+               Postgres.validate(__MODULE__, [FailingCheck])
 
       assert issue.check == FailingCheck
       assert issue.target.adapter == Postgres
-      assert is_function(issue.target.query, 4)
+      assert issue.target.repo == __MODULE__
     end
 
-    test "builds a target from an explicit target config" do
+    test "includes dynamic repo on the target" do
       assert {:error, [%Issue{} = issue]} =
-               Postgres.validate(target: [query: query_fun()], checks: [FailingCheck])
+               Postgres.validate(__MODULE__, [FailingCheck], dynamic_repo: :tenant_foo)
 
-      assert issue.target.adapter == Postgres
+      assert issue.target.dynamic_repo == :tenant_foo
     end
 
-    test "builds targets from explicit targets config" do
-      assert {:error, issues} =
-               Postgres.validate(
-                 targets: [[query: query_fun(), meta: %{label: :primary}], [query: query_fun()]],
-                 checks: [FailingCheck]
-               )
-
-      assert Enum.count(issues) == 2
-      assert hd(issues).target.meta == %{label: :primary}
-    end
-
-    test "accepts already built Postgres targets in config" do
-      target = Postgres.target(query: query_fun())
-
-      assert {:error, [%Issue{} = issue]} =
-               Postgres.validate(target: target, checks: [FailingCheck])
-
-      assert issue.target == target
-    end
-
-    test "rejects unknown validation config options" do
+    test "rejects unknown validation options" do
       assert_raise ArgumentError, ~r/unknown Postgres validation option: :unknown/, fn ->
-        Postgres.validate(query: query_fun(), checks: [FailingCheck], unknown: true)
+        Postgres.validate(__MODULE__, [FailingCheck], unknown: true)
       end
     end
 
-    test "requires exactly one target source" do
-      assert_raise ArgumentError, ~r/exactly one target source/, fn ->
-        Postgres.validate(checks: [FailingCheck])
-      end
+    test "rejects malformed validation options" do
+      assert_raise ArgumentError,
+                   ~r/expected Postgres validation opts to be a keyword list/,
+                   fn ->
+                     Postgres.validate(__MODULE__, [FailingCheck], :bad_opts)
+                   end
+    end
 
-      assert_raise ArgumentError, ~r/exactly one target source/, fn ->
-        Postgres.validate(
-          query: query_fun(),
-          target: [query: query_fun()],
-          checks: [FailingCheck]
-        )
+    test "requires a repo module" do
+      assert_raise ArgumentError, ~r/expected Postgres repo/, fn ->
+        Postgres.validate(nil, [FailingCheck])
       end
     end
 
-    test "requires checks" do
-      assert_raise ArgumentError, ~r/include :checks/, fn ->
-        Postgres.validate(query: query_fun())
+    test "rejects malformed check lists" do
+      assert_raise ArgumentError, ~r/expected checks to be a list/, fn ->
+        Postgres.validate(__MODULE__, FailingCheck)
       end
     end
 
-    test "rejects empty targets config" do
-      assert_raise ArgumentError, ~r/:targets to be a non-empty list/, fn ->
-        Postgres.validate(targets: [], checks: [FailingCheck])
+    test "rejects malformed check specs" do
+      assert_raise ArgumentError, ~r/expected check opts to be a keyword list/, fn ->
+        Postgres.validate(__MODULE__, [{FailingCheck, :bad_opts}])
       end
     end
   end
