@@ -131,6 +131,72 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest do
     |> refute_issues()
   end
 
+  test "does not check every behaviour when behaviours config is empty" do
+    """
+    defmodule Example do
+      @behaviour Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+
+      @impl Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+      def run(value), do: value
+
+      def helper(value), do: value
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoExtraPublicBehaviourFunctions)
+    |> refute_issues()
+  end
+
+  test "does not crash when a configured behaviour cannot be loaded" do
+    """
+    defmodule Example do
+      @behaviour MissingBehaviourForNoExtraPublicBehaviourFunctions
+
+      def helper(value), do: value
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoExtraPublicBehaviourFunctions,
+      behaviours: [MissingBehaviourForNoExtraPublicBehaviourFunctions]
+    )
+    |> refute_issues()
+  end
+
+  test "does not report public macros" do
+    """
+    defmodule Example do
+      @behaviour Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+
+      @impl Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+      def run(value), do: value
+
+      defmacro helper(value), do: value
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoExtraPublicBehaviourFunctions, behaviours: [@primary_behaviour])
+    |> refute_issues()
+  end
+
+  test "respects excluded_paths" do
+    """
+    defmodule Example do
+      @behaviour Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+
+      @impl Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+      def run(value), do: value
+
+      def helper(value), do: value
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(NoExtraPublicBehaviourFunctions,
+      behaviours: [@primary_behaviour],
+      excluded_paths: ["lib/example.ex"]
+    )
+    |> refute_issues()
+  end
+
   test "handles guarded callback function heads" do
     """
     defmodule Example do
