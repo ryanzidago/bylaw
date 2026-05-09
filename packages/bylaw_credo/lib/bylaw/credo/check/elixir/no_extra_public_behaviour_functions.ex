@@ -80,10 +80,12 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   defp traverse(ast, state), do: {ast, state}
 
   defp report_module(body, state) do
+    aliases = aliases(body)
+
     implemented_behaviours =
       body
       |> direct_children()
-      |> Enum.flat_map(&behaviour_attribute/1)
+      |> Enum.flat_map(&behaviour_attribute(&1, aliases))
       |> Enum.filter(&MapSet.member?(state.behaviours, &1))
 
     allowed_callbacks = callback_signatures(implemented_behaviours, state.callbacks_by_behaviour)
@@ -96,6 +98,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
       |> Enum.flat_map(&public_definition_signatures/1)
       |> Enum.reject(&MapSet.member?(allowed_callbacks, signature(&1)))
       |> Enum.reject(&MapSet.member?(state.allowed, signature(&1)))
+      |> Enum.uniq_by(&signature/1)
       |> Enum.reduce(state, &add_issue/2)
     end
   end
@@ -142,21 +145,45 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   defp direct_children(nil), do: []
   defp direct_children(child), do: [child]
 
-  defp behaviour_attribute({:@, _meta, [{:behaviour, _attribute_meta, [behaviour_ast]}]}) do
-    case module_attribute_value(behaviour_ast) do
+  defp aliases(body) do
+    body
+    |> direct_children()
+    |> Enum.flat_map(&alias_entries/1)
+    |> Map.new()
+  end
+
+  defp alias_entries({:alias, _meta, [{:__aliases__, _aliases_meta, aliases}]}) do
+    [{List.last(aliases), Module.concat(aliases)}]
+  end
+
+  defp alias_entries(
+         {:alias, _meta, [{:__aliases__, _aliases_meta, aliases}, [as: {:__aliases__, _, [as]}]]}
+       ) do
+    [{as, Module.concat(aliases)}]
+  end
+
+  defp alias_entries(_ast), do: []
+
+  defp behaviour_attribute({:@, _meta, [{:behaviour, _attribute_meta, [behaviour_ast]}]}, aliases) do
+    case module_attribute_value(behaviour_ast, aliases) do
       {:ok, behaviour} -> [behaviour]
       :error -> []
     end
   end
 
-  defp behaviour_attribute(_ast), do: []
+  defp behaviour_attribute(_ast, _aliases), do: []
 
-  defp module_attribute_value({:__aliases__, _meta, aliases}) do
-    {:ok, Module.concat(aliases)}
+  defp module_attribute_value({:__aliases__, _meta, [alias]}, aliases) do
+    {:ok, Map.get(aliases, alias, alias)}
   end
 
-  defp module_attribute_value(behaviour) when is_atom(behaviour), do: {:ok, behaviour}
-  defp module_attribute_value(_ast), do: :error
+  defp module_attribute_value({:__aliases__, _meta, [alias | rest]}, aliases) do
+    root = Map.get(aliases, alias, alias)
+    {:ok, Module.concat([root | rest])}
+  end
+
+  defp module_attribute_value(behaviour, _aliases) when is_atom(behaviour), do: {:ok, behaviour}
+  defp module_attribute_value(_ast, _aliases), do: :error
 
   defp public_definition_signatures({:def, _meta, [head | _body]}) do
     case definition_head(head) do
