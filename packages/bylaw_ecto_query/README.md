@@ -20,25 +20,9 @@ end
 
 ## Usage
 
-Choose the query checks you want to enforce, then pass them to
-`Bylaw.Ecto.Query.validate/3`:
-
-```elixir
-checks = [
-  Bylaw.Ecto.Query.Checks.RequiredOrder,
-  Bylaw.Ecto.Query.Checks.DeterministicOrder,
-  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
-]
-
-case Bylaw.Ecto.Query.validate(:all, query, checks) do
-  :ok -> :ok
-  {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
-end
-```
-
-For repo-wide validation, call the same function from
-`c:Ecto.Repo.prepare_query/3`. Keep the check list in your application and pass
-it explicitly:
+For repo-wide validation, choose the query checks you want to enforce and pass
+them explicitly to `Bylaw.Ecto.Query.validate/3` from
+`c:Ecto.Repo.prepare_query/3`:
 
 ```elixir
 defmodule MyApp.Repo do
