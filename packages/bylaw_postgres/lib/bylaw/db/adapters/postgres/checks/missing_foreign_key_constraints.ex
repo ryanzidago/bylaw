@@ -42,7 +42,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   Use `schemas: [...]` or `tables: [...]` for simple filtering:
 
   ```elixir
-  {MissingForeignKeyConstraints,
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
    schemas: ["public"],
    tables: ["orders", "line_items"]}
   ```
@@ -50,7 +50,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   Use `rules: [...]` when the scope needs column matchers or exclusions:
 
   ```elixir
-  {MissingForeignKeyConstraints,
+  {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
    rules: [
      [
        only: [schema: "public"],
@@ -130,11 +130,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   }
 
   @doc """
-  Validates that foreign-key-shaped columns have foreign key constraints.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

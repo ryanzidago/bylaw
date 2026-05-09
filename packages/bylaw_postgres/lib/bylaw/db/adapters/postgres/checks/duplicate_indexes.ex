@@ -34,7 +34,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   Use `schemas: [...]` or `tables: [...]` for simple filtering:
 
   ```elixir
-  {DuplicateIndexes,
+  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
    schemas: ["public"],
    tables: ["users", "accounts"]}
   ```
@@ -42,7 +42,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   Use `rules: [...]` when the scope needs matchers or exclusions:
 
   ```elixir
-  {DuplicateIndexes,
+  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
    rules: [
      [
        only: [schema: "public"],
@@ -129,11 +129,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   }
 
   @doc """
-  Validates that tables do not have duplicate indexes.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Use
-  `rules: [[only: [schema: "public"]]]` to narrow the default all-schema scope.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

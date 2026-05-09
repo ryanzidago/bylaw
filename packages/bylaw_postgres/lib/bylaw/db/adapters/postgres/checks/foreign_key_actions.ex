@@ -45,7 +45,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   action:
 
   ```elixir
-  {ForeignKeyActions,
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
    rules: [[on_delete: :cascade]]}
   ```
 
@@ -53,7 +53,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   rule, and matching rules accumulate.
 
   ```elixir
-  {ForeignKeyActions,
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
    rules: [
      [
        only: [[table: "messages"], [referenced_table: "conversations"]],
@@ -179,13 +179,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   }
 
   @doc """
-  Validates that foreign keys in the target scope use configured actions.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires either global `:on_delete` and/or `:on_update` policy, or `rules:
-  [...]` for scoped policy. Use rule-level `:only` and `:except` matchers to
-  narrow or exclude the inspected foreign keys.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

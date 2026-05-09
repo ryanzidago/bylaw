@@ -41,7 +41,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   `rules: [...]` to configure forbidden types for scoped groups of columns:
 
   ```elixir
-  {ForbiddenColumnTypes,
+  {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
    rules: [
      [
        only: [schema: "public"],
@@ -129,12 +129,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   }
 
   @doc """
-  Validates that scoped Postgres columns do not use forbidden database types.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires `rules: [[types: [...]]]`; each type rule can be a string, regex, or
-  keyword rule with optional `:prefer` and `:reason` guidance.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

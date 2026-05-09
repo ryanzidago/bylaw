@@ -42,7 +42,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   `rules: [...]` to configure allowed types for scoped groups of tables:
 
   ```elixir
-  {PrimaryKeyType,
+  {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
    rules: [
      [
        only: [schema: "public"],
@@ -156,12 +156,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   }
 
   @doc """
-  Validates that every table in scope has a primary key using allowed types.
-
-  The check is enabled by default. Pass `validate: false` to skip it. Validation
-  requires `rules: [[types: [...]]]`, such as
-  `rules: [[types: ["uuid"]]]`.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()

@@ -54,7 +54,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   scope:
 
   ```elixir
-  {ScopedForeignKeys,
+  {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
    rules: [
      [
        scope_columns: ["tenant_id", "workspace_id"],
@@ -197,11 +197,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   }
 
   @doc """
-  Validates that scoped foreign keys include configured scope columns.
-
-  The check is enabled by default and requires `rules: [[scope_columns: [...]]]`.
-  Pass `validate: false` to skip it.
-
+  Implements the `Bylaw.Db.Check` validation callback.
   """
   @impl Bylaw.Db.Check
   @spec validate(target :: Target.t(), opts :: check_opts()) :: Check.result()
