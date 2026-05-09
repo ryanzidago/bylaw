@@ -55,6 +55,7 @@ Then enable the checks you want in your Credo configuration:
 - `Bylaw.Credo.Check.Elixir.FloatUsage`
 - `Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse`
 - `Bylaw.Credo.Check.Elixir.NoEndOfDayTime`
+- `Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions`
 - `Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives`
 - `Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead`
 - `Bylaw.Credo.Check.Elixir.NoPassthroughWrapper`
@@ -69,6 +70,28 @@ Then enable the checks you want in your Credo configuration:
 - `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison`
 - `Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName`
 - `Bylaw.Credo.Check.Elixir.WithElseClause`
+
+#### Minimal behaviour implementations
+
+`Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions` is opt-in by
+behaviour. Configure `:behaviours` with the behaviour modules whose
+implementations should keep a minimal public API:
+
+```elixir
+{Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
+ [
+   behaviours: [
+     Bylaw.Db.Check,
+     Bylaw.Ecto.Query.Check
+   ],
+   allowed: []
+ ]}
+```
+
+The check reads callback signatures from each configured behaviour module with
+`behaviour_info(:callbacks)`, so callback lists should not be duplicated in
+Credo config. Use `:allowed`, for example `[child_spec: 1]`, for intentional
+extra public functions.
 
 ### Ecto
 
