@@ -33,7 +33,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
         where: post.sequence == ^1,
         where: post.sequence == ^2
 
-  Limitations:
+  ## Notes
 
   This check is intentionally narrow. It evaluates supported root `where`
   predicates and ignores fragments, subqueries, non-root bindings, and most
@@ -50,12 +50,14 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   unsatisfiable, but standalone empty `in` issues are intentionally left to
   `Bylaw.Ecto.Query.Checks.EmptyInPredicates`.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -65,21 +67,23 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   alias Bylaw.Ecto.Query.Issue
   alias Bylaw.Ecto.Query.RootWherePredicates
 
+  @typedoc false
   @type comparable_value :: atom() | integer() | String.t()
+  @typedoc false
   @type operator :: :== | :in | :is_nil
+  @typedoc false
   @type predicate :: %{
           field: atom(),
           operator: operator(),
           values: list(comparable_value())
         }
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates that root `where` predicates are mutually satisfiable.
-
-  The operation is kept as issue metadata. This check applies the same static
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

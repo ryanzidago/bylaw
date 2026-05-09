@@ -29,16 +29,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   The datetime side is explicitly treated as a date, so the boundary decision is
   visible to reviewers.
 
-  Limitations:
+  ## Notes
 
   This check inspects supported direct field-to-field comparisons and `in`
   predicates. It ignores values, schema-less sources, hidden fragment access,
   and subqueries.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
@@ -49,6 +46,11 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   dot field access, `field/2`, named bindings, dynamic predicates, and
   `type(field, :date)` wrappers used as explicit truncation. It ignores values,
   schema-less sources, fragments that hide field access, and subqueries.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -60,8 +62,10 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
   @datetime_types [:naive_datetime, :naive_datetime_usec, :utc_datetime, :utc_datetime_usec]
 
+  @typedoc false
   @type datetime_type ::
           :naive_datetime | :naive_datetime_usec | :utc_datetime | :utc_datetime_usec
+  @typedoc false
   @type field_side :: %{
           binding_index: non_neg_integer(),
           field: atom(),
@@ -69,6 +73,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
           schema_type: :date | datetime_type(),
           truncated_to_date?: boolean()
         }
+  @typedoc false
   @type violation :: %{
           date_binding_index: non_neg_integer(),
           date_field: atom(),
@@ -79,14 +84,13 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
           datetime_type: datetime_type(),
           operator: atom()
         }
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates date/datetime field comparisons for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same static
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

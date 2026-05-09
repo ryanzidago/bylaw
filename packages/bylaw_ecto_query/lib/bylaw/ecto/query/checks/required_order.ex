@@ -6,17 +6,6 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   It intentionally does not decide whether the existing order is deterministic;
   use `Bylaw.Ecto.Query.Checks.DeterministicOrder` for that separate question.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
-  Queries with `limit`, `offset`, or the `:stream` operation require an
-  `order_by` clause. If any `order_by` exists, this check passes and leaves
-  deterministic tie-breaker validation to `DeterministicOrder`.
-
   ## Examples
 
   Bad:
@@ -68,7 +57,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
       Repo.stream(from(post in Post, order_by: [asc: post.id]))
 
-  Limitations:
+  ## Notes
 
   This check only requires that some `order_by` exists. It does not prove that
   the order is deterministic. If rows can tie on the ordered field, pair this
@@ -83,6 +72,19 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   synthetic limit is ignored because existence checks do not depend on which row
   is returned. A preserved `offset` still requires ordering because the skipped
   rows are otherwise undefined.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  Queries with `limit`, `offset`, or the `:stream` operation require an
+  `order_by` clause. If any `order_by` exists, this check passes and leaves
+  deterministic tie-breaker validation to `DeterministicOrder`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -91,16 +93,15 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type reason :: :limit | :offset | :stream
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates required `order_by` presence for a prepared Ecto query.
-
-  Queries with `limit`, `offset`, or the `:stream` operation must include an
-  `order_by` clause. Existing `order_by` clauses are accepted without checking
-  whether they are deterministic.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

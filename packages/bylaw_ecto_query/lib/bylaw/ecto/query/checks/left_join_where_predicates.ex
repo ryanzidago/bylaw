@@ -33,15 +33,20 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   The optional comment filter stays in the join predicate. Posts are preserved
   even when no matching published comment exists.
 
-  Limitations:
+  ## Notes
 
   This check detects supported direct field predicates on left-join bindings. It
   does not prove predicates hidden inside fragments, subqueries, or arbitrary
   functions.
 
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
 
   The check is static and intentionally supports a small, tested subset of
   Ecto's query AST. It detects direct left-join binding fields in comparisons,
@@ -61,16 +66,17 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
   @left_join_quals [:left, :left_lateral]
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
+  @typedoc false
   @type field_set :: list(atom())
+  @typedoc false
   @type rejection_map :: %{optional(non_neg_integer()) => MapSet.t(atom())}
 
   @doc """
-  Validates left-join `where` predicates for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same query
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

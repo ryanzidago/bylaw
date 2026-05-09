@@ -5,13 +5,6 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   This check is useful as a guard against accidentally updating every row in a
   table.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
   ## Examples
 
   Bad:
@@ -35,7 +28,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   The root `where` clauses state the intended update scope.
 
-  Limitations:
+  ## Notes
 
   This check only requires a non-true root predicate. It does not prove the
   predicate is selective or semantically correct.
@@ -46,6 +39,15 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   predicate is selective. Checks that need specific predicates should use a more
   targeted rule such as
   `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -54,13 +56,13 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates that `update_all` queries are bounded.
-
-  Operations other than `:update_all` are ignored.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

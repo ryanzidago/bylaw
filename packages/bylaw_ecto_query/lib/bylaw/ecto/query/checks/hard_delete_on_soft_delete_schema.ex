@@ -38,7 +38,7 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   Removal is represented in the soft-delete field, preserving the schema's
   lifecycle convention.
 
-  Limitations:
+  ## Notes
 
   This check uses persisted root schema fields as the signal. It ignores
   schema-less queries, virtual fields, source subqueries, and soft-delete fields
@@ -47,9 +47,14 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   The check is zero-config. Field presence in `__schema__(:fields)` is the
   signal.
 
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
 
   The root query and every combination branch are inspected independently. The
   check ignores schema-less queries, non-query values, virtual fields, source
@@ -64,14 +69,13 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
 
   @soft_delete_fields [:deleted_at, :archived_at]
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates that `:delete_all` is not used for schemas with soft-delete fields.
-
-  Non-delete operations always pass. For delete operations, the root schema must
-  not declare persisted `:deleted_at` or `:archived_at` fields.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

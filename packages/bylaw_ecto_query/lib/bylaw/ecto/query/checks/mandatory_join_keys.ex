@@ -14,7 +14,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   Why this is bad:
 
-  If `:organisation_id` is configured as mandatory, the join preserves the row
+  If `:organization_id` is configured as mandatory, the join preserves the row
   relationship but not the tenant key. Bad or inconsistent foreign-key data can
   cross tenant boundaries.
 
@@ -24,13 +24,13 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
         join: comment in Comment,
         on:
           comment.post_id == post.id and
-            comment.organisation_id == post.organisation_id
+            comment.organization_id == post.organization_id
 
   Why this is better:
 
   The join requires both the row relationship and the configured key to match.
 
-  Limitations:
+  ## Notes
 
   This check only validates direct explicit schema joins and supported equality
   predicates in the join `on` expression. Association joins, subqueries,
@@ -43,19 +43,27 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   Ecto treats those structs as opaque, so this check intentionally supports a
   small, tested subset of Ecto's query AST.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:keys` - required non-empty list of field names when the check runs.
     * `:match` - `:any` or `:all`. Defaults to `:any`.
 
+  Example check spec:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
+       keys: [:organization_id],
+       match: :all}
+
   When a join schema does not contain any configured keys, that join is not
   applicable and the check returns no issue for it. For applicable joins, the
   check accepts direct equality predicates between the joined binding and
   another query binding in the join `on` expression.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -64,21 +72,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type match :: :any | :all
+  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:keys, list(atom())}
             | {:match, match()}
           )
+  @typedoc false
   @type opts :: check_opts()
+  @typedoc false
   @type field_set :: list(atom())
 
   @doc """
-  Validates mandatory join-key predicates for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same explicit
-  join validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

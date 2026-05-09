@@ -29,7 +29,7 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   Ecto uses the association metadata for keys, through joins, preloads, and
   future schema changes.
 
-  Limitations:
+  ## Notes
 
   This check only rejects direct schema joins when the root schema declares a
   matching association. It ignores reverse-only associations and joins that are
@@ -40,16 +40,18 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   rejected when the joined source is an Ecto schema module and the root schema
   defines an association whose related schema matches it.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
 
   This check intentionally looks at associations defined on the root schema,
   because those are the associations that can be used as `assoc(root, name)` in
   the query. Reverse-only associations on the joined schema are ignored.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -58,15 +60,15 @@ defmodule Bylaw.Ecto.Query.Checks.ManualJoinInsteadOfAssoc do
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
+  @typedoc false
   @type association_index :: %{module() => list(atom())}
 
   @doc """
-  Validates that manual joins use root schema associations when available.
-
-  Queries without a schema root, joins that already use `assoc/2`, and joins
-  whose source is not a direct schema module are ignored.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

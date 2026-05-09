@@ -8,13 +8,6 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   expression. Named bindings are intentionally ignored, because a different
   binding name does not change the rows produced by the join.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
   ## Examples
 
   Bad:
@@ -42,7 +35,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   One join represents the relationship once, and predicates that refine the
   joined rows use that binding.
 
-  Limitations:
+  ## Notes
 
   This check compares supported Ecto join shapes after normalization. It is not
   a semantic SQL equivalence engine.
@@ -50,6 +43,15 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   The check is static and intentionally inspects the query structure produced by
   Ecto's query macros. It supports the tested join shapes exposed by the Ecto
   query API.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -60,12 +62,16 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
 
   @metadata_keys [:file, :line, :cache]
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
+  @typedoc false
   @type join_summary :: %{
           binding_index: pos_integer(),
           join_index: non_neg_integer()
         }
+  @typedoc false
   @type normalize_context :: %{
           aliases: map(),
           binding_index: pos_integer() | nil,
@@ -74,10 +80,7 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
         }
 
   @doc """
-  Validates that prepared Ecto queries do not contain equivalent joins.
-
-  Queries without joins are ignored. When several joins repeat an earlier join,
-  the check returns one issue per repeated join.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

@@ -5,13 +5,6 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   This check prevents accidental table-wide deletes by requiring callers to add
   a restricting root `where` or `or_where` before `Repo.delete_all/2` runs.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
-
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
-
   ## Examples
 
   Bad:
@@ -32,7 +25,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
 
   The root `where` clause states the intended delete scope.
 
-  Limitations:
+  ## Notes
 
   This check only requires a non-true root predicate. It does not prove the
   predicate is selective or semantically correct.
@@ -41,6 +34,15 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   operation. It requires every possible root `where` branch to include at least
   one non-true expression and does not try to prove whether that
   predicate is selective.
+
+  ## Options
+
+    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -49,15 +51,13 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
 
+  @typedoc false
   @type check_opts :: list({:validate, boolean()})
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates that `:delete_all` operations are bounded.
-
-  Non-delete operations always pass. For delete operations, every possible root
-  `where` or `or_where` branch must include a clause other than a `true`
-  expression.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check

@@ -2,8 +2,9 @@
 
 Ecto query validation APIs and checks for Bylaw.
 
-Use this package to validate prepared `Ecto.Query` structs before they run,
-usually from `c:Ecto.Repo.prepare_query/3`.
+Use this package to validate prepared `Ecto.Query` structs before they run.
+Callers choose checks explicitly and pass them to
+`Bylaw.Ecto.Query.validate/3`.
 
 ## Installation
 
@@ -19,14 +20,14 @@ end
 
 ## Usage
 
-Choose the query checks you want to enforce, then call
-`Bylaw.Ecto.Query.validate/3`.
+Choose the query checks you want to enforce, then pass them to
+`Bylaw.Ecto.Query.validate/3`:
 
 ```elixir
 checks = [
   Bylaw.Ecto.Query.Checks.RequiredOrder,
   Bylaw.Ecto.Query.Checks.DeterministicOrder,
-  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organisation_id]}
+  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
 ]
 
 case Bylaw.Ecto.Query.validate(:all, query, checks) do
@@ -36,7 +37,8 @@ end
 ```
 
 For repo-wide validation, call the same function from
-`c:Ecto.Repo.prepare_query/3`:
+`c:Ecto.Repo.prepare_query/3`. Keep the check list in your application and pass
+it explicitly:
 
 ```elixir
 defmodule MyApp.Repo do
@@ -46,7 +48,8 @@ defmodule MyApp.Repo do
 
   @query_checks [
     Bylaw.Ecto.Query.Checks.RequiredOrder,
-    Bylaw.Ecto.Query.Checks.DeterministicOrder
+    Bylaw.Ecto.Query.Checks.DeterministicOrder,
+    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
   ]
 
   @impl Ecto.Repo
@@ -59,26 +62,71 @@ defmodule MyApp.Repo do
 end
 ```
 
-See the HexDocs guide for environment configuration, the full built-in check
-list, check options, and issue metadata.
+If you want to enable validation only in certain environments, gate the call
+with your own application config:
+
+```elixir
+# config/dev.exs and config/test.exs
+config :my_app, :bylaw, validate_ecto_queries?: true
+
+# config/prod.exs
+config :my_app, :bylaw, validate_ecto_queries?: false
+```
+
+```elixir
+defmodule MyApp.Repo do
+  use Ecto.Repo,
+    otp_app: :my_app,
+    adapter: Ecto.Adapters.Postgres
+
+  @query_checks [
+    Bylaw.Ecto.Query.Checks.RequiredOrder,
+    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
+  ]
+
+  @validate_ecto_queries? Application.compile_env(
+                            :my_app,
+                            [:bylaw, :validate_ecto_queries?],
+                            false
+                          )
+
+  @impl Ecto.Repo
+  def prepare_query(operation, query, opts) do
+    if @validate_ecto_queries? do
+      validate_query!(operation, query)
+    end
+
+    {query, opts}
+  end
+
+  defp validate_query!(operation, query) do
+    case Bylaw.Ecto.Query.validate(operation, query, @query_checks) do
+      :ok -> :ok
+      {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
+    end
+  end
+end
+```
+
+This config belongs to `:my_app`. `bylaw_ecto_query` does not read application
+config or register checks globally.
 
 ## Built-in checks
 
 Built-in checks live under `Bylaw.Ecto.Query.Checks.*`. Start with the checks
 that match your application invariants; each check module documents its own
-query shapes, options, and issue metadata.
+examples, notes, and options.
 
-Common zero-config checks include:
+Common zero-config checks include `Bylaw.Ecto.Query.Checks.RequiredOrder`,
+`Bylaw.Ecto.Query.Checks.DeterministicOrder`,
+`Bylaw.Ecto.Query.Checks.CartesianJoins`,
+`Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`, and
+`Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`.
 
-- `Bylaw.Ecto.Query.Checks.RequiredOrder`
-- `Bylaw.Ecto.Query.Checks.DeterministicOrder`
-- `Bylaw.Ecto.Query.Checks.CartesianJoins`
-- `Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates`
-- `Bylaw.Ecto.Query.Checks.ConflictingWherePredicates`
+Configured checks include `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`,
+`Bylaw.Ecto.Query.Checks.MandatoryJoinKeys`,
+`Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`, and
+`Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals`.
 
-Configured checks include:
-
-- `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys`
-- `Bylaw.Ecto.Query.Checks.MandatoryJoinKeys`
-- `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates`
-- `Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals`
+See each check module's documentation for copyable check specs and
+check-specific behavior.

@@ -32,21 +32,23 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   The comparison value is an explicit UTC datetime, so the instant being queried
   does not depend on an implicit timezone assumption.
 
-  Limitations:
+  ## Notes
 
   This check inspects supported root UTC datetime field comparisons and `in`
   predicates. It ignores non-root bindings, fragments that hide field access,
   subqueries, and schema-less queries without configured fields.
 
-  For repo-wide enforcement, include this module in `Bylaw.Ecto.Query.validate/3`.
-  See the [`Bylaw.Ecto.Query` checks guide](ecto_query_checks.html) for repo wiring.
-
-  Supported options:
+  ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:fields` - optional non-empty list of root fields to validate. When
       omitted, the check validates UTC datetime fields reflected from the root
       Ecto schema.
+
+  Example check spec:
+
+      {Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons,
+       fields: [:inserted_at, :updated_at]}
 
   The check inspects direct root field comparisons and `in` predicates in
   `where` expressions. It detects visible `NaiveDateTime` values in pinned
@@ -54,6 +56,11 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   query maps. It ignores field-to-field comparisons, non-root bindings,
   fragments that hide field access, subqueries, and schema-less queries without
   configured fields.
+
+  ## Usage
+
+  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
+  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
   """
 
   @behaviour Bylaw.Ecto.Query.Check
@@ -65,24 +72,25 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
   @utc_datetime_types [:utc_datetime, :utc_datetime_usec]
 
+  @typedoc false
   @type value_source :: :literal | :parameter | :tagged
+  @typedoc false
   @type violation :: %{
           field: atom(),
           operator: atom(),
           value_source: value_source()
         }
+  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
             | {:fields, list(atom())}
           )
+  @typedoc false
   @type opts :: check_opts()
 
   @doc """
-  Validates UTC datetime comparisons for a prepared Ecto query.
-
-  The operation is kept as issue metadata. This check applies the same static
-  validation to all `c:Ecto.Repo.prepare_query/3` operations.
+  Implements the `Bylaw.Ecto.Query.Check` validation callback.
   """
 
   @impl Bylaw.Ecto.Query.Check
