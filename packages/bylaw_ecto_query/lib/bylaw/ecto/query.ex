@@ -53,11 +53,6 @@ defmodule Bylaw.Ecto.Query do
   `checks` accepts modules and `{module, opts}` tuples. Duplicate check modules
   raise `ArgumentError`. Bylaw does not read check lists from application
   config; callers pass checks explicitly.
-
-  ## Examples
-
-      iex> Bylaw.Ecto.Query.validate(:all, :query, [:not_a_check])
-      ** (ArgumentError) expected :not_a_check to be a query check module
   """
   @spec validate(Check.operation(), Check.query(), checks()) ::
           :ok | {:error, nonempty_list(Issue.t())}

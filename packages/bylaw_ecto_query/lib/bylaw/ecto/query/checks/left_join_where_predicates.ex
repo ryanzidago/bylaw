@@ -49,8 +49,8 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
 
   ## Usage
 
-  Add this module to the checks passed to `Bylaw.Ecto.Query.validate/3`.
-  See the README usage section for the full `c:Ecto.Repo.prepare_query/3` setup.
+  Add this module to the explicit check list passed through `Bylaw.Ecto.Query`.
+  See `Bylaw.Ecto.Query` for the full `c:Ecto.Repo.prepare_query/3` setup.
 
   The check is static and intentionally supports a small, tested subset of
   Ecto's query AST. It detects direct left-join binding fields in comparisons,
