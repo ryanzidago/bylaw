@@ -1,6 +1,8 @@
 defmodule Bylaw.Ecto.QueryTest do
   use ExUnit.Case, async: true
 
+  doctest Bylaw.Ecto.Query
+
   import Ecto.Query
 
   alias Bylaw.Ecto.Query

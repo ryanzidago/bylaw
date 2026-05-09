@@ -4,6 +4,12 @@ defmodule Bylaw.Db do
 
   Adapter packages usually expose their own `validate/2` function and delegate
   to this module after building `t:Bylaw.Db.Target.t/0` structs.
+
+  ## Examples
+
+      iex> target = %Bylaw.Db.Target{adapter: MyApp.DbAdapter, meta: %{database: :primary}}
+      iex> Bylaw.Db.validate([target], [])
+      :ok
   """
 
   alias Bylaw.CheckRunner
@@ -24,6 +30,11 @@ defmodule Bylaw.Db do
   `t:Bylaw.Db.Issue.t/0` values.
 
   Invalid target and check arguments raise `ArgumentError`.
+
+  ## Examples
+
+      iex> Bylaw.Db.validate([], [])
+      ** (ArgumentError) expected at least one database target
   """
   @spec validate(targets :: list(Target.t()), checks :: list(check_spec())) :: Check.result()
   def validate(targets, checks) do
