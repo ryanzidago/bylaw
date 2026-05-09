@@ -2,35 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   @moduledoc """
   Validates Postgres foreign key `ON DELETE` and `ON UPDATE` actions.
 
-  ## Options
-
-  Use a rule without `:only` when every foreign key in scope should use the same
-  action:
-
-  ```elixir
-  {ForeignKeyActions,
-   rules: [[on_delete: :cascade]]}
-  ```
-
-  Use `rules: [...]` for scoped policy. A foreign key can match more than one
-  rule, and matching rules accumulate.
-
-  ```elixir
-  {ForeignKeyActions,
-   rules: [
-     [
-       only: [[table: "messages"], [referenced_table: "conversations"]],
-       on_delete: :cascade
-     ],
-     [
-       only: [referenced_table: "lookup_statuses"],
-       on_delete: :restrict,
-       on_update: :restrict
-     ]
-   ]}
-  ```
-
-  ## Example
+  ## Examples
 
   With this rule:
 
@@ -66,6 +38,34 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   This check only validates actions you configure. If a rule only sets
   `on_delete`, the `ON UPDATE` action is ignored for that rule.
+
+  ## Options
+
+  Use a rule without `:only` when every foreign key in scope should use the same
+  action:
+
+  ```elixir
+  {ForeignKeyActions,
+   rules: [[on_delete: :cascade]]}
+  ```
+
+  Use `rules: [...]` for scoped policy. A foreign key can match more than one
+  rule, and matching rules accumulate.
+
+  ```elixir
+  {ForeignKeyActions,
+   rules: [
+     [
+       only: [[table: "messages"], [referenced_table: "conversations"]],
+       on_delete: :cascade
+     ],
+     [
+       only: [referenced_table: "lookup_statuses"],
+       on_delete: :restrict,
+       on_update: :restrict
+     ]
+   ]}
+  ```
 
   ## Usage
 

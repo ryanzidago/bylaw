@@ -2,26 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   @moduledoc """
   Validates that Postgres foreign key columns are not nullable.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
-  foreign keys:
-
-  ```elixir
-  {ForeignKeyNullability,
-   rules: [
-     [
-       only: [schema: "public"],
-       except: [
-         [table: "runs", column: "assistant_message_id"],
-         [constraint: "messages_parent_message_id_fkey"]
-       ]
-     ]
-   ]}
-  ```
-
-  ## Example
+  ## Examples
 
   Before, the foreign key allows missing parents:
 
@@ -52,6 +33,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   This check only inspects columns that are already part of a foreign key
   constraint. Optional relationships should be excluded with an `except`
   matcher.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
+  foreign keys:
+
+  ```elixir
+  {ForeignKeyNullability,
+   rules: [
+     [
+       only: [schema: "public"],
+       except: [
+         [table: "runs", column: "assistant_message_id"],
+         [constraint: "messages_parent_message_id_fkey"]
+       ]
+     ]
+   ]}
+  ```
 
   ## Usage
 

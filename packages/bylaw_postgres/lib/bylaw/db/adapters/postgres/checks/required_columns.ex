@@ -2,33 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   @moduledoc """
   Validates that Postgres tables include required columns.
 
-  ## Options
-
-  Use `rules: [...]` to require columns for scoped groups of tables. A rule
-  applies when a table matches any matcher in `only`; keys inside one matcher
-  are combined. Matching rules accumulate, so the same table can be validated by
-  more than one rule.
-
-  ```elixir
-  {RequiredColumns,
-   rules: [
-     [
-       columns: ["inserted_at", "updated_at"],
-       except: [[table: "schema_migrations"]]
-     ],
-     [
-       only: [
-         [schema: "audit"],
-         [schema: "billing", table: ~r/^invoice_/]
-       ],
-       columns: ["tenant_id"]
-     ]
-   ]}
-  ```
-
-  Use rule-level `except: [...]` for exclusions.
-
-  ## Example
+  ## Examples
 
   With `rules: [[only: [schema: "public"], columns: ["tenant_id"]]]`, before:
 
@@ -59,6 +33,32 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   The check only verifies column presence. It does not validate type,
   nullability, indexes, or constraints for required columns.
+
+  ## Options
+
+  Use `rules: [...]` to require columns for scoped groups of tables. A rule
+  applies when a table matches any matcher in `only`; keys inside one matcher
+  are combined. Matching rules accumulate, so the same table can be validated by
+  more than one rule.
+
+  ```elixir
+  {RequiredColumns,
+   rules: [
+     [
+       columns: ["inserted_at", "updated_at"],
+       except: [[table: "schema_migrations"]]
+     ],
+     [
+       only: [
+         [schema: "audit"],
+         [schema: "billing", table: ~r/^invoice_/]
+       ],
+       columns: ["tenant_id"]
+     ]
+   ]}
+  ```
+
+  Use rule-level `except: [...]` for exclusions.
 
   ## Usage
 

@@ -2,26 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   @moduledoc """
   Validates `Ecto.Changeset.foreign_key_constraint/3` annotations for Postgres FKs.
 
-  ## Options
-
-  The check discovers compiled Ecto schemas through reflection, parses source
-  files for conservative changeset candidates, and only requires
-  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
-  Dynamic cast/change field lists are skipped for v1.
-
-
-  The check needs source paths so Bylaw can parse source AST for user-defined
-  changeset functions:
-
-  ```elixir
-  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
-   paths: ["lib/my_app"]}
-  ```
-
-  When the repo can report `config()[:otp_app]`, schema module discovery is
-  derived from it.
-
-  ## Example
+  ## Examples
 
   With a foreign key on `orders.account_id`, before:
 
@@ -53,6 +34,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
 
   The check skips dynamic `cast` or `change` field lists and foreign keys whose
   columns cannot be mapped to Ecto schema fields.
+
+  ## Options
+
+  The check discovers compiled Ecto schemas through reflection, parses source
+  files for conservative changeset candidates, and only requires
+  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
+  Dynamic cast/change field lists are skipped for v1.
+
+
+  The check needs source paths so Bylaw can parse source AST for user-defined
+  changeset functions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
+   paths: ["lib/my_app"]}
+  ```
+
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it.
 
   ## Usage
 

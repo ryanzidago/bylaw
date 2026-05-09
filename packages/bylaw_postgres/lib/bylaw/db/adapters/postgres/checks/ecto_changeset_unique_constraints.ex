@@ -2,26 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   @moduledoc """
   Validates `Ecto.Changeset.unique_constraint/3` annotations for Postgres indexes.
 
-  ## Options
-
-  The check discovers compiled Ecto schemas through reflection, parses source
-  files for conservative changeset candidates, and only requires
-  `unique_constraint/3` when a candidate casts all fields covered by a unique
-  Postgres index. Dynamic cast/change field lists are skipped for v1.
-
-
-  The check needs source paths so Bylaw can parse source AST for user-defined
-  changeset functions:
-
-  ```elixir
-  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
-   paths: ["lib/my_app"]}
-  ```
-
-  When the repo can report `config()[:otp_app]`, schema module discovery is
-  derived from it.
-
-  ## Example
+  ## Examples
 
   With a unique index on `users.email`, before:
 
@@ -55,6 +36,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   The check skips dynamic `cast` or `change` field lists, expression indexes,
   partial indexes, primary keys, and unique indexes whose columns cannot be
   mapped to Ecto schema fields.
+
+  ## Options
+
+  The check discovers compiled Ecto schemas through reflection, parses source
+  files for conservative changeset candidates, and only requires
+  `unique_constraint/3` when a candidate casts all fields covered by a unique
+  Postgres index. Dynamic cast/change field lists are skipped for v1.
+
+
+  The check needs source paths so Bylaw can parse source AST for user-defined
+  changeset functions:
+
+  ```elixir
+  {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
+   paths: ["lib/my_app"]}
+  ```
+
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it.
 
   ## Usage
 

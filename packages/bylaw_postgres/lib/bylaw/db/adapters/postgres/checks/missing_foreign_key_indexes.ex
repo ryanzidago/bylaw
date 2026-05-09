@@ -2,14 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   @moduledoc """
   Validates that Postgres foreign keys have supporting indexes.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope. A foreign key passes when the
-  referencing table has a valid, non-partial index whose leading columns contain
-  the foreign key columns.
-
-  ## Example
+  ## Examples
 
   Before, the foreign key exists but the referencing column has no index:
 
@@ -41,6 +34,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   The supporting index does not have to be unique, and it may include extra
   trailing columns such as `(account_id, inserted_at)`. Partial indexes such as
   `WHERE deleted_at IS NULL` do not count as support for the foreign key.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [[only: ...]]` to narrow the scope. A foreign key passes when the
+  referencing table has a valid, non-partial index whose leading columns contain
+  the foreign key columns.
 
   ## Usage
 

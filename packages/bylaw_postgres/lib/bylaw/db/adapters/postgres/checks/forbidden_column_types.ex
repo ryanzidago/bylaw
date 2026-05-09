@@ -2,26 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   @moduledoc """
   Validates that Postgres columns do not use configured forbidden types.
 
-  ## Options
-
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [...]` to configure forbidden types for scoped groups of columns:
-
-  ```elixir
-  {ForbiddenColumnTypes,
-   rules: [
-     [
-       only: [schema: "public"],
-       types: [
-         [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
-         [type: ~r/^character\\(/, prefer: "text"]
-       ],
-       except: [[table: "webhook_events", column: "raw_payload"]]
-     ]
-   ]}
-  ```
-
-  ## Example
+  ## Examples
 
   With `types: [[type: "json", prefer: "jsonb"]]`, before:
 
@@ -53,6 +34,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   This check is policy-driven and has no built-in opinion about which types are
   bad. Type matchers compare against `pg_catalog.format_type`, so use exact
   strings such as `"json"` or regexes such as `~r/^character\\(/`.
+
+  ## Options
+
+  By default the check inspects all non-system schemas in a Postgres target. Use
+  `rules: [...]` to configure forbidden types for scoped groups of columns:
+
+  ```elixir
+  {ForbiddenColumnTypes,
+   rules: [
+     [
+       only: [schema: "public"],
+       types: [
+         [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
+         [type: ~r/^character\\(/, prefer: "text"]
+       ],
+       except: [[table: "webhook_events", column: "raw_payload"]]
+     ]
+   ]}
+  ```
 
   ## Usage
 

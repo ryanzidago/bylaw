@@ -2,24 +2,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   @moduledoc """
   Validates that scoped Postgres foreign keys include configured scope columns.
 
-  ## Options
-
-  A foreign key is checked when both the child table and referenced table have
-  every configured `:scope_columns` column. The foreign key must include those
-  columns on both sides so a child row cannot point at a parent row from another
-  scope:
-
-  ```elixir
-  {ScopedForeignKeys,
-   rules: [
-     [
-       scope_columns: ["tenant_id", "workspace_id"],
-       except: [[referenced_table: "global_settings"]]
-     ]
-   ]}
-  ```
-
-  ## Example
+  ## Examples
 
   Before, both tables are tenant-scoped, but the foreign key only references
   `conversations(id)`:
@@ -62,6 +45,23 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   every configured `scope_columns` column. Shared lookup tables that
   intentionally have no tenant column are not flagged unless they match a
   different rule.
+
+  ## Options
+
+  A foreign key is checked when both the child table and referenced table have
+  every configured `:scope_columns` column. The foreign key must include those
+  columns on both sides so a child row cannot point at a parent row from another
+  scope:
+
+  ```elixir
+  {ScopedForeignKeys,
+   rules: [
+     [
+       scope_columns: ["tenant_id", "workspace_id"],
+       except: [[referenced_table: "global_settings"]]
+     ]
+   ]}
+  ```
 
   ## Usage
 
