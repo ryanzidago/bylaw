@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.DocBeforeSpec do
+defmodule Bylaw.Credo.Check.Elixir.DocBeforeSpec do
   @moduledoc """
   Requires `@doc` to appear before `@spec` for public function definitions.
 
@@ -33,7 +33,7 @@ defmodule Bylaw.Credo.Check.DocBeforeSpec do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.DocBeforeSpec, []}
+          {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []}
         ]
       }
     ]
