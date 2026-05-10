@@ -2,23 +2,67 @@ defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
   @moduledoc """
   Prefer `Decimal` over floats in Ecto migrations, Ecto schemas, and Elixir code.
 
-  This should be refactored:
+  Floats are approximate binary numbers. Many decimal values cannot be represented
+  exactly as floats, which can make calculations, rounding, equality checks, and
+  persisted values surprising for money, tax, rates, balances, quantities, and
+  other business data.
 
-      add :amount, :float
-      field :amount, :float
-      Float.round(value, 2)
-      amount = 1.25
-      @spec amount() :: float()
+  For example, a float calculation may keep a tiny representation error:
 
-  Into this:
+        0.1 + 0.2
 
-      add :amount, :decimal
-      field :amount, :decimal
-      Decimal.round(value, 2)
-      amount = Decimal.new("1.25")
-      @spec amount() :: Decimal.t()
+  Use the `Decimal` library and Ecto's `:decimal` type when a value needs decimal
+  precision or predictable rounding:
+
+        Decimal.add(Decimal.new("0.1"), Decimal.new("0.2"))
+
+  Floats may still be appropriate for approximate measurements, statistics,
+  scientific calculations, graphics, telemetry, or other domains where small
+  precision differences are expected and acceptable.
+
+  ## Examples
+
+  Avoid:
+
+        add :amount, :float
+        field :amount, :float
+        Float.round(value, 2)
+        amount = 1.25
+        @spec amount() :: float()
+  Prefer:
+
+        add :amount, :decimal
+        field :amount, :decimal
+        Decimal.round(value, 2)
+        amount = Decimal.new("1.25")
+        @spec amount() :: Decimal.t()
 
   If a float is genuinely required, document the exception and disable the check locally.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FloatUsage, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +74,7 @@ defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
 
   @migration_functions [:add, :add_if_not_exists, :modify]
   @typespec_attributes [:spec, :type, :typep, :opaque, :callback, :macrocallback]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

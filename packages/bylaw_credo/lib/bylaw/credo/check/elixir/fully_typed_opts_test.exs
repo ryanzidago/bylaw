@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.FullyTypedOptsTest do
+defmodule Bylaw.Credo.Check.Elixir.FullyTypedOptsTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.FullyTypedOpts
+  alias Bylaw.Credo.Check.Elixir.FullyTypedOpts
 
   test "reports broad opts parameter types in specs and callbacks" do
     """

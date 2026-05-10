@@ -3,27 +3,52 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
   Use `Enum.find/2` when the code only needs the first item that matches a
   predicate.
 
-  ### Bad
+  ## Examples
 
-      users
-      |> Enum.filter(& &1.active?)
-      |> List.first()
+  Avoid:
 
-      List.first(Enum.reject(users, & &1.archived?))
+        users
+        |> Enum.filter(& &1.active?)
+        |> List.first()
 
-  ### Why?
+        List.first(Enum.reject(users, & &1.archived?))
+
+  Prefer:
+
+        Enum.find(users, & &1.active?)
+        Enum.find(users, &(not &1.archived?))
+
+  ## Notes
 
   `Enum.filter/2` and `Enum.reject/2` traverse the whole enumerable and
   allocate an intermediate list before `List.first/1` discards everything
   but the first item.
 
-  ### Better
-
-      Enum.find(users, & &1.active?)
-      Enum.find(users, &(not &1.archived?))
-
   `Enum.find/2` stops as soon as it finds a matching item and states the
   intent directly.
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FilterRejectFirst, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -33,6 +58,7 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

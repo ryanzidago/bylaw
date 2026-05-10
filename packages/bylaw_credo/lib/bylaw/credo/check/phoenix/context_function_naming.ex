@@ -3,24 +3,69 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
   Context lookup functions must follow a naming convention that signals their
   return type, consistent with `Ecto.Repo` (e.g. `Repo.get/2`, `Repo.get!/2`):
 
+  ## Examples
+
   - `get_*`   functions return `record | nil`
   - `get_*!`  functions return `record` (raise on not found)
   - `fetch_*` functions return `{:ok, record} | {:error, reason}`
+  Avoid:
 
-  This should be refactored:
+        @spec get_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
+        def get_workspace(id), do: ...
+  Prefer:
 
-      @spec get_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
-      def get_workspace(id), do: ...
-
-  Into this:
-
-      @spec fetch_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
-      def fetch_workspace(id), do: ...
+        @spec fetch_workspace(binary()) :: {:ok, Workspace.t()} | {:error, :not_found}
+        def fetch_workspace(id), do: ...
 
   Or this:
 
-      @spec get_workspace(binary()) :: Workspace.t() | nil
-      def get_workspace(id), do: ...
+        @spec get_workspace(binary()) :: Workspace.t() | nil
+        def get_workspace(id), do: ...
+
+  ## Notes
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Phoenix.ContextFunctionNaming,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - List of paths or regex to exclude from this check
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Phoenix.ContextFunctionNaming, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -34,6 +79,7 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
       ]
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

@@ -2,29 +2,53 @@ defmodule Bylaw.Credo.Check.Phoenix.NoRepoInController do
   @moduledoc """
   Disallows calling `Repo` directly from controller modules.
 
+  ## Examples
+
   Controllers should delegate data access to context modules (e.g. `Conversations`,
   `Runs`) rather than calling `Repo` directly. This enforces a boundary between the
   web layer and the persistence layer.
+  Avoid:
 
-  ## Examples
-
-  Bad:
-
-      defmodule MyAppWeb.ThingController do
-        def show(conn, %{"id" => id}) do
-          thing = Repo.get!(Thing, id)
-          render(conn, :show, thing: thing)
+        defmodule MyAppWeb.ThingController do
+          def show(conn, %{"id" => id}) do
+            thing = Repo.get!(Thing, id)
+            render(conn, :show, thing: thing)
+          end
         end
-      end
 
-  Good:
+  Prefer:
 
-      defmodule MyAppWeb.ThingController do
-        def show(conn, %{"id" => id}) do
-          thing = Things.get_thing!(id)
-          render(conn, :show, thing: thing)
+        defmodule MyAppWeb.ThingController do
+          def show(conn, %{"id" => id}) do
+            thing = Things.get_thing!(id)
+            render(conn, :show, thing: thing)
+          end
         end
-      end
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Phoenix.NoRepoInController, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -32,6 +56,7 @@ defmodule Bylaw.Credo.Check.Phoenix.NoRepoInController do
     category: :warning,
     explanations: [check: @moduledoc]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     if controller_file?(source_file.filename) do

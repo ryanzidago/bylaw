@@ -4,23 +4,50 @@ defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
   Ecto preload expression. Accept a `preloads:` option, bind it to a local
   `preloads` variable, and pass it to Ecto with `preload(^preloads)`.
 
-  This should be refactored:
+  ## Examples
 
-      defp input_file_preload_query do
-        ToolCallFile
-        |> from(as: :tool_file)
-        |> preload([:file])
-      end
+  Avoid:
 
-  Into this:
+        defp input_file_preload_query do
+          ToolCallFile
+          |> from(as: :tool_file)
+          |> preload([:file])
+        end
 
-      defp input_file_preload_query(opts) do
-        preloads = Keyword.get(opts, :preloads, [])
+  Prefer:
 
-        ToolCallFile
-        |> from(as: :tool_file)
-        |> preload(^preloads)
-      end
+        defp input_file_preload_query(opts) do
+          preloads = Keyword.get(opts, :preloads, [])
+
+          ToolCallFile
+          |> from(as: :tool_file)
+          |> preload(^preloads)
+        end
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.ComposablePreloadQueries, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -31,7 +58,7 @@ defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
     ]
 
   alias Credo.SourceFile
-
+  @doc false
   @impl Credo.Check
   def run(%SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

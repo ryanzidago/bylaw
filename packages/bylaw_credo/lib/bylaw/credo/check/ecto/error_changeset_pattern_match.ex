@@ -3,29 +3,54 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
   Match changeset errors explicitly when handling tagged `{:error, ...}`
   results.
 
-  ### Bad
+  ## Examples
 
-      case Accounts.create_user(attrs) do
-        {:ok, user} -> user
-        {:error, changeset} -> changeset
-      end
+  Avoid:
 
-  ### Why?
+        case Accounts.create_user(attrs) do
+          {:ok, user} -> user
+          {:error, changeset} -> changeset
+        end
+
+  Prefer:
+
+        case Accounts.create_user(attrs) do
+          {:ok, user} -> user
+          {:error, %Ecto.Changeset{} = changeset} -> changeset
+        end
+
+  ## Notes
 
   A bare `{:error, changeset}` pattern only communicates a variable name.
   It does not prove the error value is an Ecto changeset, so readers have
   to inspect the called function before they know what the branch handles.
 
-  ### Better
-
-      case Accounts.create_user(attrs) do
-        {:ok, user} -> user
-        {:error, %Ecto.Changeset{} = changeset} -> changeset
-      end
-
   The struct match documents the expected error shape at the branch that
   handles it, and it prevents unrelated `{:error, reason}` values from
   being treated like changesets.
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -36,7 +61,7 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
     ]
 
   @changeset_var_names ~w(changeset cs)a
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

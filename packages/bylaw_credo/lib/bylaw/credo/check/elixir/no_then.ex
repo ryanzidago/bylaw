@@ -2,21 +2,47 @@ defmodule Bylaw.Credo.Check.Elixir.NoThen do
   @moduledoc """
   Prefer explicit control flow over `then/2`.
 
-  This should be refactored:
+  ## Examples
 
-      value
-      |> transform()
-      |> then(&{:ok, &1})
+  Avoid:
 
-      then(value, &{:ok, &1})
-
-  Into this:
-
-      value =
         value
         |> transform()
+        |> then(&{:ok, &1})
 
-      {:ok, value}
+        then(value, &{:ok, &1})
+  Prefer:
+
+        value =
+          value
+          |> transform()
+
+        {:ok, value}
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoThen, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -26,6 +52,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoThen do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

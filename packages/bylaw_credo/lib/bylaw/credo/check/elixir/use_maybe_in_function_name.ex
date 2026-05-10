@@ -2,16 +2,42 @@ defmodule Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName do
   @moduledoc """
   Use `maybe_` in function names that only perform work conditionally.
 
-  This should be refactored:
+  ## Examples
 
-      def complete_run_if_needed(run), do: ...
+  Avoid:
 
-  Into this:
+        def complete_run_if_needed(run), do: ...
+  Prefer:
 
-      def maybe_complete_run(run), do: ...
+        def maybe_complete_run(run), do: ...
 
   A leading `maybe_` keeps the conditional intent visible without coupling
   the naming convention to a specific suffix like `_if_needed`.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -25,7 +51,7 @@ defmodule Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName do
   @conditional_name_patterns [
     ~r/^(?<stem>.+)_if_needed(?<suffix>[!?])?$/
   ]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     initial_state = %{

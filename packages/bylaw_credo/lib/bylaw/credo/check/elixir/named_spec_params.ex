@@ -1,26 +1,68 @@
-defmodule Bylaw.Credo.Check.NamedSpecParams do
+defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
   @moduledoc """
   Requires named parameters in all `@spec` declarations.
 
-  ## Avoid
+  ## Examples
 
+  Avoid:
   Positional-only types omit what each argument represents:
 
-      @spec fetch(UUIDv7.t(), integer()) :: {:ok, Run.t()} | {:error, term()}
-      @spec submit(UUIDv7.t(), UUIDv7.t(), UUIDv7.t(), UUIDv7.t(), list(map())) :: :ok
-
-  ## Prefer
-
+        @spec fetch(UUIDv7.t(), integer()) :: {:ok, Run.t()} | {:error, term()}
+        @spec submit(UUIDv7.t(), UUIDv7.t(), UUIDv7.t(), UUIDv7.t(), list(map())) :: :ok
+  Prefer:
   Give each parameter a name so the spec is self-documenting:
 
-      @spec fetch(run_id :: UUIDv7.t(), limit :: integer()) :: {:ok, Run.t()} | {:error, term()}
-      @spec submit(
-              tenant_id :: UUIDv7.t(),
-              workspace_id :: UUIDv7.t(),
-              run_id :: UUIDv7.t(),
-              message_id :: UUIDv7.t(),
-              tool_results :: list(map())
-            ) :: :ok
+        @spec fetch(run_id :: UUIDv7.t(), limit :: integer()) :: {:ok, Run.t()} | {:error, term()}
+        @spec submit(
+                tenant_id :: UUIDv7.t(),
+                workspace_id :: UUIDv7.t(),
+                run_id :: UUIDv7.t(),
+                message_id :: UUIDv7.t(),
+                tool_results :: list(map())
+              ) :: :ok
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NamedSpecParams,
+           [
+             min_params: 2
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:min_params` - Minimum number of parameters to trigger the check (default: 1).
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NamedSpecParams, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -34,6 +76,7 @@ defmodule Bylaw.Credo.Check.NamedSpecParams do
       ]
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

@@ -1,18 +1,44 @@
-defmodule Bylaw.Credo.Check.PreferListTypeSyntax do
+defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
   @moduledoc """
   Prefer `list(type)` over `[type]` in typespecs.
 
-  This should be refactored:
+  ## Examples
 
-      @type names :: [String.t()]
-      @spec run([integer()]) :: [atom()]
+  Avoid:
 
-  Into this:
+        @type names :: [String.t()]
+        @spec run([integer()]) :: [atom()]
+  Prefer:
 
-      @type names :: list(String.t())
-      @spec run(list(integer())) :: list(atom())
+        @type names :: list(String.t())
+        @spec run(list(integer())) :: list(atom())
 
   Keep `[type, ...]` when the intent is a non-empty list.
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -24,7 +50,7 @@ defmodule Bylaw.Credo.Check.PreferListTypeSyntax do
 
   @typespec_attributes [:spec, :type, :typep, :opaque, :callback, :macrocallback]
   @callable_typespec_attributes [:spec, :callback, :macrocallback]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

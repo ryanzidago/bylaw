@@ -1,22 +1,68 @@
-defmodule Bylaw.Credo.Check.FullyTypedOpts do
+defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
   @moduledoc """
   Fully type option lists instead of using `keyword()` or `Keyword.t()` for
   `opts` parameters or `*_opts` type aliases.
 
-  This should be refactored:
+  ## Examples
 
-      @spec search(query :: String.t(), opts :: keyword()) :: result()
-      @type search_opts :: Keyword.t()
+  Avoid:
 
-  Into this:
+        @spec search(query :: String.t(), opts :: keyword()) :: result()
+        @type search_opts :: Keyword.t()
+  Prefer:
 
-      @type search_opt ::
-              {:max_results, pos_integer()}
-              | {:country, String.t()}
+        @type search_opt ::
+                {:max_results, pos_integer()}
+                | {:country, String.t()}
 
-      @type search_opts :: [search_opt()]
+        @type search_opts :: [search_opt()]
 
-      @spec search(query :: String.t(), opts :: search_opts()) :: result()
+        @spec search(query :: String.t(), opts :: search_opts()) :: result()
+
+  ## Notes
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FullyTypedOpts,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - List of path prefixes or regexes to exclude from this check.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FullyTypedOpts, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -35,7 +81,7 @@ defmodule Bylaw.Credo.Check.FullyTypedOpts do
   @typespec_attributes [:spec, :callback, :macrocallback, :type, :typep, :opaque]
   @callable_typespec_attributes [:spec, :callback, :macrocallback]
   @type_typespec_attributes [:type, :typep, :opaque]
-
+  @doc false
   @impl Credo.Check
   def run(%SourceFile{} = source_file, params \\ []) do
     excluded_paths = Params.get(params, :excluded_paths, __MODULE__)
