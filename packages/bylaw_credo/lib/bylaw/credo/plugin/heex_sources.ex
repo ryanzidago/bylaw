@@ -6,6 +6,10 @@ defmodule Bylaw.Credo.Plugin.HEExSources do
   Enable this plugin when checks need to run against standalone Phoenix HEEx
   templates.
 
+  Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
+  This plugin adds standalone Phoenix `.html.heex` templates to the source files
+  passed to Credo checks.
+
       plugins: [
         {Bylaw.Credo.Plugin.HEExSources, []}
       ]

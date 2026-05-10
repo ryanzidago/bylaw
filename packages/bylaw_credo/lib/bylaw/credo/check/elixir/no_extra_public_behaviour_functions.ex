@@ -19,7 +19,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
 
   Callback signatures are read from each behaviour module with
   `behaviour_info(:callbacks)`, so the callback list should not be duplicated in
-  Credo configuration. Use `:allowed` for intentional extra public functions.
+  Credo configuration. Use `:allowed`, for example `[child_spec: 1]`, for
+  intentional extra public functions.
 
   ## Notes
 
