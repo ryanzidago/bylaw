@@ -241,10 +241,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   end
 
   defp static_attr_value?(tag, name, expected_value) do
-    tag
-    |> attr_value(name)
-    |> static_string()
-    |> case do
+    case static_string(attr_value(tag, name)) do
       ^expected_value -> true
       _value -> false
     end

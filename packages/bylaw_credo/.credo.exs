@@ -1,3 +1,9 @@
+build_path = Path.expand("_build/#{Mix.env()}/lib/bylaw_credo/ebin", __DIR__)
+
+if File.dir?(build_path) do
+  Code.prepend_path(build_path)
+end
+
 # This file contains the configuration for Credo and you are probably reading
 # this after creating it with `mix credo.gen.config`.
 #

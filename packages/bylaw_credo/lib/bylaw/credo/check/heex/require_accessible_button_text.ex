@@ -75,14 +75,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
       Enum.reduce(tokens, {[], []}, fn token, {issues, stack} ->
         case token do
           %Heex.Tag{type: :tag, name: "button", closing: :self} = tag ->
-            issues =
-              if attrs_have_name?(tag) do
-                issues
-              else
-                [%{line: tag.line, column: tag.column} | issues]
-              end
-
-            {issues, stack}
+            {add_self_closing_button_issue(issues, tag), stack}
 
           %Heex.Tag{type: :tag, name: "button"} = tag ->
             button = %{
@@ -122,6 +115,14 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   end
 
   defp close_button(issues, []), do: {issues, []}
+
+  defp add_self_closing_button_issue(issues, tag) do
+    if attrs_have_name?(tag) do
+      issues
+    else
+      [%{line: tag.line, column: tag.column} | issues]
+    end
+  end
 
   defp mark_named(stack, true), do: Enum.map(stack, &%{&1 | has_name?: true})
   defp mark_named(stack, false), do: stack

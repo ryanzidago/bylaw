@@ -78,9 +78,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   defp unsafe_target_blank?(_tag), do: false
 
   defp static_target_blank?(%Heex.Tag{} = tag) do
-    tag
-    |> attr_value("target")
-    |> case do
+    case attr_value(tag, "target") do
       {:string, target, _meta} -> String.downcase(target) == "_blank"
       _other -> false
     end
@@ -89,9 +87,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   defp dynamic_attrs?(%Heex.Tag{} = tag), do: Heex.has_attr?(tag, :root)
 
   defp safe_rel?(%Heex.Tag{} = tag) do
-    tag
-    |> attr_value("rel")
-    |> case do
+    case attr_value(tag, "rel") do
       {:string, rel, _meta} -> rel_has_token?(rel, "noopener")
       {:expr, _expr, _meta} -> true
       _other -> false
@@ -105,9 +101,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   end
 
   defp attr_value(%Heex.Tag{attrs: attrs}, name) do
-    attrs
-    |> Enum.find(&(&1.name == name))
-    |> case do
+    case Enum.find(attrs, &(&1.name == name)) do
       %{value: value} -> value
       nil -> nil
     end
