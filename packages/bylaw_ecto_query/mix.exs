@@ -31,6 +31,7 @@ defmodule BylawEctoQuery.MixProject do
   defp deps do
     [
       {:bylaw, "~> 0.1", hex: :bylaw, path: "../bylaw"},
+      {:bylaw_credo, "== 0.1.0-alpha.1", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
