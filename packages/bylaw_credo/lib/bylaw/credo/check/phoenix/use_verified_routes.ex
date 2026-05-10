@@ -500,19 +500,19 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
         []
       end
 
-    (router_paths ++ fallback_paths(fallback_router_paths))
-    |> MapSet.new()
+    MapSet.new(router_paths ++ fallback_paths(fallback_router_paths))
   end
 
   defp fallback_paths(fallback_router_paths) do
-    fallback_router_paths
-    |> Enum.map(&normalize_router_path/1)
+    Enum.map(fallback_router_paths, &normalize_router_path/1)
   end
 
   defp module_names(modules), do: Enum.map(modules, &module_name/1)
 
   defp module_name(module) when is_atom(module) do
-    Module.split(module) |> Enum.join(".")
+    module
+    |> Module.split()
+    |> Enum.join(".")
   end
 
   defp module_name(module) when is_binary(module), do: module

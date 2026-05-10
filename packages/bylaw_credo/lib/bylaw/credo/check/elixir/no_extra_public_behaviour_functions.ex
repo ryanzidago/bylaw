@@ -101,7 +101,10 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
 
       state = %{
         issue_meta: issue_meta,
-        behaviours: MapSet.new(Params.get(params, :behaviours, __MODULE__)),
+        behaviours:
+          params
+          |> Params.get(:behaviours, __MODULE__)
+          |> MapSet.new(),
         callbacks_by_behaviour: callbacks_by_behaviour(params),
         allowed: allowed_signatures(params),
         issues: []
@@ -148,8 +151,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
       body
       |> direct_children()
       |> Enum.flat_map(&public_definition_signatures/1)
-      |> Enum.reject(&MapSet.member?(allowed_callbacks, signature(&1)))
-      |> Enum.reject(&MapSet.member?(state.allowed, signature(&1)))
+      |> Enum.reject(&allowed_definition?(&1, allowed_callbacks, state.allowed))
       |> Enum.uniq_by(&signature/1)
       |> Enum.reduce(state, &add_issue/2)
     end
@@ -165,9 +167,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
 
   defp behaviour_callbacks(behaviour) when is_atom(behaviour) do
     if Code.ensure_loaded?(behaviour) and function_exported?(behaviour, :behaviour_info, 1) do
-      behaviour
-      |> apply(:behaviour_info, [:callbacks])
-      |> MapSet.new()
+      callbacks = behaviour.behaviour_info(:callbacks)
+      MapSet.new(callbacks)
     else
       MapSet.new()
     end
@@ -176,6 +177,13 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   end
 
   defp behaviour_callbacks(_behaviour), do: MapSet.new()
+
+  defp allowed_definition?(definition, allowed_callbacks, allowed_signatures) do
+    definition_signature = signature(definition)
+
+    MapSet.member?(allowed_callbacks, definition_signature) ||
+      MapSet.member?(allowed_signatures, definition_signature)
+  end
 
   defp callback_signatures(behaviours, callbacks_by_behaviour) do
     behaviours
@@ -209,7 +217,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   end
 
   defp alias_entries(
-         {:alias, _meta, [{:__aliases__, _aliases_meta, aliases}, [as: {:__aliases__, _, [as]}]]}
+         {:alias, _meta,
+          [{:__aliases__, _aliases_meta, aliases}, [as: {:__aliases__, _as_meta, [as]}]]}
        ) do
     [{as, Module.concat(aliases)}]
   end

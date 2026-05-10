@@ -216,7 +216,9 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAltTest do
     tmp_dir = tmp_dir!("require-image-alt")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
 
     File.write!(template_path, """
     <section>
@@ -243,7 +245,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAltTest do
     tmp_dir = tmp_dir!("require-image-alt-excluded")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
+
     File.write!(template_path, ~s(<img src="/logo.svg">))
 
     source_files =

@@ -193,7 +193,9 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRelTest do
     tmp_dir = tmp_dir!("require-target-blank-rel")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
 
     File.write!(template_path, """
     <section>

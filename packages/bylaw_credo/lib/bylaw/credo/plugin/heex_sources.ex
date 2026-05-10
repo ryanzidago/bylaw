@@ -39,10 +39,10 @@ defmodule Bylaw.Credo.Plugin.HEExSources do
     use Credo.Execution.Task
 
     alias Credo.Execution
-    alias Credo.SourceFile
     alias Credo.Service.SourceFileAST
     alias Credo.Service.SourceFileLines
     alias Credo.Service.SourceFileSource
+    alias Credo.SourceFile
 
     @extension ".html.heex"
     @wildcard "**/*.html.heex"
@@ -125,8 +125,7 @@ defmodule Bylaw.Credo.Plugin.HEExSources do
     end
 
     defp heex_wildcards(path) do
-      [path | derived_heex_wildcards(path)]
-      |> Enum.uniq()
+      Enum.uniq([path | derived_heex_wildcards(path)])
     end
 
     defp derived_heex_wildcards(path) do

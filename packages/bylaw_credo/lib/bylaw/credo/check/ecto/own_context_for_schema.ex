@@ -152,7 +152,7 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
 
   defp normalized_schema_module_names(schema_modules) do
     Enum.map(schema_modules, fn
-      module when is_atom(module) -> Module.split(module) |> Enum.join(".")
+      module when is_atom(module) -> Enum.join(Module.split(module), ".")
       module when is_binary(module) -> module
     end)
   end

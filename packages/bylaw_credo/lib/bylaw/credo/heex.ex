@@ -94,15 +94,15 @@ defmodule Bylaw.Credo.Heex do
 
   @eex_expr [:start_expr, :expr, :end_expr, :middle_expr]
   @heex_extensions [".ex", ".exs"]
-  @tag_engine_tokenizer Module.concat([Phoenix, LiveView, TagEngine, Tokenizer])
-  @tokenizer Module.concat([Phoenix, LiveView, Tokenizer])
-  @html_engine Module.concat([Phoenix, LiveView, HTMLEngine])
+  @tokenizer Phoenix.LiveView.Tokenizer
+  @html_engine Phoenix.LiveView.HTMLEngine
+  @tokenizer_available Code.ensure_loaded?(@tokenizer) and Code.ensure_loaded?(@html_engine)
 
   # Returns whether a compatible Phoenix LiveView tokenizer is available.
   @doc false
   @spec available?() :: boolean()
   def available? do
-    not is_nil(tokenizer_module()) and Code.ensure_loaded?(@html_engine)
+    @tokenizer_available
   end
 
   # Extracts HEEx templates from a Credo source file.
@@ -166,13 +166,15 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defp sigil_templates(source) do
-    with {:ok, ast} <- Code.string_to_quoted(source, columns: true, token_metadata: true) do
-      ast
-      |> Macro.prewalk([], &collect_sigil_template/2)
-      |> elem(1)
-      |> Enum.reverse()
-    else
-      _error -> []
+    case Code.string_to_quoted(source, columns: true, token_metadata: true) do
+      {:ok, ast} ->
+        ast
+        |> Macro.prewalk([], &collect_sigil_template/2)
+        |> elem(1)
+        |> Enum.reverse()
+
+      _error ->
+        []
     end
   end
 
@@ -182,23 +184,27 @@ defmodule Bylaw.Credo.Heex do
        ) do
     source = IO.iodata_to_binary(parts)
     indentation = text_meta[:indentation] || 0
-
-    line =
-      case meta[:delimiter] do
-        "\"\"\"" -> (meta[:line] || 1) + 1
-        _other -> meta[:line] || 1
-      end
-
-    column =
-      case meta[:delimiter] do
-        "\"\"\"" -> indentation + 1
-        delimiter -> (meta[:column] || 1) + 2 + String.length(delimiter || "")
-      end
+    line = sigil_line(meta)
+    column = sigil_column(meta, source, indentation)
 
     {ast, [%Template{source: source, line: line, column: column} | templates]}
   end
 
   defp collect_sigil_template(ast, templates), do: {ast, templates}
+
+  defp sigil_line(meta) do
+    case meta[:delimiter] do
+      "\"\"\"" -> (meta[:line] || 1) + 1
+      _delimiter -> meta[:line] || 1
+    end
+  end
+
+  defp sigil_column(meta, _source, indentation) do
+    case meta[:delimiter] do
+      "\"\"\"" -> indentation + 1
+      delimiter -> (meta[:column] || 1) + 2 + String.length(delimiter || "")
+    end
+  end
 
   defp do_tokens(%Template{} = template) do
     template.source
@@ -211,30 +217,30 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defp tokenize(source, template) do
-    with {:ok, eex_nodes} <- EEx.tokenize(source) do
-      {tokens, cont} =
-        Enum.reduce(eex_nodes, {[], {:text, :enabled}}, fn node, acc ->
-          tokenize_eex_node(node, acc, template, source)
-        end)
+    case EEx.tokenize(source) do
+      {:ok, eex_nodes} ->
+        {tokens, cont} =
+          Enum.reduce(eex_nodes, {[], {:text, :enabled}}, fn node, acc ->
+            tokenize_eex_node(node, acc, template, source)
+          end)
 
-      tokenizer = tokenizer_module()
-      apply(tokenizer, :finalize, [tokens, "nofile", cont, source])
-    else
-      _error -> []
+        tokenizer_finalize(tokens, "nofile", cont, source)
+
+      _error ->
+        []
     end
   end
 
   defp tokenize_eex_node({:text, text, meta}, {tokens, cont}, template, source) do
     text = List.to_string(text)
-    tokenizer = tokenizer_module()
-    state = apply(tokenizer, :init, [template.column - 1, "nofile", source, @html_engine])
+    state = tokenizer_init(template.column - 1, "nofile", source)
 
     meta = [
       line: template.line + meta.line - 1,
       column: if(meta.line == 1, do: template.column + meta.column - 1, else: meta.column)
     ]
 
-    apply(tokenizer, :tokenize, [text, meta, tokens, cont, state])
+    tokenizer_tokenize(text, meta, tokens, cont, state)
   end
 
   defp tokenize_eex_node({:comment, text, meta}, {tokens, cont}, _template, _source) do
@@ -249,7 +255,13 @@ defmodule Bylaw.Credo.Heex do
        )
        when type in @eex_expr do
     meta = %{opt: opt, line: line, column: column}
-    {[{:eex, type, expr |> List.to_string() |> String.trim(), meta} | tokens], cont}
+
+    expr =
+      expr
+      |> List.to_string()
+      |> String.trim()
+
+    {[{:eex, type, expr, meta} | tokens], cont}
   end
 
   defp tokenize_eex_node(_node, acc, _template, _source), do: acc
@@ -313,11 +325,24 @@ defmodule Bylaw.Credo.Heex do
     }
   end
 
-  defp tokenizer_module do
-    cond do
-      Code.ensure_loaded?(@tag_engine_tokenizer) -> @tag_engine_tokenizer
-      Code.ensure_loaded?(@tokenizer) -> @tokenizer
-      true -> nil
+  if @tokenizer_available do
+    alias Phoenix.LiveView.HTMLEngine
+    alias Phoenix.LiveView.Tokenizer
+
+    defp tokenizer_init(column, file, source) do
+      Tokenizer.init(column, file, source, HTMLEngine)
     end
+
+    defp tokenizer_tokenize(text, meta, tokens, cont, state) do
+      Tokenizer.tokenize(text, meta, tokens, cont, state)
+    end
+
+    defp tokenizer_finalize(tokens, file, cont, source) do
+      Tokenizer.finalize(tokens, file, cont, source)
+    end
+  else
+    defp tokenizer_init(_column, _file, _source), do: nil
+    defp tokenizer_tokenize(_text, _meta, tokens, cont, _state), do: {tokens, cont}
+    defp tokenizer_finalize(_tokens, _file, _cont, _source), do: []
   end
 end

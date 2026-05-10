@@ -191,7 +191,9 @@ defmodule Bylaw.Credo.Check.HEEx.RequireButtonTypeTest do
     tmp_dir = tmp_dir!("require-button-type")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
 
     File.write!(template_path, """
     <form>
