@@ -1,6 +1,6 @@
 # Bylaw.Credo
 
-Custom Credo checks for Bylaw.
+Custom Credo checks.
 
 ## Installation
 
