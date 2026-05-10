@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.PreferListTypeSyntax do
+defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
   @moduledoc """
   Prefer `list(type)` over `[type]` in typespecs.
 
@@ -33,7 +33,7 @@ defmodule Bylaw.Credo.Check.PreferListTypeSyntax do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.PreferListTypeSyntax, []}
+          {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []}
         ]
       }
     ]

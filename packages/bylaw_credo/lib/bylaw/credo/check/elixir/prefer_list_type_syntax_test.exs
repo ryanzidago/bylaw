@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.PreferListTypeSyntaxTest do
+defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntaxTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.PreferListTypeSyntax
+  alias Bylaw.Credo.Check.Elixir.PreferListTypeSyntax
 
   test "reports bracket list syntax in typespecs" do
     """
