@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.FullySpecifiedStructTypesTest do
+defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypesTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.FullySpecifiedStructTypes
+  alias Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes
 
   test "reports empty struct literals in type declarations" do
     """

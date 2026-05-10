@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.FullySpecifiedStructTypes do
+defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes do
   @moduledoc """
   Fully specify struct fields in type declarations instead of using
   empty struct literals such as `%__MODULE__{}`.
@@ -32,7 +32,7 @@ defmodule Bylaw.Credo.Check.FullySpecifiedStructTypes do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.FullySpecifiedStructTypes, []}
+          {Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes, []}
         ]
       }
     ]

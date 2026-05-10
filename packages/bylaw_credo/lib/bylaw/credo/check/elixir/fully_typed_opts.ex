@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.FullyTypedOpts do
+defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
   @moduledoc """
   Fully type option lists instead of using `keyword()` or `Keyword.t()` for
   `opts` parameters or `*_opts` type aliases.
@@ -35,7 +35,7 @@ defmodule Bylaw.Credo.Check.FullyTypedOpts do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.FullyTypedOpts,
+          {Bylaw.Credo.Check.Elixir.FullyTypedOpts,
            [
              excluded_paths: ["test/support/"]
            ]}
@@ -57,7 +57,7 @@ defmodule Bylaw.Credo.Check.FullyTypedOpts do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.FullyTypedOpts, []}
+          {Bylaw.Credo.Check.Elixir.FullyTypedOpts, []}
         ]
       }
     ]
