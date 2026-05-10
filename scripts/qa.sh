@@ -9,8 +9,6 @@ packages=(
   bylaw_credo
 )
 
-stage_packages=("${packages[@]}")
-
 echo "qa running ..."
 
 run_stage() {
@@ -23,7 +21,7 @@ run_stage() {
   local -a statuses=()
 
   local package
-  for package in "${stage_packages[@]}"; do
+  for package in "${packages[@]}"; do
     labels+=("packages/${package}")
 
     local output
@@ -71,9 +69,7 @@ run_stage() {
 run_stage "deps.get" mix deps.get
 run_stage "format" mix format --check-formatted
 run_stage "compile" mix compile --warnings-as-errors
-stage_packages=(bylaw bylaw_db bylaw_ecto_query bylaw_postgres)
 run_stage "credo" mix credo --strict
-stage_packages=("${packages[@]}")
 run_stage "test" mix test "$@"
 run_stage "docs" mix docs
 

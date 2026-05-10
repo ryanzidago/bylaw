@@ -216,7 +216,9 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacingTest do
     tmp_dir = tmp_dir!("no-element-spacing")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
 
     File.write!(template_path, """
     <section>

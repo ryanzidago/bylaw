@@ -163,7 +163,9 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIdsTest do
     tmp_dir = tmp_dir!("no-duplicate-static-ids")
     template_path = Path.join([tmp_dir, "lib", "example", "index.html.heex"])
 
-    File.mkdir_p!(Path.dirname(template_path))
+    template_path
+    |> Path.dirname()
+    |> File.mkdir_p!()
 
     File.write!(template_path, """
     <section id="settings">
