@@ -18,12 +18,6 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
    ]}
   ```
 
-  Notes:
-  The check only runs in configured web paths and tests using configured ConnCase
-  modules. It only flags path strings that normalize to a route exposed by one
-  of the configured routers or `:fallback_router_paths`. It ignores OpenAPI URI
-  templates like `"/api/v1/tenants/{tenant_id}/..."` and HEEx route attributes
-  for now.
 
   Avoid:
 
@@ -49,6 +43,12 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
         conn |> get(~p"/api/v1/tenants/\#{tenant_id}/workspaces?\#{params}")
 
   ## Notes
+
+  The check only runs in configured web paths and tests using configured ConnCase
+  modules. It only flags path strings that normalize to a route exposed by one
+  of the configured routers or `:fallback_router_paths`. It ignores OpenAPI URI
+  templates like `"/api/v1/tenants/{tenant_id}/..."` and HEEx route attributes
+  for now.
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
   Configure `:fallback_router_paths` when router modules are unavailable during Credo analysis.

@@ -11,21 +11,22 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
           Application.put_env(:my_app, :feature_enabled?, true)
           assert Feature.enabled?()
         end
-  Notes:
-  Application and system environment are shared process-wide state. Tests
-  that read or mutate that state can race with each other when the suite
-  runs concurrently, especially when a test forgets to restore a value.
+
   Prefer:
 
         test "uses config" do
           assert Feature.enabled?(%{feature_enabled?: true})
         end
 
+  ## Notes
+
+  Application and system environment are shared process-wide state. Tests
+  that read or mutate that state can race with each other when the suite
+  runs concurrently, especially when a test forgets to restore a value.
+
   Prefer passing dependencies or configuration explicitly. If a test needs
   a substitute implementation, use a behaviour-backed module or mock that
   is scoped to the test process.
-
-  ## Notes
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 

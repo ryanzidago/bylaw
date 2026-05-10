@@ -10,20 +10,21 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple do
         {:noreply, assign(socket, :user, user)}
 
         {:ok, socket |> assign(:user, user)}
-  Notes:
-  Inline assignment hides the socket transformation inside the return value.
-  That makes it harder to add more socket changes, inspect intermediate
-  values, or keep return tuples visually consistent.
+
   Prefer:
 
         socket = assign(socket, :user, user)
         {:noreply, socket}
 
+  ## Notes
+
+  Inline assignment hides the socket transformation inside the return value.
+  That makes it harder to add more socket changes, inspect intermediate
+  values, or keep return tuples visually consistent.
+
   Keep socket updates in normal expressions and reserve `{:ok, socket}`,
   `{:noreply, socket}`, and `{:reply, reply, socket}` for returning the
   final socket.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

@@ -9,10 +9,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
 
         def handle({:ok, value}), do: process(value)
         def handle({:error, reason}), do: reason
-  Notes:
-  A helper that accepts tagged result tuples mixes two responsibilities:
-  branching on the result shape and doing the work for the successful or error
-  value. That makes the helper harder to reuse with plain values.
+
   Prefer:
 
         case fetch_value() do
@@ -20,10 +17,14 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
           {:error, reason} -> reason
         end
 
+  ## Notes
+
+  A helper that accepts tagged result tuples mixes two responsibilities:
+  branching on the result shape and doing the work for the successful or error
+  value. That makes the helper harder to reuse with plain values.
+
   Branch where the tagged result is produced, then call helpers with the value
   or reason they actually operate on.
-
-  ## Notes
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 

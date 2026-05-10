@@ -8,18 +8,19 @@ defmodule Bylaw.Credo.Check.Testing.NoTestsInTestDir do
   Avoid:
 
         test/bylaw/example_test.exs
-  Notes:
-  A separate test tree makes it harder to find the tests for a module and
-  easier to move implementation without noticing stale or missing coverage.
+
   Prefer:
 
         lib/bylaw/example.ex
         lib/bylaw/example_test.exs
 
+  ## Notes
+
+  A separate test tree makes it harder to find the tests for a module and
+  easier to move implementation without noticing stale or missing coverage.
+
   Colocation keeps behavior and coverage near each other, which makes
   focused changes and reviews cheaper.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

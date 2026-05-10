@@ -11,10 +11,7 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
           {:ok, user} -> user
           {:error, changeset} -> changeset
         end
-  Notes:
-  A bare `{:error, changeset}` pattern only communicates a variable name.
-  It does not prove the error value is an Ecto changeset, so readers have
-  to inspect the called function before they know what the branch handles.
+
   Prefer:
 
         case Accounts.create_user(attrs) do
@@ -22,11 +19,15 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
           {:error, %Ecto.Changeset{} = changeset} -> changeset
         end
 
+  ## Notes
+
+  A bare `{:error, changeset}` pattern only communicates a variable name.
+  It does not prove the error value is an Ecto changeset, so readers have
+  to inspect the called function before they know what the branch handles.
+
   The struct match documents the expected error shape at the branch that
   handles it, and it prevents unrelated `{:error, reason}` values from
   being treated like changesets.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

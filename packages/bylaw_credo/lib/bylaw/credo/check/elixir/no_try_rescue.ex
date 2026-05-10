@@ -11,10 +11,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoTryRescue do
         rescue
           Ecto.NoResultsError -> {:error, :not_found}
         end
-  Notes:
-  Exceptions hide expected failure modes and make the successful path look
-  more reliable than it is. They also push error handling away from the
-  function contract.
+
   Prefer:
 
         case Accounts.fetch_user(id) do
@@ -22,11 +19,15 @@ defmodule Bylaw.Credo.Check.Elixir.NoTryRescue do
           {:error, :not_found} -> {:error, :not_found}
         end
 
+  ## Notes
+
+  Exceptions hide expected failure modes and make the successful path look
+  more reliable than it is. They also push error handling away from the
+  function contract.
+
   Prefer functions that return explicit values and handle those values with
   pattern matching. `try/after` without `rescue` or `catch` is still allowed
   for resource cleanup.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

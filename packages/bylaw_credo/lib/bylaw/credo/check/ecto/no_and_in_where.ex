@@ -9,10 +9,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoAndInWhere do
         User
         |> where([u], u.active and u.confirmed_at > ^cutoff)
         |> Repo.all()
-  Notes:
-  Packing multiple predicates into one `where` expression makes query
-  composition harder. Separate clauses are easier to add, remove, reorder,
-  and conditionally compose with helper functions.
+
   Prefer:
 
         User
@@ -20,10 +17,14 @@ defmodule Bylaw.Credo.Check.Ecto.NoAndInWhere do
         |> where([u], u.confirmed_at > ^cutoff)
         |> Repo.all()
 
+  ## Notes
+
+  Packing multiple predicates into one `where` expression makes query
+  composition harder. Separate clauses are easier to add, remove, reorder,
+  and conditionally compose with helper functions.
+
   Each clause carries one constraint, which keeps incremental query
   building clear and makes diffs smaller when a predicate changes.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

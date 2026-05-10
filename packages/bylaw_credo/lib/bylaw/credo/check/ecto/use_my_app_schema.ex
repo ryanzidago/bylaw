@@ -4,13 +4,6 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
 
   ## Examples
 
-  Notes:
-  An app schema module, such as `MyApp.Schema`, can provide project-specific
-  schema defaults:
-  - primary key conventions
-  - foreign key conventions
-  - timestamp precision and type conventions
-
   For example:
 
   ```elixir
@@ -52,6 +45,12 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
   ```
 
   ## Notes
+
+  An app schema module, such as `MyApp.Schema`, can provide project-specific
+  schema defaults:
+  - primary key conventions
+  - foreign key conventions
+  - timestamp precision and type conventions
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
   Since each application chooses its own schema wrapper module, files ending in

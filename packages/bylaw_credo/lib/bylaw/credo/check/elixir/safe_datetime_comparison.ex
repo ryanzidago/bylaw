@@ -8,20 +8,21 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
 
         entry.inserted_at > cutoff_at
         start_date <= end_date
-  Notes:
-  Elixir's term ordering can compare structs even when the comparison is
-  not the domain comparison you meant. Date and time types have comparison
-  functions that encode the correct semantics.
+
   Prefer:
 
         DateTime.after?(entry.inserted_at, cutoff_at)
         Date.compare(start_date, end_date) in [:lt, :eq]
 
+  ## Notes
+
+  Elixir's term ordering can compare structs even when the comparison is
+  not the domain comparison you meant. Date and time types have comparison
+  functions that encode the correct semantics.
+
   Use `compare/2`, `before?/2`, or `after?/2` from the relevant date/time
   module. Ecto `where` clauses are ignored because query comparisons are
   translated by Ecto instead of using Elixir term ordering.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

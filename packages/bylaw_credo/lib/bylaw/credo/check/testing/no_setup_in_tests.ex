@@ -13,10 +13,7 @@ defmodule Bylaw.Credo.Check.Testing.NoSetupInTests do
         test "shows user", %{user: user} do
           assert user.active?
         end
-  Notes:
-  Shared setup hides the inputs a test needs and encourages unrelated tests
-  to depend on the same fixture shape. `setup_all` also creates shared data
-  that can make ordering and isolation problems harder to see.
+
   Prefer:
 
         test "shows user" do
@@ -24,11 +21,15 @@ defmodule Bylaw.Credo.Check.Testing.NoSetupInTests do
           assert user.active?
         end
 
+  ## Notes
+
+  Shared setup hides the inputs a test needs and encourages unrelated tests
+  to depend on the same fixture shape. `setup_all` also creates shared data
+  that can make ordering and isolation problems harder to see.
+
   Keep each test's data close to the assertion. `setup :verify_on_exit!` is
   allowed because it supports mock verification rather than shared fixture
   construction.
-
-  ## Notes
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 

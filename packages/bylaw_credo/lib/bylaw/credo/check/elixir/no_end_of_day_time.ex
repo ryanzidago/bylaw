@@ -7,18 +7,19 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
   Avoid:
 
         occurred_at >= day_start and occurred_at <= ~T[23:59:59]
-  Notes:
-  An inclusive `23:59:59` bound misses values with fractional seconds, such
-  as `23:59:59.500000`. That creates edge-case bugs for timestamp and time
-  comparisons.
+
   Prefer:
 
         occurred_at >= day_start and occurred_at < next_day_start
 
+  ## Notes
+
+  An inclusive `23:59:59` bound misses values with fractional seconds, such
+  as `23:59:59.500000`. That creates edge-case bugs for timestamp and time
+  comparisons.
+
   Use the next day's midnight as an exclusive upper bound. Half-open ranges
   include every representable time in the day without guessing precision.
-
-  ## Notes
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 

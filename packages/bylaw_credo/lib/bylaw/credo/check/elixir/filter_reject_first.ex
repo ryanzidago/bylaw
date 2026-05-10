@@ -12,19 +12,20 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
         |> List.first()
 
         List.first(Enum.reject(users, & &1.archived?))
-  Notes:
-  `Enum.filter/2` and `Enum.reject/2` traverse the whole enumerable and
-  allocate an intermediate list before `List.first/1` discards everything
-  but the first item.
+
   Prefer:
 
         Enum.find(users, & &1.active?)
         Enum.find(users, &(not &1.archived?))
 
+  ## Notes
+
+  `Enum.filter/2` and `Enum.reject/2` traverse the whole enumerable and
+  allocate an intermediate list before `List.first/1` discards everything
+  but the first item.
+
   `Enum.find/2` stops as soon as it finds a matching item and states the
   intent directly.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 

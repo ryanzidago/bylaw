@@ -11,10 +11,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoTransaction do
           create_user!(attrs)
           create_audit_event!(attrs)
         end)
-  Notes:
-  `Repo.transaction/1,2` is deprecated in Ecto 3.13 in favor of
-  `Repo.transact/1,2`. Keeping deprecated calls around makes future Ecto
-  upgrades noisier and leaves new transactional code on the old API.
+
   Prefer:
 
         Repo.transact(fn ->
@@ -22,10 +19,14 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoTransaction do
           create_audit_event!(attrs)
         end)
 
+  ## Notes
+
+  `Repo.transaction/1,2` is deprecated in Ecto 3.13 in favor of
+  `Repo.transact/1,2`. Keeping deprecated calls around makes future Ecto
+  upgrades noisier and leaves new transactional code on the old API.
+
   `Repo.transact/1,2` communicates the preferred Ecto API directly and
   keeps transaction call sites off the deprecated API.
-
-  ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
