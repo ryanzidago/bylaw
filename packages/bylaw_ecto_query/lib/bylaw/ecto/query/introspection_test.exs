@@ -149,8 +149,8 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
 
     test "returns an empty list for unsupported values" do
-      assert Introspection.nested_queries(:not_a_query) == []
-      assert Introspection.nested_queries(%{joins: [:bad], combinations: [:bad]}) == []
+      assert Enum.empty?(Introspection.nested_queries(:not_a_query))
+      assert Enum.empty?(Introspection.nested_queries(%{joins: [:bad], combinations: [:bad]}))
     end
   end
 
@@ -202,7 +202,7 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
       assert Introspection.root_field(post_status, aliases) == {:ok, :status}
 
-      assert Introspection.root_fields(comment_status, aliases) == []
+      assert Enum.empty?(Introspection.root_fields(comment_status, aliases))
     end
 
     test "accept named root fields from root alias sets" do
@@ -212,7 +212,7 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
       assert Introspection.root_field(post_status, root_aliases) == {:ok, :status}
 
-      assert Introspection.root_fields(comment_status, root_aliases) == []
+      assert Enum.empty?(Introspection.root_fields(comment_status, root_aliases))
     end
   end
 
