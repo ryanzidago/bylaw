@@ -218,7 +218,19 @@
           {Credo.Check.Warning.UnusedTupleOperation, []},
           {Credo.Check.Warning.WrongTestFilename, []},
           {Bylaw.Credo.Check.Elixir.FloatUsage, []},
-          {Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes, []},
+          {Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes,
+           [
+             web_paths: ["lib/bylaw_web/"],
+             endpoint_paths: ["lib/bylaw_web/endpoint.ex"],
+             router_paths: ["lib/bylaw_web/router.ex"],
+             conn_case_modules: [BylawWeb.ConnCase],
+             routers: [BylawWeb.Router],
+             fallback_router_paths: [
+               "/api/v1/openapi",
+               "/api/v1/tenants/:tenant_id/workspaces/:workspace_id",
+               "/api/v1/tenants/:tenant_id/workspaces/:workspace_id/runs/:run_id"
+             ]
+           ]},
           {Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate, false},
           {Bylaw.Credo.Check.Ecto.NamedBinding, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch, []},
