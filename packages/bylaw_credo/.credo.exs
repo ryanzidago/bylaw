@@ -222,7 +222,7 @@
           {Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate, false},
           {Bylaw.Credo.Check.Ecto.NamedBinding, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch, []},
-          {Bylaw.Credo.Check.FullySpecifiedStructTypes, []},
+          {Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes, []},
           {Bylaw.Credo.Check.Ecto.NoAndInWhere, false},
           {Bylaw.Credo.Check.Elixir.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple, []},

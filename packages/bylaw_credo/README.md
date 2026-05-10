@@ -60,8 +60,8 @@ implementations should keep a minimal public API:
 {Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
  [
    behaviours: [
-     Bylaw.Db.Check,
-     Bylaw.Ecto.Query.Check
+     MyApp.Workers.Job,
+     MyApp.Notifications.Delivery
    ],
    allowed: []
  ]}

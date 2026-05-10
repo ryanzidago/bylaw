@@ -15,7 +15,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
 
   Note: `Agent` is not flagged because it cannot be reliably
   distinguished from aliased application modules (e.g.
-  `Bylaw.Agents.Agent`) at the AST level. `Task` is also not
+  `MyApp.Agents.Agent`) at the AST level. `Task` is also not
   flagged - it is a reasonable concurrency tool that does not
   introduce hidden state.
 
