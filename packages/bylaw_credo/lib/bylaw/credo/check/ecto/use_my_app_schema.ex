@@ -10,7 +10,25 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
   - primary key conventions
   - foreign key conventions
   - timestamp precision and type conventions
+
+  For example:
+
+  ```elixir
+  defmodule MyApp.Schema do
+    defmacro __using__(_opts) do
+      quote do
+        use Ecto.Schema
+
+        @primary_key {:id, UUIDv7, autogenerate: true}
+        @foreign_key_type UUIDv7
+        @timestamps_opts [type: :utc_datetime_usec]
+      end
+    end
+  end
+  ```
+
   Avoid:
+
   ```elixir
   defmodule MyApp.User do
       use Ecto.Schema
@@ -20,7 +38,9 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
       end
   end
   ```
+
   Prefer:
+
   ```elixir
   defmodule MyApp.User do
       use MyApp.Schema
