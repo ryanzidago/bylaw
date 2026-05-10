@@ -7,18 +7,18 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
 
   Avoid:
 
-        defmodule BylawWeb.Api.V1.ToolController do
-          alias Bylaw.Accounts.TenantApiKey
-          alias Bylaw.TestSupport.ExAwsHttpClient
-          alias Bylaw.DatabaseCheck.UuidKeys
+        defmodule MyAppWeb.Api.V1.ToolController do
+          alias MyApp.Accounts.TenantApiKey
+          alias MyApp.TestSupport.ExAwsHttpClient
+          alias MyApp.DatabaseCheck.UuidKeys
         end
 
   Prefer:
 
-        defmodule BylawWeb.API.V1.ToolController do
-          alias Bylaw.Accounts.TenantAPIKey
-          alias Bylaw.TestSupport.ExAwsHTTPClient
-          alias Bylaw.DatabaseCheck.UUIDKeys
+        defmodule MyAppWeb.API.V1.ToolController do
+          alias MyApp.Accounts.TenantAPIKey
+          alias MyApp.TestSupport.ExAwsHTTPClient
+          alias MyApp.DatabaseCheck.UUIDKeys
         end
 
   Mix task modules are exempt because the project intentionally keeps names
@@ -27,6 +27,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   ## Notes
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+  Configure `:app_roots` for the application module roots that should be checked.
 
   ## Options
 
@@ -52,7 +53,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   ```
 
   - `:acronyms` - Uppercase acronym words to enforce in app-owned module names.
-  - `:app_roots` - Absolute app module roots that should be checked.
+  - `:app_roots` - Absolute app module roots that should be checked. Defaults to an empty list, so consumer applications should configure their own roots.
   - `:exempt_prefixes` - Module prefixes that should always be ignored.
   - `:relative_roots` - Relative module roots to check inside app-owned modules.
 
@@ -66,7 +67,10 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing, []}
+          {Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing,
+           [
+             app_roots: ~w(MyApp MyAppWeb)
+           ]}
         ]
       }
     ]
@@ -79,7 +83,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
     category: :readability,
     param_defaults: [
       acronyms: ~w(API CSV HTTP JSON LLM UUID),
-      app_roots: ~w(Bylaw BylawWeb),
+      app_roots: [],
       exempt_prefixes: ~w(Mix.Tasks),
       relative_roots: ~w(api)
     ],
@@ -87,7 +91,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
       check: @moduledoc,
       params: [
         acronyms: "Uppercase acronym words to enforce in app-owned module names.",
-        app_roots: "Absolute app module roots that should be checked.",
+        app_roots: "Absolute app module roots that should be checked. Defaults to an empty list.",
         exempt_prefixes: "Module prefixes that should always be ignored.",
         relative_roots: "Relative module roots to check inside app-owned modules."
       ]

@@ -4,7 +4,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
   ## Examples
 
-  ## Why
+  ### Why
 
   Function heads have two jobs: naming parameters and selecting which clause runs.
   When you also use them to reach into maps and structs to pull out fields, those
@@ -43,7 +43,9 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   - **Scanning speed.** Clause dispatch should be easy to scan vertically.
       When heads are short and uniform, the reader can see the dispatch table at a
       glance. Long heads with inline extraction break that visual rhythm.
+
   Avoid:
+
   Extracting struct fields in the head:
 
         def perform(%Oban.Job{args: args, attempt: attempt, max_attempts: max_attempts}) do
@@ -66,7 +68,9 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   Anonymous functions have the same problem:
 
         Enum.map(jobs, fn %Oban.Job{args: args} -> process(args) end)
+
   Prefer:
+
   Accept the struct, extract in the body:
 
         def perform(%Oban.Job{} = job) do
@@ -89,7 +93,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
         Enum.map(jobs, fn %Oban.Job{} = job -> process(job.args) end)
 
-  ## Good uses of function-head pattern matching
+  ### Allowed uses of function-head pattern matching
 
   Pattern matching in function heads is fine when it does real dispatch work -
   deciding *which clause runs*, not pulling data out for later use.
