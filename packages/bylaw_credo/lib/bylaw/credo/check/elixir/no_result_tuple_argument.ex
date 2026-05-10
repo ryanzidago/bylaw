@@ -3,26 +3,71 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
   Prevents functions from accepting `{:ok, _}` or `{:error, _}` as their first
   argument.
 
-  ## Bad
+  ## Examples
 
-      def handle({:ok, value}), do: process(value)
-      def handle({:error, reason}), do: reason
+  Avoid:
 
-  ## Why?
+        def handle({:ok, value}), do: process(value)
+        def handle({:error, reason}), do: reason
+
+  Prefer:
+
+        case fetch_value() do
+          {:ok, value} -> process(value)
+          {:error, reason} -> reason
+        end
+
+  ## Notes
 
   A helper that accepts tagged result tuples mixes two responsibilities:
   branching on the result shape and doing the work for the successful or error
   value. That makes the helper harder to reuse with plain values.
 
-  ## Better
-
-      case fetch_value() do
-        {:ok, value} -> process(value)
-        {:error, reason} -> reason
-      end
-
   Branch where the tagged result is produced, then call helpers with the value
   or reason they actually operate on.
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoResultTupleArgument,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - List of paths or regexes to exclude from this check
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoResultTupleArgument, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -37,7 +82,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
     ]
 
   @result_tags [:ok, :error]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     excluded_paths = Params.get(params, :excluded_paths, __MODULE__)

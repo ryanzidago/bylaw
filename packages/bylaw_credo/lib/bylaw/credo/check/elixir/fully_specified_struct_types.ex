@@ -1,17 +1,43 @@
-defmodule Bylaw.Credo.Check.FullySpecifiedStructTypes do
+defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes do
   @moduledoc """
   Fully specify struct fields in type declarations instead of using
   empty struct literals such as `%__MODULE__{}`.
 
-  This should be refactored:
+  ## Examples
 
-      @type t :: %__MODULE__{}
-      @opaque result :: {:ok, %URI{}}
+  Avoid:
 
-  Into this:
+        @type t :: %__MODULE__{}
+        @opaque result :: {:ok, %URI{}}
+  Prefer:
 
-      @type t :: %__MODULE__{id: integer(), name: String.t()}
-      @opaque result :: {:ok, %URI{host: String.t() | nil, path: String.t()}}
+        @type t :: %__MODULE__{id: integer(), name: String.t()}
+        @opaque result :: {:ok, %URI{host: String.t() | nil, path: String.t()}}
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -22,7 +48,7 @@ defmodule Bylaw.Credo.Check.FullySpecifiedStructTypes do
     ]
 
   @typespec_attributes [:type, :typep, :opaque]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

@@ -2,30 +2,55 @@ defmodule Bylaw.Credo.Check.Elixir.NoTryRescue do
   @moduledoc """
   Avoid `try/rescue` and `try/catch` for ordinary control flow.
 
-  ### Bad
+  ## Examples
 
-      try do
-        Accounts.fetch_user!(id)
-      rescue
-        Ecto.NoResultsError -> {:error, :not_found}
-      end
+  Avoid:
 
-  ### Why?
+        try do
+          Accounts.fetch_user!(id)
+        rescue
+          Ecto.NoResultsError -> {:error, :not_found}
+        end
+
+  Prefer:
+
+        case Accounts.fetch_user(id) do
+          {:ok, user} -> {:ok, user}
+          {:error, :not_found} -> {:error, :not_found}
+        end
+
+  ## Notes
 
   Exceptions hide expected failure modes and make the successful path look
   more reliable than it is. They also push error handling away from the
   function contract.
 
-  ### Better
-
-      case Accounts.fetch_user(id) do
-        {:ok, user} -> {:ok, user}
-        {:error, :not_found} -> {:error, :not_found}
-      end
-
   Prefer functions that return explicit values and handle those values with
   pattern matching. `try/after` without `rescue` or `catch` is still allowed
   for resource cleanup.
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoTryRescue, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -35,6 +60,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoTryRescue do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

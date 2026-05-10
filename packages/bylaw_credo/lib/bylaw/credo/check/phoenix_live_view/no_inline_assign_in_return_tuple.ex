@@ -3,26 +3,51 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple do
   Extract LiveView `assign/2,3` and `assign_new/3` calls before returning
   the socket tuple.
 
-  ### Bad
+  ## Examples
 
-      {:noreply, assign(socket, :user, user)}
+  Avoid:
 
-      {:ok, socket |> assign(:user, user)}
+        {:noreply, assign(socket, :user, user)}
 
-  ### Why?
+        {:ok, socket |> assign(:user, user)}
+
+  Prefer:
+
+        socket = assign(socket, :user, user)
+        {:noreply, socket}
+
+  ## Notes
 
   Inline assignment hides the socket transformation inside the return value.
   That makes it harder to add more socket changes, inspect intermediate
   values, or keep return tuples visually consistent.
 
-  ### Better
-
-      socket = assign(socket, :user, user)
-      {:noreply, socket}
-
   Keep socket updates in normal expressions and reserve `{:ok, socket}`,
   `{:noreply, socket}`, and `{:reply, reply, socket}` for returning the
   final socket.
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -33,7 +58,7 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple do
     ]
 
   @assign_functions [:assign, :assign_new]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     if liveview_file?(source_file.filename) do

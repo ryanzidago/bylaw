@@ -3,19 +3,63 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
   Avoid private functions that only forward their arguments to a single call.
   Inline the call instead.
 
-  This should be refactored:
+  ## Examples
 
-      defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
+  Avoid:
 
-  Into this:
+        defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
+  Prefer:
 
-      DateTime.to_iso8601(datetime)
+        DateTime.to_iso8601(datetime)
 
   If the wrapper name materially improves readability, keep it and disable
   this check locally:
 
-      # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoPassthroughWrapper
-      defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
+        # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoPassthroughWrapper
+        defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoPassthroughWrapper,
+           [
+             include_public: true
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:include_public` - When true, also report public `def` passthrough wrappers
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoPassthroughWrapper, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +74,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
     ]
 
   @definitions ~w(def defp)a
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

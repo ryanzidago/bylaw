@@ -2,23 +2,50 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkHref do
   @moduledoc """
   Requires static HEEx/HTML anchor tags to define an `href` attribute.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <a>Read more</a>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <a>Read more</a>
-      \"\"\"
+        ~H\"\"\"
+        <a href="/articles">Read more</a>
+        <a href={@path}>Read more</a>
+        <a {@attrs}>Read more</a>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <a href="/articles">Read more</a>
-      <a href={@path}>Read more</a>
-      <a {@attrs}>Read more</a>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireLinkHref, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -29,7 +56,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkHref do
   alias Bylaw.Credo.Heex
 
   @message "Anchor tags must define an href attribute. Use a button for actions."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

@@ -2,23 +2,50 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement do
   @moduledoc """
   Prefers native interactive elements over clickable static HEEx/HTML tags.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <div phx-click="save">Save</div>
+        <span phx-click="open">Open</span>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <div phx-click="save">Save</div>
-      <span phx-click="open">Open</span>
-      \"\"\"
+        ~H\"\"\"
+        <button type="button" phx-click="save">Save</button>
+        <a href={~p"/settings"}>Settings</a>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <button type="button" phx-click="save">Save</button>
-      <a href={~p"/settings"}>Settings</a>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -38,7 +65,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement do
     "onkeydown",
     "onkeyup"
   ]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

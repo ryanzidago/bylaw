@@ -3,13 +3,23 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
 
   alias Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing
 
-  test "flags app-owned module definitions with title-cased acronym words" do
+  test "does not flag modules when app roots are not configured" do
     """
     defmodule BylawWeb.Api.V1.ToolController do
     end
     """
     |> to_source_file()
     |> run_check(AppModuleAcronymCasing)
+    |> refute_issues()
+  end
+
+  test "flags app-owned module definitions with title-cased acronym words" do
+    """
+    defmodule BylawWeb.Api.V1.ToolController do
+    end
+    """
+    |> to_source_file()
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 1,
       trigger: "BylawWeb.Api.V1.ToolController",
@@ -24,7 +34,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 2,
       trigger: "Bylaw.Accounts.TenantApiKey",
@@ -39,7 +49,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 2,
       trigger: "Api.V1.OpenApiTest",
@@ -54,7 +64,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> refute_issues()
   end
 
@@ -65,7 +75,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 1,
       trigger: "BylawWeb.Api.V1.ToolController"
@@ -78,7 +88,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> refute_issues()
   end
 
@@ -89,7 +99,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> refute_issues()
   end
 
@@ -100,7 +110,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> refute_issues()
   end
 
@@ -110,7 +120,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 1,
       trigger: "Bylaw.TestSupport.ExAwsHttpClient",
@@ -124,11 +134,15 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasingTest do
     end
     """
     |> to_source_file()
-    |> run_check(AppModuleAcronymCasing)
+    |> run_acronym_check()
     |> assert_issue(%{
       line_no: 1,
       trigger: "Bylaw.DatabaseCheck.UuidKeys",
       message: ~r/Bylaw.DatabaseCheck.UUIDKeys/
     })
+  end
+
+  defp run_acronym_check(source_file) do
+    run_check(source_file, AppModuleAcronymCasing, app_roots: ~w(Bylaw BylawWeb))
   end
 end

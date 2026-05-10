@@ -2,15 +2,41 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEmptyListChecks do
   @moduledoc """
   Prefer `Enum.empty?/1` and `Enum.any?/1` over comparing collections to `[]`.
 
-  This should be refactored:
+  ## Examples
 
-      items == []
-      items != []
+  Avoid:
 
-  Into this:
+        items == []
+        items != []
+  Prefer:
 
-      Enum.empty?(items)
-      Enum.any?(items)
+        Enum.empty?(items)
+        Enum.any?(items)
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -22,7 +48,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEmptyListChecks do
 
   @empty_list_operators [:==, :===]
   @non_empty_list_operators [:!=, :!==]
-
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

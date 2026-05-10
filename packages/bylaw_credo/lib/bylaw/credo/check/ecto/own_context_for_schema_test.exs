@@ -3,23 +3,38 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
 
   alias Bylaw.Credo.Check.Ecto.OwnContextForSchema
 
-  test "reports schema under a foreign context" do
+  test "does not report schemas when schema modules are not configured" do
     """
-    defmodule Bylaw.Runs.ToolCall do
-      use Bylaw.Schema
+    defmodule MyApp.Runs.ToolCall do
+      use MyApp.Schema
 
       schema "tool_calls" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/runs/tool_call.ex")
+    |> to_source_file("lib/my_app/runs/tool_call.ex")
     |> run_check(OwnContextForSchema)
+    |> refute_issues()
+  end
+
+  test "reports schema under a foreign context" do
+    """
+    defmodule MyApp.Runs.ToolCall do
+      use MyApp.Schema
+
+      schema "tool_calls" do
+        field :name, :string
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/runs/tool_call.ex")
+    |> run_own_context_check()
     |> assert_issue()
     |> assert_issues_match([
       %{
         line_no: 1,
-        trigger: "Bylaw.Runs.ToolCall",
+        trigger: "MyApp.Runs.ToolCall",
         message:
           "`ToolCall` should not live under `Runs`. Move it to its own context (e.g. `ToolCalls.ToolCall`)."
       }
@@ -28,21 +43,21 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
 
   test "reports schema under a deeply nested foreign context" do
     """
-    defmodule Bylaw.Billing.Invoices.LineItem do
-      use Bylaw.Schema
+    defmodule MyApp.Billing.Invoices.LineItem do
+      use MyApp.Schema
 
       schema "line_items" do
         field :amount, :integer
       end
     end
     """
-    |> to_source_file("lib/bylaw/billing/invoices/line_item.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/billing/invoices/line_item.ex")
+    |> run_own_context_check()
     |> assert_issue()
     |> assert_issues_match([
       %{
         line_no: 1,
-        trigger: "Bylaw.Billing.Invoices.LineItem",
+        trigger: "MyApp.Billing.Invoices.LineItem",
         message:
           "`LineItem` should not live under `Invoices`. Move it to its own context (e.g. `LineItems.LineItem`)."
       }
@@ -51,94 +66,94 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
 
   test "does not report schema under its own context" do
     """
-    defmodule Bylaw.Runs.Run do
-      use Bylaw.Schema
+    defmodule MyApp.Runs.Run do
+      use MyApp.Schema
 
       schema "runs" do
         field :status, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/runs/run.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/runs/run.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "does not report schema whose context starts with schema name" do
     """
-    defmodule Bylaw.ToolCalls.ToolCall do
-      use Bylaw.Schema
+    defmodule MyApp.ToolCalls.ToolCall do
+      use MyApp.Schema
 
       schema "tool_calls" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/tool_calls/tool_call.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/tool_calls/tool_call.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "does not report schema with pluralized context" do
     """
-    defmodule Bylaw.Agents.Agent do
-      use Bylaw.Schema
+    defmodule MyApp.Agents.Agent do
+      use MyApp.Schema
 
       schema "agents" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/agents/agent.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/agents/agent.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "does not report schema with irregular plural context" do
     """
-    defmodule Bylaw.Addresses.Address do
-      use Bylaw.Schema
+    defmodule MyApp.Addresses.Address do
+      use MyApp.Schema
 
       schema "addresses" do
         field :street, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/addresses/address.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/addresses/address.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
-  test "does not report module without use Bylaw.Schema" do
+  test "does not report module without use MyApp.Schema" do
     """
-    defmodule Bylaw.Runs.SomeHelper do
+    defmodule MyApp.Runs.SomeHelper do
       def help, do: :ok
     end
     """
-    |> to_source_file("lib/bylaw/runs/some_helper.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/runs/some_helper.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "does not report top-level schema module" do
     """
-    defmodule Bylaw.Schema do
-      use Bylaw.Schema
+    defmodule MyApp.Schema do
+      use MyApp.Schema
 
       schema "things" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/schema.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/schema.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "reports AgentTool under Agents context" do
     """
-    defmodule Bylaw.Agents.AgentTool do
-      use Bylaw.Schema
+    defmodule MyApp.Agents.AgentTool do
+      use MyApp.Schema
 
       schema "agent_tools" do
         field :agent_id, :string
@@ -146,13 +161,13 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
       end
     end
     """
-    |> to_source_file("lib/bylaw/agents/agent_tool.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/agents/agent_tool.ex")
+    |> run_own_context_check()
     |> assert_issue()
     |> assert_issues_match([
       %{
         line_no: 1,
-        trigger: "Bylaw.Agents.AgentTool",
+        trigger: "MyApp.Agents.AgentTool",
         message:
           "`AgentTool` should not live under `Agents`. Move it to its own context (e.g. `AgentTools.AgentTool`)."
       }
@@ -161,8 +176,8 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
 
   test "does not report AgentTool under AgentTools context" do
     """
-    defmodule Bylaw.AgentTools.AgentTool do
-      use Bylaw.Schema
+    defmodule MyApp.AgentTools.AgentTool do
+      use MyApp.Schema
 
       schema "agent_tools" do
         field :agent_id, :string
@@ -170,68 +185,76 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchemaTest do
       end
     end
     """
-    |> to_source_file("lib/bylaw/agent_tools/agent_tool.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/agent_tools/agent_tool.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "handles Account under Accounts" do
     """
-    defmodule Bylaw.Accounts.Account do
-      use Bylaw.Schema
+    defmodule MyApp.Accounts.Account do
+      use MyApp.Schema
 
       schema "accounts" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/accounts/account.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/accounts/account.ex")
+    |> run_own_context_check()
     |> refute_issues()
   end
 
   test "reports TenantUser under Accounts" do
     """
-    defmodule Bylaw.Accounts.TenantUser do
-      use Bylaw.Schema
+    defmodule MyApp.Accounts.TenantUser do
+      use MyApp.Schema
 
       schema "tenant_users" do
         field :tenant_id, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/accounts/tenant_user.ex")
-    |> run_check(OwnContextForSchema)
+    |> to_source_file("lib/my_app/accounts/tenant_user.ex")
+    |> run_own_context_check()
     |> assert_issue()
   end
 
   test "does not report excluded modules" do
     """
-    defmodule Bylaw.Runs.ToolCall do
-      use Bylaw.Schema
+    defmodule MyApp.Runs.ToolCall do
+      use MyApp.Schema
 
       schema "tool_calls" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/runs/tool_call.ex")
-    |> run_check(OwnContextForSchema, excluded_modules: ["Bylaw.Runs.ToolCall"])
+    |> to_source_file("lib/my_app/runs/tool_call.ex")
+    |> run_own_context_check(excluded_modules: ["MyApp.Runs.ToolCall"])
     |> refute_issues()
   end
 
   test "still reports non-excluded modules when exclusions are configured" do
     """
-    defmodule Bylaw.Runs.SomethingElse do
-      use Bylaw.Schema
+    defmodule MyApp.Runs.SomethingElse do
+      use MyApp.Schema
 
       schema "something_elses" do
         field :name, :string
       end
     end
     """
-    |> to_source_file("lib/bylaw/runs/something_else.ex")
-    |> run_check(OwnContextForSchema, excluded_modules: ["Bylaw.Runs.ToolCall"])
+    |> to_source_file("lib/my_app/runs/something_else.ex")
+    |> run_own_context_check(excluded_modules: ["MyApp.Runs.ToolCall"])
     |> assert_issue()
+  end
+
+  defp run_own_context_check(source_file, opts \\ []) do
+    run_check(
+      source_file,
+      OwnContextForSchema,
+      Keyword.put_new(opts, :schema_modules, [MyApp.Schema])
+    )
   end
 end

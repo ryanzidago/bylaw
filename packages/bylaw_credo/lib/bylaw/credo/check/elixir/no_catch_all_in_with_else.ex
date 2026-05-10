@@ -2,24 +2,50 @@ defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
   @moduledoc """
   Prefer explicit pattern matches in `with` else clauses over catch-all variables.
 
+  ## Examples
+
   Each `else` branch should match a specific pattern so that success and failure
   paths are clearly separated.
+  Avoid:
 
-  This should be refactored:
+        with {:ok, user} <- fetch_user(id) do
+          {:ok, user}
+        else
+          error -> error
+        end
 
-      with {:ok, user} <- fetch_user(id) do
-        {:ok, user}
-      else
-        error -> error
-      end
+  Prefer:
 
-  Into this:
+        with {:ok, user} <- fetch_user(id) do
+          {:ok, user}
+        else
+          {:error, error} -> {:error, error}
+        end
 
-      with {:ok, user} <- fetch_user(id) do
-        {:ok, user}
-      else
-        {:error, error} -> {:error, error}
-      end
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -29,6 +55,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

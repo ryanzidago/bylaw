@@ -2,15 +2,41 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
   @moduledoc """
   Prefer `Enum.count/1` over `length/1`.
 
-  This should be refactored:
+  ## Examples
 
-      length(items)
-      items |> length()
+  Avoid:
 
-  Into this:
+        length(items)
+        items |> length()
+  Prefer:
 
-      Enum.count(items)
-      items |> Enum.count()
+        Enum.count(items)
+        items |> Enum.count()
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.PreferEnumCount, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -20,6 +46,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

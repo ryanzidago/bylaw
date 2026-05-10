@@ -2,19 +2,46 @@ defmodule Bylaw.Credo.Check.Elixir.WithElseClause do
   @moduledoc """
   Prefer adding an explicit `else` clause to every `with` expression.
 
-  This should be refactored:
+  ## Examples
 
-      with {:ok, user} <- fetch_user(id) do
-        {:ok, user.name}
-      end
+  Avoid:
 
-  Into this:
+        with {:ok, user} <- fetch_user(id) do
+          {:ok, user.name}
+        end
 
-      with {:ok, user} <- fetch_user(id) do
-        {:ok, user.name}
-      else
-        {:error, error} -> {:error, error}
-      end
+  Prefer:
+
+        with {:ok, user} <- fetch_user(id) do
+          {:ok, user.name}
+        else
+          {:error, error} -> {:error, error}
+        end
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.WithElseClause, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -24,6 +51,7 @@ defmodule Bylaw.Credo.Check.Elixir.WithElseClause do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

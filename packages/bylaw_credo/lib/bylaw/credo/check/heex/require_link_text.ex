@@ -2,24 +2,51 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   @moduledoc """
   Requires static HEEx/HTML links to have an accessible name.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <a href="/settings"></a>
+        <a href="/settings"><.icon name="settings" /></a>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <a href="/settings"></a>
-      <a href="/settings"><.icon name="settings" /></a>
-      \"\"\"
+        ~H\"\"\"
+        <a href="/settings">Settings</a>
+        <a href="/settings" aria-label="Settings"><.icon name="settings" /></a>
+        <a href={@href}>{@label}</a>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <a href="/settings">Settings</a>
-      <a href="/settings" aria-label="Settings"><.icon name="settings" /></a>
-      <a href={@href}>{@label}</a>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireLinkText, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -30,7 +57,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   alias Bylaw.Credo.Heex
 
   @message "Links must have accessible text or an accessible name."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

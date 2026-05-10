@@ -2,22 +2,67 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
   @moduledoc """
   Avoid `~T[23:59:59]` as an end-of-day bound.
 
-  ### Bad
+  ## Examples
 
-      occurred_at >= day_start and occurred_at <= ~T[23:59:59]
+  Avoid:
 
-  ### Why?
+        occurred_at >= day_start and occurred_at <= ~T[23:59:59]
+
+  Prefer:
+
+        occurred_at >= day_start and occurred_at < next_day_start
+
+  ## Notes
 
   An inclusive `23:59:59` bound misses values with fractional seconds, such
   as `23:59:59.500000`. That creates edge-case bugs for timestamp and time
   comparisons.
 
-  ### Better
-
-      occurred_at >= day_start and occurred_at < next_day_start
-
   Use the next day's midnight as an exclusive upper bound. Half-open ranges
   include every representable time in the day without guessing precision.
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoEndOfDayTime,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - Paths containing any configured string are skipped. Defaults to `test/` so fixtures and assertions can still describe boundary values directly.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoEndOfDayTime, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -34,6 +79,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
       ]
     ]
 
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     excluded_paths = Params.get(params, :excluded_paths, __MODULE__)

@@ -4,29 +4,54 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   `Repo.all`. Prefer composing the preload into the Ecto query so the
   preload intent stays visible at the query boundary.
 
-  This should be refactored:
+  ## Examples
 
-      query
-      |> Repo.one()
-      |> Repo.preload([:message])
+  Avoid:
 
-  Into this:
+        query
+        |> Repo.one()
+        |> Repo.preload([:message])
+  Prefer:
 
-      query
-      |> preload([:message])
-      |> Repo.one()
+        query
+        |> preload([:message])
+        |> Repo.one()
 
   The same rule applies when a local helper hides the `Repo.preload` call:
 
-      query
-      |> Repo.one()
-      |> preload_message()
+        query
+        |> Repo.one()
+        |> preload_message()
+  Prefer:
 
-  Into this:
+        query
+        |> preload([:message])
+        |> Repo.one()
 
-      query
-      |> preload([:message])
-      |> Repo.one()
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -39,7 +64,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   alias Credo.SourceFile
 
   @repo_read_functions [:all, :one, :one!]
-
+  @doc false
   @impl Credo.Check
   def run(%SourceFile{} = source_file, params \\ []) do
     ast = SourceFile.ast(source_file)

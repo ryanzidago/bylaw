@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.DocBeforeSpecTest do
+defmodule Bylaw.Credo.Check.Elixir.DocBeforeSpecTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.DocBeforeSpec
+  alias Bylaw.Credo.Check.Elixir.DocBeforeSpec
 
   test "reports when @spec appears before @doc for a public function" do
     """

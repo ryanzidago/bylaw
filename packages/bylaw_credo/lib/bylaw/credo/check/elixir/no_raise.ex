@@ -3,20 +3,66 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
   Prefer returning tagged results and handling them with `with` expressions
   that include an explicit `else` clause at application boundaries.
 
-  This should be refactored:
+  ## Examples
 
-      user = Repo.get!(User, id)
-      {:ok, account} = Accounts.fetch_account(user)
-      raise "boom"
+  Avoid:
 
-  Into this:
+        user = Repo.get!(User, id)
+        {:ok, account} = Accounts.fetch_account(user)
+        raise "boom"
+  Prefer:
 
-      with {:ok, user} <- Accounts.fetch_user(id),
-           {:ok, account} <- Accounts.fetch_account(user) do
-        {:ok, account}
-      else
-        {:error, reason} -> {:error, reason}
-      end
+        with {:ok, user} <- Accounts.fetch_user(id),
+             {:ok, account} <- Accounts.fetch_account(user) do
+          {:ok, account}
+        else
+          {:error, reason} -> {:error, reason}
+        end
+
+  ## Notes
+
+  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
+
+  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoRaise,
+           [
+             excluded_paths: ["test/support/"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:excluded_paths` - List of paths or regex to exclude from this check
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Elixir.NoRaise, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -33,7 +79,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
   alias Credo.SourceFile
 
   @definition_ops [:def, :defp, :defmacro, :defmacrop]
-
+  @doc false
   @impl Credo.Check
   def run(%SourceFile{} = source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

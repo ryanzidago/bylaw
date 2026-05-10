@@ -3,17 +3,18 @@ defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
   Prefer using `select` in the Ecto query over loading full rows with
   `Repo.all` and then mapping them with `Enum.map` to extract fields.
 
-  This should be refactored:
+  ## Examples
 
-      query
-      |> Repo.all()
-      |> Enum.map(&%{role: &1.role, content: &1.content})
+  Avoid:
 
-  Into this:
+        query
+        |> Repo.all()
+        |> Enum.map(&%{role: &1.role, content: &1.content})
+  Prefer:
 
-      query
-      |> select([m], %{role: m.role, content: m.content})
-      |> Repo.all()
+        query
+        |> select([m], %{role: m.role, content: m.content})
+        |> Repo.all()
 
   This pushes the projection down to the database, reducing memory usage
   and data transfer.
@@ -21,8 +22,33 @@ defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
   Cases where `Enum.map` references the full record (not just field
   accesses) are allowed, since they cannot be expressed as a `select`:
 
-      # OK - the full record is referenced
-      Repo.all(query) |> Enum.map(&%{id: &1.id, record: &1})
+        # OK - the full record is referenced
+        Repo.all(query) |> Enum.map(&%{id: &1.id, record: &1})
+
+  ## Notes
+
+  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -32,6 +58,7 @@ defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
       check: @moduledoc
     ]
 
+  @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
     ctx = Context.build(source_file, params, __MODULE__)

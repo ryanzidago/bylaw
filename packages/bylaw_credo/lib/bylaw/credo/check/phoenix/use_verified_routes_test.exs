@@ -3,7 +3,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
 
   alias Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes
 
-  test "reports direct request helper paths in ConnCase tests" do
+  test "does not report route strings when web boundary and routes are not configured" do
     """
     defmodule BylawWeb.Api.V1.OpenApiTest do
       use BylawWeb.ConnCase, async: true
@@ -15,6 +15,21 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     """
     |> to_source_file("lib/bylaw_web/api/v1/openapi_test.exs")
     |> run_check(UseVerifiedRoutes)
+    |> refute_issues()
+  end
+
+  test "reports direct request helper paths in ConnCase tests" do
+    """
+    defmodule BylawWeb.Api.V1.OpenApiTest do
+      use BylawWeb.ConnCase, async: true
+
+      test "fetches the spec", %{conn: conn} do
+        conn |> get("/api/v1/openapi")
+      end
+    end
+    """
+    |> to_source_file("lib/bylaw_web/api/v1/openapi_test.exs")
+    |> run_verified_routes_check()
     |> assert_issue(%{line_no: 5, trigger: "/api/v1/openapi"})
   end
 
@@ -29,7 +44,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/api/v1/openapi_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
   end
 
@@ -44,7 +59,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/workspace_controller.ex")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> assert_issue(%{line_no: 4, trigger: "workspace_path"})
   end
 
@@ -59,7 +74,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/message_controller.ex")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> assert_issue(%{line_no: 4, trigger: "run_location"})
   end
 
@@ -76,7 +91,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/message_controller_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> assert_issue(%{line_no: 5})
   end
 
@@ -91,7 +106,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/message_controller_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
   end
 
@@ -108,7 +123,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/components/layouts.ex")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
   end
 
@@ -124,7 +139,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/workspace_controller_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
   end
 
@@ -137,7 +152,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw_web/controllers/api/v1/workspace_openapi_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
   end
 
@@ -153,7 +168,22 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
     end
     """
     |> to_source_file("lib/bylaw/some_library_test.exs")
-    |> run_check(UseVerifiedRoutes)
+    |> run_verified_routes_check()
     |> refute_issues()
+  end
+
+  defp run_verified_routes_check(source_file) do
+    run_check(source_file, UseVerifiedRoutes,
+      web_paths: ["lib/bylaw_web/"],
+      endpoint_paths: ["lib/bylaw_web/endpoint.ex"],
+      router_paths: ["lib/bylaw_web/router.ex"],
+      conn_case_modules: [BylawWeb.ConnCase],
+      routers: [BylawWeb.Router, BylawWeb.AdminRouter],
+      fallback_router_paths: [
+        "/api/v1/openapi",
+        "/api/v1/tenants/:tenant_id/workspaces/:workspace_id",
+        "/api/v1/tenants/:tenant_id/workspaces/:workspace_id/runs/:run_id"
+      ]
+    )
   end
 end

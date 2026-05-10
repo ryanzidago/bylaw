@@ -2,23 +2,50 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
   @moduledoc """
   Forbids static HEEx/HTML link `href` attributes that use `javascript:`.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <a href="javascript:alert('x')">Delete</a>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <a href="javascript:alert('x')">Delete</a>
-      \"\"\"
+        ~H\"\"\"
+        <a href="/account">Account</a>
+        <a href={@href}>Dynamic link</a>
+        <button phx-click="delete">Delete</button>
+        \"\"\"
 
-  ## Good
+  ## Notes
 
-      ~H\"\"\"
-      <a href="/account">Account</a>
-      <a href={@href}>Dynamic link</a>
-      <button phx-click="delete">Delete</button>
-      \"\"\"
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.NoJavascriptHref, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -29,7 +56,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
   alias Bylaw.Credo.Heex
 
   @message "Links must not use javascript: href values."
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)

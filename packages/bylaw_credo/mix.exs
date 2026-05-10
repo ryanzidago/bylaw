@@ -12,7 +12,7 @@ defmodule BylawCredo.MixProject do
       test_paths: test_paths(Mix.env()),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_credo",
-      description: "Custom Credo checks for Bylaw.",
+      description: "Custom Credo checks.",
       package: package(),
       docs: docs(),
       deps: deps()

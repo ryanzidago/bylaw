@@ -2,28 +2,75 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   @moduledoc """
   Requires HEEx submit forms and controls to expose a loading or disabled state.
 
+  ## Examples
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
+  Avoid:
 
-  ## Bad
+        ~H\"\"\"
+        <.form for={@form} phx-submit="save">
+          <button type="submit">Save</button>
+        </.form>
+        \"\"\"
+  Prefer:
 
-      ~H\"\"\"
-      <.form for={@form} phx-submit="save">
-        <button type="submit">Save</button>
-      </.form>
-      \"\"\"
-
-  ## Good
-
-      ~H\"\"\"
-      <.form for={@form} phx-submit="save">
-        <button type="submit" phx-disable-with="Saving...">Save</button>
-      </.form>
-      \"\"\"
+        ~H\"\"\"
+        <.form for={@form} phx-submit="save">
+          <button type="submit" phx-disable-with="Saving...">Save</button>
+        </.form>
+        \"\"\"
 
   Custom loading conventions can be configured with `:loading_attrs` or
   `:loading_class_patterns`.
+
+  ## Notes
+
+  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+
+  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+
+  ## Options
+
+  Configure options in `.credo.exs` with the check tuple:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit,
+           [
+             loading_attrs: ["phx-disable-with", "disabled"],
+             loading_class_patterns: ["is-loading"]
+           ]}
+        ]
+      }
+    ]
+  }
+  ```
+
+  - `:loading_attrs` - Attribute names that satisfy the loading-state requirement (default: phx-disable-with, disabled).
+  - `:loading_class_patterns` - Class-name substrings that satisfy the loading-state requirement (default: none).
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,
@@ -48,7 +95,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   @message "Submit actions must expose a loading or disabled state."
   @form_tags [:tag, :local_component]
   @submit_control_tags ["button", "input"]
-
+  @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
