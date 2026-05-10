@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.NamedSpecParams do
+defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
   @moduledoc """
   Requires named parameters in all `@spec` declarations.
 
@@ -35,7 +35,7 @@ defmodule Bylaw.Credo.Check.NamedSpecParams do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.NamedSpecParams,
+          {Bylaw.Credo.Check.Elixir.NamedSpecParams,
            [
              min_params: 2
            ]}
@@ -57,7 +57,7 @@ defmodule Bylaw.Credo.Check.NamedSpecParams do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.NamedSpecParams, []}
+          {Bylaw.Credo.Check.Elixir.NamedSpecParams, []}
         ]
       }
     ]

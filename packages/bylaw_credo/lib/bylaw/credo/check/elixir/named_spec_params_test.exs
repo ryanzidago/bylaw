@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.NamedSpecParamsTest do
+defmodule Bylaw.Credo.Check.Elixir.NamedSpecParamsTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.NamedSpecParams
+  alias Bylaw.Credo.Check.Elixir.NamedSpecParams
 
   describe "specs with more than 3 arguments" do
     test "reports when spec args are positional types without names" do
