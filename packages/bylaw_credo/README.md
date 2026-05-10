@@ -50,36 +50,5 @@ There is no separate Bylaw runtime validation API for these checks. Credo loads
 the check modules from `.credo.exs` and passes each check its configured option
 list.
 
-## Minimal behaviour implementations
-
-`Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions` is opt-in by
-behaviour. Configure `:behaviours` with the behaviour modules whose
-implementations should keep a minimal public API:
-
-```elixir
-{Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions,
- [
-   behaviours: [
-     MyApp.Workers.Job,
-     MyApp.Notifications.Delivery
-   ],
-   allowed: []
- ]}
-```
-
-The check reads callback signatures from each configured behaviour module with
-`behaviour_info(:callbacks)`, so callback lists should not be duplicated in
-Credo config. Use `:allowed`, for example `[child_spec: 1]`, for intentional
-extra public functions.
-
-## HEEx templates
-
-HEEx checks use Phoenix LiveView's undocumented HEEx tokenizer when it is
-available. Add `phoenix_live_view` to applications that enable these checks.
-
-Credo discovers embedded `~H` templates in `.ex` and `.exs` files by default.
-To check standalone Phoenix `.html.heex` templates, enable
-`Bylaw.Credo.Plugin.HEExSources` as shown above.
-
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
