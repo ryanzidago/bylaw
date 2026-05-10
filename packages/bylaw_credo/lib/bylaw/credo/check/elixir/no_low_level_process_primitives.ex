@@ -4,6 +4,20 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
 
   ## Examples
 
+  Avoid:
+
+        Process.put(:current_tenant, tenant_id)
+        GenServer.call(MyApp.Registry, {:lookup, key})
+        :ets.lookup(:cache, key)
+
+  Prefer:
+
+        fetch_tenant(conn)
+        MyApp.Registry.lookup(key)
+        Cache.fetch(key)
+
+  ## Notes
+
   Stateful and process-based primitives are **exceptions, not
   defaults**. They exist for very specific use cases and should only
   be introduced after gaining explicit approval.
@@ -30,8 +44,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
 
         # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives
         Process.put(:key, value)
-
-  ## Notes
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 

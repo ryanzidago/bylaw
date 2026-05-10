@@ -5,7 +5,7 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
 
   ## Examples
 
-  This check flags:
+  Avoid:
 
         schema "events" do
           field :starts_on, :date
@@ -16,11 +16,22 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
           modify :ends_on, :date
         end
 
-  Use `:naive_datetime`, `:utc_datetime`, or `timestamps/1` instead unless the
-  field is intentionally a calendar-only value. If a true date-only field is
-  required, disable the check locally with Credo.
+  Prefer:
+
+        schema "events" do
+          field :starts_at, :utc_datetime
+        end
+
+        alter table(:events) do
+          add :starts_at, :utc_datetime
+          timestamps(type: :utc_datetime)
+        end
 
   ## Notes
+
+  Use `:naive_datetime`, `:utc_datetime`, or `timestamps/1` unless the field is
+  intentionally a calendar-only value. If a true date-only field is required,
+  disable the check locally with Credo.
 
   This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
