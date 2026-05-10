@@ -60,7 +60,7 @@ defmodule Bylaw.Ecto.Query.BranchesTest do
     end
 
     test "returns an empty list for no branches" do
-      assert Branches.guaranteed_values([]) == []
+      assert Enum.empty?(Branches.guaranteed_values([]))
     end
   end
 end

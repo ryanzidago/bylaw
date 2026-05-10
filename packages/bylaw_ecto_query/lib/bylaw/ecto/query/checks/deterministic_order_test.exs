@@ -199,7 +199,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
 
       assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
-      assert issue.meta.primary_key == []
+      assert Enum.empty?(issue.meta.primary_key)
       assert issue.meta.found_order_keys == [:title]
 
       assert issue.message ==
@@ -211,7 +211,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
 
       assert {:error, [%Issue{} = issue]} = DeterministicOrder.validate(:all, query, [])
 
-      assert issue.meta.primary_key == []
+      assert Enum.empty?(issue.meta.primary_key)
       assert issue.meta.found_order_keys == [:title]
     end
 

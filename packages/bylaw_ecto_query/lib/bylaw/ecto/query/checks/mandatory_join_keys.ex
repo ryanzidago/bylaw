@@ -127,7 +127,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
       binding_index = join_index + 1
 
       with {:ok, schema} <- Introspection.explicit_join_schema(join),
-           applicable_keys when applicable_keys != [] <- applicable_keys(schema, keys),
+           [_first_key | _remaining_keys] = applicable_keys <- applicable_keys(schema, keys),
            found_keys <- join_keys(join, binding_index, aliases),
            missing_keys <- missing_keys(applicable_keys, found_keys, match),
            false <- Enum.empty?(missing_keys) do

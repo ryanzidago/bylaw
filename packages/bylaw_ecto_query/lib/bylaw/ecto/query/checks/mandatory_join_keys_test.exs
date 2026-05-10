@@ -70,7 +70,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
       assert issue.meta.join_schema == Comment
       assert issue.meta.keys == [:organisation_id]
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
 
       assert issue.message ==
                "expected explicit join to #{inspect(Comment)} to match at least one mandatory key with an earlier binding: :organisation_id"
@@ -255,7 +255,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept mandatory key matches behind or predicates" do
@@ -272,7 +272,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "validates only configured keys that exist on the joined schema" do
@@ -462,7 +462,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "passes when the joined schema has none of the configured keys" do
@@ -559,7 +559,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept mandatory keys when an or expression branch can match without them" do
@@ -576,7 +576,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept mandatory keys in joined self comparisons" do
@@ -591,7 +591,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept mandatory keys in named joined self comparisons" do
@@ -609,7 +609,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept mandatory keys hidden inside fragments" do
@@ -626,7 +626,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "does not accept joined keys compared only to query parameters" do
@@ -641,7 +641,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
                MandatoryJoinKeys.validate(:all, query, keys: [:organisation_id])
 
       assert issue.meta.missing_keys == [:organisation_id]
-      assert issue.meta.found_join_keys == []
+      assert Enum.empty?(issue.meta.found_join_keys)
     end
 
     test "respects the explicit validate false option" do
