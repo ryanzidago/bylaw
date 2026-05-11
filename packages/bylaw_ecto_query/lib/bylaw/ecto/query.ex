@@ -21,6 +21,13 @@ defmodule Bylaw.Ecto.Query do
   A check spec is either a check module or `{check_module, opts}`. Each check
   module may appear at most once.
 
+  > #### Warning {: .warning}
+  >
+  > `bylaw_ecto_query` inspects prepared `%Ecto.Query{}` structs. Ecto exposes
+  > `Ecto.Query.t()`, but the internal shape of query expressions is not a
+  > stable extension API. Review and run your enabled checks when upgrading
+  > Ecto.
+
   ## Examples
 
       iex> import Ecto.Query
