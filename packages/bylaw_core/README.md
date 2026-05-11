@@ -15,7 +15,7 @@ extension that needs the shared core helpers:
 ```elixir
 def deps do
   [
-    {:bylaw_core, "~> 0.1.0"}
+    {:bylaw_core, "~> 0.1.0-alpha.1"}
   ]
 end
 ```
