@@ -1,10 +1,12 @@
 # Bylaw.Ecto.Query
 
-Ecto query validation APIs and checks for Bylaw.
+Validate prepared `Ecto.Query` structs before they run, so invalid query
+patterns are easier to catch and harder to ship.
 
-Use this package to validate prepared `Ecto.Query` structs before they run.
-Callers choose checks explicitly and pass them to
-`Bylaw.Ecto.Query.validate/3`.
+Use `bylaw_ecto_query` to enforce application-specific query invariants, keep
+queries readable and maintainable, and codify conventions around ordering,
+filtering, and other query behavior. Callers choose checks explicitly and pass
+them to `Bylaw.Ecto.Query.validate/3`.
 
 ## Installation
 
