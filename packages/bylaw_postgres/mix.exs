@@ -14,7 +14,7 @@ defmodule BylawPostgres.MixProject do
       aliases: aliases(),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_postgres",
-      description: "Postgres database validation adapter and checks for Bylaw.",
+      description: "Validate Postgres database structure and enforce schema conventions.",
       package: package(),
       docs: docs(),
       deps: deps()
