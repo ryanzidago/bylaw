@@ -9,8 +9,7 @@ by the changeset constraint checks.
 
 ## Installation
 
-Add `bylaw_postgres` to applications that want Postgres database-shape
-validation:
+Add `bylaw_postgres` to applications that want Postgres schema validation:
 
 ```elixir
 def deps do

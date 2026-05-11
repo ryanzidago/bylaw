@@ -9,8 +9,8 @@ Bylaw is organized as independent packages under `packages/`:
 - `packages/bylaw_ecto_query` validates prepared Ecto queries.
 - `packages/bylaw_db` defines generic database check contracts and data
   structures.
-- `packages/bylaw_postgres` validates Postgres database structure through the
-  `Bylaw.Db.Adapters.Postgres` adapter and checks.
+- `packages/bylaw_postgres` validates Postgres database structure and schema
+  conventions.
 - `packages/bylaw_credo` provides custom Credo checks for downstream
   development and test environments.
 
