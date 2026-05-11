@@ -8,6 +8,12 @@ queries readable and maintainable, and codify conventions around ordering,
 filtering, and other query behavior. Callers choose checks explicitly and pass
 them to `Bylaw.Ecto.Query.validate/3`.
 
+> #### Warning {: .warning}
+>
+> `bylaw_ecto_query` inspects prepared `%Ecto.Query{}` structs. Ecto exposes
+> `Ecto.Query.t()`, but the internal shape of query expressions is not a stable
+> extension API. Review and run your enabled checks when upgrading Ecto.
+
 ## Installation
 
 Add `:bylaw_ecto_query` to your dependencies:
