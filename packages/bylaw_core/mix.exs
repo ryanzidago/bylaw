@@ -1,4 +1,4 @@
-defmodule Bylaw.MixProject do
+defmodule BylawCore.MixProject do
   use Mix.Project
 
   @version "0.1.0"
@@ -6,13 +6,13 @@ defmodule Bylaw.MixProject do
 
   def project do
     [
-      app: :bylaw,
+      app: :bylaw_core,
       version: @version,
       elixir: "~> 1.19",
       test_paths: test_paths(Mix.env()),
       source_url: @source_url,
-      homepage_url: "https://hexdocs.pm/bylaw",
-      description: "Internal shared helpers for Bylaw packages.",
+      homepage_url: "https://hexdocs.pm/bylaw_core",
+      description: "Shared core helpers for Bylaw packages.",
       package: package(),
       docs: docs(),
       deps: deps()

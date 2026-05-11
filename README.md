@@ -5,7 +5,7 @@ workflow constraints.
 
 Bylaw is organized as independent packages under `packages/`:
 
-- `packages/bylaw` defines shared internal helpers used by Bylaw packages.
+- `packages/bylaw_core` defines shared core helpers used by Bylaw packages.
 - `packages/bylaw_ecto_query` validates prepared Ecto queries.
 - `packages/bylaw_db` defines generic database check contracts and data
   structures.
