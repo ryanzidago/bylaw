@@ -46,9 +46,5 @@ check you want by listing its fully qualified module in the `checks:` list:
 }
 ```
 
-There is no separate Bylaw runtime validation API for these checks. Credo loads
-the check modules from `.credo.exs` and passes each check its configured option
-list.
-
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
