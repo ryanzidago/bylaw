@@ -13,7 +13,7 @@ Add `:bylaw_ecto_query` to your dependencies:
 ```elixir
 def deps do
   [
-    {:bylaw_ecto_query, "~> 0.1.0"}
+    {:bylaw_ecto_query, "~> 0.1.0-alpha.1"}
   ]
 end
 ```
