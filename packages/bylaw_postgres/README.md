@@ -1,6 +1,7 @@
 # Bylaw.Postgres
 
-Postgres database validation adapter and checks for Bylaw.
+Validate Postgres database structure and enforce schema conventions with
+`bylaw_postgres`.
 
 This package owns `Bylaw.Db.Adapters.Postgres` and
 `Bylaw.Db.Adapters.Postgres.Checks.*`. It also includes Ecto helper modules used
