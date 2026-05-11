@@ -46,7 +46,7 @@ multiple adapters:
 ```elixir
 def deps do
   [
-    {:bylaw_db, "~> 0.1.0-alpha.1"}
+    {:bylaw_db, "~> 0.1.0"}
   ]
 end
 ```
