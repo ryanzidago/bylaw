@@ -12,7 +12,7 @@ defmodule BylawEctoQuery.MixProject do
       test_paths: test_paths(Mix.env()),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_ecto_query",
-      description: "Ecto query validation APIs and checks for Bylaw.",
+      description: "Validation checks for prepared Ecto queries.",
       package: package(),
       docs: docs(),
       deps: deps()
