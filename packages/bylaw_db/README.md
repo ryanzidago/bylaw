@@ -32,7 +32,7 @@ on `bylaw_db` directly. For Postgres applications:
 ```elixir
 def deps do
   [
-    {:bylaw_postgres, "~> 0.1.0-alpha.1", only: [:dev, :test]}
+    {:bylaw_postgres, "~> 0.1.0", only: [:dev, :test]}
   ]
 end
 ```
