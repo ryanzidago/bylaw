@@ -10,12 +10,12 @@ explicitly and pass them to `Bylaw.HTML.validate_html/2`.
 
 ## Installation
 
-Add `:bylaw_html` to your dependencies:
+Add `:bylaw_html` to test dependencies:
 
 ```elixir
 def deps do
   [
-    {:bylaw_html, "~> 0.1.0-alpha.1"}
+    {:bylaw_html, "~> 0.1.0-alpha.1", only: :test}
   ]
 end
 ```
@@ -61,16 +61,6 @@ If you want assertion helpers, write a small downstream wrapper around
 `Bylaw.HTML.validate_html/2` in your own test support, such as `ConnCase` or
 LiveView test helpers.
 
-If you want to enable validation only in certain environments or test groups,
-gate the call with your own application config or test tags:
-
-```elixir
-if Application.get_env(:my_app, :validate_html?, true) do
-  assert :ok = Bylaw.HTML.validate_html(html, @html_checks)
-end
-```
-
-This config belongs to `:my_app`.
 `bylaw_html` does not read application config or register checks globally.
 
 ## Built-in checks

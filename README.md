@@ -30,7 +30,7 @@ Add the package you need to your dependencies:
 ```elixir
 def deps do
   [
-    {:bylaw_html, "~> 0.1.0-alpha.1"},
+    {:bylaw_html, "~> 0.1.0-alpha.1", only: :test},
     {:bylaw_ecto_query, "~> 0.1.0"},
     {:bylaw_postgres, "~> 0.1.0"},
     {:bylaw_credo, "~> 0.1.0", only: [:dev, :test], runtime: false}
