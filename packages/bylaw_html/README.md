@@ -28,6 +28,7 @@ Choose the checks you want to run and pass them explicitly to
 
 ```elixir
 checks = [
+  Bylaw.HTML.Check.RequireLinkHref,
   Bylaw.HTML.Check.PreferLinkForNavigation
 ]
 
@@ -46,10 +47,14 @@ Built-in checks live under `Bylaw.HTML.Check.*`.
 `0.1.0-alpha.1` includes:
 
 - `Bylaw.HTML.Check.PreferLinkForNavigation`
+- `Bylaw.HTML.Check.RequireLinkHref`
 
 This first built-in check is intentionally narrow. It inspects rendered HTML
 for non-`a` elements whose `phx-click` value is a JSON LiveView JS command
 sequence containing `navigate` or `patch`.
+
+`Bylaw.HTML.Check.RequireLinkHref` inspects rendered `<a>` elements and flags
+anchors without an `href` attribute.
 
 ## Why rendered HTML
 
