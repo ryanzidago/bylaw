@@ -1,13 +1,19 @@
 # Bylaw.HTML
 
-Validate rendered HTML strings with explicit, composable checks.
+Validate rendered HTML strings before assertions finish, so invalid HTML
+patterns are easier to catch and harder to ship.
 
-`bylaw_html` works at the rendered HTML layer, not the source-template layer.
-It parses the HTML string you already rendered, runs the checks you choose, and
-returns `:ok` or `{:error, issues}` from `Bylaw.HTML.validate_html/2`.
+Use `bylaw_html` to enforce application-specific HTML invariants, keep rendered
+markup accessible and semantically correct, and codify conventions around links,
+buttons, images, and other browser-facing behavior. Callers choose checks
+explicitly and pass them to `Bylaw.HTML.validate_html/2`.
 
-In `0.1.0-alpha.1`, this package is core-only. It does not include Phoenix
-adapters, test helper wrappers, default checks, or application config.
+> #### Warning {: .warning}
+>
+> `bylaw_html` inspects rendered HTML strings. This is a useful integration
+> boundary, but it does not know which component, template, or source line
+> produced an issue. Review and run your enabled checks when changing rendering
+> libraries or HTML parsing dependencies.
 
 ## Installation
 
@@ -23,24 +29,56 @@ end
 
 ## Usage
 
-Choose the checks you want to run and pass them explicitly to
-`Bylaw.HTML.validate_html/2`:
+Choose the checks you want to enforce and pass them explicitly to
+`Bylaw.HTML.validate_html/2` from your tests:
 
 ```elixir
-checks = [
-  Bylaw.HTML.Check.PreferButtonForAction,
-  Bylaw.HTML.Check.RequireImageAlt,
-  Bylaw.HTML.Check.RequireLinkHref,
-  Bylaw.HTML.Check.PreferLinkForNavigation
-]
+defmodule MyAppWeb.PageHTMLTest do
+  use MyAppWeb.ConnCase, async: true
 
-html = ~s(<a href="/settings">Settings</a>)
+  @html_checks [
+    Bylaw.HTML.Check.RequireLinkHref,
+    Bylaw.HTML.Check.PreferButtonForAction,
+    Bylaw.HTML.Check.PreferLinkForNavigation,
+    Bylaw.HTML.Check.RequireImageAlt
+  ]
 
-Bylaw.HTML.validate_html(html, checks)
+  test "home page satisfies Bylaw HTML checks", %{conn: conn} do
+    conn = get(conn, ~p"/")
+    html = html_response(conn, 200)
+
+    assert :ok = Bylaw.HTML.validate_html(html, @html_checks)
+  end
+end
 ```
 
+For LiveView and component tests, pass the rendered string from the test helper:
+
+```elixir
+html = render(view)
+assert :ok = Bylaw.HTML.validate_html(html, @html_checks)
+```
+
+```elixir
+html = render_component(&MyAppWeb.Button.button/1, label: "Save")
+assert :ok = Bylaw.HTML.validate_html(html, @html_checks)
+```
+
+If you want assertion helpers, write a small downstream wrapper around
+`Bylaw.HTML.validate_html/2` in your own test support, such as `ConnCase` or
+LiveView test helpers.
+
+If you want to enable validation only in certain environments or test groups,
+gate the call with your own application config or test tags:
+
+```elixir
+if Application.get_env(:my_app, :validate_html?, true) do
+  assert :ok = Bylaw.HTML.validate_html(html, @html_checks)
+end
+```
+
+This config belongs to `:my_app`.
 `bylaw_html` does not read application config or register checks globally.
-Callers choose checks explicitly each time.
 
 ## Built-in checks
 
@@ -53,19 +91,8 @@ Built-in checks live under `Bylaw.HTML.Check.*`.
 - `Bylaw.HTML.Check.RequireImageAlt`
 - `Bylaw.HTML.Check.RequireLinkHref`
 
-This first built-in check is intentionally narrow. It inspects rendered HTML
-for non-`a` elements whose `phx-click` value is a JSON LiveView JS command
-sequence containing `navigate` or `patch`.
-
-`Bylaw.HTML.Check.RequireLinkHref` inspects rendered `<a>` elements and flags
-anchors without an `href` attribute.
-
-`Bylaw.HTML.Check.PreferButtonForAction` inspects rendered `<a>` elements with
-`phx-click` and flags placeholder action hrefs such as `#`, empty hrefs, and
-`javascript:void(0)`.
-
-`Bylaw.HTML.Check.RequireImageAlt` inspects rendered `<img>` elements and flags
-images without an `alt` attribute.
+Start with the checks that match your application invariants; each check module
+documents its own examples, notes, options, and copyable check specs.
 
 ## Why rendered HTML
 
@@ -73,33 +100,3 @@ Rendered HTML is a stable integration boundary for many test styles. It lets
 you validate what the browser actually receives without coupling the check to
 HEEx source, component internals, `%Phoenix.LiveView.JS{}` structs, or source
 template conventions.
-
-## Integration examples
-
-These are example integration paths only. `bylaw_html` stays HTML-first and
-plain-string based in `0.1.0-alpha.1`.
-
-LiveView tests:
-
-```elixir
-html = render(view)
-Bylaw.HTML.validate_html(html, checks)
-```
-
-Controller tests:
-
-```elixir
-html = html_response(conn, 200)
-Bylaw.HTML.validate_html(html, checks)
-```
-
-Component tests:
-
-```elixir
-html = render_component(...)
-Bylaw.HTML.validate_html(html, checks)
-```
-
-If you want assertion helpers, write a small downstream wrapper around
-`Bylaw.HTML.validate_html/2` in your own test support, such as `ConnCase` or
-LiveView test helpers.

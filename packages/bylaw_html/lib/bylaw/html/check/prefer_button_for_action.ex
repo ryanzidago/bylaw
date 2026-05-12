@@ -6,17 +6,66 @@ defmodule Bylaw.HTML.Check.PreferButtonForAction do
   placeholder action hrefs. Use an anchor for durable navigation, and use a
   button for actions handled by events.
 
-  Valid examples:
+  ## Examples
 
-      <a href="/settings">Settings</a>
-      <a href="/settings" phx-click="track">Settings</a>
-      <button type="button" phx-click="save">Save</button>
-
-  Invalid examples:
+  Bad:
 
       <a href="#" phx-click="save">Save</a>
-      <a href="" phx-click="open">Open</a>
-      <a href="javascript:void(0)" phx-click="save">Save</a>
+
+  Why this is bad:
+
+  The element looks like a link, but the placeholder `href` has no durable
+  destination. The real behavior is the event action attached to `phx-click`.
+
+  Better:
+
+      <button type="button" phx-click="save">Save</button>
+
+  Why this is better:
+
+  A button communicates that the element performs an action instead of
+  navigating to another resource.
+
+  Bad:
+
+      <a href="javascript:void(0)" phx-click="open">Open</a>
+
+  Why this is bad:
+
+  A JavaScript placeholder suppresses normal link behavior and makes the anchor
+  an action control.
+
+  Better:
+
+      <button type="button" phx-click="open">Open</button>
+
+  Why this is better:
+
+  The browser exposes the element as a control without pretending there is a
+  navigable URL.
+
+  ## Notes
+
+  This check only flags rendered anchors that have both `phx-click` and a
+  placeholder action href. It allows real navigation anchors, including anchors
+  that also use `phx-click` for secondary behavior such as analytics:
+
+      <a href="/settings" phx-click="track">Settings</a>
+
+  It also allows fragment links without `phx-click`, such as
+  `<a href="#details">Details</a>`.
+
+  ## Options
+
+  This check has no check-specific options. Add the module directly to the
+  explicit checks list:
+
+      Bylaw.HTML.Check.PreferButtonForAction
+
+  ## Usage
+
+  Add this module to the explicit check list passed through `Bylaw.HTML`.
+  See `Bylaw.HTML` for the full rendered HTML validation setup.
   """
 
   @behaviour Bylaw.HTML.Check
