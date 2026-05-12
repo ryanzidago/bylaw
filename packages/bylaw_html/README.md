@@ -122,20 +122,6 @@ assert_valid_html(html)
 
 `bylaw_html` does not read application config or register checks globally.
 
-## Built-in checks
-
-Built-in checks live under `Bylaw.HTML.Check.*`.
-
-`0.1.0-alpha.1` includes:
-
-- `Bylaw.HTML.Check.PreferLinkForNavigation`
-- `Bylaw.HTML.Check.PreferButtonForAction`
-- `Bylaw.HTML.Check.RequireImageAlt`
-- `Bylaw.HTML.Check.RequireLinkHref`
-
-Start with the checks that match your application invariants; each check module
-documents its own examples, notes, options, and copyable check specs.
-
 ## Why rendered HTML
 
 Rendered HTML is a stable integration boundary for many test styles. It lets
