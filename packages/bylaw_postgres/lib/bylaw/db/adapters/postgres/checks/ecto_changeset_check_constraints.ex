@@ -68,10 +68,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
    paths: ["lib/my_app"],
    rules: [
-     [
-       where: [schemas: ["public"]],
-       except: [[tables: ["legacy_products"], constraints: ["legacy_price_check"]]]
-     ]
+     where: [schemas: ["public"]],
+     except: [[tables: ["legacy_products"], constraints: ["legacy_price_check"]]]
    ]}
   ```
 

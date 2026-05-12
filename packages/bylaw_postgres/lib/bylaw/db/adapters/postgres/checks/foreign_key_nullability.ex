@@ -46,13 +46,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
    rules: [where: [schemas: ["public"]]]}
 
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
-   rules: [[
+   rules: [
      where: [schemas: ["public"]],
      except: [
        [tables: ["runs"], columns: ["assistant_message_id"]],
        [constraints: ["messages_parent_message_id_fkey"]]
      ]
-   ]]}
+   ]}
   ```
 
   ## Usage

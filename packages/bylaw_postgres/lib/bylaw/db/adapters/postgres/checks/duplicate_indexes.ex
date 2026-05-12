@@ -43,7 +43,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
    rules: [where: [schemas: ["public"]]]}
 
   {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
-   rules: [[where: [schemas: ["public"]], except: [[tables: ["spatial_ref_sys"]]]]]}
+   rules: [where: [schemas: ["public"]], except: [[tables: ["spatial_ref_sys"]]]]}
   ```
 
   Indexes are treated as duplicates when they have the same table, access
