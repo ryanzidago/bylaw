@@ -47,6 +47,24 @@ defmodule Bylaw.HTMLTest do
     def validate(_context), do: :error
   end
 
+  defmodule EmptyIssueCheck do
+    @behaviour Bylaw.HTML.Check
+
+    @doc false
+    @impl Bylaw.HTML.Check
+    @spec validate(Bylaw.HTML.Check.context()) :: {:error, list(Issue.t())}
+    def validate(_context), do: {:error, []}
+  end
+
+  defmodule InvalidIssueCheck do
+    @behaviour Bylaw.HTML.Check
+
+    @doc false
+    @impl Bylaw.HTML.Check
+    @spec validate(Bylaw.HTML.Check.context()) :: {:error, list(term())}
+    def validate(_context), do: {:error, [:bad]}
+  end
+
   describe "validate_html/2" do
     test "returns :ok for empty checks" do
       assert :ok = HTML.validate_html("<button>", [])
@@ -60,6 +78,13 @@ defmodule Bylaw.HTMLTest do
 
     test "passes valid rendered anchor navigation using data-phx-link" do
       html = ~s(<a href="/users" data-phx-link="patch" data-phx-link-state="push">Users</a>)
+
+      assert :ok = HTML.validate_html(html, [PreferLinkForNavigation])
+    end
+
+    test "passes anchor elements with phx-click navigation commands" do
+      html =
+        ~s(<a href="/settings" phx-click='[["navigate",{"href":"/settings","replace":false}]]'>Settings</a>)
 
       assert :ok = HTML.validate_html(html, [PreferLinkForNavigation])
     end
@@ -154,6 +179,16 @@ defmodule Bylaw.HTMLTest do
       assert Enum.all?(issues, &is_binary(&1.snippet))
     end
 
+    test "does not crash on malformed HTML input" do
+      html =
+        ~s(<section><button phx-click='[["navigate",{"href":"/settings","replace":false}]]'>Settings)
+
+      assert {:error, [%Issue{} = issue]} = HTML.validate_html(html, [PreferLinkForNavigation])
+
+      assert issue.check == PreferLinkForNavigation
+      assert issue.tag == "button"
+    end
+
     test "accepts downstream custom check modules" do
       html = "<div>content</div>"
 
@@ -169,6 +204,18 @@ defmodule Bylaw.HTMLTest do
                    "expected #{inspect(InvalidReturnCheck)}.validate/1 to return :ok or {:error, non_empty_issue_list}, got: :error",
                    fn ->
                      HTML.validate_html("<div />", [InvalidReturnCheck])
+                   end
+
+      assert_raise ArgumentError,
+                   "expected #{inspect(EmptyIssueCheck)}.validate/1 to return :ok or {:error, non_empty_issue_list}, got: {:error, []}",
+                   fn ->
+                     HTML.validate_html("<div />", [EmptyIssueCheck])
+                   end
+
+      assert_raise ArgumentError,
+                   "expected #{inspect(InvalidIssueCheck)}.validate/1 to return :ok or {:error, non_empty_issue_list}, got: {:error, [:bad]}",
+                   fn ->
+                     HTML.validate_html("<div />", [InvalidIssueCheck])
                    end
     end
 
