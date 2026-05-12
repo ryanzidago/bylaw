@@ -23,6 +23,22 @@ defmodule Bylaw.Ecto.Query.Introspection do
     :windows
   ]
 
+  @doc """
+  Returns the effective root source query for root-only checks.
+
+  Prepared queries may wrap their real source query in one or more root
+  `subquery/1` layers before `c:Ecto.Repo.prepare_query/3` runs. Root-only
+  checks use this helper so schema, table, prefix, and root `where` validation
+  all inspect the same effective source query instead of silently stopping at
+  the outer wrapper.
+  """
+  @spec effective_root_query(term()) :: term()
+  def effective_root_query(%{from: %{source: %Ecto.SubQuery{query: query}}}) do
+    effective_root_query(query)
+  end
+
+  def effective_root_query(query), do: query
+
   # The root schema comes from the query `from` source. Return `:unknown` for
   # schema-less sources, malformed values, non-query values, and modules that do
   # not expose Ecto schema reflection.

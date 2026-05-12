@@ -45,7 +45,8 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
 
   @spec matching_rules(Bylaw.Ecto.Query.Check.operation(), term(), list(map())) :: list(map())
   def matching_rules(operation, query, rules) do
-    Enum.filter(rules, &in_rule_scope?(operation, query, &1))
+    effective_query = Introspection.effective_root_query(query)
+    Enum.filter(rules, &in_rule_scope?(operation, effective_query, &1))
   end
 
   @spec in_rule_scope?(Bylaw.Ecto.Query.Check.operation(), term(), rule()) :: boolean()

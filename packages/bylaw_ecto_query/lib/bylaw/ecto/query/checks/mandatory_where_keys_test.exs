@@ -858,6 +858,45 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    @doc """
+    Scoped `MandatoryWhereKeys` rules must keep validating the effective root
+    source query when the outer prepared query reads from `subquery/1`.
+
+    This matters because `Ecto.Repo.prepare_query/3` only validates the outer
+    query. If schema, table, or prefix matchers stop at the wrapper query,
+    tenant-boundary rules can silently downgrade from enforcement to `:ok`.
+    """
+    test "continues enforcing scoped rules through root source subqueries" do
+      unscoped_posts =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: post.title == ^"hello"
+        )
+
+      scoped_posts =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: post.organisation_id == ^123
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:organisation_id]
+        ]
+      ]
+
+      query_missing = from(post in subquery(unscoped_posts), select: count())
+      query_present = from(post in subquery(scoped_posts), select: count())
+
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryWhereKeys.validate(:all, query_missing, rules: rules)
+
+      assert issue.meta.missing_keys == [:organisation_id]
+
+      assert :ok = MandatoryWhereKeys.validate(:all, query_present, rules: rules)
+    end
+
     test "scopes rules by plural operations matcher" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
