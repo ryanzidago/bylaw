@@ -38,6 +38,15 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   def root_schema(_query), do: :unknown
 
+  @spec root_table(term()) :: String.t() | nil
+  def root_table(%{from: %{source: {source, _schema}}}) when is_binary(source), do: source
+  def root_table(_query), do: nil
+
+  @spec root_prefix(term()) :: String.t() | nil
+  def root_prefix(%{from: %{prefix: prefix}}) when is_binary(prefix), do: prefix
+  def root_prefix(%{prefix: prefix}) when is_binary(prefix), do: prefix
+  def root_prefix(_query), do: nil
+
   # Association joins can encode application-specific behavior separately from
   # the visible join source, so checks that reason about direct explicit joins
   # skip them instead of treating them as plain schema joins.
