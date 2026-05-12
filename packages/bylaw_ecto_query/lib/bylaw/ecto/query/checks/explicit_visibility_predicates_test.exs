@@ -982,7 +982,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert {:error, [%Issue{} = issue]} =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 rules: [[only: [ecto_schema: Post], fields: [:deleted_at, :status]]]
+                 rules: [[where: [ecto_schemas: [Post]], fields: [:deleted_at, :status]]]
                )
 
       assert issue.meta.configured_fields == [:deleted_at, :status]
@@ -995,42 +995,78 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
-                 rules: [[only: [table: "comments"], fields: [:deleted_at]]]
+                 rules: [[where: [tables: ["comments"]], fields: [:deleted_at]]]
                )
     end
 
-    test "supports where alias and except matchers" do
+    test "supports plural where and except matchers" do
       query = from(post in Post)
-
-      assert {:error, [%Issue{}]} =
-               ExplicitVisibilityPredicates.validate(:all, query,
-                 rules: [[where: [table: "posts"], fields: [:deleted_at]]]
-               )
 
       assert :ok =
                ExplicitVisibilityPredicates.validate(:all, query,
                  rules: [
                    [
-                     where: [table: "posts"],
-                     except: [ecto_schema: Post],
+                     where: [tables: ["posts"]],
+                     except: [ecto_schemas: [Post]],
                      fields: [:deleted_at]
                    ]
                  ]
                )
     end
 
+    test "supports OR matcher groups and ANDed matcher keys" do
+      query = from(post in Post, prefix: "tenant_a", where: is_nil(post.deleted_at))
+
+      assert {:error, [%Issue{} = issue]} =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 rules: [
+                   [
+                     where: [
+                       [ecto_schemas: [Comment], operations: [:all]],
+                       [tables: ["posts"], db_schemas: ["tenant_a"], operations: [:all]]
+                     ],
+                     fields: [:deleted_at, :status]
+                   ]
+                 ]
+               )
+
+      assert issue.meta.missing_fields == [:status]
+    end
+
     test "raises for invalid rule fields" do
       query = from(post in Post)
 
       assert_raise ArgumentError, "missing required :fields option", fn ->
-        ExplicitVisibilityPredicates.validate(:all, query, rules: [[only: [ecto_schema: Post]]])
+        ExplicitVisibilityPredicates.validate(:all, query,
+          rules: [[where: [ecto_schemas: [Post]]]]
+        )
       end
 
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: []",
                    fn ->
                      ExplicitVisibilityPredicates.validate(:all, query,
-                       rules: [[only: [ecto_schema: Post], fields: []]]
+                       rules: [[where: [ecto_schemas: [Post]], fields: []]]
+                     )
+                   end
+    end
+
+    test "raises when old only shorthand or singular matcher keys are used" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError,
+                   "unknown explicit_visibility_predicates rule option: :only",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       rules: [[only: [ecto_schemas: [Post]], fields: [:deleted_at]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "unknown explicit_visibility_predicates :where matcher option: :ecto_schema",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       rules: [[where: [ecto_schema: Post], fields: [:deleted_at]]]
                      )
                    end
     end

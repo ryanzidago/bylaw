@@ -52,7 +52,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     * `:keys` - required non-empty list of field names when the check runs.
     * `:match` - `:any` or `:all`. Defaults to `:any`.
     * `:rules` - query-local rules with rule-level `:keys`, optional `:match`,
-      and optional `:only`/`:where` and `:except` matchers.
+      and optional `:where` and `:except` matchers. Matchers use plural keys
+      with list values, such as `ecto_schemas: [Post]`, `tables: ["posts"]`,
+      `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
 
   Example check spec:
 
