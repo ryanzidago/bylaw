@@ -5,6 +5,7 @@ packages=(
   bylaw_core
   bylaw_db
   bylaw_ecto_query
+  bylaw_html
   bylaw_postgres
   bylaw_credo
 )
