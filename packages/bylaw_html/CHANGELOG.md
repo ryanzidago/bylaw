@@ -12,3 +12,5 @@ Initial alpha package release.
   missing an `href` attribute.
 - Add the built-in `Bylaw.HTML.Check.PreferButtonForAction` check for rendered
   anchors with `phx-click` and placeholder action hrefs.
+- Add the built-in `Bylaw.HTML.Check.RequireImageAlt` check for rendered images
+  missing an `alt` attribute.
