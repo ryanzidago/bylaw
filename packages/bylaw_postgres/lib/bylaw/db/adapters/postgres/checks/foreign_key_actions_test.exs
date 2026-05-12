@@ -7,7 +7,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
   alias Bylaw.Db.Target
 
   describe "validate/2" do
-    test "passes when every foreign key uses the configured global actions" do
+    test "accepts single-rule shorthand when every foreign key uses configured actions" do
       target =
         target(
           {:ok,
@@ -26,7 +26,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
            ])}
         )
 
-      assert :ok = ForeignKeyActions.validate(target, on_delete: :cascade, on_update: :no_action)
+      assert :ok =
+               ForeignKeyActions.validate(target,
+                 rules: [on_delete: :cascade, on_update: :no_action]
+               )
 
       assert_received {:query, sql, [nil, nil], []}
       assert sql =~ "pg_catalog.pg_constraint"
@@ -54,7 +57,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               ForeignKeyActions.validate(target, on_delete: :cascade)
+               ForeignKeyActions.validate(target, rules: [on_delete: :cascade])
 
       assert issue.check == ForeignKeyActions
       assert issue.target == target
@@ -95,7 +98,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               ForeignKeyActions.validate(target, on_update: :restrict)
+               ForeignKeyActions.validate(target, rules: [on_update: :restrict])
 
       assert issue.message ==
                "expected foreign key messages_status_id_fkey on public.messages to use ON UPDATE RESTRICT, got: CASCADE"
@@ -121,7 +124,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
         )
 
       assert {:error, issues} =
-               ForeignKeyActions.validate(target, on_delete: :restrict, on_update: :restrict)
+               ForeignKeyActions.validate(target,
+                 rules: [on_delete: :restrict, on_update: :restrict]
+               )
 
       assert Enum.map(issues, & &1.message) == [
                "expected foreign key messages_status_id_fkey on public.messages to use ON DELETE RESTRICT, got: NO ACTION",
@@ -292,7 +297,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               ForeignKeyActions.validate(target, on_delete: :cascade)
+               ForeignKeyActions.validate(target, rules: [on_delete: :cascade])
 
       assert issue.meta.constraint == "messages_conversation_id_fkey"
       assert issue.meta.referenced_table == "conversations"
@@ -311,7 +316,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError, ~r/unknown foreign_key_actions option: :unknown/, fn ->
-        ForeignKeyActions.validate(target, on_delete: :cascade, unknown: true)
+        ForeignKeyActions.validate(target, rules: [on_delete: :cascade], unknown: true)
       end
     end
 
@@ -335,55 +340,52 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
                    end
     end
 
-    test "requires actions or rules when validation is enabled" do
+    test "requires rules when validation is enabled" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions to include :on_delete, :on_update, or :rules/,
+                   ~r/expected foreign_key_actions to include :rules/,
                    fn ->
                      ForeignKeyActions.validate(target, [])
                    end
     end
 
-    test "rejects global actions and rules together" do
+    test "rejects top-level actions" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_actions to use rule-level :on_delete when :rules is provided/,
+                   ~r/unknown foreign_key_actions option: :on_delete/,
                    fn ->
-                     ForeignKeyActions.validate(target,
-                       on_delete: :cascade,
-                       rules: [[on_delete: :restrict]]
-                     )
+                     ForeignKeyActions.validate(target, on_delete: :cascade)
                    end
     end
 
-    test "rejects top-level scope options" do
+    test "rejects top-level update action and scope options" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/unknown foreign_key_actions option: :except/,
+                   ~r/unknown foreign_key_actions option: :on_update/,
                    fn ->
-                     ForeignKeyActions.validate(target,
-                       on_delete: :cascade,
-                       except: [[table: "schema_migrations"]]
-                     )
+                     ForeignKeyActions.validate(target, on_update: :restrict)
                    end
 
       assert_raise ArgumentError,
                    ~r/unknown foreign_key_actions option: :schemas/,
                    fn ->
-                     ForeignKeyActions.validate(target, schemas: [], on_delete: :cascade)
+                     ForeignKeyActions.validate(target,
+                       schemas: [],
+                       rules: [on_delete: :cascade]
+                     )
                    end
     end
 
-    test "requires actions to be known atoms" do
+    test "requires rule actions to be known atoms" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
                    ~r/expected foreign_key_actions :on_delete to be one of/,
                    fn ->
-                     ForeignKeyActions.validate(target, on_delete: :delete)
+                     ForeignKeyActions.validate(target, rules: [on_delete: :delete])
                    end
 
       assert_raise ArgumentError,
@@ -419,7 +421,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       assert_raise ArgumentError,
                    ~r/unknown foreign_key_actions option: :tables/,
                    fn ->
-                     ForeignKeyActions.validate(target, tables: [:orders], on_delete: :cascade)
+                     ForeignKeyActions.validate(target,
+                       tables: [:orders],
+                       rules: [on_delete: :cascade]
+                     )
                    end
     end
 
@@ -526,7 +531,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActionsTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        ForeignKeyActions.validate(target, on_delete: :cascade)
+        ForeignKeyActions.validate(target, rules: [on_delete: :cascade])
       end
     end
   end

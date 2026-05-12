@@ -30,25 +30,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target.
-  Use `schemas: [...]` or `tables: [...]` for simple filtering:
+  Use the bare module for zero-config validation across the whole target:
 
   ```elixir
-  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
-   schemas: ["public"],
-   tables: ["users", "accounts"]}
+  Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
   ```
 
-  Use `rules: [...]` when the scope needs matchers or exclusions:
+  Use `rules:` when the scope needs matchers or exclusions:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
-   rules: [
-     [
-       where: [schemas: ["public"]],
-       except: [[tables: ["spatial_ref_sys"]]]
-     ]
-   ]}
+   rules: [where: [schemas: ["public"]]]}
+
+  {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
+   rules: [[where: [schemas: ["public"]], except: [[tables: ["spatial_ref_sys"]]]]]}
   ```
 
   Indexes are treated as duplicates when they have the same table, access
@@ -118,7 +113,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   @type check_opt ::
           {:validate, boolean()}
-          | {:rules, list(keyword())}
+          | {:rules, keyword() | list(keyword())}
 
   @type check_opts :: list(check_opt())
 
@@ -158,10 +153,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   defp validate_duplicate_indexes(target, opts) do
     rules = RuleOptions.default_rules!(opts, :duplicate_indexes, allowed_matcher_keys())
-    schemas = RuleOptions.filter(opts, :schemas, :duplicate_indexes)
-    tables = RuleOptions.filter(opts, :tables, :duplicate_indexes)
 
-    case Postgres.query(target, @query, [schemas, tables], []) do
+    case Postgres.query(target, @query, [nil, nil], []) do
       {:ok, result} ->
         result
         |> Result.rows()
@@ -179,17 +172,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :schemas, :tables],
+      [:validate, :rules],
       :duplicate_indexes
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :duplicate_indexes)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], :duplicate_indexes)
       RuleOptions.default_rules!(opts, :duplicate_indexes, allowed_matcher_keys())
-      RuleOptions.filter(opts, :schemas, :duplicate_indexes)
-      RuleOptions.filter(opts, :tables, :duplicate_indexes)
     end
 
     opts

@@ -121,7 +121,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(keyword())}
+          | {:rules, keyword() | list(keyword())}
 
   @type check_opts :: list(check_opt())
 

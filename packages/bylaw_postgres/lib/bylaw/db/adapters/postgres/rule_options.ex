@@ -118,15 +118,29 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
           (keyword() -> map())
         ) :: list(map())
   def rules!(rules, check, allowed_matcher_keys, payload_keys, payload_fun) when is_list(rules) do
-    if Enum.empty?(rules) or Enum.any?(rules, &(not Keyword.keyword?(&1))) do
-      raise_rules_error!(check)
-    end
-
-    Enum.map(rules, &rule!(&1, check, allowed_matcher_keys, payload_keys, payload_fun))
+    rules
+    |> normalize_rules!(check)
+    |> Enum.map(&rule!(&1, check, allowed_matcher_keys, payload_keys, payload_fun))
   end
 
   def rules!(_rules, check, _allowed_matcher_keys, _payload_keys, _payload_fun) do
     raise_rules_error!(check)
+  end
+
+  defp normalize_rules!(rules, check) do
+    cond do
+      Enum.empty?(rules) ->
+        raise_rules_error!(check)
+
+      Keyword.keyword?(rules) ->
+        [rules]
+
+      Enum.all?(rules, &Keyword.keyword?/1) ->
+        rules
+
+      true ->
+        raise_rules_error!(check)
+    end
   end
 
   @doc false

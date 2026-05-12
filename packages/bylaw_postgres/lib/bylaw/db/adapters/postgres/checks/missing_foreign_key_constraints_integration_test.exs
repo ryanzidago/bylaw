@@ -16,7 +16,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {MissingForeignKeyConstraints, schemas: [TestDatabase.schema()]}
+               {MissingForeignKeyConstraints, rules: [where: [schemas: [TestDatabase.schema()]]]}
              ])
 
     assert issue.meta.table == "orders"
@@ -29,7 +29,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {MissingForeignKeyConstraints,
-                schemas: [TestDatabase.schema()], tables: ["orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["orders"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -46,7 +51,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
     assert :ok =
              Postgres.validate([target], [
                {MissingForeignKeyConstraints,
-                schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["events", "indexed_orders"]
+                  ]
+                ]}
              ])
   end
 
@@ -56,7 +66,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
     assert :ok =
              Postgres.validate([target], [
                {MissingForeignKeyConstraints,
-                schemas: [TestDatabase.schema()], tables: ["accounts"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["accounts"]
+                  ]
+                ]}
              ])
   end
 
@@ -65,7 +80,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {MissingForeignKeyConstraints, schemas: [TestDatabase.pg_schema()]}
+               {MissingForeignKeyConstraints,
+                rules: [where: [schemas: [TestDatabase.pg_schema()]]]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -78,7 +94,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsIntegrat
     assert {:error, issues} =
              Postgres.validate([target], [
                {MissingForeignKeyConstraints,
-                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
+                    tables: ["orders"]
+                  ]
+                ]}
              ])
 
     assert Enum.map(issues, &{&1.meta.schema, &1.meta.table, &1.meta.column}) == [

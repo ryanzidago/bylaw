@@ -104,16 +104,15 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
       refute Keyword.has_key?(opts, :otp_app)
     end
 
-    test "rejects top-level scope options when rules are provided" do
+    test "rejects top-level scope options" do
       assert_raise ArgumentError,
-                   "expected #{@check} to use rule-level :schemas when :rules is provided",
+                   "unknown #{@check} option: :schemas",
                    fn ->
                      EctoChangesetConstraintOptions.normalize!(
                        %{},
                        [
                          schema_modules: [String],
                          paths: ["lib"],
-                         rules: [[where: [tables: ["users"]]]],
                          schemas: ["public"]
                        ],
                        @check
@@ -121,18 +120,18 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
                    end
     end
 
-    test "accepts where rules with plural matcher keys and list values" do
+    test "accepts single-rule shorthand with plural matcher keys and list values" do
       assert [
                schema_modules: [String],
                paths: ["lib"],
-               rules: [[where: [tables: ["users"]]]]
+               rules: [where: [tables: ["users"]]]
              ] =
                EctoChangesetConstraintOptions.normalize!(
                  %{},
                  [
                    schema_modules: [String],
                    paths: ["lib"],
-                   rules: [[where: [tables: ["users"]]]]
+                   rules: [where: [tables: ["users"]]]
                  ],
                  @check
                )
