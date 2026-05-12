@@ -51,6 +51,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:keys` - required non-empty list of field names when the check runs.
     * `:match` - `:any` or `:all`. Defaults to `:any`.
+    * `:rules` - query-local rules with rule-level `:keys`, optional `:match`,
+      and optional `:only`/`:where` and `:except` matchers.
 
   Example check spec:
 
@@ -70,6 +72,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type match :: :any | :all
@@ -79,6 +82,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
             {:validate, boolean()}
             | {:keys, list(atom())}
             | {:match, match()}
+            | {:rules, list(keyword())}
           )
   @typedoc false
   @type opts :: check_opts()
@@ -91,7 +95,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
+    check_opts = CheckOptions.keyword_list!(opts, "opts")
+    RuleOptions.validate_allowed_options!(check_opts, :mandatory_where_keys, [:keys, :match])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -105,34 +110,52 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
+    rules =
+      RuleOptions.default_rules!(
+        check_opts,
+        :mandatory_where_keys,
+        [:keys, :match],
+        &rule_payload!/1
+      )
 
     query
     |> Introspection.query_branches()
-    |> Enum.flat_map(&issues_for_branch(operation, &1, check_opts, keys))
+    |> Enum.flat_map(&issues_for_branch(operation, &1, rules))
     |> result()
   end
 
-  defp issues_for_branch(operation, {branch_path, query}, check_opts, keys) do
-    case applicable_keys(query, keys) do
+  defp rule_payload!(opts) do
+    %{
+      keys: CheckOptions.fetch_non_empty_atoms!(opts, :keys),
+      match: CheckOptions.match!(opts)
+    }
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, rules) do
+    operation
+    |> RuleOptions.matching_rules(query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, query, &1, branch_path))
+  end
+
+  defp issues_for_rule(operation, query, rule, branch_path) do
+    case applicable_keys(query, rule.keys) do
       [] ->
         []
 
       applicable_keys ->
-        issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path)
+        issues_for_applicable_branch(operation, query, rule, applicable_keys, branch_path)
     end
   end
 
-  defp issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path) do
-    match = CheckOptions.match!(check_opts)
+  defp issues_for_applicable_branch(operation, query, rule, applicable_keys, branch_path) do
     field_branches = where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
-    missing = missing_keys(applicable_keys, field_branches, match)
+    missing = missing_keys(applicable_keys, field_branches, rule.match)
 
     if Enum.empty?(missing) do
       []
     else
-      [issue(operation, applicable_keys, fields, missing, match, branch_path)]
+      [issue(operation, applicable_keys, fields, missing, rule.match, branch_path)]
     end
   end
 

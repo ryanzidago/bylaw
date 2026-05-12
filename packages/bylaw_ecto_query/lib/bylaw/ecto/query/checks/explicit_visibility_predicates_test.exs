@@ -976,6 +976,41 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
     end
   end
 
+  describe "validate/3 with rules" do
+    test "validates fields from matching query-local rules" do
+      query = from(post in Post, where: is_nil(post.deleted_at))
+
+      assert {:error, [%Issue{} = issue]} =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 rules: [[only: [ecto_schema: Post], fields: [:deleted_at, :status]]]
+               )
+
+      assert issue.meta.configured_fields == [:deleted_at, :status]
+      assert issue.meta.missing_fields == [:status]
+      assert issue.meta.found_visibility_fields == [:deleted_at]
+    end
+
+    test "passes when no query-local visibility rule matches" do
+      query = from(post in Post)
+
+      assert :ok =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 rules: [[only: [table: "comments"], fields: [:deleted_at]]]
+               )
+    end
+
+    test "raises when old schemas shorthand is mixed with rules" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "unknown option: :schemas", fn ->
+        ExplicitVisibilityPredicates.validate(:all, query,
+          schemas: [{Post, fields: [:deleted_at]}],
+          rules: [[fields: [:status]]]
+        )
+      end
+    end
+  end
+
   defp opts do
     [
       schemas: [

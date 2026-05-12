@@ -61,6 +61,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
+    * `:rules` - query-local rules with rule-level `:fields` and optional
+      `:only`/`:where` and `:except` matchers.
 
   Example check spec:
 
@@ -79,6 +81,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
 
@@ -89,6 +92,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
           list(
             {:validate, boolean()}
             | {:schemas, list(schema_config())}
+            | {:rules, list(keyword())}
           )
   @typedoc false
   @type opts :: check_opts()
@@ -102,7 +106,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
     opts = CheckOptions.keyword_list!(opts, "opts")
-    check_opts = CheckOptions.normalize!(opts, [:schemas, :validate])
+    check_opts = CheckOptions.normalize!(opts, :any)
+    validate_top_level_opts!(check_opts)
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -116,24 +121,77 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    schema_configs = fetch_schema_configs!(check_opts)
+    rules = rules!(check_opts)
 
     query
     |> Introspection.query_branches()
-    |> Enum.flat_map(&issues_for_branch(operation, &1, schema_configs))
+    |> Enum.flat_map(&issues_for_branch(operation, &1, rules))
     |> result()
   end
 
-  defp issues_for_branch(operation, {branch_path, query}, schema_configs) do
+  defp validate_top_level_opts!(opts) do
+    if Keyword.has_key?(opts, :rules) do
+      RuleOptions.validate_allowed_options!(opts, :explicit_visibility_predicates, [:fields])
+    else
+      CheckOptions.validate_allowed_keys!(opts, [:schemas, :validate])
+    end
+  end
+
+  defp rules!(opts) do
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
+        RuleOptions.default_rules!(
+          opts,
+          :explicit_visibility_predicates,
+          [:fields],
+          &rule_payload!/1
+        )
+
+      :error ->
+        schema_rules!(opts)
+    end
+  end
+
+  defp rule_payload!(opts) do
+    %{fields: fetch_rule_fields!(opts)}
+  end
+
+  defp fetch_rule_fields!(opts) do
+    case Keyword.fetch(opts, :fields) do
+      {:ok, fields} -> normalize_fields!(nil, fields)
+      :error -> raise ArgumentError, "missing required :fields option"
+    end
+  end
+
+  defp schema_rules!(opts) do
+    opts
+    |> validate_schema_opts!()
+    |> fetch_schema_configs!()
+    |> Enum.map(fn {schema, fields: fields} ->
+      %{only: [[ecto_schema: schema]], except: [], fields: fields}
+    end)
+  end
+
+  defp validate_schema_opts!(opts) do
+    CheckOptions.validate_allowed_keys!(opts, [:schemas, :validate])
+    opts
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, rules) do
+    operation
+    |> RuleOptions.matching_rules(query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, query, &1, branch_path))
+  end
+
+  defp issues_for_rule(operation, query, rule, branch_path) do
     with {:ok, schema} <- Introspection.root_schema(query),
-         {:ok, configured_fields} <- configured_fields(schema_configs, schema),
-         applicable_fields = applicable_fields(schema, configured_fields),
+         applicable_fields = applicable_fields(schema, rule.fields),
          false <- Enum.empty?(applicable_fields) do
       issues_for_applicable_branch(
         operation,
         query,
         schema,
-        configured_fields,
+        rule.fields,
         applicable_fields,
         branch_path
       )
@@ -241,15 +299,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   defp normalize_fields!(_schema, fields) do
     raise ArgumentError,
           "expected :fields to be a non-empty list of atoms, got: #{inspect(fields)}"
-  end
-
-  defp configured_fields(schema_configs, schema) do
-    case Enum.find(schema_configs, fn {configured_schema, _opts} ->
-           configured_schema == schema
-         end) do
-      {^schema, fields: fields} -> {:ok, fields}
-      nil -> :unknown
-    end
   end
 
   defp applicable_fields(schema, fields) do

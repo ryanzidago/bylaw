@@ -43,6 +43,30 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
     end
   end
 
+  describe "root_table/1 and root_prefix/1" do
+    test "return root table and source prefix" do
+      query = from(post in Post, prefix: "tenant_a")
+
+      assert Introspection.root_table(query) == "posts"
+      assert Introspection.root_prefix(query) == "tenant_a"
+    end
+
+    test "return query prefix when the source prefix is absent" do
+      query = Ecto.Query.put_query_prefix(from(post in Post), "tenant_b")
+
+      assert Introspection.root_table(query) == "posts"
+      assert Introspection.root_prefix(query) == "tenant_b"
+    end
+
+    test "return nil for malformed sources and missing prefixes" do
+      query = from(post in Post)
+
+      assert Introspection.root_table(:not_a_query) == nil
+      assert Introspection.root_prefix(query) == nil
+      assert Introspection.root_prefix(:not_a_query) == nil
+    end
+  end
+
   describe "explicit_join_schema/1" do
     test "returns direct schema joins" do
       query = from(post in Post, join: comment in Comment, on: comment.post_id == post.id)
