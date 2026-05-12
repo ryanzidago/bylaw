@@ -50,7 +50,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
    rules: [where: [schemas: ["public"]]]}
 
   {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
-   rules: [[where: [schemas: ["public"]], except: [[tables: ["audit_events"]]]]]}
+   rules: [where: [schemas: ["public"]], except: [[tables: ["audit_events"]]]]}
   ```
 
   A foreign key passes when the referencing table has a valid, non-partial index

@@ -68,10 +68,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
    paths: ["lib/my_app"],
    rules: [
-     [
-       where: [schemas: ["public"]],
-       except: [[tables: ["legacy_users"], constraints: ["legacy_users_email_index"]]]
-     ]
+     where: [schemas: ["public"]],
+     except: [[tables: ["legacy_users"], constraints: ["legacy_users_email_index"]]]
    ]}
   ```
 

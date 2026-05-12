@@ -65,12 +65,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
    paths: ["lib/my_app"],
-   rules: [
-     [
-       where: [schemas: ["public"]],
-       except: [[tables: ["events"], columns: ["actor_id"]]]
-     ]
-   ]}
+   rules: [where: [schemas: ["public"]], except: [[tables: ["events"], columns: ["actor_id"]]]]}
   ```
 
   ## Usage
