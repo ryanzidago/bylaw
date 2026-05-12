@@ -44,16 +44,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityTest do
              }
     end
 
-    test "passes schema and table filters as check scope" do
+    test "accepts single-rule shorthand for scoped validation" do
       target = target({:ok, result([])})
 
       assert :ok =
                ForeignKeyNullability.validate(target,
-                 schemas: ["public", "billing"],
-                 tables: ["orders", "line_items"]
+                 rules: [
+                   where: [
+                     schemas: ["public", "billing"],
+                     tables: ["orders", "line_items"]
+                   ]
+                 ]
                )
 
-      assert_received {:query, _sql, [["public", "billing"], ["orders", "line_items"]], []}
+      assert_received {:query, _sql, [nil, nil], []}
     end
 
     test "returns every nullable foreign key column issue" do
@@ -106,9 +110,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityTest do
 
       assert {:error, [%Issue{} = issue]} =
                ForeignKeyNullability.validate(target,
-                 except: [
-                   [tables: ["runs"], columns: ["assistant_message_id"]],
-                   [constraints: [~r/^runs_/]]
+                 rules: [
+                   except: [
+                     [tables: ["runs"], columns: ["assistant_message_id"]],
+                     [constraints: [~r/^runs_/]]
+                   ]
                  ]
                )
 
@@ -153,51 +159,61 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityTest do
                    end
     end
 
-    test "requires schema filters to be non-empty lists of strings" do
+    test "rejects top-level schema filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_nullability :schemas to be a non-empty list of strings/,
+                   ~r/unknown foreign_key_nullability option: :schemas/,
                    fn ->
                      ForeignKeyNullability.validate(target, schemas: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_nullability :schemas to be a non-empty list of strings/,
+                   ~r/unknown foreign_key_nullability option: :schemas/,
                    fn ->
                      ForeignKeyNullability.validate(target, schemas: [:public])
                    end
     end
 
-    test "requires table filters to be non-empty lists of strings" do
+    test "rejects top-level table filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_nullability :tables to be a non-empty list of strings/,
+                   ~r/unknown foreign_key_nullability option: :tables/,
                    fn ->
                      ForeignKeyNullability.validate(target, tables: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_nullability :tables to be a non-empty list of strings/,
+                   ~r/unknown foreign_key_nullability option: :tables/,
                    fn ->
                      ForeignKeyNullability.validate(target, tables: [""])
                    end
     end
 
-    test "requires exceptions to be matchers" do
+    test "rejects top-level exceptions and validates rule exceptions" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected foreign_key_nullability :except to be a matcher or non-empty list of matchers/,
+                   ~r/unknown foreign_key_nullability option: :except/,
                    fn ->
                      ForeignKeyNullability.validate(target, except: ["orders"])
                    end
 
       assert_raise ArgumentError,
+                   ~r/expected foreign_key_nullability :except to be a matcher or non-empty list of matchers/,
+                   fn ->
+                     ForeignKeyNullability.validate(target,
+                       rules: [except: ["orders"]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
                    ~r/unknown foreign_key_nullability :except matcher option: :unknown/,
                    fn ->
-                     ForeignKeyNullability.validate(target, except: [unknown: "orders"])
+                     ForeignKeyNullability.validate(target,
+                       rules: [except: [unknown: "orders"]]
+                     )
                    end
     end
 

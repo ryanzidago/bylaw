@@ -41,12 +41,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   ## Options
 
-  Use a rule without `:where` when every foreign key in scope should use the same
-  action:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules. Use a rule
+  without `:where` when every foreign key in scope should use the same action:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
-   rules: [[on_delete: :cascade]]}
+   rules: [on_delete: :restrict, on_update: :restrict]}
   ```
 
   Use `rules: [...]` for scoped policy. A foreign key can match more than one
@@ -56,13 +57,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
    rules: [
      [
-       where: [[tables: ["messages"]], [referenced_tables: ["conversations"]]],
-       on_delete: :cascade
-     ],
-     [
        where: [referenced_tables: ["lookup_statuses"]],
        on_delete: :restrict,
        on_update: :restrict
+     ],
+     [
+       where: [tables: ["messages"]],
+       except: [constraints: ["messages_status_id_fkey"]],
+       on_delete: :cascade
      ]
    ]}
   ```
@@ -155,9 +157,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
             | {:on_delete, action()}
             | {:on_update, action()}
           )
-  @type check_opt ::
-          {:validate, boolean()}
-          | {:rules, list(rule())}
+  @type check_opt :: {:validate, boolean()} | {:rules, rule() | list(rule())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
@@ -208,10 +208,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   defp validate_foreign_key_actions(target, opts) do
     rules = normalize_rules!(opts)
-    schemas = RuleOptions.filter(opts, :schemas, :foreign_key_actions)
-    tables = RuleOptions.filter(opts, :tables, :foreign_key_actions)
 
-    case Postgres.query(target, @query, [schemas, tables], []) do
+    case Postgres.query(target, @query, [nil, nil], []) do
       {:ok, result} ->
         result
         |> Result.rows()
@@ -228,19 +226,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :on_delete, :on_update],
+      [:validate, :rules],
       :foreign_key_actions
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :foreign_key_actions)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(
-        opts,
-        [:on_delete, :on_update],
-        :foreign_key_actions
-      )
-
       normalize_rules!(opts)
     end
 
@@ -248,13 +240,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   end
 
   defp normalize_rules!(opts) do
-    cond do
-      Keyword.has_key?(opts, :rules) and
-          (Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update)) ->
-        raise ArgumentError,
-              "expected foreign_key_actions to include global actions or :rules, not both"
-
-      Keyword.has_key?(opts, :rules) ->
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
         opts
         |> Keyword.fetch!(:rules)
         |> RuleOptions.rules!(
@@ -264,19 +251,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
           &rule_payload!/1
         )
 
-      Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update) ->
-        [
-          %{
-            where: [],
-            except: [],
-            on_delete: action!(opts, :on_delete),
-            on_update: action!(opts, :on_update)
-          }
-        ]
-
-      true ->
-        raise ArgumentError,
-              "expected foreign_key_actions to include :on_delete, :on_update, or :rules"
+      :error ->
+        raise ArgumentError, "expected foreign_key_actions to include :rules"
     end
   end
 

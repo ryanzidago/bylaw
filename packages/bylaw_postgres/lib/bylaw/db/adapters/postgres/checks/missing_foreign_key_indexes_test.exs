@@ -44,16 +44,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesTest do
              }
     end
 
-    test "passes schema and table filters as check scope" do
+    test "accepts single-rule shorthand for scoped validation" do
       target = target({:ok, result([])})
 
       assert :ok =
                MissingForeignKeyIndexes.validate(target,
-                 schemas: ["public", "billing"],
-                 tables: ["orders", "line_items"]
+                 rules: [
+                   where: [
+                     schemas: ["public", "billing"],
+                     tables: ["orders", "line_items"]
+                   ]
+                 ]
                )
 
-      assert_received {:query, _sql, [["public", "billing"], ["orders", "line_items"]], []}
+      assert_received {:query, _sql, [nil, nil], []}
     end
 
     test "returns every missing foreign key index issue" do
@@ -131,33 +135,33 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesTest do
                    end
     end
 
-    test "requires schema filters to be non-empty lists of strings" do
+    test "rejects top-level schema filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected missing_foreign_key_indexes :schemas to be a non-empty list of strings/,
+                   ~r/unknown missing_foreign_key_indexes option: :schemas/,
                    fn ->
                      MissingForeignKeyIndexes.validate(target, schemas: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected missing_foreign_key_indexes :schemas to be a non-empty list of strings/,
+                   ~r/unknown missing_foreign_key_indexes option: :schemas/,
                    fn ->
                      MissingForeignKeyIndexes.validate(target, schemas: [:public])
                    end
     end
 
-    test "requires table filters to be non-empty lists of strings" do
+    test "rejects top-level table filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected missing_foreign_key_indexes :tables to be a non-empty list of strings/,
+                   ~r/unknown missing_foreign_key_indexes option: :tables/,
                    fn ->
                      MissingForeignKeyIndexes.validate(target, tables: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected missing_foreign_key_indexes :tables to be a non-empty list of strings/,
+                   ~r/unknown missing_foreign_key_indexes option: :tables/,
                    fn ->
                      MissingForeignKeyIndexes.validate(target, tables: [""])
                    end

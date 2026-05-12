@@ -16,7 +16,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
 
     assert {:error, issues} =
              Postgres.validate([target], [
-               {MissingForeignKeyIndexes, schemas: [TestDatabase.schema()]}
+               {MissingForeignKeyIndexes, rules: [where: [schemas: [TestDatabase.schema()]]]}
              ])
 
     assert Enum.map(issues, & &1.meta.constraint) == [
@@ -32,7 +32,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {MissingForeignKeyIndexes, schemas: [TestDatabase.schema()], tables: ["orders"]}
+               {MissingForeignKeyIndexes,
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["orders"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -50,7 +56,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
     assert :ok =
              Postgres.validate([target], [
                {MissingForeignKeyIndexes,
-                schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["events", "indexed_orders"]
+                  ]
+                ]}
              ])
   end
 
@@ -60,7 +71,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {MissingForeignKeyIndexes,
-                schemas: [TestDatabase.schema()], tables: ["partial_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["partial_orders"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.constraint == "partial_orders_user_id_fkey"
@@ -72,7 +88,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {MissingForeignKeyIndexes,
-                schemas: [TestDatabase.schema()], tables: ["ordered_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["ordered_orders"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.constraint == "ordered_orders_user_id_fkey"
@@ -84,7 +105,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {MissingForeignKeyIndexes,
-                schemas: [TestDatabase.schema()], tables: ["included_events"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["included_events"]
+                  ]
+                ]}
              ])
 
     assert issue.meta.constraint == "included_events_account_fkey"
@@ -96,7 +122,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {MissingForeignKeyIndexes, schemas: [TestDatabase.pg_schema()]}
+               {MissingForeignKeyIndexes, rules: [where: [schemas: [TestDatabase.pg_schema()]]]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -109,7 +135,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexesIntegrationT
     assert {:error, issues} =
              Postgres.validate([target], [
                {MissingForeignKeyIndexes,
-                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()], tables: ["orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
+                    tables: ["orders"]
+                  ]
+                ]}
              ])
 
     assert Enum.map(issues, &{&1.meta.schema, &1.meta.table}) == [

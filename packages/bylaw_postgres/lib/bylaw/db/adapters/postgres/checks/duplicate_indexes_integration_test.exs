@@ -16,7 +16,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {DuplicateIndexes, schemas: [TestDatabase.schema()]}
+               {DuplicateIndexes, rules: [where: [schemas: [TestDatabase.schema()]]]}
              ])
 
     assert issue.meta.table == "duplicate_indexes"
@@ -32,7 +32,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {DuplicateIndexes, schemas: [TestDatabase.schema()], tables: ["duplicate_indexes"]}
+               {DuplicateIndexes,
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["duplicate_indexes"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -52,7 +58,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesIntegrationTest do
 
     assert :ok =
              Postgres.validate([target], [
-               {DuplicateIndexes, schemas: [TestDatabase.schema()], tables: ["indexed_orders"]}
+               {DuplicateIndexes,
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["indexed_orders"]
+                  ]
+                ]}
              ])
   end
 
@@ -61,7 +73,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesIntegrationTest do
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {DuplicateIndexes, schemas: [TestDatabase.pg_schema()]}
+               {DuplicateIndexes, rules: [where: [schemas: [TestDatabase.pg_schema()]]]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -74,8 +86,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesIntegrationTest do
     assert {:error, issues} =
              Postgres.validate([target], [
                {DuplicateIndexes,
-                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
-                tables: ["duplicate_indexes"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
+                    tables: ["duplicate_indexes"]
+                  ]
+                ]}
              ])
 
     assert Enum.map(issues, &{&1.meta.schema, &1.meta.table}) == [
