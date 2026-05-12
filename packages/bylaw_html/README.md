@@ -29,6 +29,7 @@ Choose the checks you want to run and pass them explicitly to
 ```elixir
 checks = [
   Bylaw.HTML.Check.PreferButtonForAction,
+  Bylaw.HTML.Check.RequireImageAlt,
   Bylaw.HTML.Check.RequireLinkHref,
   Bylaw.HTML.Check.PreferLinkForNavigation
 ]
@@ -49,6 +50,7 @@ Built-in checks live under `Bylaw.HTML.Check.*`.
 
 - `Bylaw.HTML.Check.PreferLinkForNavigation`
 - `Bylaw.HTML.Check.PreferButtonForAction`
+- `Bylaw.HTML.Check.RequireImageAlt`
 - `Bylaw.HTML.Check.RequireLinkHref`
 
 This first built-in check is intentionally narrow. It inspects rendered HTML
@@ -61,6 +63,9 @@ anchors without an `href` attribute.
 `Bylaw.HTML.Check.PreferButtonForAction` inspects rendered `<a>` elements with
 `phx-click` and flags placeholder action hrefs such as `#`, empty hrefs, and
 `javascript:void(0)`.
+
+`Bylaw.HTML.Check.RequireImageAlt` inspects rendered `<img>` elements and flags
+images without an `alt` attribute.
 
 ## Why rendered HTML
 
