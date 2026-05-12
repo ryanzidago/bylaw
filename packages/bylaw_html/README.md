@@ -121,13 +121,3 @@ assert_valid_html(html)
 ```
 
 `bylaw_html` does not read application config or register checks globally.
-
-## Why rendered HTML
-
-Rendered HTML is a stable integration boundary for many test styles. It lets
-you validate what the browser actually receives without coupling the check to
-HEEx source, component internals, `%Phoenix.LiveView.JS{}` structs, or source
-template conventions.
-
-Rendered HTML validation reports the offending markup snippet, not the source
-component or template that produced it.
