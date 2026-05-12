@@ -10,3 +10,5 @@ Initial alpha package release.
   `phx-click` LiveView navigation sequences on non-link elements.
 - Add the built-in `Bylaw.HTML.Check.RequireLinkHref` check for rendered anchors
   missing an `href` attribute.
+- Add the built-in `Bylaw.HTML.Check.PreferButtonForAction` check for rendered
+  anchors with `phx-click` and placeholder action hrefs.
