@@ -418,7 +418,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, :not_a_query, opts())
     end
 
-    test "passes source subqueries when no scoped rule matches" do
+    test "passes source subqueries when the effective root query satisfies the scoped rule" do
       scoped_posts =
         from(post in Post,
           where: is_nil(post.deleted_at),
@@ -1022,6 +1022,45 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                )
 
       assert issue.meta.missing_fields == [:status]
+    end
+
+    @doc """
+    Scoped visibility rules must keep validating the effective root source query
+    when the outer prepared query reads from `subquery/1`.
+
+    This matters because `Ecto.Repo.prepare_query/3` only validates the outer
+    query. If schema, table, or prefix matchers stop at the wrapper query,
+    visibility rules can silently downgrade from enforcement to `:ok`.
+    """
+    test "continues enforcing scoped rules through root source subqueries" do
+      unscoped_posts =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: post.status == ^:published
+        )
+
+      scoped_posts =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: is_nil(post.deleted_at)
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:deleted_at]
+        ]
+      ]
+
+      query_missing = from(post in subquery(unscoped_posts), select: count())
+      query_present = from(post in subquery(scoped_posts), select: count())
+
+      assert {:error, [%Issue{} = issue]} =
+               ExplicitVisibilityPredicates.validate(:all, query_missing, rules: rules)
+
+      assert issue.meta.missing_fields == [:deleted_at]
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query_present, rules: rules)
     end
 
     test "raises for invalid rule fields" do

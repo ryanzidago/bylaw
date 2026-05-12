@@ -34,6 +34,14 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
       assert Introspection.root_schema(query) == {:ok, Post}
     end
 
+    test "unwraps root source subqueries before resolving the root schema" do
+      inner_query = from(post in Post)
+      query = from(post in subquery(inner_query), select: count())
+
+      assert Introspection.effective_root_query(query) == inner_query
+      assert Introspection.root_schema(Introspection.effective_root_query(query)) == {:ok, Post}
+    end
+
     test "returns unknown for schema-less and malformed sources" do
       query = from(post in "posts")
 
@@ -56,6 +64,14 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
 
       assert Introspection.root_table(query) == "posts"
       assert Introspection.root_prefix(query) == "tenant_b"
+    end
+
+    test "unwrap root source subqueries before resolving table and prefix" do
+      inner_query = from(post in Post, prefix: "tenant_a")
+      query = from(post in subquery(inner_query), select: count())
+
+      assert Introspection.root_table(Introspection.effective_root_query(query)) == "posts"
+      assert Introspection.root_prefix(Introspection.effective_root_query(query)) == "tenant_a"
     end
 
     test "return nil for malformed sources and missing prefixes" do

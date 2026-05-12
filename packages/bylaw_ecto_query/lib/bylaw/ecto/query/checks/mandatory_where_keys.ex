@@ -133,9 +133,11 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp issues_for_branch(operation, {branch_path, query}, rules) do
+    effective_query = Introspection.effective_root_query(query)
+
     operation
-    |> RuleOptions.matching_rules(query, rules)
-    |> Enum.flat_map(&issues_for_rule(operation, query, &1, branch_path))
+    |> RuleOptions.matching_rules(effective_query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, effective_query, &1, branch_path))
   end
 
   defp issues_for_rule(operation, query, rule, branch_path) do
