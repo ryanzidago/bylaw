@@ -999,6 +999,42 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
                )
     end
 
+    test "supports where alias and except matchers" do
+      query = from(post in Post)
+
+      assert {:error, [%Issue{}]} =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 rules: [[where: [table: "posts"], fields: [:deleted_at]]]
+               )
+
+      assert :ok =
+               ExplicitVisibilityPredicates.validate(:all, query,
+                 rules: [
+                   [
+                     where: [table: "posts"],
+                     except: [ecto_schema: Post],
+                     fields: [:deleted_at]
+                   ]
+                 ]
+               )
+    end
+
+    test "raises for invalid rule fields" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "missing required :fields option", fn ->
+        ExplicitVisibilityPredicates.validate(:all, query, rules: [[only: [ecto_schema: Post]]])
+      end
+
+      assert_raise ArgumentError,
+                   "expected :fields to be a non-empty list of atoms, got: []",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       rules: [[only: [ecto_schema: Post], fields: []]]
+                     )
+                   end
+    end
+
     test "raises when old schemas shorthand is mixed with rules" do
       query = from(post in Post)
 

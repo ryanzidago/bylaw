@@ -732,6 +732,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
   end
 
   describe "validate/3 with rules" do
+    test "rules without scope apply globally" do
+      query = from(post in Post)
+
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryWhereKeys.validate(:all, query, rules: [[keys: [:organisation_id]]])
+
+      assert issue.meta.missing_keys == [:organisation_id]
+    end
+
     test "scopes rules by ecto_schema" do
       query = from(post in Post)
 
@@ -848,6 +857,21 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "supports except as a non-empty list of matcher keyword lists" do
+      query = from(post in Post)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [
+                   [
+                     only: [ecto_schema: Post],
+                     except: [[table: "comments"], [operation: :all]],
+                     keys: [:organisation_id]
+                   ]
+                 ]
+               )
+    end
+
     test "supports where as an alias for only" do
       query = from(post in Post)
 
@@ -902,6 +926,18 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                    end
 
       assert_raise ArgumentError,
+                   "expected mandatory_where_keys :rules to be a non-empty list of keyword rules",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query, rules: :invalid)
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :rules to be a non-empty list of keyword rules",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query, rules: [:invalid])
+                   end
+
+      assert_raise ArgumentError,
                    "expected mandatory_where_keys rule to include :only or :where, not both",
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
@@ -911,6 +947,20 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
 
       assert_raise ArgumentError, "unknown mandatory_where_keys rule option: :unknown", fn ->
         MandatoryWhereKeys.validate(:all, query, rules: [[unknown: true, keys: [:id]]])
+      end
+    end
+
+    test "raises for invalid rule payloads" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "missing required :keys option", fn ->
+        MandatoryWhereKeys.validate(:all, query, rules: [[only: [ecto_schema: Post]]])
+      end
+
+      assert_raise ArgumentError, "expected :match to be :any or :all, got: :one", fn ->
+        MandatoryWhereKeys.validate(:all, query,
+          rules: [[only: [ecto_schema: Post], keys: [:organisation_id], match: :one]]
+        )
       end
     end
 
@@ -938,6 +988,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
                        rules: [[only: [table: :posts], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :except to be a matcher or non-empty list of matchers",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[except: [], keys: [:organisation_id]]]
                      )
                    end
     end
