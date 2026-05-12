@@ -68,10 +68,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints,
    paths: ["lib/my_app"],
    rules: [
-     [
-       only: [schema: "public"],
-       except: [[table: "legacy_users", constraint: "legacy_users_email_index"]]
-     ]
+     where: [schemas: ["public"]],
+     except: [[tables: ["legacy_users"], constraints: ["legacy_users_email_index"]]]
    ]}
   ```
 
@@ -128,7 +126,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(keyword())}
+          | {:rules, keyword() | list(keyword())}
 
   @type check_opts :: list(check_opt())
 

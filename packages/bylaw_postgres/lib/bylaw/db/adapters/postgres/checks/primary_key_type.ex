@@ -4,7 +4,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   ## Examples
 
-  With `rules: [[only: [schema: "public"], types: ["uuid"]]]`, before:
+  With `rules: [where: [schemas: ["public"]], types: ["uuid"]]`, before:
 
   ```sql
   CREATE TABLE users (
@@ -38,17 +38,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [...]` to configure allowed types for scoped groups of tables:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
+   rules: [types: ["uuid"]]}
+
+  {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
    rules: [
-     [
-       only: [schema: "public"],
-       types: ["uuid"],
-       except: [[table: "schema_migrations"]]
-     ]
+     [where: [schemas: ["public"]], types: ["uuid"]],
+     [where: [schemas: ["billing"], tables: [~r/^invoice_/]], types: ["uuid", "bigint"]]
    ]}
   ```
 
@@ -128,7 +128,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -137,13 +137,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
           )
   @type rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:types, list(String.t())}
           )
-  @type check_opt ::
-          {:validate, boolean()}
-          | {:rules, list(rule())}
+  @type check_opt :: {:validate, boolean()} | {:rules, rule() | list(rule())}
 
   @type check_opts :: list(check_opt())
 
@@ -185,10 +183,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   defp validate_primary_key_type(target, opts) do
     rules = normalize_rules!(opts)
-    schemas = RuleOptions.filter(opts, :schemas, :primary_key_type)
-    tables = RuleOptions.filter(opts, :tables, :primary_key_type)
 
-    case Postgres.query(target, @query, [schemas, tables, query_types(rules, opts)], []) do
+    case Postgres.query(target, @query, [nil, nil, []], []) do
       {:ok, result} ->
         result
         |> Result.rows()
@@ -206,14 +202,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :types],
+      [:validate, :rules],
       :primary_key_type
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :primary_key_type)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:types], :primary_key_type)
       normalize_rules!(opts)
     end
 
@@ -221,8 +216,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   end
 
   defp normalize_rules!(opts) do
-    cond do
-      Keyword.has_key?(opts, :rules) ->
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
         opts
         |> Keyword.fetch!(:rules)
         |> RuleOptions.rules!(
@@ -232,22 +227,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
           &rule_payload!/1
         )
 
-      Keyword.has_key?(opts, :types) ->
-        [
-          %{
-            types: types!(Keyword.fetch!(opts, :types)),
-            only: [],
-            except: []
-          }
-        ]
-
-      true ->
-        raise ArgumentError, "expected primary_key_type to include :types"
+      :error ->
+        raise ArgumentError, "expected primary_key_type to include :rules"
     end
-  end
-
-  defp query_types(_rules, opts) do
-    if Keyword.has_key?(opts, :types), do: Keyword.fetch!(opts, :types), else: []
   end
 
   defp rule_payload!(rule) do

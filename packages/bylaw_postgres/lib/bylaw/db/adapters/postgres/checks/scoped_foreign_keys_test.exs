@@ -7,10 +7,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
   alias Bylaw.Db.Target
 
   describe "validate/2" do
-    test "passes when every scoped foreign key includes scope columns" do
+    test "accepts single-rule shorthand when every scoped foreign key includes scope columns" do
       target = target({:ok, result([])})
 
-      assert :ok = ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
+      assert :ok =
+               ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]])
 
       assert_received {:query, sql, [nil, nil, ["tenant_id"]], []}
       assert sql =~ "pg_catalog.pg_constraint"
@@ -36,7 +37,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
+               ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]])
 
       assert issue.check == ScopedForeignKeys
       assert issue.target == target
@@ -77,7 +78,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
 
       assert {:error, [%Issue{} = issue]} =
                ScopedForeignKeys.validate(target,
-                 scope_columns: ["tenant_id", "workspace_id"]
+                 rules: [scope_columns: ["tenant_id", "workspace_id"]]
                )
 
       assert issue.message =~ "tenant_id, workspace_id"
@@ -92,7 +93,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                  rules: [
                    [
                      scope_columns: ["tenant_id"],
-                     only: [schema: ["public", "billing"], table: ["orders", "line_items"]]
+                     where: [
+                       schemas: ["public", "billing"],
+                       tables: ["orders", "line_items"]
+                     ]
                    ]
                  ]
                )
@@ -128,7 +132,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
         )
 
       assert {:error, issues} =
-               ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
+               ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]])
 
       assert Enum.map(issues, & &1.meta.constraint) == [
                "orders_customer_id_fkey",
@@ -154,7 +158,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
+               ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]])
 
       assert issue.meta.constraint == "orders_customer_id_fkey"
       assert issue.meta.referenced_table == "customers"
@@ -201,8 +205,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                    [
                      scope_columns: ["tenant_id"],
                      except: [
-                       [table: "orders", constraint: ~r/customer_id/],
-                       [referenced_table: "global_actors"]
+                       [tables: ["orders"], constraints: [~r/customer_id/]],
+                       [referenced_tables: ["global_actors"]]
                      ]
                    ]
                  ]
@@ -225,7 +229,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError, ~r/unknown scoped_foreign_keys option: :unknown/, fn ->
-        ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"], unknown: true)
+        ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]], unknown: true)
       end
     end
 
@@ -249,49 +253,46 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                    end
     end
 
-    test "requires scope columns when validation is enabled" do
+    test "requires rules when validation is enabled" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected scoped_foreign_keys to include :scope_columns/,
+                   ~r/expected scoped_foreign_keys to include :rules/,
                    fn ->
                      ScopedForeignKeys.validate(target, [])
                    end
     end
 
-    test "requires scope columns to be a non-empty list of strings" do
+    test "requires rule scope columns to be a non-empty list of strings" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
                    ~r/expected scoped_foreign_keys :scope_columns to be a non-empty list of strings/,
                    fn ->
-                     ScopedForeignKeys.validate(target, scope_columns: [])
+                     ScopedForeignKeys.validate(target, rules: [scope_columns: []])
                    end
 
       assert_raise ArgumentError,
                    ~r/expected scoped_foreign_keys :scope_columns to be a non-empty list of strings/,
                    fn ->
-                     ScopedForeignKeys.validate(target, scope_columns: [:tenant_id])
+                     ScopedForeignKeys.validate(target, rules: [scope_columns: [:tenant_id]])
                    end
     end
 
-    test "rejects top-level schema scope" do
+    test "rejects top-level scope columns and schema scope" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/unknown scoped_foreign_keys option: :schemas/,
+                   ~r/unknown scoped_foreign_keys option: :scope_columns/,
                    fn ->
-                     ScopedForeignKeys.validate(target,
-                       scope_columns: ["tenant_id"],
-                       schemas: []
-                     )
+                     ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
                    end
 
       assert_raise ArgumentError,
                    ~r/unknown scoped_foreign_keys option: :schemas/,
                    fn ->
                      ScopedForeignKeys.validate(target,
-                       scope_columns: ["tenant_id"],
+                       rules: [scope_columns: ["tenant_id"]],
                        schemas: [:public]
                      )
                    end
@@ -304,7 +305,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                    ~r/unknown scoped_foreign_keys option: :tables/,
                    fn ->
                      ScopedForeignKeys.validate(target,
-                       scope_columns: ["tenant_id"],
+                       rules: [scope_columns: ["tenant_id"]],
                        tables: []
                      )
                    end
@@ -313,7 +314,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                    ~r/unknown scoped_foreign_keys option: :tables/,
                    fn ->
                      ScopedForeignKeys.validate(target,
-                       scope_columns: ["tenant_id"],
+                       rules: [scope_columns: ["tenant_id"]],
                        tables: [""]
                      )
                    end
@@ -343,7 +344,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected scoped_foreign_keys :except :referenced_tables to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected scoped_foreign_keys :except :referenced_tables to be a non-empty list of matcher values/,
                    fn ->
                      ScopedForeignKeys.validate(target,
                        rules: [[scope_columns: ["tenant_id"], except: [referenced_tables: []]]]
@@ -359,8 +360,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                  rules: [
                    [
                      scope_columns: ["tenant_id"],
-                     only: [schema: "public", table: "orders"],
-                     except: [[referenced_table: "global_settings"]]
+                     where: [schemas: ["public"], tables: ["orders"]],
+                     except: [[referenced_tables: ["global_settings"]]]
                    ]
                  ]
                )
@@ -371,9 +372,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                repo: nil,
                dynamic_repo: nil,
                rule: %{
-                 only: [[schema: "public", table: "orders"]],
+                 where: [[schema: ["public"], table: ["orders"]]],
                  scope_columns: ["tenant_id"],
-                 except: [[referenced_table: "global_settings"]]
+                 except: [[referenced_table: ["global_settings"]]]
                },
                reason: :connection_closed
              }
@@ -383,7 +384,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        ScopedForeignKeys.validate(target, scope_columns: ["tenant_id"])
+        ScopedForeignKeys.validate(target, rules: [scope_columns: ["tenant_id"]])
       end
     end
   end

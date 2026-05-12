@@ -104,16 +104,15 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
       refute Keyword.has_key?(opts, :otp_app)
     end
 
-    test "rejects top-level scope options when rules are provided" do
+    test "rejects top-level scope options" do
       assert_raise ArgumentError,
-                   "expected #{@check} to use rule-level :schemas when :rules is provided",
+                   "unknown #{@check} option: :schemas",
                    fn ->
                      EctoChangesetConstraintOptions.normalize!(
                        %{},
                        [
                          schema_modules: [String],
                          paths: ["lib"],
-                         rules: [[only: [table: "users"]]],
                          schemas: ["public"]
                        ],
                        @check
@@ -121,16 +120,49 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
                    end
     end
 
+    test "accepts single-rule shorthand with plural matcher keys and list values" do
+      assert [
+               schema_modules: [String],
+               paths: ["lib"],
+               rules: [where: [tables: ["users"]]]
+             ] =
+               EctoChangesetConstraintOptions.normalize!(
+                 %{},
+                 [
+                   schema_modules: [String],
+                   paths: ["lib"],
+                   rules: [where: [tables: ["users"]]]
+                 ],
+                 @check
+               )
+    end
+
     test "validates rule matcher keys" do
       assert_raise ArgumentError,
-                   "unknown #{@check} :only matcher option: :type",
+                   "unknown #{@check} :where matcher option: :type",
                    fn ->
                      EctoChangesetConstraintOptions.normalize!(
                        %{},
                        [
                          schema_modules: [String],
                          paths: ["lib"],
-                         rules: [[only: [type: "uuid"]]]
+                         rules: [[where: [type: ["uuid"]]]]
+                       ],
+                       @check
+                     )
+                   end
+    end
+
+    test "rejects only as an unknown rule option" do
+      assert_raise ArgumentError,
+                   "unknown #{@check} rule option: :only",
+                   fn ->
+                     EctoChangesetConstraintOptions.normalize!(
+                       %{},
+                       [
+                         schema_modules: [String],
+                         paths: ["lib"],
+                         rules: [[only: [tables: ["users"]]]]
                        ],
                        @check
                      )

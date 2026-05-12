@@ -19,9 +19,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [
-                      [schema: TestDatabase.schema(), table: "orders"],
-                      [schema: TestDatabase.schema(), table: "events"]
+                    where: [
+                      [schemas: [TestDatabase.schema()], tables: ["orders"]],
+                      [schemas: [TestDatabase.schema()], tables: ["events"]]
                     ],
                     columns: ["tenant_id", "account_id"]
                   ]
@@ -40,7 +40,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "indexed_orders"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["indexed_orders"]],
                     columns: ["tenant_id", "account_id"]
                   ]
                 ]}
@@ -62,9 +62,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [
-                      [schema: TestDatabase.schema(), table: "accounts"],
-                      [schema: TestDatabase.schema(), table: "events"]
+                    where: [
+                      [schemas: [TestDatabase.schema()], tables: ["accounts"]],
+                      [schemas: [TestDatabase.schema()], tables: ["events"]]
                     ],
                     columns: ["tenant_id", "account_id"]
                   ]
@@ -80,9 +80,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "orders"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["orders"]],
                     columns: ["tenant_id"],
-                    except: [[schema: TestDatabase.schema(), table: "orders"]]
+                    except: [[schemas: [TestDatabase.schema()], tables: ["orders"]]]
                   ]
                 ]}
              ])
@@ -96,12 +96,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [
-                      [schema: TestDatabase.schema(), table: "orders"],
-                      [schema: TestDatabase.pg_schema(), table: "orders"]
+                    where: [
+                      [schemas: [TestDatabase.schema()], tables: ["orders"]],
+                      [schemas: [TestDatabase.pg_schema()], tables: ["orders"]]
                     ],
                     columns: ["tenant_id"],
-                    except: [[schema: TestDatabase.schema(), table: "orders"]]
+                    except: [[schemas: [TestDatabase.schema()], tables: ["orders"]]]
                   ]
                 ]}
              ])
@@ -118,7 +118,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumnsIntegrationTest do
                {RequiredColumns,
                 rules: [
                   [
-                    only: [schema: TestDatabase.pg_schema(), table: "orders"],
+                    where: [schemas: [TestDatabase.pg_schema()], tables: ["orders"]],
                     columns: ["tenant_id"]
                   ]
                 ]}

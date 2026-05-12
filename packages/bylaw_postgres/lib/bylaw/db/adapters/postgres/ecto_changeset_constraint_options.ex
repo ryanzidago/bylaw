@@ -3,7 +3,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptions do
 
   alias Bylaw.Db.Adapters.Postgres.RuleOptions
 
-  @allowed_keys [:validate, :otp_app, :paths, :schema_modules, :rules, :schemas, :tables]
+  @allowed_keys [:validate, :otp_app, :paths, :schema_modules, :rules]
   @allowed_matcher_keys [:schema, :table, :constraint, :column]
 
   @type t :: Keyword.t()
@@ -20,14 +20,11 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptions do
     RuleOptions.validate_boolean_option!(opts, :validate, check)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:schemas, :tables], check)
       validate_schema_discovery_opts!(opts, check)
       validate_required_option!(opts, :paths, check)
       validate_schema_modules_option!(opts, check)
       validate_paths_option!(opts, check)
       RuleOptions.default_rules!(opts, check, @allowed_matcher_keys)
-      RuleOptions.filter(opts, :schemas, check)
-      RuleOptions.filter(opts, :tables, check)
     end
 
     opts

@@ -4,7 +4,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   ## Examples
 
-  With `types: [[type: "json", prefer: "jsonb"]]`, before:
+  With `rules: [types: [[type: "json", prefer: "jsonb"]]]`, before:
 
   ```sql
   CREATE TABLE webhook_events (
@@ -37,19 +37,24 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [...]` to configure forbidden types for scoped groups of columns:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
    rules: [
+     types: [
+       [type: "json", prefer: "jsonb"],
+       [type: ~r/^character\\(/, prefer: "text"]
+     ]
+   ]}
+
+  {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
+   rules: [
      [
-       only: [schema: "public"],
-       types: [
-         [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
-         [type: ~r/^character\\(/, prefer: "text"]
-       ],
-       except: [[table: "webhook_events", column: "raw_payload"]]
+       where: [schemas: ["public"], tables: ["webhook_events"]],
+       types: [[type: "json", prefer: "jsonb"]],
+       except: [[columns: ["raw_payload"]]]
      ]
    ]}
   ```
@@ -97,7 +102,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           type_matcher()
           | list({:type, type_matcher()} | {:prefer, String.t()} | {:reason, String.t()})
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -107,13 +112,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           )
   @type scope_rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:types, list(type_rule())}
           )
-  @type check_opt ::
-          {:validate, boolean()}
-          | {:rules, list(scope_rule())}
+  @type check_opt :: {:validate, boolean()} | {:rules, scope_rule() | list(scope_rule())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
@@ -158,10 +161,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   defp validate_forbidden_column_types(target, opts) do
     rules = normalize_scope_rules!(opts)
-    schemas = RuleOptions.filter(opts, :schemas, :forbidden_column_types)
-    tables = RuleOptions.filter(opts, :tables, :forbidden_column_types)
 
-    case Postgres.query(target, @query, [schemas, tables], []) do
+    case Postgres.query(target, @query, [nil, nil], []) do
       {:ok, result} ->
         result
         |> Result.rows()
@@ -178,14 +179,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :types],
+      [:validate, :rules],
       :forbidden_column_types
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :forbidden_column_types)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:types], :forbidden_column_types)
       normalize_scope_rules!(opts)
     end
 
@@ -193,8 +193,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   end
 
   defp normalize_scope_rules!(opts) do
-    cond do
-      Keyword.has_key?(opts, :rules) ->
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
         opts
         |> Keyword.fetch!(:rules)
         |> RuleOptions.rules!(
@@ -204,17 +204,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           &scope_rule_payload!/1
         )
 
-      Keyword.has_key?(opts, :types) ->
-        [
-          %{
-            types: type_rules!(Keyword.fetch!(opts, :types)),
-            only: [],
-            except: []
-          }
-        ]
-
-      true ->
-        raise ArgumentError, "expected forbidden_column_types to include :types"
+      :error ->
+        raise ArgumentError, "expected forbidden_column_types to include :rules"
     end
   end
 

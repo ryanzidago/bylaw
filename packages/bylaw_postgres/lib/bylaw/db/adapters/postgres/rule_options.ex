@@ -2,9 +2,9 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
   @moduledoc false
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher :: keyword(matcher_values())
-  @type rule :: %{only: list(matcher()), except: list(matcher())}
+  @type rule :: %{where: list(matcher()), except: list(matcher())}
 
   @plural_keys %{
     schemas: :schema,
@@ -105,7 +105,7 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
   def default_rules!(opts, check, allowed_matcher_keys) do
     case Keyword.fetch(opts, :rules) do
       {:ok, rules} -> rules!(rules, check, allowed_matcher_keys, [], fn _rule -> %{} end)
-      :error -> [%{only: [], except: matchers(opts, :except, check, allowed_matcher_keys)}]
+      :error -> [%{where: [], except: matchers(opts, :except, check, allowed_matcher_keys)}]
     end
   end
 
@@ -118,15 +118,29 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
           (keyword() -> map())
         ) :: list(map())
   def rules!(rules, check, allowed_matcher_keys, payload_keys, payload_fun) when is_list(rules) do
-    if Enum.empty?(rules) or Enum.any?(rules, &(not Keyword.keyword?(&1))) do
-      raise_rules_error!(check)
-    end
-
-    Enum.map(rules, &rule!(&1, check, allowed_matcher_keys, payload_keys, payload_fun))
+    rules
+    |> normalize_rules!(check)
+    |> Enum.map(&rule!(&1, check, allowed_matcher_keys, payload_keys, payload_fun))
   end
 
   def rules!(_rules, check, _allowed_matcher_keys, _payload_keys, _payload_fun) do
     raise_rules_error!(check)
+  end
+
+  defp normalize_rules!(rules, check) do
+    cond do
+      Enum.empty?(rules) ->
+        raise_rules_error!(check)
+
+      Keyword.keyword?(rules) ->
+        [rules]
+
+      Enum.all?(rules, &Keyword.keyword?/1) ->
+        rules
+
+      true ->
+        raise_rules_error!(check)
+    end
   end
 
   @doc false
@@ -141,7 +155,7 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
   @doc false
   @spec in_rule_scope?(term(), rule(), (term(), atom() -> term())) :: boolean()
   def in_rule_scope?(row, rule, value_fun) do
-    (Enum.empty?(rule.only) or matches_any?(row, rule.only, value_fun)) and
+    (Enum.empty?(rule.where) or matches_any?(row, rule.where, value_fun)) and
       not matches_any?(row, rule.except, value_fun)
   end
 
@@ -153,7 +167,7 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
     do: Enum.any?(matchers, &matches?(row, &1, value_fun))
 
   defp rule!(rule, check, allowed_matcher_keys, payload_keys, payload_fun) do
-    allowed_rule_keys = [:only, :where, :except] ++ payload_keys
+    allowed_rule_keys = [:where, :except] ++ payload_keys
 
     Enum.each(rule, fn {key, _value} ->
       if key not in allowed_rule_keys do
@@ -161,20 +175,12 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
       end
     end)
 
-    if Keyword.has_key?(rule, :only) and Keyword.has_key?(rule, :where) do
-      raise ArgumentError, "expected #{check} rule to include :only or :where, not both"
-    end
-
     rule
     |> payload_fun.()
     |> Map.merge(%{
-      only: matchers(rule, scope_key(rule), check, allowed_matcher_keys),
+      where: matchers(rule, :where, check, allowed_matcher_keys),
       except: matchers(rule, :except, check, allowed_matcher_keys)
     })
-  end
-
-  defp scope_key(rule) do
-    if Keyword.has_key?(rule, :only), do: :only, else: :where
   end
 
   defp matchers!(value, check, key, allowed_matcher_keys) when is_list(value) do
@@ -201,15 +207,20 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
     end
 
     Enum.map(matcher, fn {matcher_key, matcher_value} ->
-      normalized_key = Map.get(@plural_keys, matcher_key, matcher_key)
+      case Map.fetch(@plural_keys, matcher_key) do
+        {:ok, normalized_key} ->
+          if normalized_key not in allowed_matcher_keys do
+            raise ArgumentError,
+                  "unknown #{check} #{inspect(key)} matcher option: #{inspect(matcher_key)}"
+          end
 
-      if normalized_key not in allowed_matcher_keys do
-        raise ArgumentError,
-              "unknown #{check} #{inspect(key)} matcher option: #{inspect(matcher_key)}"
+          matcher_values!(check, key, matcher_key, matcher_value)
+          {normalized_key, matcher_value}
+
+        :error ->
+          raise ArgumentError,
+                "unknown #{check} #{inspect(key)} matcher option: #{inspect(matcher_key)}"
       end
-
-      matcher_values!(check, key, matcher_key, matcher_value)
-      {normalized_key, matcher_value}
     end)
   end
 
@@ -220,9 +231,8 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
   end
 
   defp matcher_values!(check, key, matcher_key, value) do
-    if not matcher_value?(value) do
-      raise_matcher_values_error!(check, key, matcher_key)
-    end
+    _value = value
+    raise_matcher_values_error!(check, key, matcher_key)
   end
 
   defp matcher_value?(%Regex{}), do: true
@@ -260,7 +270,7 @@ defmodule Bylaw.Db.Adapters.Postgres.RuleOptions do
 
   defp raise_matcher_values_error!(check, key, matcher_key) do
     raise ArgumentError,
-          "expected #{check} #{inspect(key)} #{inspect(matcher_key)} to be a matcher value or non-empty list of matcher values"
+          "expected #{check} #{inspect(key)} #{inspect(matcher_key)} to be a non-empty list of matcher values"
   end
 
   defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0

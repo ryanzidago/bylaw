@@ -7,12 +7,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
   alias Bylaw.Db.Target
 
   describe "validate/2" do
-    test "passes when all primary key columns use configured types" do
+    test "accepts single-rule shorthand when all primary key columns use configured types" do
       target = target({:ok, result([])})
 
-      assert :ok = PrimaryKeyType.validate(target, types: ["uuid"])
+      assert :ok = PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
 
-      assert_received {:query, sql, [nil, nil, ["uuid"]], []}
+      assert_received {:query, sql, [nil, nil, []], []}
       assert sql =~ "pg_catalog.pg_constraint"
       assert sql =~ "format_type"
       assert sql =~ "missing_primary_key"
@@ -28,7 +28,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
            ])}
         )
 
-      assert {:error, [%Issue{} = issue]} = PrimaryKeyType.validate(target, types: ["uuid"])
+      assert {:error, [%Issue{} = issue]} =
+               PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
 
       assert issue.check == PrimaryKeyType
       assert issue.target == target
@@ -54,7 +55,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
            ])}
         )
 
-      assert {:error, [%Issue{} = issue]} = PrimaryKeyType.validate(target, types: ["uuid"])
+      assert {:error, [%Issue{} = issue]} =
+               PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
 
       assert issue.message ==
                "expected primary key public.orders.id to use one of: uuid, got: bigint"
@@ -81,7 +83,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
         )
 
       assert {:error, [%Issue{} = issue]} =
-               PrimaryKeyType.validate(target, types: ["uuid"])
+               PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
 
       assert issue.meta.table == "memberships"
       assert issue.meta.column == "tenant_id"
@@ -95,7 +97,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                PrimaryKeyType.validate(target,
                  rules: [
                    [
-                     only: [schema: ["public", "billing"], table: ["orders", "line_items"]],
+                     where: [
+                       schemas: ["public", "billing"],
+                       tables: ["orders", "line_items"]
+                     ],
                      types: ["uuid", "bigint"]
                    ]
                  ]
@@ -119,7 +124,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
            ]}
         )
 
-      assert {:error, [%Issue{} = issue]} = PrimaryKeyType.validate(target, types: ["uuid"])
+      assert {:error, [%Issue{} = issue]} =
+               PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
 
       assert issue.meta.table == "orders"
       assert issue.meta.column == "id"
@@ -143,8 +149,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                    [
                      types: ["uuid"],
                      except: [
-                       [table: "schema_migrations"],
-                       [schema: "public", tables: ["audit_log"]]
+                       [tables: ["schema_migrations"]],
+                       [schemas: ["public"], tables: ["audit_log"]]
                      ]
                    ]
                  ]
@@ -169,7 +175,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                  rules: [
                    [
                      types: ["uuid"],
-                     except: [[table: "memberships", column: "tenant_id"]]
+                     except: [[tables: ["memberships"], columns: ["tenant_id"]]]
                    ]
                  ]
                )
@@ -190,7 +196,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError, ~r/unknown primary_key_type option: :unknown/, fn ->
-        PrimaryKeyType.validate(target, types: ["uuid"], unknown: true)
+        PrimaryKeyType.validate(target, rules: [types: ["uuid"]], unknown: true)
       end
     end
 
@@ -214,43 +220,43 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                    end
     end
 
-    test "requires types when validation is enabled" do
+    test "requires rules when validation is enabled" do
       target = target({:ok, result([])})
 
-      assert_raise ArgumentError, ~r/expected primary_key_type to include :types/, fn ->
+      assert_raise ArgumentError, ~r/expected primary_key_type to include :rules/, fn ->
         PrimaryKeyType.validate(target, [])
       end
     end
 
-    test "requires types to be non-empty lists of strings" do
+    test "requires rule types to be non-empty lists of strings" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
                    ~r/expected primary_key_type :types to be a non-empty list of strings/,
                    fn ->
-                     PrimaryKeyType.validate(target, types: [])
+                     PrimaryKeyType.validate(target, rules: [types: []])
                    end
 
       assert_raise ArgumentError,
                    ~r/expected primary_key_type :types to be a non-empty list of strings/,
                    fn ->
-                     PrimaryKeyType.validate(target, types: [:uuid])
+                     PrimaryKeyType.validate(target, rules: [types: [:uuid]])
                    end
     end
 
-    test "rejects top-level schema scope" do
+    test "rejects top-level types and schema scope" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/unknown primary_key_type option: :schemas/,
+                   ~r/unknown primary_key_type option: :types/,
                    fn ->
-                     PrimaryKeyType.validate(target, schemas: [], types: ["uuid"])
+                     PrimaryKeyType.validate(target, types: ["uuid"])
                    end
 
       assert_raise ArgumentError,
                    ~r/unknown primary_key_type option: :schemas/,
                    fn ->
-                     PrimaryKeyType.validate(target, schemas: [:public], types: ["uuid"])
+                     PrimaryKeyType.validate(target, schemas: [:public], rules: [types: ["uuid"]])
                    end
     end
 
@@ -260,13 +266,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
       assert_raise ArgumentError,
                    ~r/unknown primary_key_type option: :tables/,
                    fn ->
-                     PrimaryKeyType.validate(target, tables: [], types: ["uuid"])
+                     PrimaryKeyType.validate(target, tables: [], rules: [types: ["uuid"]])
                    end
 
       assert_raise ArgumentError,
                    ~r/unknown primary_key_type option: :tables/,
                    fn ->
-                     PrimaryKeyType.validate(target, tables: [""], types: ["uuid"])
+                     PrimaryKeyType.validate(target, tables: [""], rules: [types: ["uuid"]])
                    end
     end
 
@@ -283,7 +289,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected primary_key_type to use rule-level :types when :rules is provided/,
+                   ~r/unknown primary_key_type option: :types/,
                    fn ->
                      PrimaryKeyType.validate(target,
                        rules: [[types: ["uuid"]]],
@@ -312,7 +318,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected primary_key_type :except :columns to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected primary_key_type :except :columns to be a non-empty list of matcher values/,
                    fn ->
                      PrimaryKeyType.validate(target,
                        rules: [[types: ["uuid"], except: [columns: []]]]
@@ -327,9 +333,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                PrimaryKeyType.validate(target,
                  rules: [
                    [
-                     only: [schema: "public", table: "orders"],
+                     where: [schemas: ["public"], tables: ["orders"]],
                      types: ["uuid"],
-                     except: [[table: "schema_migrations"]]
+                     except: [[tables: ["schema_migrations"]]]
                    ]
                  ]
                )
@@ -341,9 +347,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
                dynamic_repo: nil,
                rules: [
                  %{
-                   only: [[schema: "public", table: "orders"]],
+                   where: [[schema: ["public"], table: ["orders"]]],
                    types: ["uuid"],
-                   except: [[table: "schema_migrations"]]
+                   except: [[table: ["schema_migrations"]]]
                  }
                ],
                reason: :connection_closed
@@ -354,7 +360,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        PrimaryKeyType.validate(target, types: ["uuid"])
+        PrimaryKeyType.validate(target, rules: [types: ["uuid"]])
       end
     end
   end
