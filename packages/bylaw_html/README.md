@@ -8,13 +8,6 @@ markup accessible and semantically correct, and codify conventions around links,
 buttons, images, and other browser-facing behavior. Callers choose checks
 explicitly and pass them to `Bylaw.HTML.validate_html/2`.
 
-> #### Warning {: .warning}
->
-> `bylaw_html` inspects rendered HTML strings. This is a useful integration
-> boundary, but it does not know which component, template, or source line
-> produced an issue. Review and run your enabled checks when changing rendering
-> libraries or HTML parsing dependencies.
-
 ## Installation
 
 Add `:bylaw_html` to your dependencies:
@@ -100,3 +93,6 @@ Rendered HTML is a stable integration boundary for many test styles. It lets
 you validate what the browser actually receives without coupling the check to
 HEEx source, component internals, `%Phoenix.LiveView.JS{}` structs, or source
 template conventions.
+
+Rendered HTML validation reports the offending markup snippet, not the source
+component or template that produced it.
