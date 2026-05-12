@@ -5,14 +5,16 @@ workflow constraints.
 
 Bylaw is organized as independent packages under `packages/`:
 
-- `packages/bylaw_core` defines shared core helpers used by Bylaw packages.
-- `packages/bylaw_ecto_query` validates prepared Ecto queries.
-- `packages/bylaw_db` defines generic database check contracts and data
-  structures.
-- `packages/bylaw_postgres` validates Postgres database structure and schema
-  conventions.
-- `packages/bylaw_credo` provides custom Credo checks for downstream
-  development and test environments.
+- [`packages/bylaw_core`](packages/bylaw_core/README.md) defines shared core
+  helpers used by Bylaw packages.
+- [`packages/bylaw_ecto_query`](packages/bylaw_ecto_query/README.md) validates
+  prepared Ecto queries.
+- [`packages/bylaw_db`](packages/bylaw_db/README.md) defines generic database
+  check contracts and data structures.
+- [`packages/bylaw_postgres`](packages/bylaw_postgres/README.md) validates
+  Postgres database structure and schema conventions.
+- [`packages/bylaw_credo`](packages/bylaw_credo/README.md) provides custom Credo
+  checks for downstream development and test environments.
 
 ## Installation
 
