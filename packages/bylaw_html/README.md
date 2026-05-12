@@ -33,7 +33,8 @@ defmodule MyAppWeb.PageHTMLTest do
     Bylaw.HTML.Check.RequireLinkHref,
     Bylaw.HTML.Check.PreferButtonForAction,
     Bylaw.HTML.Check.PreferLinkForNavigation,
-    Bylaw.HTML.Check.RequireImageAlt
+    Bylaw.HTML.Check.RequireImageAlt,
+    Bylaw.HTML.Check.NoInlineStyle
   ]
 
   test "home page satisfies Bylaw HTML checks", %{conn: conn} do
@@ -71,7 +72,8 @@ defmodule MyAppWeb.HTMLAssertions do
     Bylaw.HTML.Check.RequireLinkHref,
     Bylaw.HTML.Check.PreferButtonForAction,
     Bylaw.HTML.Check.PreferLinkForNavigation,
-    Bylaw.HTML.Check.RequireImageAlt
+    Bylaw.HTML.Check.RequireImageAlt,
+    Bylaw.HTML.Check.NoInlineStyle
   ]
 
   def assert_valid_html(html) when is_binary(html) do

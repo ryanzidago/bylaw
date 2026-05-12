@@ -17,7 +17,8 @@ defmodule Bylaw.HTML do
         Bylaw.HTML.Check.RequireLinkHref,
         Bylaw.HTML.Check.PreferButtonForAction,
         Bylaw.HTML.Check.PreferLinkForNavigation,
-        Bylaw.HTML.Check.RequireImageAlt
+        Bylaw.HTML.Check.RequireImageAlt,
+        Bylaw.HTML.Check.NoInlineStyle
       ]
 
       assert :ok = Bylaw.HTML.validate_html(html, checks)
