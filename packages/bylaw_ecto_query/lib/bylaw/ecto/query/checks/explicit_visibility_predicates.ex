@@ -142,15 +142,15 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp issues_for_branch(operation, {branch_path, query}, rules) do
-    effective_query = Introspection.effective_root_query(query)
+    scope_query = Introspection.effective_root_query(query)
 
     operation
-    |> RuleOptions.matching_rules(effective_query, rules)
-    |> Enum.flat_map(&issues_for_rule(operation, effective_query, &1, branch_path))
+    |> RuleOptions.matching_rules(scope_query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, query, scope_query, &1, branch_path))
   end
 
-  defp issues_for_rule(operation, query, rule, branch_path) do
-    case Introspection.root_schema(query) do
+  defp issues_for_rule(operation, query, scope_query, rule, branch_path) do
+    case Introspection.root_schema(scope_query) do
       {:ok, schema} ->
         applicable_fields = applicable_fields(schema, rule.fields)
 
@@ -187,7 +187,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
          applicable_fields,
          branch_path
        ) do
-    field_branches = where_field_branches(query)
+    field_branches = root_where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
     missing = missing_fields(applicable_fields, field_branches)
 
@@ -238,6 +238,14 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp where_field_branches(_query), do: [MapSet.new()]
+
+  defp root_where_field_branches(query) do
+    query
+    |> Introspection.root_query_layers()
+    |> Enum.reduce(nil, fn layer_query, branches ->
+      Branches.merge(branches, where_field_branches(layer_query), &MapSet.union/2)
+    end)
+  end
 
   defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
     left_branches = field_branches_in_expr(left, aliases)

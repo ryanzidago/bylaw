@@ -430,6 +430,48 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
       assert :ok = ExplicitVisibilityPredicates.validate(:all, query, opts())
     end
 
+    test "accepts outer root where predicates on root source subqueries" do
+      inner_query = from(post in Post, prefix: "tenant_a")
+
+      query =
+        from(post in subquery(inner_query),
+          where: is_nil(post.deleted_at),
+          select: count()
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:deleted_at]
+        ]
+      ]
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, rules: rules)
+    end
+
+    test "accepts visibility fields split across outer and inner root source subqueries" do
+      inner_query =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: is_nil(post.deleted_at)
+        )
+
+      query =
+        from(post in subquery(inner_query),
+          where: post.status == ^:published,
+          select: count()
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:deleted_at, :status]
+        ]
+      ]
+
+      assert :ok = ExplicitVisibilityPredicates.validate(:all, query, rules: rules)
+    end
+
     test "passes when every combination branch constrains visibility fields" do
       scoped_posts =
         from(post in Post,

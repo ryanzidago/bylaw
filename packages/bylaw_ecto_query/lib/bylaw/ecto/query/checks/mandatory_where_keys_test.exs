@@ -897,6 +897,49 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert :ok = MandatoryWhereKeys.validate(:all, query_present, rules: rules)
     end
 
+    test "accepts outer root where predicates on root source subqueries" do
+      inner_query = from(post in Post, prefix: "tenant_a")
+
+      query =
+        from(post in subquery(inner_query),
+          where: post.organisation_id == ^123,
+          select: count()
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:organisation_id]
+        ]
+      ]
+
+      assert :ok = MandatoryWhereKeys.validate(:all, query, rules: rules)
+    end
+
+    test "accepts mandatory keys split across outer and inner root source subqueries" do
+      inner_query =
+        from(post in Post,
+          prefix: "tenant_a",
+          where: post.organisation_id == ^123
+        )
+
+      query =
+        from(post in subquery(inner_query),
+          where: post.user_id == ^456,
+          select: count()
+        )
+
+      rules = [
+        [
+          where: [ecto_schemas: [Post], tables: ["posts"], db_schemas: ["tenant_a"]],
+          fields: [:organisation_id, :user_id],
+          match: :all
+        ]
+      ]
+
+      assert :ok = MandatoryWhereKeys.validate(:all, query, rules: rules)
+    end
+
     test "scopes rules by plural operations matcher" do
       query = from(post in Post, where: post.organisation_id == ^123)
 

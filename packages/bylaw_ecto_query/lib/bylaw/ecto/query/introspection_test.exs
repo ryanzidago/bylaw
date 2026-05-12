@@ -39,6 +39,7 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
       query = from(post in subquery(inner_query), select: count())
 
       assert Introspection.effective_root_query(query) == inner_query
+      assert Introspection.root_query_layers(query) == [query, inner_query]
       assert Introspection.root_schema(Introspection.effective_root_query(query)) == {:ok, Post}
     end
 
