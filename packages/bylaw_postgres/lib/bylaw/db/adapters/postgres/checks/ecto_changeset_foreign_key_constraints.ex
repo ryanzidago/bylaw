@@ -65,12 +65,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
    paths: ["lib/my_app"],
-   rules: [
-     [
-       only: [schema: "public"],
-       except: [[table: "events", column: "actor_id"]]
-     ]
-   ]}
+   rules: [where: [schemas: ["public"]], except: [[tables: ["events"], columns: ["actor_id"]]]]}
   ```
 
   ## Usage
@@ -118,7 +113,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(keyword())}
+          | {:rules, keyword() | list(keyword())}
 
   @type check_opts :: list(check_opt())
 

@@ -36,19 +36,21 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
   ## Options
 
-  By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
-  foreign keys:
+  Use the bare module for zero-config validation across the whole target. Use
+  `rules:` to narrow the scope or exclude intentionally optional foreign keys:
 
   ```elixir
+  Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability
+
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
+   rules: [where: [schemas: ["public"]]]}
+
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
    rules: [
-     [
-       only: [schema: "public"],
-       except: [
-         [table: "runs", column: "assistant_message_id"],
-         [constraint: "messages_parent_message_id_fkey"]
-       ]
+     where: [schemas: ["public"]],
+     except: [
+       [tables: ["runs"], columns: ["assistant_message_id"]],
+       [constraints: ["messages_parent_message_id_fkey"]]
      ]
    ]}
   ```
@@ -96,7 +98,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -105,8 +107,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
             | {:column, matcher_values()}
           )
   @type rule ::
-          list({:only, matcher() | list(matcher())} | {:except, matcher() | list(matcher())})
-  @type check_opt :: {:validate, boolean()} | {:rules, list(rule())}
+          list({:where, matcher() | list(matcher())} | {:except, matcher() | list(matcher())})
+  @type check_opt :: {:validate, boolean()} | {:rules, rule() | list(rule())}
 
   @type check_opts :: list(check_opt())
 
@@ -147,10 +149,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
   defp validate_foreign_key_nullability(target, opts) do
     rules = RuleOptions.default_rules!(opts, :foreign_key_nullability, allowed_matcher_keys())
-    schemas = RuleOptions.filter(opts, :schemas, :foreign_key_nullability)
-    tables = RuleOptions.filter(opts, :tables, :foreign_key_nullability)
 
-    case Postgres.query(target, @query, [schemas, tables], []) do
+    case Postgres.query(target, @query, [nil, nil], []) do
       {:ok, result} ->
         result
         |> Result.rows()
@@ -168,22 +168,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :schemas, :tables, :except],
+      [:validate, :rules],
       :foreign_key_nullability
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :foreign_key_nullability)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(
-        opts,
-        [:schemas, :tables, :except],
-        :foreign_key_nullability
-      )
-
       RuleOptions.default_rules!(opts, :foreign_key_nullability, allowed_matcher_keys())
-      RuleOptions.filter(opts, :schemas, :foreign_key_nullability)
-      RuleOptions.filter(opts, :tables, :foreign_key_nullability)
     end
 
     opts

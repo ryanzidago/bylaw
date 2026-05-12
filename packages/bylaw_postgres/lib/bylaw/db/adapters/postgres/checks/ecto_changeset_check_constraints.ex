@@ -68,10 +68,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints,
    paths: ["lib/my_app"],
    rules: [
-     [
-       only: [schema: "public"],
-       except: [[table: "legacy_products", constraint: "legacy_price_check"]]
-     ]
+     where: [schemas: ["public"]],
+     except: [[tables: ["legacy_products"], constraints: ["legacy_price_check"]]]
    ]}
   ```
 
@@ -121,7 +119,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetCheckConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(keyword())}
+          | {:rules, keyword() | list(keyword())}
 
   @type check_opts :: list(check_opt())
 

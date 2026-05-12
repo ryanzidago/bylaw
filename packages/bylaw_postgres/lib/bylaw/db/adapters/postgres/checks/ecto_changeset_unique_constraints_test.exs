@@ -274,14 +274,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetUniqueConstraintsTest d
                EctoChangesetUniqueConstraints.validate(target,
                  paths: [__ENV__.file],
                  schema_modules: [MissingUser],
-                 rules: [[only: [table: "users"]]]
+                 rules: [[where: [tables: ["users"]]]]
                )
 
       assert issue.check == EctoChangesetUniqueConstraints
       assert issue.message == "could not inspect Postgres unique indexes"
       assert issue.target == target
       assert issue.meta.reason == :closed
-      assert issue.meta.rules == [%{only: [[table: "users"]], except: []}]
+      assert issue.meta.rules == [%{where: [[table: ["users"]]], except: []}]
     end
 
     test "requires keyword options" do

@@ -18,7 +18,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
              Postgres.validate([target], [
                {ScopedForeignKeys,
                 rules: [
-                  [only: [schema: TestDatabase.scoped_schema()], scope_columns: ["tenant_id"]]
+                  [where: [schemas: [TestDatabase.scoped_schema()]], scope_columns: ["tenant_id"]]
                 ]}
              ])
 
@@ -34,9 +34,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
                {ScopedForeignKeys,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.scoped_schema(),
-                      table: "scoped_orders_missing_scope"
+                    where: [
+                      schemas: [TestDatabase.scoped_schema()],
+                      tables: ["scoped_orders_missing_scope"]
                     ],
                     scope_columns: ["tenant_id"]
                   ]
@@ -64,9 +64,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
                {ScopedForeignKeys,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.scoped_schema(),
-                      table: "scoped_orders_with_scope"
+                    where: [
+                      schemas: [TestDatabase.scoped_schema()],
+                      tables: ["scoped_orders_with_scope"]
                     ],
                     scope_columns: ["tenant_id"]
                   ]
@@ -82,9 +82,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
                {ScopedForeignKeys,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.scoped_schema(),
-                      table: "scoped_orders_with_global_status"
+                    where: [
+                      schemas: [TestDatabase.scoped_schema()],
+                      tables: ["scoped_orders_with_global_status"]
                     ],
                     scope_columns: ["tenant_id"]
                   ]
@@ -100,7 +100,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
                {ScopedForeignKeys,
                 rules: [
                   [
-                    only: [schema: TestDatabase.scoped_schema(), table: "global_imports"],
+                    where: [schemas: [TestDatabase.scoped_schema()], tables: ["global_imports"]],
                     scope_columns: ["tenant_id"]
                   ]
                 ]}
@@ -115,9 +115,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysIntegrationTest do
                {ScopedForeignKeys,
                 rules: [
                   [
-                    only: [schema: TestDatabase.scoped_schema()],
+                    where: [schemas: [TestDatabase.scoped_schema()]],
                     scope_columns: ["tenant_id"],
-                    except: [[referenced_table: "scoped_customers"]]
+                    except: [[referenced_tables: ["scoped_customers"]]]
                   ]
                 ]}
              ])

@@ -7,10 +7,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
   alias Bylaw.Db.Target
 
   describe "validate/2" do
-    test "passes when no columns use forbidden types" do
+    test "accepts single-rule shorthand when no columns use forbidden types" do
       target = target({:ok, result([["public", "events", "payload", "jsonb"]])})
 
-      assert :ok = ForbiddenColumnTypes.validate(target, types: ["json"])
+      assert :ok = ForbiddenColumnTypes.validate(target, rules: [types: ["json"]])
 
       assert_received {:query, sql, [nil, nil], []}
       assert sql =~ "pg_catalog.format_type(attribute.atttypid, attribute.atttypmod)"
@@ -21,7 +21,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
     test "reports exact forbidden types" do
       target = target({:ok, result([["public", "events", "payload", "json"]])})
 
-      assert {:error, [%Issue{} = issue]} = ForbiddenColumnTypes.validate(target, types: ["json"])
+      assert {:error, [%Issue{} = issue]} =
+               ForbiddenColumnTypes.validate(target, rules: [types: ["json"]])
 
       assert issue.check == ForbiddenColumnTypes
       assert issue.target == target
@@ -47,7 +48,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
         target({:ok, result([["public", "profiles", "name", "character varying(255)"]])})
 
       assert {:error, [%Issue{} = issue]} =
-               ForbiddenColumnTypes.validate(target, types: [~r/^character varying/])
+               ForbiddenColumnTypes.validate(target, rules: [types: [~r/^character varying/]])
 
       assert issue.meta.type == "character varying(255)"
       assert inspect(issue.meta.matched_type) == inspect(~r/^character varying/)
@@ -58,12 +59,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
 
       assert {:error, [%Issue{} = issue]} =
                ForbiddenColumnTypes.validate(target,
-                 types: [
-                   [
-                     type: "json",
-                     prefer: "jsonb",
-                     reason:
-                       "jsonb is indexable and avoids reparsing for most application queries"
+                 rules: [
+                   types: [
+                     [
+                       type: "json",
+                       prefer: "jsonb",
+                       reason:
+                         "jsonb is indexable and avoids reparsing for most application queries"
+                     ]
                    ]
                  ]
                )
@@ -90,10 +93,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
 
       assert {:error, issues} =
                ForbiddenColumnTypes.validate(target,
-                 types: [
-                   "json",
-                   [type: "money", prefer: "numeric"],
-                   [type: ~r/^character\(/, prefer: "text"]
+                 rules: [
+                   types: [
+                     "json",
+                     [type: "money", prefer: "numeric"],
+                     [type: ~r/^character\(/, prefer: "text"]
+                   ]
                  ]
                )
 
@@ -111,7 +116,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                ForbiddenColumnTypes.validate(target,
                  rules: [
                    [
-                     only: [schema: ["public", "billing"], table: ["events", "payments"]],
+                     where: [
+                       schemas: ["public", "billing"],
+                       tables: ["events", "payments"]
+                     ],
                      types: ["json"]
                    ]
                  ]
@@ -137,9 +145,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    [
                      types: ["json", "money"],
                      except: [
-                       [table: "events", column: "payload"],
-                       [column: "metadata", type: "json"],
-                       [table: "payments", type: "money"]
+                       [tables: ["events"], columns: ["payload"]],
+                       [columns: ["metadata"], types: ["json"]],
+                       [tables: ["payments"], types: ["money"]]
                      ]
                    ]
                  ]
@@ -163,7 +171,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    [
                      types: ["json", "money"],
                      except: [
-                       [table: ~r/_events$/, columns: [~r/payload$/]],
+                       [tables: [~r/_events$/], columns: [~r/payload$/]],
                        [types: [~r/^money$/]]
                      ]
                    ]
@@ -185,7 +193,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
            ]}
         )
 
-      assert {:error, [%Issue{} = issue]} = ForbiddenColumnTypes.validate(target, types: ["json"])
+      assert {:error, [%Issue{} = issue]} =
+               ForbiddenColumnTypes.validate(target, rules: [types: ["json"]])
 
       assert issue.meta.table == "events"
       assert issue.meta.column == "payload"
@@ -207,9 +216,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                ForbiddenColumnTypes.validate(target,
                  rules: [
                    [
-                     only: [schema: "public", table: "events"],
+                     where: [schemas: ["public"], tables: ["events"]],
                      types: ["json"],
-                     except: [[table: "webhook_events"]]
+                     except: [[tables: ["webhook_events"]]]
                    ]
                  ]
                )
@@ -221,9 +230,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                dynamic_repo: nil,
                rules: [
                  %{
-                   only: [[schema: "public", table: "events"]],
+                   where: [[schema: ["public"], table: ["events"]]],
                    types: [%{type: "json", prefer: nil, reason: nil}],
-                   except: [[table: "webhook_events"]]
+                   except: [[table: ["webhook_events"]]]
                  }
                ],
                reason: :connection_closed
@@ -234,7 +243,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError, ~r/unknown forbidden_column_types option: :unknown/, fn ->
-        ForbiddenColumnTypes.validate(target, types: ["json"], unknown: true)
+        ForbiddenColumnTypes.validate(target, rules: [types: ["json"]], unknown: true)
       end
     end
 
@@ -258,27 +267,27 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    end
     end
 
-    test "requires types when validation is enabled" do
+    test "requires rules when validation is enabled" do
       target = target({:ok, result([])})
 
-      assert_raise ArgumentError, ~r/expected forbidden_column_types to include :types/, fn ->
+      assert_raise ArgumentError, ~r/expected forbidden_column_types to include :rules/, fn ->
         ForbiddenColumnTypes.validate(target, [])
       end
     end
 
-    test "requires types to be non-empty valid type rules" do
+    test "requires rule types to be non-empty valid type rules" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
                    ~r/expected forbidden_column_types :types to be a non-empty list/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: [])
+                     ForbiddenColumnTypes.validate(target, rules: [types: []])
                    end
 
       assert_raise ArgumentError,
                    ~r/expected forbidden_column_types :types to be a non-empty list/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: [:json])
+                     ForbiddenColumnTypes.validate(target, rules: [types: [:json]])
                    end
     end
 
@@ -288,7 +297,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       assert_raise ArgumentError,
                    ~r/expected forbidden_column_types type rule to include :type/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: [[prefer: "jsonb"]])
+                     ForbiddenColumnTypes.validate(target, rules: [types: [[prefer: "jsonb"]]])
                    end
     end
 
@@ -298,7 +307,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       assert_raise ArgumentError,
                    ~r/expected forbidden_column_types type rule :prefer to be a non-empty string/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: [[type: "json", prefer: ""]])
+                     ForbiddenColumnTypes.validate(target,
+                       rules: [types: [[type: "json", prefer: ""]]]
+                     )
                    end
     end
 
@@ -308,23 +319,31 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       assert_raise ArgumentError,
                    ~r/expected forbidden_column_types type rule :reason to be a non-empty string/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: [[type: "json", reason: :bad]])
+                     ForbiddenColumnTypes.validate(target,
+                       rules: [types: [[type: "json", reason: :bad]]]
+                     )
                    end
     end
 
-    test "rejects top-level scope options" do
+    test "rejects top-level types and scope options" do
       target = target({:ok, result([])})
+
+      assert_raise ArgumentError,
+                   ~r/unknown forbidden_column_types option: :types/,
+                   fn ->
+                     ForbiddenColumnTypes.validate(target, types: ["json"])
+                   end
 
       assert_raise ArgumentError,
                    ~r/unknown forbidden_column_types option: :schemas/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: ["json"], schemas: [])
+                     ForbiddenColumnTypes.validate(target, schemas: [], rules: [types: ["json"]])
                    end
 
       assert_raise ArgumentError,
                    ~r/unknown forbidden_column_types option: :tables/,
                    fn ->
-                     ForbiddenColumnTypes.validate(target, types: ["json"], tables: [""])
+                     ForbiddenColumnTypes.validate(target, tables: [""], rules: [types: ["json"]])
                    end
     end
 
@@ -348,7 +367,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected forbidden_column_types :except :types to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected forbidden_column_types :except :types to be a non-empty list of matcher values/,
                    fn ->
                      ForbiddenColumnTypes.validate(target,
                        rules: [[types: ["json"], except: [types: []]]]
@@ -360,7 +379,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
       target = %Target{adapter: OtherAdapter}
 
       assert_raise ArgumentError, ~r/expected a Postgres target/, fn ->
-        ForbiddenColumnTypes.validate(target, types: ["json"])
+        ForbiddenColumnTypes.validate(target, rules: [types: ["json"]])
       end
     end
   end

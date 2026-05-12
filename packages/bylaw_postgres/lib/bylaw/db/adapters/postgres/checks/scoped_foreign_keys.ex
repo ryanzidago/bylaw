@@ -48,18 +48,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
   ## Options
 
-  A foreign key is checked when both the child table and referenced table have
-  every configured `:scope_columns` column. The foreign key must include those
-  columns on both sides so a child row cannot point at a parent row from another
-  scope:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules. A foreign key is
+  checked when both the child table and referenced table have every configured
+  `:scope_columns` column. The foreign key must include those columns on both
+  sides so a child row cannot point at a parent row from another scope:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
+   rules: [scope_columns: ["tenant_id"]]}
+
+  {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
    rules: [
-     [
-       scope_columns: ["tenant_id", "workspace_id"],
-       except: [[referenced_table: "global_settings"]]
-     ]
+     [where: [schemas: ["public"]], scope_columns: ["tenant_id"]],
+     [where: [referenced_tables: ["accounts"]], scope_columns: ["tenant_id", "workspace_id"]]
    ]}
   ```
 
@@ -166,7 +168,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -176,13 +178,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
           )
   @type rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:scope_columns, list(String.t())}
           )
-  @type check_opt ::
-          {:validate, boolean()}
-          | {:rules, list(rule())}
+  @type check_opt :: {:validate, boolean()} | {:rules, rule() | list(rule())}
 
   @type check_opts :: list(check_opt())
 
@@ -251,14 +251,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :rules, :scope_columns],
+      [:validate, :rules],
       :scoped_foreign_keys
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :scoped_foreign_keys)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:scope_columns], :scoped_foreign_keys)
       normalize_rules!(opts)
     end
 
@@ -266,8 +265,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   end
 
   defp normalize_rules!(opts) do
-    cond do
-      Keyword.has_key?(opts, :rules) ->
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
         opts
         |> Keyword.fetch!(:rules)
         |> RuleOptions.rules!(
@@ -277,17 +276,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
           &rule_payload!/1
         )
 
-      Keyword.has_key?(opts, :scope_columns) ->
-        [
-          %{
-            scope_columns: scope_columns!(Keyword.fetch!(opts, :scope_columns)),
-            only: [],
-            except: []
-          }
-        ]
-
-      true ->
-        raise ArgumentError, "expected scoped_foreign_keys to include :scope_columns"
+      :error ->
+        raise ArgumentError, "expected scoped_foreign_keys to include :rules"
     end
   end
 
@@ -325,14 +315,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
   defp allowed_matcher_keys, do: [:schema, :table, :constraint, :referenced_table]
 
-  defp query_filters(%{only: [[schema: schemas, table: tables]]}),
-    do: {List.wrap(schemas), List.wrap(tables)}
-
-  defp query_filters(%{only: [[table: tables, schema: schemas]]}),
-    do: {List.wrap(schemas), List.wrap(tables)}
-
-  defp query_filters(%{only: [[schema: schemas]]}), do: {List.wrap(schemas), nil}
-  defp query_filters(%{only: [[table: tables]]}), do: {nil, List.wrap(tables)}
+  defp query_filters(%{where: [[schema: schemas, table: tables]]}), do: {schemas, tables}
+  defp query_filters(%{where: [[table: tables, schema: schemas]]}), do: {schemas, tables}
+  defp query_filters(%{where: [[schema: schemas]]}), do: {schemas, nil}
+  defp query_filters(%{where: [[table: tables]]}), do: {nil, tables}
   defp query_filters(_rule), do: {nil, nil}
 
   @spec issue(target :: Target.t(), row :: Result.row(), scope_columns :: list(String.t())) ::

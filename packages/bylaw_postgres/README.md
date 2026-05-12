@@ -65,3 +65,19 @@ end
 ```
 
 See each check module's documentation for its examples, notes, and options.
+
+Configurable Postgres checks use `rules:` as their public configuration entry
+point. `rules:` accepts either one keyword rule or a list of keyword rules:
+
+```elixir
+@checks [
+  {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+   rules: [columns: ["tenant_id"]]},
+  {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
+   rules: [
+     [where: [referenced_tables: ["lookup_statuses"]], on_delete: :restrict, on_update: :restrict],
+     [where: [tables: ["messages"]], except: [constraints: ["messages_status_id_fkey"]], on_delete: :cascade]
+   ]},
+  Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
+]
+```

@@ -19,7 +19,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
                {ForbiddenColumnTypes,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["column_type_examples"]],
                     types: ["json"]
                   ]
                 ]}
@@ -38,7 +38,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
                {ForbiddenColumnTypes,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["column_type_examples"]],
                     types: ["json"],
                     except: [[columns: ["json_payload", "raw_payload"]]]
                   ]
@@ -54,7 +54,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
                {ForbiddenColumnTypes,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["column_type_examples"]],
                     types: [[type: ~r/^character\(/, prefer: "text"]]
                   ]
                 ]}
@@ -76,13 +76,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesIntegrationTest 
                {ForbiddenColumnTypes,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "column_type_examples"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["column_type_examples"]],
                     types: ["json"],
                     except: [
                       [
-                        schema: TestDatabase.schema(),
-                        table: "column_type_examples",
-                        column: "raw_payload"
+                        schemas: [TestDatabase.schema()],
+                        tables: ["column_type_examples"],
+                        columns: ["raw_payload"]
                       ]
                     ]
                   ]

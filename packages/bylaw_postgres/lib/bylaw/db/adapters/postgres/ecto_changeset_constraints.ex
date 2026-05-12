@@ -36,7 +36,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
           | {:otp_app, atom()}
           | {:paths, list(Path.t())}
           | {:schema_modules, list(module())}
-          | {:rules, list(Keyword.t())}
+          | {:rules, Keyword.t() | list(Keyword.t())}
 
   @type check_opts :: list(check_opt())
 
@@ -108,10 +108,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
         EctoChangesetConstraintOptions.allowed_matcher_keys()
       )
 
-    schemas = RuleOptions.filter(opts, :schemas, config.name)
-    tables = RuleOptions.filter(opts, :tables, config.name)
-
-    case catalog_constraints(target, rules, schemas, tables, config) do
+    case catalog_constraints(target, rules, config) do
       {:ok, constraints} ->
         schema_infos =
           opts
@@ -132,8 +129,8 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraints do
     end
   end
 
-  defp catalog_constraints(target, rules, schemas, tables, config) do
-    case Postgres.query(target, config.query, [schemas, tables], []) do
+  defp catalog_constraints(target, rules, config) do
+    case Postgres.query(target, config.query, [nil, nil], []) do
       {:ok, result} ->
         constraints =
           result

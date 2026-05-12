@@ -16,7 +16,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyNullability, schemas: [TestDatabase.schema()]}
+               {ForeignKeyNullability, rules: [where: [schemas: [TestDatabase.schema()]]]}
              ])
 
     assert issue.meta.table == "nullable_orders"
@@ -29,7 +29,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
                {ForeignKeyNullability,
-                schemas: [TestDatabase.schema()], tables: ["nullable_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["nullable_orders"]
+                  ]
+                ]}
              ])
 
     assert issue.message ==
@@ -47,7 +52,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
     assert :ok =
              Postgres.validate([target], [
                {ForeignKeyNullability,
-                schemas: [TestDatabase.schema()], tables: ["events", "indexed_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema()],
+                    tables: ["events", "indexed_orders"]
+                  ]
+                ]}
              ])
   end
 
@@ -57,8 +67,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
     assert :ok =
              Postgres.validate([target], [
                {ForeignKeyNullability,
-                schemas: [TestDatabase.schema()],
-                except: [[table: "nullable_orders", column: "user_id"]]}
+                rules: [
+                  where: [schemas: [TestDatabase.schema()]],
+                  except: [[tables: ["nullable_orders"], columns: ["user_id"]]]
+                ]}
              ])
   end
 
@@ -67,7 +79,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
 
     assert {:error, [%Issue{} = issue]} =
              Postgres.validate([target], [
-               {ForeignKeyNullability, schemas: [TestDatabase.pg_schema()]}
+               {ForeignKeyNullability, rules: [where: [schemas: [TestDatabase.pg_schema()]]]}
              ])
 
     assert issue.meta.schema == TestDatabase.pg_schema()
@@ -80,8 +92,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
     assert {:error, issues} =
              Postgres.validate([target], [
                {ForeignKeyNullability,
-                schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
-                tables: ["nullable_orders"]}
+                rules: [
+                  where: [
+                    schemas: [TestDatabase.schema(), TestDatabase.pg_schema()],
+                    tables: ["nullable_orders"]
+                  ]
+                ]}
              ])
 
     assert Enum.map(issues, &{&1.meta.schema, &1.meta.table, &1.meta.column}) == [

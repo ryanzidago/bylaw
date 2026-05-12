@@ -4,7 +4,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   ## Examples
 
-  With `rules: [[only: [schema: "public"], columns: ["tenant_id"]]]`, before:
+  With `rules: [where: [schemas: ["public"]], columns: ["tenant_id"]]`, before:
 
   ```sql
   CREATE TABLE invoices (
@@ -36,25 +36,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   ## Options
 
-  Use `rules: [...]` to require columns for scoped groups of tables. A rule
-  applies when a table matches any matcher in `only`; keys inside one matcher
-  are combined. Matching rules accumulate, so the same table can be validated by
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules. A rule applies
+  when a table matches any matcher in `where`; keys inside one matcher are
+  combined. Matching rules accumulate, so the same table can be validated by
   more than one rule.
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
+   rules: [columns: ["tenant_id"]]}
+
+  {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
    rules: [
-     [
-       columns: ["inserted_at", "updated_at"],
-       except: [[table: "schema_migrations"]]
-     ],
-     [
-       only: [
-         [schema: "audit"],
-         [schema: "billing", table: ~r/^invoice_/]
-       ],
-       columns: ["tenant_id"]
-     ]
+     [where: [schemas: ["public"]], columns: ["tenant_id"]],
+     [where: [schemas: ["billing"], tables: [~r/^invoice_/]], columns: ["account_id"]]
    ]}
   ```
 
@@ -107,23 +102,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher :: list({:schema, matcher_values()} | {:table, matcher_values()})
   @type rule ::
           list(
             {:columns, list(String.t())}
-            | {:only, matcher() | list(matcher())}
+            | {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
           )
-  @type check_opt ::
-          {:validate, boolean()}
-          | {:rules, list(rule())}
-          | {:except, matcher() | list(matcher())}
+  @type check_opt :: {:validate, boolean()} | {:rules, rule() | list(rule())}
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
           columns: list(String.t()),
-          only: list(matcher()),
+          where: list(matcher()),
           except: list(matcher())
         }
   @row_keys %{
@@ -162,23 +154,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   defp validate_required_columns(target, opts) do
     rules = normalize_rules!(opts)
-    global_except = RuleOptions.matchers(opts, :except, :required_columns, allowed_matcher_keys())
 
     rules
-    |> Enum.flat_map(&rule_issues(target, &1, global_except))
+    |> Enum.flat_map(&rule_issues(target, &1))
     |> Result.to_check_result()
   end
 
-  defp rule_issues(target, rule, global_except) do
+  defp rule_issues(target, rule) do
     case Postgres.query(target, @query, [rule.columns], []) do
       {:ok, result} ->
         result
         |> Result.rows()
-        |> Enum.filter(&matched_by_rule?(&1, rule, global_except))
+        |> Enum.filter(&matched_by_rule?(&1, rule))
         |> Enum.map(&issue(target, &1, rule))
 
       {:error, reason} ->
-        [query_error_issue(target, rule, global_except, reason)]
+        [query_error_issue(target, rule, reason)]
     end
   end
 
@@ -187,30 +178,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
     RuleOptions.validate_allowed_keys!(
       opts,
-      [:validate, :columns, :rules, :except],
+      [:validate, :rules],
       :required_columns
     )
 
     RuleOptions.validate_boolean_option!(opts, :validate, :required_columns)
 
     if RuleOptions.enabled?(opts) do
-      RuleOptions.reject_top_level_keys_with_rules!(opts, [:columns, :except], :required_columns)
       normalize_rules!(opts)
-      RuleOptions.matchers(opts, :except, :required_columns, allowed_matcher_keys())
     end
 
     opts
   end
 
   defp normalize_rules!(opts) do
-    has_rules? = Keyword.has_key?(opts, :rules)
-    has_columns? = Keyword.has_key?(opts, :columns)
-
-    cond do
-      has_rules? and has_columns? ->
-        raise ArgumentError, "expected required_columns to include :columns or :rules, not both"
-
-      has_rules? ->
+    case Keyword.fetch(opts, :rules) do
+      {:ok, _rules} ->
         opts
         |> Keyword.fetch!(:rules)
         |> RuleOptions.rules!(
@@ -220,11 +203,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
           &rule_payload!/1
         )
 
-      has_columns? ->
-        [%{columns: columns!(Keyword.fetch!(opts, :columns)), only: [], except: []}]
-
-      true ->
-        raise ArgumentError, "expected required_columns to include :columns or :rules"
+      :error ->
+        raise ArgumentError, "expected required_columns to include :rules"
     end
   end
 
@@ -246,10 +226,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   defp columns!(_values), do: raise_columns_error!()
 
-  defp matched_by_rule?(row, rule, global_except) do
-    RuleOptions.in_rule_scope?(row, rule, &matcher_value/2) and
-      not RuleOptions.matches_any?(row, global_except, &matcher_value/2)
-  end
+  defp matched_by_rule?(row, rule), do: RuleOptions.in_rule_scope?(row, rule, &matcher_value/2)
 
   defp matcher_value(row, :schema), do: Result.value(row, "schema_name", @row_keys)
   defp matcher_value(row, :table), do: Result.value(row, "table_name", @row_keys)
@@ -287,10 +264,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   @spec query_error_issue(
           target :: Target.t(),
           rule :: normalized_rule(),
-          global_except :: list(matcher()),
           reason :: term()
         ) :: Issue.t()
-  defp query_error_issue(target, rule, global_except, reason) do
+  defp query_error_issue(target, rule, reason) do
     %Issue{
       check: __MODULE__,
       target: target,
@@ -299,7 +275,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
         repo: target.repo,
         dynamic_repo: target.dynamic_repo,
         rule: rule_meta(rule),
-        except: global_except,
         reason: reason
       }
     }
@@ -308,7 +283,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   defp rule_meta(rule) do
     %{
       columns: rule.columns,
-      only: rule.only,
+      where: rule.where,
       except: rule.except
     }
   end

@@ -43,16 +43,20 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesTest do
              }
     end
 
-    test "passes schema and table filters as check scope" do
+    test "accepts single-rule shorthand for scoped validation" do
       target = target({:ok, result([])})
 
       assert :ok =
                DuplicateIndexes.validate(target,
-                 schemas: ["public", "billing"],
-                 tables: ["orders", "line_items"]
+                 rules: [
+                   where: [
+                     schemas: ["public", "billing"],
+                     tables: ["orders", "line_items"]
+                   ]
+                 ]
                )
 
-      assert_received {:query, _sql, [["public", "billing"], ["orders", "line_items"]], []}
+      assert_received {:query, _sql, [nil, nil], []}
     end
 
     test "returns every duplicate index group issue" do
@@ -126,33 +130,33 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesTest do
                    end
     end
 
-    test "requires schema filters to be non-empty lists of strings" do
+    test "rejects top-level schema filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected duplicate_indexes :schemas to be a non-empty list of strings/,
+                   ~r/unknown duplicate_indexes option: :schemas/,
                    fn ->
                      DuplicateIndexes.validate(target, schemas: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected duplicate_indexes :schemas to be a non-empty list of strings/,
+                   ~r/unknown duplicate_indexes option: :schemas/,
                    fn ->
                      DuplicateIndexes.validate(target, schemas: [:public])
                    end
     end
 
-    test "requires table filters to be non-empty lists of strings" do
+    test "rejects top-level table filters" do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected duplicate_indexes :tables to be a non-empty list of strings/,
+                   ~r/unknown duplicate_indexes option: :tables/,
                    fn ->
                      DuplicateIndexes.validate(target, tables: [])
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected duplicate_indexes :tables to be a non-empty list of strings/,
+                   ~r/unknown duplicate_indexes option: :tables/,
                    fn ->
                      DuplicateIndexes.validate(target, tables: [""])
                    end
@@ -168,7 +172,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexesTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               rules: [%{only: [], except: []}],
+               rules: [%{where: [], except: []}],
                reason: :connection_closed
              }
     end
