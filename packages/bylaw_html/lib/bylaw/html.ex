@@ -6,6 +6,41 @@ defmodule Bylaw.HTML do
   and returns `:ok` or `{:error, issues}`. Bylaw does not read application
   config or choose default checks for the caller.
 
+  ## Usage
+
+  Choose the checks you want to enforce and pass them with the rendered HTML
+  string:
+
+      html = render(view)
+
+      checks = [
+        Bylaw.HTML.Check.RequireLinkHref,
+        Bylaw.HTML.Check.PreferButtonForAction,
+        Bylaw.HTML.Check.PreferLinkForNavigation,
+        Bylaw.HTML.Check.RequireImageAlt
+      ]
+
+      assert :ok = Bylaw.HTML.validate_html(html, checks)
+
+  When validation fails, `validate_html/2` returns every issue found by the
+  enabled checks:
+
+      case Bylaw.HTML.validate_html(html, checks) do
+        :ok -> :ok
+        {:error, issues} -> flunk(inspect(issues, pretty: true))
+      end
+
+  ## Built-in checks
+
+  Built-in checks live under `Bylaw.HTML.Check.*`. Each check module documents
+  its own examples, notes, options, and copyable check specs.
+
+  ## Notes
+
+  The validation boundary is the rendered HTML string. Checks can see the
+  browser-facing markup, but they do not know which source component or template
+  produced it.
+
   ## Examples
 
       iex> Bylaw.HTML.validate_html(~s(<a href="/settings">Settings</a>), [])
