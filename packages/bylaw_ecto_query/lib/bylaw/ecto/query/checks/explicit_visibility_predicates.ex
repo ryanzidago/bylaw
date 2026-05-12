@@ -62,7 +62,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
     * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
     * `:rules` - query-local rules with rule-level `:fields` and optional
-      `:only`/`:where` and `:except` matchers.
+      `:where` and `:except` matchers. Matchers use plural keys with list
+      values, such as `ecto_schemas: [Post]`, `tables: ["posts"]`,
+      `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
 
   Example check spec:
 
@@ -168,7 +170,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     |> validate_schema_opts!()
     |> fetch_schema_configs!()
     |> Enum.map(fn {schema, fields: fields} ->
-      %{only: [[ecto_schema: schema]], except: [], fields: fields}
+      %{where: [[ecto_schema: [schema]]], except: [], fields: fields}
     end)
   end
 

@@ -4,11 +4,17 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   alias Bylaw.Ecto.Query.Introspection
 
   @type matcher_value :: module() | atom() | String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher :: keyword(matcher_values())
-  @type rule :: %{only: list(matcher()), except: list(matcher())}
+  @type rule :: %{where: list(matcher()), except: list(matcher())}
 
-  @allowed_matcher_keys [:ecto_schema, :table, :db_schema, :operation]
+  @matcher_keys %{
+    ecto_schemas: :ecto_schema,
+    tables: :table,
+    db_schemas: :db_schema,
+    operations: :operation
+  }
+  @allowed_operations [:all, :update_all, :delete_all, :stream, :insert_all]
 
   @spec validate_allowed_options!(keyword(), atom(), list(atom())) :: :ok
   def validate_allowed_options!(opts, check, payload_keys) do
@@ -25,7 +31,7 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
         rules!(rules, check, payload_keys, payload_fun)
 
       :error ->
-        [Map.merge(rule_payload!(opts, payload_fun), %{only: [], except: []})]
+        [Map.merge(rule_payload!(opts, payload_fun), %{where: [], except: []})]
     end
   end
 
@@ -47,12 +53,12 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
 
   @spec in_rule_scope?(Bylaw.Ecto.Query.Check.operation(), term(), rule()) :: boolean()
   def in_rule_scope?(operation, query, rule) do
-    (Enum.empty?(rule.only) or matches_any?(operation, query, rule.only)) and
+    (Enum.empty?(rule.where) or matches_any?(operation, query, rule.where)) and
       not matches_any?(operation, query, rule.except)
   end
 
   defp rule!(rule, check, payload_keys, payload_fun) do
-    allowed_rule_keys = [:only, :where, :except] ++ payload_keys
+    allowed_rule_keys = [:where, :except] ++ payload_keys
 
     Enum.each(rule, fn {key, _value} ->
       if key not in allowed_rule_keys do
@@ -60,14 +66,10 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
       end
     end)
 
-    if Keyword.has_key?(rule, :only) and Keyword.has_key?(rule, :where) do
-      raise ArgumentError, "expected #{check} rule to include :only or :where, not both"
-    end
-
     rule
     |> rule_payload!(payload_fun)
     |> Map.merge(%{
-      only: matchers(rule, scope_key(rule), check),
+      where: matchers(rule, :where, check),
       except: matchers(rule, :except, check)
     })
   end
@@ -95,10 +97,6 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
         raise ArgumentError,
               "expected #{check} to use rule-level #{inspect(key)} when :rules is provided"
     end
-  end
-
-  defp scope_key(rule) do
-    if Keyword.has_key?(rule, :only), do: :only, else: :where
   end
 
   defp matchers(opts, key, check) do
@@ -132,30 +130,30 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
     end
 
     Enum.map(matcher, fn {matcher_key, matcher_value} ->
-      if matcher_key not in @allowed_matcher_keys do
-        raise ArgumentError,
-              "unknown #{check} #{inspect(key)} matcher option: #{inspect(matcher_key)}"
-      end
+      case Map.fetch(@matcher_keys, matcher_key) do
+        {:ok, normalized_key} ->
+          matcher_values!(check, key, matcher_key, normalized_key, matcher_value)
+          {normalized_key, matcher_value}
 
-      matcher_values!(check, key, matcher_key, matcher_value)
-      {matcher_key, matcher_value}
+        :error ->
+          raise ArgumentError,
+                "unknown #{check} #{inspect(key)} matcher option: #{inspect(matcher_key)}"
+      end
     end)
   end
 
-  defp matcher_values!(check, key, matcher_key, values) when is_list(values) do
-    if Enum.empty?(values) or Enum.any?(values, &(not matcher_value?(matcher_key, &1))) do
+  defp matcher_values!(check, key, matcher_key, normalized_key, values) when is_list(values) do
+    if Enum.empty?(values) or Enum.any?(values, &(not matcher_value?(normalized_key, &1))) do
       raise_matcher_values_error!(check, key, matcher_key)
     end
   end
 
-  defp matcher_values!(check, key, matcher_key, value) do
-    if not matcher_value?(matcher_key, value) do
-      raise_matcher_values_error!(check, key, matcher_key)
-    end
+  defp matcher_values!(check, key, matcher_key, _normalized_key, _value) do
+    raise_matcher_values_error!(check, key, matcher_key)
   end
 
   defp matcher_value?(:ecto_schema, value), do: ecto_schema?(value)
-  defp matcher_value?(:operation, value), do: is_atom(value)
+  defp matcher_value?(:operation, value), do: value in @allowed_operations
   defp matcher_value?(:table, %Regex{}), do: true
   defp matcher_value?(:table, value), do: non_empty_string?(value)
   defp matcher_value?(:db_schema, %Regex{}), do: true
@@ -216,7 +214,7 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
 
   defp raise_matcher_values_error!(check, key, matcher_key) do
     raise ArgumentError,
-          "expected #{check} #{inspect(key)} #{inspect(matcher_key)} to be a matcher value or non-empty list of matcher values"
+          "expected #{check} #{inspect(key)} #{inspect(matcher_key)} to be a non-empty list of matcher values"
   end
 
   defp non_empty_string?(value), do: is_binary(value) and byte_size(value) > 0

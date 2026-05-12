@@ -741,106 +741,113 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert issue.meta.missing_keys == [:organisation_id]
     end
 
-    test "scopes rules by ecto_schema" do
+    test "scopes rules by plural ecto_schemas matcher" do
       query = from(post in Post)
 
       assert {:error, [%Issue{} = issue]} =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [ecto_schema: Post], keys: [:organisation_id]]]
+                 rules: [[where: [ecto_schemas: [Post]], keys: [:organisation_id]]]
                )
 
       assert issue.meta.missing_keys == [:organisation_id]
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [ecto_schema: Organisation], keys: [:organisation_id]]]
+                 rules: [[where: [ecto_schemas: [Organisation]], keys: [:organisation_id]]]
                )
     end
 
-    test "scopes rules by ecto_schema lists" do
+    test "scopes rules by multiple ecto_schemas in one matcher" do
       query = from(post in Post)
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [ecto_schema: [Organisation, Post]], keys: [:organisation_id]]]
+                 rules: [[where: [ecto_schemas: [Organisation, Post]], keys: [:organisation_id]]]
                )
     end
 
-    test "scopes rules by table exact, regex, and list matchers" do
+    test "scopes rules by plural tables matcher with exact and regex values" do
       query = from(post in "posts")
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [table: "posts"], keys: [:organisation_id]]]
-               )
-
-      assert {:error, [%Issue{}]} =
-               MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [table: ~r/^post/], keys: [:organisation_id]]]
-               )
-
-      assert {:error, [%Issue{}]} =
-               MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [table: ["comments", "posts"]], keys: [:organisation_id]]]
+                 rules: [[where: [tables: ["comments", ~r/^post/]], keys: [:organisation_id]]]
                )
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [table: "comments"], keys: [:organisation_id]]]
+                 rules: [[where: [tables: ["comments", "accounts"]], keys: [:organisation_id]]]
                )
     end
 
-    test "supports a non-empty list of matcher keyword lists" do
+    test "supports OR across a non-empty list of where matcher keyword lists" do
       query = from(post in Post)
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
                    [
-                     only: [[table: "comments"], [ecto_schema: Post, operation: :all]],
+                     where: [
+                       [tables: ["comments"]],
+                       [ecto_schemas: [Post], operations: [:all]]
+                     ],
                      keys: [:organisation_id]
                    ]
                  ]
                )
     end
 
-    test "scopes rules by db_schema exact, regex, and list matchers" do
+    test "ANDs matcher keys inside one where matcher" do
       query = from(post in Post, prefix: "tenant_a")
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [db_schema: "tenant_a"], keys: [:organisation_id]]]
+                 rules: [
+                   [
+                     where: [ecto_schemas: [Post], db_schemas: ["tenant_a"], operations: [:all]],
+                     keys: [:organisation_id]
+                   ]
+                 ]
                )
 
-      assert {:error, [%Issue{}]} =
-               MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [db_schema: ~r/^tenant_/], keys: [:organisation_id]]]
+      assert :ok =
+               MandatoryWhereKeys.validate(:delete_all, query,
+                 rules: [
+                   [
+                     where: [ecto_schemas: [Post], db_schemas: ["tenant_a"], operations: [:all]],
+                     keys: [:organisation_id]
+                   ]
+                 ]
                )
+    end
+
+    test "scopes rules by plural db_schemas matcher with exact and regex values" do
+      query = from(post in Post, prefix: "tenant_a")
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
-                   [only: [db_schema: ["tenant_b", "tenant_a"]], keys: [:organisation_id]]
+                   [where: [db_schemas: ["tenant_b", ~r/^tenant_/]], keys: [:organisation_id]]
                  ]
                )
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [db_schema: "tenant_b"], keys: [:organisation_id]]]
+                 rules: [[where: [db_schemas: ["tenant_b"]], keys: [:organisation_id]]]
                )
     end
 
-    test "scopes rules by operation" do
+    test "scopes rules by plural operations matcher" do
       query = from(post in Post, where: post.organisation_id == ^123)
 
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[only: [operation: :delete_all], keys: [:user_id]]]
+                 rules: [[where: [operations: [:delete_all]], keys: [:user_id]]]
                )
 
       assert {:error, [%Issue{} = issue]} =
                MandatoryWhereKeys.validate(:delete_all, query,
-                 rules: [[only: [operation: [:delete_all, :update_all]], keys: [:user_id]]]
+                 rules: [[where: [operations: [:delete_all, :update_all]], keys: [:user_id]]]
                )
 
       assert issue.meta.missing_keys == [:user_id]
@@ -852,7 +859,11 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert :ok =
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
-                   [only: [ecto_schema: Post], except: [table: "posts"], keys: [:organisation_id]]
+                   [
+                     where: [ecto_schemas: [Post]],
+                     except: [tables: ["posts"]],
+                     keys: [:organisation_id]
+                   ]
                  ]
                )
     end
@@ -864,23 +875,47 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
                    [
-                     only: [ecto_schema: Post],
-                     except: [[table: "comments"], [operation: :all]],
+                     where: [ecto_schemas: [Post]],
+                     except: [[tables: ["comments"]], [operations: [:all]]],
                      keys: [:organisation_id]
                    ]
                  ]
                )
     end
 
-    test "supports where as an alias for only" do
-      query = from(post in Post)
+    test "supports complex configurations with multiple accumulating rules" do
+      query = from(post in Post, prefix: "tenant_a", where: post.organisation_id == ^123)
 
       assert {:error, [%Issue{} = issue]} =
                MandatoryWhereKeys.validate(:all, query,
-                 rules: [[where: [ecto_schema: Post], keys: [:organisation_id]]]
+                 rules: [
+                   [
+                     where: [
+                       ecto_schemas: [Post, Organisation],
+                       operations: [:all, :stream],
+                       db_schemas: ["tenant_a", "tenant_b"]
+                     ],
+                     keys: [:organisation_id]
+                   ],
+                   [
+                     where: [
+                       [ecto_schemas: [Organisation], operations: [:all]],
+                       [tables: ["posts"], db_schemas: ["tenant_a"]]
+                     ],
+                     except: [[tables: ["schema_migrations"]], [operations: [:delete_all]]],
+                     keys: [:user_id],
+                     match: :all
+                   ],
+                   [
+                     where: [tables: ["comments"]],
+                     keys: [:allowed_organisation_ids]
+                   ]
+                 ]
                )
 
-      assert issue.meta.missing_keys == [:organisation_id]
+      assert issue.meta.keys == [:user_id]
+      assert issue.meta.match == :all
+      assert issue.meta.missing_keys == [:user_id]
     end
 
     test "accumulates all matching rules" do
@@ -889,8 +924,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       assert {:error, [%Issue{} = issue]} =
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
-                   [only: [ecto_schema: Post], keys: [:organisation_id]],
-                   [only: [table: "posts"], keys: [:user_id]]
+                   [where: [ecto_schemas: [Post]], keys: [:organisation_id]],
+                   [where: [tables: ["posts"]], keys: [:user_id]]
                  ]
                )
 
@@ -905,7 +940,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                MandatoryWhereKeys.validate(:all, query,
                  rules: [
                    [
-                     only: [ecto_schema: Post],
+                     where: [ecto_schemas: [Post]],
                      keys: [:organisation_id, :user_id],
                      match: :all
                    ]
@@ -937,16 +972,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                      MandatoryWhereKeys.validate(:all, query, rules: [:invalid])
                    end
 
-      assert_raise ArgumentError,
-                   "expected mandatory_where_keys rule to include :only or :where, not both",
-                   fn ->
-                     MandatoryWhereKeys.validate(:all, query,
-                       rules: [[only: [table: "posts"], where: [table: "posts"], keys: [:id]]]
-                     )
-                   end
-
       assert_raise ArgumentError, "unknown mandatory_where_keys rule option: :unknown", fn ->
         MandatoryWhereKeys.validate(:all, query, rules: [[unknown: true, keys: [:id]]])
+      end
+
+      assert_raise ArgumentError, "unknown mandatory_where_keys rule option: :only", fn ->
+        MandatoryWhereKeys.validate(:all, query,
+          rules: [[only: [tables: ["posts"]], keys: [:id]]]
+        )
       end
     end
 
@@ -954,12 +987,12 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError, "missing required :keys option", fn ->
-        MandatoryWhereKeys.validate(:all, query, rules: [[only: [ecto_schema: Post]]])
+        MandatoryWhereKeys.validate(:all, query, rules: [[where: [ecto_schemas: [Post]]]])
       end
 
       assert_raise ArgumentError, "expected :match to be :any or :all, got: :one", fn ->
         MandatoryWhereKeys.validate(:all, query,
-          rules: [[only: [ecto_schema: Post], keys: [:organisation_id], match: :one]]
+          rules: [[where: [ecto_schemas: [Post]], keys: [:organisation_id], match: :one]]
         )
       end
     end
@@ -968,26 +1001,66 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       query = from(post in Post)
 
       assert_raise ArgumentError,
-                   "expected mandatory_where_keys :only to be a matcher or non-empty list of matchers",
+                   "expected mandatory_where_keys :where to be a matcher or non-empty list of matchers",
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
-                       rules: [[only: [], keys: [:organisation_id]]]
+                       rules: [[where: [], keys: [:organisation_id]]]
                      )
                    end
 
       assert_raise ArgumentError,
-                   "unknown mandatory_where_keys :only matcher option: :schema",
+                   "unknown mandatory_where_keys :where matcher option: :ecto_schema",
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
-                       rules: [[only: [schema: Post], keys: [:organisation_id]]]
+                       rules: [[where: [ecto_schema: Post], keys: [:organisation_id]]]
                      )
                    end
 
       assert_raise ArgumentError,
-                   "expected mandatory_where_keys :only :table to be a matcher value or non-empty list of matcher values",
+                   "unknown mandatory_where_keys :where matcher option: :table",
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
-                       rules: [[only: [table: :posts], keys: [:organisation_id]]]
+                       rules: [[where: [table: "posts"], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :where :tables to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[where: [tables: "posts"], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :where :ecto_schemas to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[where: [ecto_schemas: Post], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :where :tables to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[where: [tables: []], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :where :operations to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[where: [operations: [nil]], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :where :operations to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[where: [operations: [:invalid]], keys: [:organisation_id]]]
                      )
                    end
 
@@ -996,6 +1069,22 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                    fn ->
                      MandatoryWhereKeys.validate(:all, query,
                        rules: [[except: [], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "unknown mandatory_where_keys :except matcher option: :table",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[except: [table: "posts"], keys: [:organisation_id]]]
+                     )
+                   end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys :except :tables to be a non-empty list of matcher values",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       rules: [[except: [tables: "posts"], keys: [:organisation_id]]]
                      )
                    end
     end
