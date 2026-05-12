@@ -16,32 +16,29 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   }
   @allowed_operations [:all, :update_all, :delete_all, :stream, :insert_all]
 
-  @spec validate_allowed_options!(keyword(), atom(), list(atom())) :: :ok
-  def validate_allowed_options!(opts, check, payload_keys) do
-    validate_top_level_keys!(opts, check, payload_keys)
-  end
-
-  @spec default_rules!(keyword(), atom(), list(atom()), (keyword() -> map())) :: list(map())
-  def default_rules!(opts, check, payload_keys, payload_fun) do
-    validate_allowed_options!(opts, check, payload_keys)
-
+  @spec fetch_rules!(keyword(), atom(), list(atom()), (keyword() -> map())) :: list(map())
+  def fetch_rules!(opts, check, payload_keys, payload_fun) do
     case Keyword.fetch(opts, :rules) do
-      {:ok, rules} ->
-        reject_top_level_payload_keys_with_rules!(opts, check, payload_keys)
-        rules!(rules, check, payload_keys, payload_fun)
-
-      :error ->
-        [Map.merge(rule_payload!(opts, payload_fun), %{where: [], except: []})]
+      {:ok, rules} -> rules!(rules, check, payload_keys, payload_fun)
+      :error -> raise ArgumentError, "missing required :rules option"
     end
   end
 
   @spec rules!(term(), atom(), list(atom()), (keyword() -> map())) :: list(map())
   def rules!(rules, check, payload_keys, payload_fun) when is_list(rules) do
-    if Enum.empty?(rules) or Enum.any?(rules, &(not Keyword.keyword?(&1))) do
-      raise_rules_error!(check)
-    end
+    cond do
+      Enum.empty?(rules) ->
+        raise_rules_error!(check)
 
-    Enum.map(rules, &rule!(&1, check, payload_keys, payload_fun))
+      Keyword.keyword?(rules) ->
+        [rule!(rules, check, payload_keys, payload_fun)]
+
+      Enum.all?(rules, &Keyword.keyword?/1) ->
+        Enum.map(rules, &rule!(&1, check, payload_keys, payload_fun))
+
+      true ->
+        raise_rules_error!(check)
+    end
   end
 
   def rules!(_rules, check, _payload_keys, _payload_fun), do: raise_rules_error!(check)
@@ -76,27 +73,6 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
 
   defp rule_payload!(opts, payload_fun) do
     payload_fun.(opts)
-  end
-
-  defp validate_top_level_keys!(opts, _check, payload_keys) do
-    allowed_keys = [:validate, :rules] ++ payload_keys
-
-    Enum.each(opts, fn {key, _value} ->
-      if key not in allowed_keys do
-        raise ArgumentError, "unknown option: #{inspect(key)}"
-      end
-    end)
-  end
-
-  defp reject_top_level_payload_keys_with_rules!(opts, check, payload_keys) do
-    case Enum.find(payload_keys, &Keyword.has_key?(opts, &1)) do
-      nil ->
-        :ok
-
-      key ->
-        raise ArgumentError,
-              "expected #{check} to use rule-level #{inspect(key)} when :rules is provided"
-    end
   end
 
   defp matchers(opts, key, check) do
@@ -204,7 +180,8 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   defp matches_value?(value, expected), do: value == expected
 
   defp raise_rules_error!(check) do
-    raise ArgumentError, "expected #{check} :rules to be a non-empty list of keyword rules"
+    raise ArgumentError,
+          "expected #{check} :rules to be a keyword rule or non-empty list of keyword rules"
   end
 
   defp raise_matchers_error!(check, key) do

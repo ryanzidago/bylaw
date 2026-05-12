@@ -41,7 +41,13 @@ defmodule MyApp.Repo do
   @query_checks [
     Bylaw.Ecto.Query.Checks.RequiredOrder,
     Bylaw.Ecto.Query.Checks.DeterministicOrder,
-    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
+    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+     rules: [fields: [:organization_id]]},
+    {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+     rules: [
+       [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
+       [where: [tables: ["comments"]], fields: [:deleted_at]]
+     ]}
   ]
 
   @impl Ecto.Repo
@@ -73,7 +79,8 @@ defmodule MyApp.Repo do
 
   @query_checks [
     Bylaw.Ecto.Query.Checks.RequiredOrder,
-    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
+    {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+     rules: [fields: [:organization_id]]}
   ]
 
   @impl Ecto.Repo
@@ -102,6 +109,36 @@ end
 
 This config belongs to `:my_app`. `bylaw_ecto_query` does not read application
 config or register checks globally.
+
+Zero-config checks stay as bare modules:
+
+```elixir
+@query_checks [
+  Bylaw.Ecto.Query.Checks.RequiredOrder
+]
+```
+
+Configurable checks use `rules:` as their only public entry point. A single
+global rule can use the shorthand keyword form:
+
+```elixir
+@query_checks [
+  {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+   rules: [fields: [:organization_id]]}
+]
+```
+
+Scoped rules use the list-of-rules form:
+
+```elixir
+@query_checks [
+  {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+   rules: [
+     [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
+     [where: [tables: ["comments"]], fields: [:deleted_at]]
+   ]}
+]
+```
 
 Built-in checks live under `Bylaw.Ecto.Query.Checks.*`. Start with the checks
 that match your application invariants; each check module documents its own
