@@ -3,11 +3,10 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   Validates that configured visibility-sensitive fields are explicitly constrained.
 
   This check is about query explicitness, not visibility correctness. Callers
-  configure the schema fields that affect record visibility or lifecycle in
-  their application, such as `:deleted_at`, `:archived_at`, `:hidden_at`,
-  `:status`, `:state`, or `:published_at`. Bylaw only verifies that queries
-  against configured schemas mention those fields in supported root `where`
-  predicates.
+  configure the root fields that affect record visibility or lifecycle in their
+  application, such as `:deleted_at`, `:archived_at`, `:hidden_at`, `:status`,
+  `:state`, or `:published_at`. Bylaw only verifies that matching queries
+  mention those fields in supported root `where` predicates.
 
   ## Examples
 
@@ -18,9 +17,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   Why this is bad:
 
-  If `Post` is configured with `fields: [:deleted_at]`, this query does not say
-  whether soft-deleted rows should be visible. The visibility decision is left
-  implicit.
+  If `Post` is covered by `rules: [where: [ecto_schemas: [Post]], fields:
+  [:deleted_at]]`, this query does not say whether soft-deleted rows should be
+  visible. The visibility decision is left implicit.
 
   Better:
 
@@ -53,19 +52,28 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   as `union`, `union_all`, `except`, and `intersect` validate the parent query
   and every combination branch independently.
 
-  When the root query schema is not configured, the check returns `:ok`.
-  Configured fields that do not exist on the root schema are ignored. If no
-  applicable configured fields remain, the check returns `:ok`.
+  When the root query uses an Ecto schema, configured fields are narrowed to
+  fields that exist on that schema. If no applicable configured fields remain,
+  the check returns `:ok`. Schema-less sources can still be validated because
+  there is no schema reflection signal.
 
   ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
-    * `:schemas` - list of `{schema, fields: fields}` tuples. Defaults to `[]`.
+    * `:rules` - required rule keyword list or non-empty list of rule keyword
+      lists. A single-rule shorthand such as `rules: [fields: [:deleted_at]]`
+      is normalized to one rule.
+    * `:fields` - required non-empty list of visibility-sensitive root fields
+      inside each rule.
+    * `:where` and `:except` - optional rule matchers for scoping rules.
+      Matchers use plural keys with list values, such as `ecto_schemas: [Post]`,
+      `tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and
+      `operations: [:all]`.
 
   Example check spec:
 
       {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
-       schemas: [{Post, fields: [:deleted_at, :archived_at]}]}
+       rules: [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]]}
 
   ## Usage
 
@@ -79,16 +87,15 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @comparison_ops [:==, :!=, :>, :>=, :<, :<=]
 
   @typedoc false
-  @type schema_config :: {module(), list({:fields, list(atom())})}
-  @typedoc false
   @type check_opts ::
           list(
             {:validate, boolean()}
-            | {:schemas, list(schema_config())}
+            | {:rules, keyword() | list(keyword())}
           )
   @typedoc false
   @type opts :: check_opts()
@@ -101,8 +108,8 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    opts = CheckOptions.keyword_list!(opts, "opts")
-    check_opts = CheckOptions.normalize!(opts, [:schemas, :validate])
+    check_opts = CheckOptions.keyword_list!(opts, "opts")
+    CheckOptions.validate_allowed_keys!(check_opts, [:validate, :rules])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -116,29 +123,59 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    schema_configs = fetch_schema_configs!(check_opts)
+    rules =
+      RuleOptions.fetch_rules!(
+        check_opts,
+        :explicit_visibility_predicates,
+        [:fields],
+        &rule_payload!/1
+      )
 
     query
     |> Introspection.query_branches()
-    |> Enum.flat_map(&issues_for_branch(operation, &1, schema_configs))
+    |> Enum.flat_map(&issues_for_branch(operation, &1, rules))
     |> result()
   end
 
-  defp issues_for_branch(operation, {branch_path, query}, schema_configs) do
-    with {:ok, schema} <- Introspection.root_schema(query),
-         {:ok, configured_fields} <- configured_fields(schema_configs, schema),
-         applicable_fields = applicable_fields(schema, configured_fields),
-         false <- Enum.empty?(applicable_fields) do
-      issues_for_applicable_branch(
-        operation,
-        query,
-        schema,
-        configured_fields,
-        applicable_fields,
-        branch_path
-      )
-    else
-      _not_applicable -> []
+  defp rule_payload!(opts) do
+    %{fields: opts |> CheckOptions.fetch_non_empty_atoms!(:fields) |> Enum.uniq()}
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, rules) do
+    scope_query = Introspection.effective_root_query(query)
+
+    operation
+    |> RuleOptions.matching_rules(scope_query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, query, scope_query, &1, branch_path))
+  end
+
+  defp issues_for_rule(operation, query, scope_query, rule, branch_path) do
+    case Introspection.root_schema(scope_query) do
+      {:ok, schema} ->
+        applicable_fields = applicable_fields(schema, rule.fields)
+
+        if Enum.empty?(applicable_fields) do
+          []
+        else
+          issues_for_applicable_branch(
+            operation,
+            query,
+            schema,
+            rule.fields,
+            applicable_fields,
+            branch_path
+          )
+        end
+
+      :unknown ->
+        issues_for_applicable_branch(
+          operation,
+          query,
+          nil,
+          rule.fields,
+          rule.fields,
+          branch_path
+        )
     end
   end
 
@@ -150,7 +187,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
          applicable_fields,
          branch_path
        ) do
-    field_branches = where_field_branches(query)
+    field_branches = root_where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
     missing = missing_fields(applicable_fields, field_branches)
 
@@ -173,84 +210,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   defp result([]), do: :ok
   defp result(issues), do: {:error, issues}
-
-  defp fetch_schema_configs!(opts) do
-    opts
-    |> Keyword.get(:schemas, [])
-    |> normalize_schema_configs!()
-  end
-
-  defp normalize_schema_configs!(schemas) when is_list(schemas) do
-    Enum.map(schemas, &normalize_schema_config!/1)
-  end
-
-  defp normalize_schema_configs!(schemas) do
-    raise ArgumentError,
-          "expected :schemas to be a list of {schema, fields: fields} tuples, got: #{inspect(schemas)}"
-  end
-
-  defp normalize_schema_config!({schema, schema_opts})
-       when is_atom(schema) and is_list(schema_opts) do
-    cond do
-      not function_exported?(schema, :__schema__, 1) ->
-        raise ArgumentError,
-              "expected configured schema to be an Ecto schema, got: #{inspect(schema)}"
-
-      not Keyword.keyword?(schema_opts) ->
-        raise ArgumentError,
-              "expected schema options for #{inspect(schema)} to be a keyword list, got: #{inspect(schema_opts)}"
-
-      true ->
-        Enum.each(schema_opts, &validate_schema_opt!(schema, &1))
-        {schema, fields: fetch_fields!(schema, schema_opts)}
-    end
-  end
-
-  defp normalize_schema_config!(schema_config) do
-    raise ArgumentError,
-          "expected :schemas to contain {schema, fields: fields} tuples, got: #{inspect(schema_config)}"
-  end
-
-  defp validate_schema_opt!(_schema, {:fields, _value}), do: :ok
-
-  defp validate_schema_opt!(schema, {key, _value}) do
-    raise ArgumentError, "unknown option for schema #{inspect(schema)}: #{inspect(key)}"
-  end
-
-  defp fetch_fields!(schema, opts) do
-    case Keyword.fetch(opts, :fields) do
-      {:ok, fields} ->
-        normalize_fields!(schema, fields)
-
-      :error ->
-        raise ArgumentError, "missing required :fields option for schema #{inspect(schema)}"
-    end
-  end
-
-  defp normalize_fields!(_schema, []) do
-    raise ArgumentError,
-          "expected :fields to be a non-empty list of atoms, got: []"
-  end
-
-  defp normalize_fields!(_schema, fields) when is_list(fields) do
-    fields
-    |> CheckOptions.non_empty_atoms!(:fields)
-    |> Enum.uniq()
-  end
-
-  defp normalize_fields!(_schema, fields) do
-    raise ArgumentError,
-          "expected :fields to be a non-empty list of atoms, got: #{inspect(fields)}"
-  end
-
-  defp configured_fields(schema_configs, schema) do
-    case Enum.find(schema_configs, fn {configured_schema, _opts} ->
-           configured_schema == schema
-         end) do
-      {^schema, fields: fields} -> {:ok, fields}
-      nil -> :unknown
-    end
-  end
 
   defp applicable_fields(schema, fields) do
     schema_fields = Introspection.schema_fields(schema)
@@ -279,6 +238,14 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp where_field_branches(_query), do: [MapSet.new()]
+
+  defp root_where_field_branches(query) do
+    query
+    |> Introspection.root_query_layers()
+    |> Enum.reduce(nil, fn layer_query, branches ->
+      Branches.merge(branches, where_field_branches(layer_query), &MapSet.union/2)
+    end)
+  end
 
   defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
     left_branches = field_branches_in_expr(left, aliases)

@@ -8,7 +8,13 @@ defmodule Bylaw.Ecto.Query do
 
       @query_checks [
         Bylaw.Ecto.Query.Checks.RequiredOrder,
-        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys, keys: [:organization_id]}
+        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+         rules: [fields: [:organization_id]]},
+        {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+         rules: [
+           [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
+           [where: [tables: ["comments"]], fields: [:deleted_at]]
+         ]}
       ]
 
       def prepare_query(operation, query, opts) do
@@ -29,6 +35,30 @@ defmodule Bylaw.Ecto.Query do
   > Ecto.
 
   ## Examples
+
+  Zero-config checks stay as bare modules:
+
+      @query_checks [
+        Bylaw.Ecto.Query.Checks.RequiredOrder
+      ]
+
+  Configurable checks use `:rules` as their only public entry point. A single
+  global rule can use the shorthand keyword form:
+
+      @query_checks [
+        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+         rules: [fields: [:organization_id]]}
+      ]
+
+  Scoped rules use the list-of-rules form:
+
+      @query_checks [
+        {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+         rules: [
+           [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
+           [where: [tables: ["comments"]], fields: [:deleted_at]]
+         ]}
+      ]
 
       iex> import Ecto.Query
       iex> query = from("posts", as: :post, limit: 1)
