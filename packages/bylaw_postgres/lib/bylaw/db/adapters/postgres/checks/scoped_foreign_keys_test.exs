@@ -92,7 +92,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                  rules: [
                    [
                      scope_columns: ["tenant_id"],
-                     only: [schema: ["public", "billing"], table: ["orders", "line_items"]]
+                     where: [
+                       schemas: ["public", "billing"],
+                       tables: ["orders", "line_items"]
+                     ]
                    ]
                  ]
                )
@@ -201,8 +204,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                    [
                      scope_columns: ["tenant_id"],
                      except: [
-                       [table: "orders", constraint: ~r/customer_id/],
-                       [referenced_table: "global_actors"]
+                       [tables: ["orders"], constraints: [~r/customer_id/]],
+                       [referenced_tables: ["global_actors"]]
                      ]
                    ]
                  ]
@@ -343,7 +346,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
       target = target({:ok, result([])})
 
       assert_raise ArgumentError,
-                   ~r/expected scoped_foreign_keys :except :referenced_tables to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected scoped_foreign_keys :except :referenced_tables to be a non-empty list of matcher values/,
                    fn ->
                      ScopedForeignKeys.validate(target,
                        rules: [[scope_columns: ["tenant_id"], except: [referenced_tables: []]]]
@@ -359,8 +362,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                  rules: [
                    [
                      scope_columns: ["tenant_id"],
-                     only: [schema: "public", table: "orders"],
-                     except: [[referenced_table: "global_settings"]]
+                     where: [schemas: ["public"], tables: ["orders"]],
+                     except: [[referenced_tables: ["global_settings"]]]
                    ]
                  ]
                )
@@ -371,9 +374,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeysTest do
                repo: nil,
                dynamic_repo: nil,
                rule: %{
-                 only: [[schema: "public", table: "orders"]],
+                 where: [[schema: ["public"], table: ["orders"]]],
                  scope_columns: ["tenant_id"],
-                 except: [[referenced_table: "global_settings"]]
+                 except: [[referenced_table: ["global_settings"]]]
                },
                reason: :connection_closed
              }

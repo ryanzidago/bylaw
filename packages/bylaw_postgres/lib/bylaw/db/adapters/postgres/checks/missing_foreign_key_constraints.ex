@@ -53,10 +53,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
   {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,
    rules: [
      [
-       only: [schema: "public"],
+       where: [schemas: ["public"]],
        except: [
-         [table: "events", column: "actor_id"],
-         [column: ~r/_external_id$/]
+         [tables: ["events"], columns: ["actor_id"]],
+         [columns: [~r/_external_id$/]]
        ]
      ]
    ]}

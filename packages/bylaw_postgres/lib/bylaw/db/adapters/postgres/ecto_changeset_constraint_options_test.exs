@@ -113,7 +113,7 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
                        [
                          schema_modules: [String],
                          paths: ["lib"],
-                         rules: [[only: [table: "users"]]],
+                         rules: [[where: [tables: ["users"]]]],
                          schemas: ["public"]
                        ],
                        @check
@@ -121,16 +121,49 @@ defmodule Bylaw.Db.Adapters.Postgres.EctoChangesetConstraintOptionsTest do
                    end
     end
 
+    test "accepts where rules with plural matcher keys and list values" do
+      assert [
+               schema_modules: [String],
+               paths: ["lib"],
+               rules: [[where: [tables: ["users"]]]]
+             ] =
+               EctoChangesetConstraintOptions.normalize!(
+                 %{},
+                 [
+                   schema_modules: [String],
+                   paths: ["lib"],
+                   rules: [[where: [tables: ["users"]]]]
+                 ],
+                 @check
+               )
+    end
+
     test "validates rule matcher keys" do
       assert_raise ArgumentError,
-                   "unknown #{@check} :only matcher option: :type",
+                   "unknown #{@check} :where matcher option: :type",
                    fn ->
                      EctoChangesetConstraintOptions.normalize!(
                        %{},
                        [
                          schema_modules: [String],
                          paths: ["lib"],
-                         rules: [[only: [type: "uuid"]]]
+                         rules: [[where: [type: ["uuid"]]]]
+                       ],
+                       @check
+                     )
+                   end
+    end
+
+    test "rejects only as an unknown rule option" do
+      assert_raise ArgumentError,
+                   "unknown #{@check} rule option: :only",
+                   fn ->
+                     EctoChangesetConstraintOptions.normalize!(
+                       %{},
+                       [
+                         schema_modules: [String],
+                         paths: ["lib"],
+                         rules: [[only: [tables: ["users"]]]]
                        ],
                        @check
                      )

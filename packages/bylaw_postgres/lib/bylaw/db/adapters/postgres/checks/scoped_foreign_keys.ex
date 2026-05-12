@@ -58,7 +58,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
    rules: [
      [
        scope_columns: ["tenant_id", "workspace_id"],
-       except: [[referenced_table: "global_settings"]]
+       except: [[referenced_tables: ["global_settings"]]]
      ]
    ]}
   ```
@@ -166,7 +166,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -176,7 +176,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
           )
   @type rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:scope_columns, list(String.t())}
           )
@@ -281,7 +281,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
         [
           %{
             scope_columns: scope_columns!(Keyword.fetch!(opts, :scope_columns)),
-            only: [],
+            where: [],
             except: []
           }
         ]
@@ -325,14 +325,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
   defp allowed_matcher_keys, do: [:schema, :table, :constraint, :referenced_table]
 
-  defp query_filters(%{only: [[schema: schemas, table: tables]]}),
-    do: {List.wrap(schemas), List.wrap(tables)}
-
-  defp query_filters(%{only: [[table: tables, schema: schemas]]}),
-    do: {List.wrap(schemas), List.wrap(tables)}
-
-  defp query_filters(%{only: [[schema: schemas]]}), do: {List.wrap(schemas), nil}
-  defp query_filters(%{only: [[table: tables]]}), do: {nil, List.wrap(tables)}
+  defp query_filters(%{where: [[schema: schemas, table: tables]]}), do: {schemas, tables}
+  defp query_filters(%{where: [[table: tables, schema: schemas]]}), do: {schemas, tables}
+  defp query_filters(%{where: [[schema: schemas]]}), do: {schemas, nil}
+  defp query_filters(%{where: [[table: tables]]}), do: {nil, tables}
   defp query_filters(_rule), do: {nil, nil}
 
   @spec issue(target :: Target.t(), row :: Result.row(), scope_columns :: list(String.t())) ::

@@ -4,7 +4,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   ## Examples
 
-  With `rules: [[only: [schema: "public"], columns: ["tenant_id"]]]`, before:
+  With `rules: [[where: [schemas: ["public"]], columns: ["tenant_id"]]]`, before:
 
   ```sql
   CREATE TABLE invoices (
@@ -37,7 +37,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   ## Options
 
   Use `rules: [...]` to require columns for scoped groups of tables. A rule
-  applies when a table matches any matcher in `only`; keys inside one matcher
+  applies when a table matches any matcher in `where`; keys inside one matcher
   are combined. Matching rules accumulate, so the same table can be validated by
   more than one rule.
 
@@ -46,12 +46,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
    rules: [
      [
        columns: ["inserted_at", "updated_at"],
-       except: [[table: "schema_migrations"]]
+       except: [[tables: ["schema_migrations"]]]
      ],
      [
-       only: [
-         [schema: "audit"],
-         [schema: "billing", table: ~r/^invoice_/]
+       where: [
+         [schemas: ["audit"]],
+         [schemas: ["billing"], tables: [~r/^invoice_/]]
        ],
        columns: ["tenant_id"]
      ]
@@ -107,12 +107,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher :: list({:schema, matcher_values()} | {:table, matcher_values()})
   @type rule ::
           list(
             {:columns, list(String.t())}
-            | {:only, matcher() | list(matcher())}
+            | {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
           )
   @type check_opt ::
@@ -123,7 +123,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
           columns: list(String.t()),
-          only: list(matcher()),
+          where: list(matcher()),
           except: list(matcher())
         }
   @row_keys %{
@@ -221,7 +221,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
         )
 
       has_columns? ->
-        [%{columns: columns!(Keyword.fetch!(opts, :columns)), only: [], except: []}]
+        [%{columns: columns!(Keyword.fetch!(opts, :columns)), where: [], except: []}]
 
       true ->
         raise ArgumentError, "expected required_columns to include :columns or :rules"
@@ -308,7 +308,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
   defp rule_meta(rule) do
     %{
       columns: rule.columns,
-      only: rule.only,
+      where: rule.where,
       except: rule.except
     }
   end

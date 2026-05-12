@@ -44,12 +44,12 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
   {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
    rules: [
      [
-       only: [schema: "public"],
+       where: [schemas: ["public"]],
        types: [
          [type: "json", prefer: "jsonb", reason: "jsonb supports common indexing patterns"],
          [type: ~r/^character\\(/, prefer: "text"]
        ],
-       except: [[table: "webhook_events", column: "raw_payload"]]
+       except: [[tables: ["webhook_events"], columns: ["raw_payload"]]]
      ]
    ]}
   ```
@@ -97,7 +97,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           type_matcher()
           | list({:type, type_matcher()} | {:prefer, String.t()} | {:reason, String.t()})
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -107,7 +107,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
           )
   @type scope_rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:types, list(type_rule())}
           )
@@ -208,7 +208,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
         [
           %{
             types: type_rules!(Keyword.fetch!(opts, :types)),
-            only: [],
+            where: [],
             except: []
           }
         ]
