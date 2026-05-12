@@ -1100,6 +1100,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                        rules: [[keys: [:user_id]]]
                      )
                    end
+
+      assert_raise ArgumentError,
+                   "expected mandatory_where_keys to use rule-level :match when :rules is provided",
+                   fn ->
+                     MandatoryWhereKeys.validate(:all, query,
+                       match: :all,
+                       rules: [[keys: [:organisation_id]]]
+                     )
+                   end
     end
   end
 

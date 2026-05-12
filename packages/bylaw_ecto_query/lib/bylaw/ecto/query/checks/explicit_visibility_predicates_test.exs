@@ -1080,6 +1080,15 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
           rules: [[fields: [:status]]]
         )
       end
+
+      assert_raise ArgumentError,
+                   "expected explicit_visibility_predicates to use rule-level :fields when :rules is provided",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       fields: [:deleted_at],
+                       rules: [[fields: [:status]]]
+                     )
+                   end
     end
   end
 
