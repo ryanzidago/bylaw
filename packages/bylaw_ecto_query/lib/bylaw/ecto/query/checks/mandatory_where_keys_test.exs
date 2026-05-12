@@ -748,6 +748,15 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
+    test "scopes rules by ecto_schema lists" do
+      query = from(post in Post)
+
+      assert {:error, [%Issue{}]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [[only: [ecto_schema: [Organisation, Post]], keys: [:organisation_id]]]
+               )
+    end
+
     test "scopes rules by table exact, regex, and list matchers" do
       query = from(post in "posts")
 
@@ -772,12 +781,38 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
     end
 
-    test "scopes rules by db_schema prefix" do
+    test "supports a non-empty list of matcher keyword lists" do
+      query = from(post in Post)
+
+      assert {:error, [%Issue{}]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [
+                   [
+                     only: [[table: "comments"], [ecto_schema: Post, operation: :all]],
+                     keys: [:organisation_id]
+                   ]
+                 ]
+               )
+    end
+
+    test "scopes rules by db_schema exact, regex, and list matchers" do
       query = from(post in Post, prefix: "tenant_a")
 
       assert {:error, [%Issue{}]} =
                MandatoryWhereKeys.validate(:all, query,
                  rules: [[only: [db_schema: "tenant_a"], keys: [:organisation_id]]]
+               )
+
+      assert {:error, [%Issue{}]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [[only: [db_schema: ~r/^tenant_/], keys: [:organisation_id]]]
+               )
+
+      assert {:error, [%Issue{}]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [
+                   [only: [db_schema: ["tenant_b", "tenant_a"]], keys: [:organisation_id]]
+                 ]
                )
 
       assert :ok =
@@ -836,6 +871,24 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                )
 
       assert issue.meta.keys == [:user_id]
+      assert issue.meta.missing_keys == [:user_id]
+    end
+
+    test "uses rule-level match options" do
+      query = from(post in Post, where: post.organisation_id == ^123)
+
+      assert {:error, [%Issue{} = issue]} =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [
+                   [
+                     only: [ecto_schema: Post],
+                     keys: [:organisation_id, :user_id],
+                     match: :all
+                   ]
+                 ]
+               )
+
+      assert issue.meta.match == :all
       assert issue.meta.missing_keys == [:user_id]
     end
 
