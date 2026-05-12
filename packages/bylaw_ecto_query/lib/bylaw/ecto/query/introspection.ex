@@ -28,9 +28,9 @@ defmodule Bylaw.Ecto.Query.Introspection do
 
   Prepared queries may wrap their real source query in one or more root
   `subquery/1` layers before `c:Ecto.Repo.prepare_query/3` runs. Root-only
-  checks use this helper so schema, table, prefix, and root `where` validation
-  all inspect the same effective source query instead of silently stopping at
-  the outer wrapper.
+  checks use this helper when schema, table, and prefix introspection should
+  inspect the effective source query instead of silently stopping at the outer
+  wrapper.
   """
   @spec effective_root_query(term()) :: term()
   def effective_root_query(%{from: %{source: %Ecto.SubQuery{query: query}}}) do
@@ -38,6 +38,17 @@ defmodule Bylaw.Ecto.Query.Introspection do
   end
 
   def effective_root_query(query), do: query
+
+  # Root-only checks that validate visible `where` predicates need to consider
+  # both the outer prepared query and any wrapped root source subqueries,
+  # because callers often build a base subquery and add the final constraints in
+  # the outer query.
+  @spec root_query_layers(term()) :: list(term())
+  def root_query_layers(%{from: %{source: %Ecto.SubQuery{query: query}}} = root_query) do
+    [root_query | root_query_layers(query)]
+  end
+
+  def root_query_layers(query), do: [query]
 
   # The root schema comes from the query `from` source. Return `:unknown` for
   # schema-less sources, malformed values, non-query values, and modules that do
