@@ -34,12 +34,53 @@ defmodule Bylaw.Ecto.Query.IntrospectionTest do
       assert Introspection.root_schema(query) == {:ok, Post}
     end
 
+    test "unwraps root source subqueries before resolving the root schema" do
+      inner_query = from(post in Post)
+      query = from(post in subquery(inner_query), select: count())
+
+      assert Introspection.effective_root_query(query) == inner_query
+      assert Introspection.root_query_layers(query) == [query, inner_query]
+      assert Introspection.root_schema(Introspection.effective_root_query(query)) == {:ok, Post}
+    end
+
     test "returns unknown for schema-less and malformed sources" do
       query = from(post in "posts")
 
       assert Introspection.root_schema(query) == :unknown
       assert Introspection.root_schema(%{from: %{source: {"posts", NotSchema}}}) == :unknown
       assert Introspection.root_schema(:not_a_query) == :unknown
+    end
+  end
+
+  describe "root_table/1 and root_prefix/1" do
+    test "return root table and source prefix" do
+      query = from(post in Post, prefix: "tenant_a")
+
+      assert Introspection.root_table(query) == "posts"
+      assert Introspection.root_prefix(query) == "tenant_a"
+    end
+
+    test "return query prefix when the source prefix is absent" do
+      query = Ecto.Query.put_query_prefix(from(post in Post), "tenant_b")
+
+      assert Introspection.root_table(query) == "posts"
+      assert Introspection.root_prefix(query) == "tenant_b"
+    end
+
+    test "unwrap root source subqueries before resolving table and prefix" do
+      inner_query = from(post in Post, prefix: "tenant_a")
+      query = from(post in subquery(inner_query), select: count())
+
+      assert Introspection.root_table(Introspection.effective_root_query(query)) == "posts"
+      assert Introspection.root_prefix(Introspection.effective_root_query(query)) == "tenant_a"
+    end
+
+    test "return nil for malformed sources and missing prefixes" do
+      query = from(post in Post)
+
+      assert Introspection.root_table(:not_a_query) == nil
+      assert Introspection.root_prefix(query) == nil
+      assert Introspection.root_prefix(:not_a_query) == nil
     end
   end
 

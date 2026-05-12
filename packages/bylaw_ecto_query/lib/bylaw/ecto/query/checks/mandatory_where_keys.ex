@@ -26,7 +26,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   Why this is better:
 
-  The configured key appears in a supported root predicate, so the query is
+  The configured field appears in a supported root predicate, so the query is
   explicitly scoped to one organization.
 
   ## Notes
@@ -41,22 +41,27 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   `except`, and `intersect` validate the parent query and every combination
   branch independently.
 
-  When the root query uses an Ecto schema, the configured keys are first narrowed
-  to fields that exist on that schema. If none of the configured keys exist, the
+  When the root query uses an Ecto schema, the configured fields are first narrowed
+  to fields that exist on that schema. If none of the configured fields exist, the
   check is not applicable and returns `:ok`. Schema-less sources are still
   validated because there is no schema reflection signal.
 
   ## Options
 
     * `:validate` - explicit `false` disables the check. Defaults to `true`.
-    * `:keys` - required non-empty list of field names when the check runs.
-    * `:match` - `:any` or `:all`. Defaults to `:any`.
+    * `:rules` - required rule keyword list or non-empty list of rule keyword
+      lists. A single-rule shorthand such as `rules: [fields: [:organization_id]]`
+      is normalized to one rule.
+    * `:fields` - required non-empty list of root field names inside each rule.
+    * `:match` - `:any` or `:all` inside each rule. Defaults to `:any`.
+    * `:where` and `:except` - optional rule matchers for scoping rules. Matchers
+      use plural keys with list values, such as `ecto_schemas: [Post]`,
+      `tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
 
   Example check spec:
 
       {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
-       keys: [:organization_id],
-       match: :all}
+       rules: [fields: [:organization_id], match: :all]}
 
   ## Usage
 
@@ -70,6 +75,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type match :: :any | :all
@@ -77,8 +83,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   @type check_opts ::
           list(
             {:validate, boolean()}
-            | {:keys, list(atom())}
-            | {:match, match()}
+            | {:rules, keyword() | list(keyword())}
           )
   @typedoc false
   @type opts :: check_opts()
@@ -91,7 +96,8 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
+    check_opts = CheckOptions.keyword_list!(opts, "opts")
+    CheckOptions.validate_allowed_keys!(check_opts, [:validate, :rules])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -105,48 +111,68 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
+    rules =
+      RuleOptions.fetch_rules!(
+        check_opts,
+        :mandatory_where_keys,
+        [:fields, :match],
+        &rule_payload!/1
+      )
 
     query
     |> Introspection.query_branches()
-    |> Enum.flat_map(&issues_for_branch(operation, &1, check_opts, keys))
+    |> Enum.flat_map(&issues_for_branch(operation, &1, rules))
     |> result()
   end
 
-  defp issues_for_branch(operation, {branch_path, query}, check_opts, keys) do
-    case applicable_keys(query, keys) do
+  defp rule_payload!(opts) do
+    %{
+      fields: CheckOptions.fetch_non_empty_atoms!(opts, :fields),
+      match: CheckOptions.match!(opts)
+    }
+  end
+
+  defp issues_for_branch(operation, {branch_path, query}, rules) do
+    scope_query = Introspection.effective_root_query(query)
+
+    operation
+    |> RuleOptions.matching_rules(scope_query, rules)
+    |> Enum.flat_map(&issues_for_rule(operation, query, scope_query, &1, branch_path))
+  end
+
+  defp issues_for_rule(operation, query, scope_query, rule, branch_path) do
+    case applicable_fields(scope_query, rule.fields) do
       [] ->
         []
 
-      applicable_keys ->
-        issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path)
+      applicable_fields ->
+        issues_for_applicable_branch(operation, query, rule, applicable_fields, branch_path)
     end
   end
 
-  defp issues_for_applicable_branch(operation, query, check_opts, applicable_keys, branch_path) do
-    match = CheckOptions.match!(check_opts)
-    field_branches = where_field_branches(query)
+  defp issues_for_applicable_branch(operation, query, rule, applicable_fields, branch_path) do
+    field_branches = root_where_field_branches(query)
     fields = Branches.guaranteed_sets(field_branches)
-    missing = missing_keys(applicable_keys, field_branches, match)
+    missing = missing_keys(applicable_fields, field_branches, rule.match)
 
     if Enum.empty?(missing) do
       []
     else
-      [issue(operation, applicable_keys, fields, missing, match, branch_path)]
+      [issue(operation, applicable_fields, fields, missing, rule.match, branch_path)]
     end
   end
 
   defp result([]), do: :ok
   defp result(issues), do: {:error, issues}
 
-  defp applicable_keys(query, keys) do
+  defp applicable_fields(query, fields) do
     case Introspection.root_schema(query) do
       {:ok, schema} ->
         schema_fields = Introspection.schema_fields(schema)
-        Enum.filter(keys, &MapSet.member?(schema_fields, &1))
+        Enum.filter(fields, &MapSet.member?(schema_fields, &1))
 
       :unknown ->
-        keys
+        fields
     end
   end
 
@@ -172,6 +198,14 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
   end
 
   defp where_field_branches(_query), do: [MapSet.new()]
+
+  defp root_where_field_branches(query) do
+    query
+    |> Introspection.root_query_layers()
+    |> Enum.reduce(nil, fn layer_query, branches ->
+      Branches.merge(branches, where_field_branches(layer_query), &MapSet.union/2)
+    end)
+  end
 
   defp field_branches_in_expr({:and, _meta, [left, right]}, aliases) do
     left_branches = field_branches_in_expr(left, aliases)
