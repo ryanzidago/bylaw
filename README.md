@@ -1,12 +1,14 @@
 # Bylaw
 
-Bylaw is an Elixir library for validating code, database, query, and schema
-constraints.
+Bylaw is an Elixir library for validating code, database, query, schema, and
+rendered HTML constraints.
 
 Bylaw is organized as independent packages under `packages/`:
 
 Packages most applications start with:
 
+- [`packages/bylaw_html`](packages/bylaw_html/README.md) validates rendered
+  HTML strings with explicit checks.
 - [`packages/bylaw_ecto_query`](packages/bylaw_ecto_query/README.md) validates
   prepared Ecto queries.
 - [`packages/bylaw_postgres`](packages/bylaw_postgres/README.md) validates
@@ -28,6 +30,7 @@ Add the package you need to your dependencies:
 ```elixir
 def deps do
   [
+    {:bylaw_html, "~> 0.1.0-alpha.1", only: :test},
     {:bylaw_ecto_query, "~> 0.1.0"},
     {:bylaw_postgres, "~> 0.1.0"},
     {:bylaw_credo, "~> 0.1.0", only: [:dev, :test], runtime: false}
