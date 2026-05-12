@@ -7,7 +7,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   With this rule:
 
   ```elixir
-  [only: [referenced_table: "accounts"], on_delete: :restrict]
+  [where: [referenced_tables: ["accounts"]], on_delete: :restrict]
   ```
 
   Before, the foreign key deletes orders when an account is deleted:
@@ -41,7 +41,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   ## Options
 
-  Use a rule without `:only` when every foreign key in scope should use the same
+  Use a rule without `:where` when every foreign key in scope should use the same
   action:
 
   ```elixir
@@ -56,11 +56,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
    rules: [
      [
-       only: [[table: "messages"], [referenced_table: "conversations"]],
+       where: [[tables: ["messages"]], [referenced_tables: ["conversations"]]],
        on_delete: :cascade
      ],
      [
-       only: [referenced_table: "lookup_statuses"],
+       where: [referenced_tables: ["lookup_statuses"]],
        on_delete: :restrict,
        on_update: :restrict
      ]
@@ -137,7 +137,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   @type action :: :no_action | :restrict | :cascade | :set_null | :set_default
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -150,7 +150,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
           )
   @type rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:on_delete, action()}
             | {:on_update, action()}
@@ -161,7 +161,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   @type check_opts :: list(check_opt())
   @type normalized_rule :: %{
-          only: list(matcher()),
+          where: list(matcher()),
           except: list(matcher()),
           on_delete: action() | nil,
           on_update: action() | nil
@@ -267,7 +267,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
       Keyword.has_key?(opts, :on_delete) or Keyword.has_key?(opts, :on_update) ->
         [
           %{
-            only: [],
+            where: [],
             except: [],
             on_delete: action!(opts, :on_delete),
             on_update: action!(opts, :on_update)

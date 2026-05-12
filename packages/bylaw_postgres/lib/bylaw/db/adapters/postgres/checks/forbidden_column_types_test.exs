@@ -111,7 +111,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                ForbiddenColumnTypes.validate(target,
                  rules: [
                    [
-                     only: [schema: ["public", "billing"], table: ["events", "payments"]],
+                     where: [
+                       schemas: ["public", "billing"],
+                       tables: ["events", "payments"]
+                     ],
                      types: ["json"]
                    ]
                  ]
@@ -137,9 +140,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    [
                      types: ["json", "money"],
                      except: [
-                       [table: "events", column: "payload"],
-                       [column: "metadata", type: "json"],
-                       [table: "payments", type: "money"]
+                       [tables: ["events"], columns: ["payload"]],
+                       [columns: ["metadata"], types: ["json"]],
+                       [tables: ["payments"], types: ["money"]]
                      ]
                    ]
                  ]
@@ -163,7 +166,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    [
                      types: ["json", "money"],
                      except: [
-                       [table: ~r/_events$/, columns: [~r/payload$/]],
+                       [tables: [~r/_events$/], columns: [~r/payload$/]],
                        [types: [~r/^money$/]]
                      ]
                    ]
@@ -207,9 +210,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                ForbiddenColumnTypes.validate(target,
                  rules: [
                    [
-                     only: [schema: "public", table: "events"],
+                     where: [schemas: ["public"], tables: ["events"]],
                      types: ["json"],
-                     except: [[table: "webhook_events"]]
+                     except: [[tables: ["webhook_events"]]]
                    ]
                  ]
                )
@@ -221,9 +224,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                dynamic_repo: nil,
                rules: [
                  %{
-                   only: [[schema: "public", table: "events"]],
+                   where: [[schema: ["public"], table: ["events"]]],
                    types: [%{type: "json", prefer: nil, reason: nil}],
-                   except: [[table: "webhook_events"]]
+                   except: [[table: ["webhook_events"]]]
                  }
                ],
                reason: :connection_closed
@@ -348,7 +351,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypesTest do
                    end
 
       assert_raise ArgumentError,
-                   ~r/expected forbidden_column_types :except :types to be a matcher value or non-empty list of matcher values/,
+                   ~r/expected forbidden_column_types :except :types to be a non-empty list of matcher values/,
                    fn ->
                      ForbiddenColumnTypes.validate(target,
                        rules: [[types: ["json"], except: [types: []]]]

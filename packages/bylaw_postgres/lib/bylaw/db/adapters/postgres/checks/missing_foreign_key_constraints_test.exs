@@ -171,7 +171,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraintsTest do
       assert issue.meta == %{
                repo: nil,
                dynamic_repo: nil,
-               rules: [%{only: [], except: []}],
+               rules: [%{where: [], except: []}],
                reason: :connection_closed
              }
     end

@@ -67,8 +67,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
    paths: ["lib/my_app"],
    rules: [
      [
-       only: [schema: "public"],
-       except: [[table: "events", column: "actor_id"]]
+       where: [schemas: ["public"]],
+       except: [[tables: ["events"], columns: ["actor_id"]]]
      ]
    ]}
   ```

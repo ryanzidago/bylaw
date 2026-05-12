@@ -52,8 +52,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes do
   {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyIndexes,
    rules: [
      [
-       only: [schema: "public"],
-       except: [[table: "audit_events"]]
+       where: [schemas: ["public"]],
+       except: [[tables: ["audit_events"]]]
      ]
    ]}
   ```

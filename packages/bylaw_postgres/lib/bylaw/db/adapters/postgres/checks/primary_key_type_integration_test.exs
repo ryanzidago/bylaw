@@ -19,9 +19,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.schema(),
-                      table: ["uuid_primary_key", "composite_uuid_primary_key"]
+                    where: [
+                      schemas: [TestDatabase.schema()],
+                      tables: ["uuid_primary_key", "composite_uuid_primary_key"]
                     ],
                     types: ["uuid"]
                   ]
@@ -37,7 +37,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "bigint_primary_key"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["bigint_primary_key"]],
                     types: ["bigint"]
                   ]
                 ]}
@@ -52,7 +52,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "missing_primary_key"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["missing_primary_key"]],
                     types: ["uuid"]
                   ]
                 ]}
@@ -76,7 +76,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "bigint_primary_key"],
+                    where: [schemas: [TestDatabase.schema()], tables: ["bigint_primary_key"]],
                     types: ["uuid"]
                   ]
                 ]}
@@ -101,7 +101,10 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [schema: TestDatabase.schema(), table: "composite_mixed_primary_key"],
+                    where: [
+                      schemas: [TestDatabase.schema()],
+                      tables: ["composite_mixed_primary_key"]
+                    ],
                     types: ["uuid"]
                   ]
                 ]}
@@ -120,9 +123,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.schema(),
-                      table: [
+                    where: [
+                      schemas: [TestDatabase.schema()],
+                      tables: [
                         "uuid_primary_key",
                         "bigint_primary_key",
                         "composite_mixed_primary_key"
@@ -142,14 +145,14 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyTypeIntegrationTest do
                {PrimaryKeyType,
                 rules: [
                   [
-                    only: [
-                      schema: TestDatabase.schema(),
-                      table: ["bigint_primary_key", "missing_primary_key"]
+                    where: [
+                      schemas: [TestDatabase.schema()],
+                      tables: ["bigint_primary_key", "missing_primary_key"]
                     ],
                     types: ["uuid"],
                     except: [
-                      [table: "bigint_primary_key", column: "id"],
-                      [table: "missing_primary_key"]
+                      [tables: ["bigint_primary_key"], columns: ["id"]],
+                      [tables: ["missing_primary_key"]]
                     ]
                   ]
                 ]}

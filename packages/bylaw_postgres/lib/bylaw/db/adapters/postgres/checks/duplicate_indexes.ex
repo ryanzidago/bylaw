@@ -45,8 +45,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
   {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
    rules: [
      [
-       only: [schema: "public"],
-       except: [[table: "spatial_ref_sys"]]
+       where: [schemas: ["public"]],
+       except: [[tables: ["spatial_ref_sys"]]]
      ]
    ]}
   ```

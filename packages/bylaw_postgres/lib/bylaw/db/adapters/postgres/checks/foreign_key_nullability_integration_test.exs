@@ -58,7 +58,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullabilityIntegrationTest
              Postgres.validate([target], [
                {ForeignKeyNullability,
                 schemas: [TestDatabase.schema()],
-                except: [[table: "nullable_orders", column: "user_id"]]}
+                except: [[tables: ["nullable_orders"], columns: ["user_id"]]]}
              ])
   end
 

@@ -37,17 +37,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   ## Options
 
   By default the check inspects all non-system schemas in a Postgres target. Use
-  `rules: [[only: ...]]` to narrow the scope or exclude intentionally optional
+  `rules: [[where: ...]]` to narrow the scope or exclude intentionally optional
   foreign keys:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
    rules: [
      [
-       only: [schema: "public"],
+       where: [schemas: ["public"]],
        except: [
-         [table: "runs", column: "assistant_message_id"],
-         [constraint: "messages_parent_message_id_fkey"]
+         [tables: ["runs"], columns: ["assistant_message_id"]],
+         [constraints: ["messages_parent_message_id_fkey"]]
        ]
      ]
    ]}
@@ -96,7 +96,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -105,7 +105,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
             | {:column, matcher_values()}
           )
   @type rule ::
-          list({:only, matcher() | list(matcher())} | {:except, matcher() | list(matcher())})
+          list({:where, matcher() | list(matcher())} | {:except, matcher() | list(matcher())})
   @type check_opt :: {:validate, boolean()} | {:rules, list(rule())}
 
   @type check_opts :: list(check_opt())

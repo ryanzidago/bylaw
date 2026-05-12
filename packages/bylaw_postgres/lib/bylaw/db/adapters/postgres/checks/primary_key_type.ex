@@ -4,7 +4,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   ## Examples
 
-  With `rules: [[only: [schema: "public"], types: ["uuid"]]]`, before:
+  With `rules: [[where: [schemas: ["public"]], types: ["uuid"]]]`, before:
 
   ```sql
   CREATE TABLE users (
@@ -45,9 +45,9 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
    rules: [
      [
-       only: [schema: "public"],
+       where: [schemas: ["public"]],
        types: ["uuid"],
-       except: [[table: "schema_migrations"]]
+       except: [[tables: ["schema_migrations"]]]
      ]
    ]}
   ```
@@ -128,7 +128,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
   """
 
   @type matcher_value :: String.t() | Regex.t()
-  @type matcher_values :: matcher_value() | list(matcher_value())
+  @type matcher_values :: list(matcher_value())
   @type matcher ::
           list(
             {:schema, matcher_values()}
@@ -137,7 +137,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
           )
   @type rule ::
           list(
-            {:only, matcher() | list(matcher())}
+            {:where, matcher() | list(matcher())}
             | {:except, matcher() | list(matcher())}
             | {:types, list(String.t())}
           )
@@ -236,7 +236,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
         [
           %{
             types: types!(Keyword.fetch!(opts, :types)),
-            only: [],
+            where: [],
             except: []
           }
         ]
