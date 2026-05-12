@@ -8,3 +8,5 @@ Initial alpha package release.
 - Add the public `Bylaw.HTML.Check` behaviour and `%Bylaw.HTML.Issue{}` issue shape.
 - Add the built-in `Bylaw.HTML.Check.PreferLinkForNavigation` check for rendered
   `phx-click` LiveView navigation sequences on non-link elements.
+- Add the built-in `Bylaw.HTML.Check.RequireLinkHref` check for rendered anchors
+  missing an `href` attribute.
