@@ -1,0 +1,14 @@
+[pre-start]
+hooks = "git config core.hooksPath .githooks"
+
+[post-start]
+copy_ignored = "wt step copy-ignored"
+
+[pre-merge]
+qa = "scripts/qa.sh"
+
+[aliases]
+qa = "scripts/qa.sh"
+hooks = "git config core.hooksPath .githooks"
+diff = "wt step diff"
+prune = "wt step prune"
