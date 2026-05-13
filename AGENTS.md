@@ -34,6 +34,8 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 Configure Worktrunk once per machine so new worktrees stay inside this repo:
 
 ```sh
+mise trust
+mise install
 wt config create
 ```
 
