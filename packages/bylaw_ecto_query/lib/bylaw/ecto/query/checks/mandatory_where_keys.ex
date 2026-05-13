@@ -48,7 +48,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
     * `:rules` - required rule keyword list or non-empty list of rule keyword
       lists. A single-rule shorthand such as `rules: [fields: [:organization_id]]`
       is normalized to one rule.
@@ -58,10 +60,25 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
       use plural keys with list values, such as `ecto_schemas: [Post]`,
       `tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
 
-  Example check spec:
+  This check requires `:fields`, so bare-module configuration is not valid.
+
+  Run globally:
 
       {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
-       rules: [fields: [:organization_id], match: :all]}
+       rules: [fields: [:organization_id]]}
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+       rules: [
+         [where: [ecto_schemas: [Post]], fields: [:organization_id]],
+         [where: [tables: ["comments"]], fields: [:organization_id]]
+       ]}
+
+  Require all configured fields instead of any one field:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
+       rules: [fields: [:organization_id, :user_id], match: :all]}
 
   ## Usage
 
@@ -115,8 +132,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
       RuleOptions.fetch_rules!(
         check_opts,
         :mandatory_where_keys,
-        [:fields, :match],
-        &rule_payload!/1
+        [:fields, :match]
       )
 
     query
@@ -125,7 +141,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     |> result()
   end
 
-  defp rule_payload!(opts) do
+  defp rule_options!(opts) do
     %{
       fields: CheckOptions.fetch_non_empty_atoms!(opts, :fields),
       match: CheckOptions.match!(opts)
@@ -136,7 +152,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
     scope_query = Introspection.effective_root_query(query)
 
     operation
-    |> RuleOptions.matching_rules(scope_query, rules)
+    |> RuleOptions.matching_rules(scope_query, rules, &rule_options!/1)
     |> Enum.flat_map(&issues_for_rule(operation, query, scope_query, &1, branch_path))
   end
 

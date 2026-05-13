@@ -42,7 +42,23 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.UnboundedUpdates
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.UnboundedUpdates,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["posts"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   ## Usage
 
@@ -55,6 +71,7 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   alias Bylaw.Ecto.Query.Boundedness
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type check_opts :: list({:validate, boolean()})
@@ -69,9 +86,11 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) and unbounded_update?(operation, query) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :unbounded_updates, operation, query) and
+         unbounded_update?(operation, query) do
       {:error, [issue(operation)]}
     else
       :ok
