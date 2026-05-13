@@ -36,12 +36,19 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability do
 
   ## Options
 
-  Use the bare module for zero-config validation across the whole target. Use
-  `rules:` to narrow the scope or exclude intentionally optional foreign keys:
+    * `:validate` - explicit `false` disables this check.
+    * `:rules` - optional rule keyword list or non-empty list of rule keyword
+      lists. Rules use only shared scope keys.
+
+  Run globally with defaults:
 
   ```elixir
   Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability
+  ```
 
+  Run only for matching rule scopes:
+
+  ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyNullability,
    rules: [where: [schemas: ["public"]]]}
 
