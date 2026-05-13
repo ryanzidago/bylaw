@@ -31,16 +31,10 @@ defmodule Bylaw.Db.Adapters.Postgres do
   `tables:`, `columns:`, `constraints:`, `types:`, `referenced_tables:`, and
   `referenced_columns:` where supported by the check.
 
-  Check-specific rule options:
-
-  | Check | Check-specific rule options |
-  | --- | --- |
-  | `RequiredColumns` | `columns:` |
-  | `ScopedForeignKeys` | `scope_columns:` |
-  | `ForeignKeyActions` | `on_delete:` and/or `on_update:` |
-  | `ForbiddenColumnTypes` | `types:` |
-  | `PrimaryKeyType` | `types:` |
-  | all other built-in checks | none |
+  Top-level `validate: false` disables the whole check. Checks with no
+  check-specific rule options accept only shared scope keys inside rules.
+  Checks with required rule options document those options in their module docs
+  with copyable rule examples.
 
   ## Examples
 

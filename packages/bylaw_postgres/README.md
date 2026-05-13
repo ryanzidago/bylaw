@@ -103,18 +103,8 @@ Postgres matchers use plural keys with non-empty list values: `schemas:`,
 `referenced_tables:`, and `referenced_columns:` where supported by the check.
 Matcher values can be strings or regexes. Unknown rule keys and missing required
 check-specific options raise `ArgumentError` messages that name the check.
+Top-level `validate: false` disables the whole check.
 
-| Check | Check-specific rule options |
-| --- | --- |
-| `DuplicateIndexes` | none |
-| `EctoChangesetCheckConstraints` | none |
-| `EctoChangesetForeignKeyConstraints` | none |
-| `EctoChangesetUniqueConstraints` | none |
-| `ForbiddenColumnTypes` | `types:` |
-| `ForeignKeyActions` | `on_delete:` and/or `on_update:` |
-| `ForeignKeyNullability` | none |
-| `MissingForeignKeyConstraints` | none |
-| `MissingForeignKeyIndexes` | none |
-| `PrimaryKeyType` | `types:` |
-| `RequiredColumns` | `columns:` |
-| `ScopedForeignKeys` | `scope_columns:` |
+Checks with no check-specific rule options accept only shared scope keys inside
+rules. Checks with required rule options document those options in their module
+docs with copyable rule examples.
