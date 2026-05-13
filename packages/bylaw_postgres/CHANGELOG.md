@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-05-13
 
 - Standardize every built-in Postgres check on the universal `rules:` DSL, with
   shared `where:` / `except:` scope keys and check-specific rule options.
