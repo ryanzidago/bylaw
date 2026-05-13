@@ -1,0 +1,9 @@
+[pre-start]
+hooks = "git config core.hooksPath .githooks"
+
+[pre-merge]
+qa = "scripts/qa.sh"
+
+[aliases]
+qa = "scripts/qa.sh"
+hooks = "git config core.hooksPath .githooks"
