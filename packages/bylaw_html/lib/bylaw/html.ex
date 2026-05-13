@@ -18,6 +18,7 @@ defmodule Bylaw.HTML do
         Bylaw.HTML.Check.PreferButtonForAction,
         Bylaw.HTML.Check.PreferLinkForNavigation,
         Bylaw.HTML.Check.RequireImageAlt,
+        Bylaw.HTML.Check.RequireButtonType,
         Bylaw.HTML.Check.RequireInputAutocomplete,
         Bylaw.HTML.Check.NoInlineStyle
       ]

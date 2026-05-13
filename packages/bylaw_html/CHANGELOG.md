@@ -19,3 +19,5 @@ Initial alpha package release.
   anchors with `phx-click` and placeholder action hrefs.
 - Add the built-in `Bylaw.HTML.Check.RequireImageAlt` check for rendered images
   missing an `alt` attribute.
+- Add the built-in `Bylaw.HTML.Check.RequireButtonType` check for rendered
+  buttons missing a valid `type` attribute.
