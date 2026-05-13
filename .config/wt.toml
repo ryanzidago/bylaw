@@ -1,6 +1,9 @@
 [pre-start]
 hooks = "git config core.hooksPath .githooks"
 
+[post-start]
+copy_ignored = "wt step copy-ignored"
+
 [pre-merge]
 qa = "scripts/qa.sh"
 
