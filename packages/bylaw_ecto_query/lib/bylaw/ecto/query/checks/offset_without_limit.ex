@@ -40,7 +40,23 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.OffsetWithoutLimit
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.OffsetWithoutLimit,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["posts"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   The check applies to the root query and nested source subqueries, join
   subqueries, CTE queries, combination branches, and expression subqueries.
@@ -56,6 +72,7 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type check_opts :: list({:validate, boolean()})
@@ -70,9 +87,11 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) and offset_without_limit?(query) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :offset_without_limit, operation, query) and
+         offset_without_limit?(query) do
       {:error, [issue(operation)]}
     else
       :ok

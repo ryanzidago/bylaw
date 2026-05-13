@@ -11,8 +11,8 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
 
       ids = []
 
-      from(Thing, as: :thing)
-      |> where([thing: t], t.id in ^ids)
+      from(Post, as: :post)
+      |> where([post: p], p.id in ^ids)
 
   Why this is bad:
 
@@ -24,8 +24,8 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
       if Enum.empty?(ids) do
         []
       else
-        from(Thing, as: :thing)
-        |> where([thing: t], t.id in ^ids)
+        from(Post, as: :post)
+        |> where([post: p], p.id in ^ids)
         |> Repo.all()
       end
 
@@ -53,7 +53,23 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.EmptyInPredicates
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.EmptyInPredicates,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["posts"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   ## Usage
 
@@ -66,6 +82,7 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
   alias Bylaw.Ecto.Query.RootWherePredicates
 
   @typedoc false
@@ -89,9 +106,10 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :empty_in_predicates, operation, query) do
       validate_enabled(operation, query)
     else
       :ok

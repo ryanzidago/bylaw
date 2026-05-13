@@ -49,15 +49,34 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+    * `:rules` - optional rule keyword list or non-empty list of rule keyword
+      lists. When omitted, top-level `:keys` and `:match` preserve the current
+      global behavior for compatibility.
     * `:keys` - required non-empty list of field names when the check runs.
     * `:match` - `:any` or `:all`. Defaults to `:any`.
 
-  Example check spec:
+  This check requires `:keys`, so bare-module configuration is not valid.
+
+  Run globally:
 
       {Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
-       keys: [:organization_id],
-       match: :all}
+       rules: [keys: [:organization_id]]}
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
+       rules: [
+         [where: [ecto_schemas: [Post]], keys: [:organization_id]],
+         [where: [tables: ["posts"]], keys: [:organization_id]]
+       ]}
+
+  Require every configured key instead of any one key:
+
+      {Bylaw.Ecto.Query.Checks.MandatoryJoinKeys,
+       rules: [keys: [:organization_id, :account_id], match: :all]}
 
   When a join schema does not contain any configured keys, that join is not
   applicable and the check returns no issue for it. For applicable joins, the
@@ -75,6 +94,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type match :: :any | :all
@@ -98,13 +118,12 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
+    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate, :rules])
 
     if CheckOptions.enabled?(check_opts) do
-      keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
-      match = CheckOptions.match!(check_opts)
+      rules = RuleOptions.rules_or_default!(check_opts, :mandatory_join_keys, [:keys, :match])
 
-      case issues(operation, query, keys, match) do
+      case issues(operation, query, rules) do
         [] -> :ok
         issues -> {:error, issues}
       end
@@ -117,39 +136,51 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
   end
 
-  defp issues(operation, query, keys, match) when is_map(query) do
+  defp rule_options!(opts) do
+    %{
+      keys: CheckOptions.fetch_non_empty_atoms!(opts, :keys),
+      match: CheckOptions.match!(opts)
+    }
+  end
+
+  defp issues(operation, query, rules) when is_map(query) do
     aliases = Introspection.aliases(query)
+    matching_rules = RuleOptions.matching_rules(operation, query, rules, &rule_options!/1)
 
     query
     |> Map.get(:joins, [])
     |> Enum.with_index()
     |> Enum.flat_map(fn {join, join_index} ->
-      binding_index = join_index + 1
-
-      with {:ok, schema} <- Introspection.explicit_join_schema(join),
-           [_first_key | _remaining_keys] = applicable_keys <- applicable_keys(schema, keys),
-           found_keys <- join_keys(join, binding_index, aliases),
-           missing_keys <- missing_keys(applicable_keys, found_keys, match),
-           false <- Enum.empty?(missing_keys) do
-        [
-          issue(
-            operation,
-            join_index,
-            binding_index,
-            schema,
-            applicable_keys,
-            found_keys,
-            missing_keys,
-            match
-          )
-        ]
-      else
-        _other -> []
-      end
+      Enum.flat_map(matching_rules, &issues_for_join(operation, join, join_index, aliases, &1))
     end)
   end
 
-  defp issues(_operation, _query, _keys, _match), do: []
+  defp issues(_operation, _query, _rules), do: []
+
+  defp issues_for_join(operation, join, join_index, aliases, rule) do
+    binding_index = join_index + 1
+
+    with {:ok, schema} <- Introspection.explicit_join_schema(join),
+         [_first_key | _remaining_keys] = applicable_keys <- applicable_keys(schema, rule.keys),
+         found_keys <- join_keys(join, binding_index, aliases),
+         missing_keys <- missing_keys(applicable_keys, found_keys, rule.match),
+         false <- Enum.empty?(missing_keys) do
+      [
+        issue(
+          operation,
+          join_index,
+          binding_index,
+          schema,
+          applicable_keys,
+          found_keys,
+          missing_keys,
+          rule.match
+        )
+      ]
+    else
+      _other -> []
+    end
+  end
 
   defp applicable_keys(schema, keys) do
     schema_fields = Introspection.schema_fields(schema)

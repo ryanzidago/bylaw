@@ -35,6 +35,53 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert issue.meta.required_by == [:limit]
     end
 
+    test "can be scoped to matching Ecto schemas with rules" do
+      query = from(post in Post, limit: 10)
+
+      assert {:error, [%Issue{check: RequiredOrder}]} =
+               RequiredOrder.validate(:all, query, rules: [where: [ecto_schemas: [Post]]])
+    end
+
+    test "can be scoped to matching tables with rules" do
+      query = from(post in "posts", limit: 10)
+
+      assert {:error, [%Issue{check: RequiredOrder}]} =
+               RequiredOrder.validate(:all, query, rules: [where: [tables: ["posts"]]])
+    end
+
+    test "does not run when no rule scope matches" do
+      query = from(post in Post, limit: 10)
+
+      assert :ok =
+               RequiredOrder.validate(:all, query, rules: [where: [tables: ["comments"]]])
+    end
+
+    test "except suppresses otherwise matching rules" do
+      query = from(post in "posts", limit: 10)
+
+      assert :ok =
+               RequiredOrder.validate(:all, query,
+                 rules: [where: [tables: ["posts"]], except: [tables: ["posts"]]]
+               )
+    end
+
+    test "rule validate false suppresses an otherwise matching scope" do
+      query = from(post in Post, limit: 10)
+
+      assert :ok =
+               RequiredOrder.validate(:all, query,
+                 rules: [where: [ecto_schemas: [Post]], validate: false]
+               )
+    end
+
+    test "raises when scope-only rules contain check-specific rule options" do
+      query = from(post in Post, limit: 10)
+
+      assert_raise ArgumentError, "unknown required_order rule option: :fields", fn ->
+        RequiredOrder.validate(:all, query, rules: [fields: [:organisation_id]])
+      end
+    end
+
     test "returns an issue when offset has no order_by" do
       query = from(post in Post, offset: 50)
 

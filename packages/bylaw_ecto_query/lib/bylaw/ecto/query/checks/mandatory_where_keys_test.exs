@@ -649,6 +649,33 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       end
     end
 
+    test "validates rule options only for matching rules" do
+      query = from(post in Post, where: post.organisation_id == ^123)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query,
+                 rules: [
+                   [where: [tables: ["comments"]], fields: []],
+                   [where: [ecto_schemas: [Post]], fields: [:organisation_id]]
+                 ]
+               )
+    end
+
+    test "raises when a matching rule is missing required rule options" do
+      query = from(post in Post)
+
+      assert_raise ArgumentError, "missing required :fields option", fn ->
+        MandatoryWhereKeys.validate(:all, query, rules: [where: [ecto_schemas: [Post]]])
+      end
+    end
+
+    test "does not validate required rule options for non-matching rules" do
+      query = from(post in Post)
+
+      assert :ok =
+               MandatoryWhereKeys.validate(:all, query, rules: [where: [tables: ["comments"]]])
+    end
+
     test "raises when top-level opts are not a keyword list" do
       query = from(post in Post)
 
@@ -1086,7 +1113,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
       end
     end
 
-    test "raises for invalid rule payloads" do
+    test "raises for invalid rule options" do
       query = from(post in Post)
 
       assert_raise ArgumentError, "missing required :fields option", fn ->
@@ -1192,7 +1219,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
                    end
     end
 
-    test "raises when old top-level payload is mixed with rules" do
+    test "raises when old top-level rule options is mixed with rules" do
       query = from(post in Post)
 
       assert_raise ArgumentError, "unknown option: :fields", fn ->
