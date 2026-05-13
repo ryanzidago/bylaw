@@ -3,8 +3,8 @@
 ## Unreleased
 
 - Standardize every built-in Postgres check on the universal `rules:` DSL, with
-  shared `where:` / `except:` scope keys and check-specific payload keys.
-- Document the rule payload catalog for scope-only checks and configurable
+  shared `where:` / `except:` scope keys and check-specific rule options.
+- Document the rule options catalog for scope-only checks and configurable
   checks.
 - Replace `only` with `where` in Postgres rule matchers.
 - Require plural matcher keys and non-empty list matcher values in Postgres rules.

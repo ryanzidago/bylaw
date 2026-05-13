@@ -130,7 +130,7 @@ check globally with its default behavior:
 ```
 
 Use `{Check, rules: [...]}` to run a check only when at least one rule matches.
-Rules use shared scope keys and check-specific payload keys side by side:
+Rules use shared scope keys and check-specific rule options side by side:
 
 ```elixir
 @query_checks [
@@ -152,10 +152,10 @@ Shared scope keys:
 Ecto query matchers use plural keys with list values: `ecto_schemas: [Post]`,
 `tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
 Matcher values can be exact values; table and database schema matchers also
-accept regexes. Unknown rule keys and missing required payload keys raise
-`ArgumentError` messages that name the check.
+accept regexes. Unknown rule keys and missing required check-specific options
+raise `ArgumentError` messages that name the check.
 
-| Check | Rule payload keys |
+| Check | Check-specific rule options |
 | --- | --- |
 | `CartesianJoins` | none |
 | `ConflictingWherePredicates` | none |

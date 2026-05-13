@@ -78,7 +78,7 @@ check globally with its default behavior:
 ```
 
 Use `{Check, rules: [...]}` to run a check only when at least one rule matches.
-Rules use shared scope keys and check-specific payload keys side by side:
+Rules use shared scope keys and check-specific rule options side by side:
 
 ```elixir
 @checks [
@@ -102,9 +102,9 @@ Postgres matchers use plural keys with non-empty list values: `schemas:`,
 `tables:`, `columns:`, `constraints:`, `types:`, `referenced_schemas:`,
 `referenced_tables:`, and `referenced_columns:` where supported by the check.
 Matcher values can be strings or regexes. Unknown rule keys and missing required
-payload keys raise `ArgumentError` messages that name the check.
+check-specific options raise `ArgumentError` messages that name the check.
 
-| Check | Rule payload keys |
+| Check | Check-specific rule options |
 | --- | --- |
 | `DuplicateIndexes` | none |
 | `EctoChangesetCheckConstraints` | none |

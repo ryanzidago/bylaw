@@ -21,9 +21,9 @@ defmodule Bylaw.Db.Adapters.Postgres do
   ## Rules DSL
 
   Every built-in Postgres check can be scoped with `rules:`. Scope is shared
-  across checks; payload is check-specific. Use a bare module for global default
-  behavior. Use `{Check, rules: [...]}` when the check should run only for
-  matching database objects.
+  across checks; each check defines any additional rule options it needs. Use a
+  bare module for global default behavior. Use `{Check, rules: [...]}` when the
+  check should run only for matching database objects.
 
   Shared scope keys are `where:` and `except:`. `where:` applies a rule when any
   matcher matches, and `except:` suppresses a rule that would otherwise match.
@@ -31,9 +31,9 @@ defmodule Bylaw.Db.Adapters.Postgres do
   `tables:`, `columns:`, `constraints:`, `types:`, `referenced_tables:`, and
   `referenced_columns:` where supported by the check.
 
-  Rule payload keys by check:
+  Check-specific rule options:
 
-  | Check | Payload keys |
+  | Check | Check-specific rule options |
   | --- | --- |
   | `RequiredColumns` | `columns:` |
   | `ScopedForeignKeys` | `scope_columns:` |

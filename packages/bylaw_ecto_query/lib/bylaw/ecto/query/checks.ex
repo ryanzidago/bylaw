@@ -7,6 +7,6 @@ defmodule Bylaw.Ecto.Query.Checks do
 
   Every check accepts shared rule scoping through `rules:`. `where:` applies a
   rule to matching queries, `except:` suppresses an otherwise matching rule, and
-  any other rule keys are check-specific payload.
+  any other rule keys are check-specific rule options.
   """
 end
