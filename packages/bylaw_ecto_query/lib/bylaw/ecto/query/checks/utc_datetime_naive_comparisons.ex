@@ -40,15 +40,29 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
     * `:fields` - optional non-empty list of root fields to validate. When
       omitted, the check validates UTC datetime fields reflected from the root
       Ecto schema.
 
-  Example check spec:
+  Run globally with inferred UTC datetime fields:
+
+      Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons
+
+  Run only for matching rule scopes:
 
       {Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons,
-       fields: [:inserted_at, :updated_at]}
+       rules: [
+         [where: [ecto_schemas: [Event]]],
+         [where: [tables: ["events"]]]
+       ]}
+
+  Validate only explicitly configured fields:
+
+      {Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons,
+       rules: [fields: [:inserted_at, :updated_at]]}
 
   The check inspects direct root field comparisons and `in` predicates in
   `where` expressions. It detects visible `NaiveDateTime` values in pinned
@@ -68,6 +82,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
   @utc_datetime_types [:utc_datetime, :utc_datetime_usec]
@@ -97,7 +112,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :fields])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :fields, :rules])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -111,19 +126,25 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    case checked_fields(query, check_opts) do
-      [] ->
-        :ok
+    rules = RuleOptions.rules_or_default!(check_opts, :utc_datetime_naive_comparisons, [:fields])
+    rules = RuleOptions.matching_rules(operation, query, rules, &rule_options!/1)
 
-      fields ->
-        operation
-        |> issues(query, fields)
-        |> result()
-    end
+    rules
+    |> Enum.flat_map(fn rule ->
+      case checked_fields(query, rule) do
+        [] -> []
+        fields -> issues(operation, query, fields)
+      end
+    end)
+    |> result()
+  end
+
+  defp rule_options!(opts) do
+    %{configured_fields: configured_fields(opts)}
   end
 
   defp checked_fields(query, opts) do
-    case {configured_fields(opts), Introspection.root_schema(query)} do
+    case {opts.configured_fields, Introspection.root_schema(query)} do
       {{:ok, fields}, {:ok, schema}} ->
         schema_fields = Introspection.schema_fields(schema)
         Enum.filter(fields, &MapSet.member?(schema_fields, &1))

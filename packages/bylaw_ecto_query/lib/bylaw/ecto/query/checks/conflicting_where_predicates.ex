@@ -52,7 +52,23 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.ConflictingWherePredicates
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.ConflictingWherePredicates,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["comments"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   ## Usage
 
@@ -65,6 +81,7 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
   alias Bylaw.Ecto.Query.RootWherePredicates
 
   @typedoc false
@@ -90,9 +107,10 @@ defmodule Bylaw.Ecto.Query.Checks.ConflictingWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :conflicting_where_predicates, operation, query) do
       validate_enabled(operation, query)
     else
       :ok
