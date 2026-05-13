@@ -58,6 +58,19 @@ defmodule Bylaw.Ecto.QueryTest do
     end
   end
 
+  defmodule RequiredOptionCheck do
+    @behaviour Bylaw.Ecto.Query.Check
+
+    @impl Bylaw.Ecto.Query.Check
+    def validate(_operation, _query, opts) do
+      if Keyword.fetch!(opts, :field) == :present do
+        :ok
+      else
+        {:error, [%Issue{check: __MODULE__, message: "missing field"}]}
+      end
+    end
+  end
+
   defmodule EmptyIssueCheck do
     @behaviour Bylaw.Ecto.Query.Check
 
@@ -77,6 +90,78 @@ defmodule Bylaw.Ecto.QueryTest do
 
     @impl Bylaw.Ecto.Query.Check
     def validate(_operation, _query, _opts), do: :error
+  end
+
+  describe "validate/4" do
+    test "with empty call-site opts preserves base check behavior" do
+      assert {:error, [%Issue{check: OptionCheck}]} =
+               Query.validate(:all, :query, [{OptionCheck, fail: true}], [])
+    end
+
+    test "with false disables all checks" do
+      assert :ok = Query.validate(:all, :query, [{OptionCheck, fail: true}], false)
+    end
+
+    test "call-site validate false replaces an existing configured check and disables it" do
+      query = from(post in "posts", limit: 1)
+
+      assert :ok =
+               Query.validate(:all, query, [RequiredOrder], [
+                 {RequiredOrder, validate: false}
+               ])
+    end
+
+    test "call-site rules replace configured rules entirely" do
+      base_rules = [fields: [:organization_id]]
+      call_site_rules = [fields: [:account_id]]
+
+      assert {:error, [%Issue{meta: %{opts: [rules: ^call_site_rules]}}]} =
+               Query.validate(:all, :query, [{FailingCheck, rules: base_rules}], [
+                 {FailingCheck, rules: call_site_rules}
+               ])
+    end
+
+    test "call-site bare existing check replaces configured options with defaults" do
+      assert :ok = Query.validate(:all, :query, [{OptionCheck, fail: true}], [OptionCheck])
+    end
+
+    test "call-site new check appends after base checks" do
+      assert {:error,
+              [
+                %Issue{check: FailingCheck},
+                %Issue{check: MultiIssueCheck, message: "first"},
+                %Issue{check: MultiIssueCheck, message: "second"}
+              ]} = Query.validate(:all, :query, [FailingCheck], [MultiIssueCheck])
+    end
+
+    test "duplicate call-site checks raise a clear error" do
+      assert_raise ArgumentError, "duplicate query check: #{inspect(OptionCheck)}", fn ->
+        Query.validate(:all, :query, [], [OptionCheck, {OptionCheck, fail: true}])
+      end
+    end
+
+    test "invalid call-site specs raise existing-style errors" do
+      assert_raise ArgumentError, "expected check opts to be a keyword list, got: [:bad]", fn ->
+        Query.validate(:all, :query, [], [{PassingCheck, [:bad]}])
+      end
+
+      assert_raise ArgumentError, "expected :not_a_module to be a query check module", fn ->
+        Query.validate(:all, :query, [], [:not_a_module])
+      end
+
+      assert_raise ArgumentError,
+                   "expected call-site Bylaw opts to be false or a list, got: :bad",
+                   fn ->
+                     Query.validate(:all, :query, [], :bad)
+                   end
+    end
+
+    test "works with Ecto repo call opts shape" do
+      repo_opts = [bylaw: [{OptionCheck, fail: true}]]
+
+      assert {:error, [%Issue{check: OptionCheck}]} =
+               Query.validate(:all, :query, [PassingCheck], Keyword.get(repo_opts, :bylaw, []))
+    end
   end
 
   describe "validate/3" do
