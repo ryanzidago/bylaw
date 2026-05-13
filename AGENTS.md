@@ -69,8 +69,9 @@ This repository keeps commit-ready Git hooks in `.githooks/` for `pre-commit`, `
 git config core.hooksPath .githooks
 ```
 
-Worktrunk runs `git config core.hooksPath .githooks` for new worktrees and runs
-`scripts/qa.sh` during `wt merge`.
+The `.githooks/` scripts are tracked executable files, so they are present in
+new worktrees automatically. Worktrunk runs `git config core.hooksPath
+.githooks` for new worktrees and runs `scripts/qa.sh` during `wt merge`.
 
 If a command cannot run, include the reason in the PR notes.
 
