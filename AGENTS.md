@@ -20,7 +20,9 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
   `wt switch <branch>`.
 - Review PRs with `wt switch pr:<number>` when possible.
 - List worktrees with `wt list`; remove completed worktrees with `wt remove`.
-- Prefer `wt merge` for the normal merge lifecycle so configured hooks run.
+- Use `wt step diff` to review the full task diff from the branch point.
+- Prefer `wt merge` for local integration when the task is ready to merge, so
+  configured hooks run before the target branch advances.
 - Do not use raw `git worktree` commands for routine task work unless `wt`
   cannot handle the case.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
@@ -45,6 +47,17 @@ If user config is unavailable, pass the path template for the command:
 
 ```sh
 WORKTRUNK_WORKTREE_PATH='{{ repo_path }}/.worktrees/{{ branch | sanitize }}' wt switch --create <branch>
+```
+
+Useful Worktrunk commands for agents:
+
+```sh
+wt switch --create codex/<task>
+wt switch pr:<number>
+wt step diff
+wt merge
+wt remove
+wt step prune
 ```
 
 ## Elixir Conventions
