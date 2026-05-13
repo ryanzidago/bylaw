@@ -32,7 +32,7 @@ def deps do
   [
     {:bylaw_html, "~> 0.1.0-alpha.2", only: :test},
     {:bylaw_ecto_query, "~> 0.2.0"},
-    {:bylaw_postgres, "~> 0.1.0"},
+    {:bylaw_postgres, "~> 0.2.0"},
     {:bylaw_credo, "~> 0.1.1", only: [:dev, :test], runtime: false}
   ]
 end
