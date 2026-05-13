@@ -12,13 +12,40 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 
 ## Workflow
 
+- Use Worktrunk (`wt`) as the primary interface for worktree lifecycle and
+  management.
 - Do all task work in a linked git worktree under `.worktrees/`.
 - Use a separate linked worktree and branch for each independent task.
+- Create and switch task worktrees with `wt switch --create <branch>` or
+  `wt switch <branch>`.
+- Review PRs with `wt switch pr:<number>` when possible.
+- List worktrees with `wt list`; remove completed worktrees with `wt remove`.
+- Prefer `wt merge` for the normal merge lifecycle so configured hooks run.
+- Do not use raw `git worktree` commands for routine task work unless `wt`
+  cannot handle the case.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
 - Add tests before fixing bugs when the current behavior can be reproduced.
+
+Configure Worktrunk once per machine so new worktrees stay inside this repo:
+
+```sh
+wt config create
+```
+
+Set the user config value:
+
+```toml
+worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
+```
+
+If user config is unavailable, pass the path template for the command:
+
+```sh
+WORKTRUNK_WORKTREE_PATH='{{ repo_path }}/.worktrees/{{ branch | sanitize }}' wt switch --create <branch>
+```
 
 ## Elixir Conventions
 
@@ -41,6 +68,9 @@ This repository keeps commit-ready Git hooks in `.githooks/` for `pre-commit`, `
 ```sh
 git config core.hooksPath .githooks
 ```
+
+Worktrunk runs `git config core.hooksPath .githooks` for new worktrees and runs
+`scripts/qa.sh` during `wt merge`.
 
 If a command cannot run, include the reason in the PR notes.
 
