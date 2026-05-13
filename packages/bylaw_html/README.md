@@ -35,6 +35,7 @@ defmodule MyAppWeb.PageHTMLTest do
     Bylaw.HTML.Check.PreferLinkForNavigation,
     Bylaw.HTML.Check.RequireImageAlt,
     Bylaw.HTML.Check.RequireButtonType,
+    Bylaw.HTML.Check.RequireInputAutocomplete,
     Bylaw.HTML.Check.NoInlineStyle
   ]
 
@@ -75,6 +76,7 @@ defmodule MyAppWeb.HTMLAssertions do
     Bylaw.HTML.Check.PreferLinkForNavigation,
     Bylaw.HTML.Check.RequireImageAlt,
     Bylaw.HTML.Check.RequireButtonType,
+    Bylaw.HTML.Check.RequireInputAutocomplete,
     Bylaw.HTML.Check.NoInlineStyle
   ]
 
