@@ -3,3 +3,4 @@
 /priv/plts/
 /packages/*/_build/
 /packages/*/deps/
+/packages/*/priv/plts/

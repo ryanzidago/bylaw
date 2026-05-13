@@ -10,3 +10,5 @@ qa = "scripts/qa.sh"
 [aliases]
 qa = "scripts/qa.sh"
 hooks = "git config core.hooksPath .githooks"
+diff = "wt step diff"
+prune = "wt step prune"
