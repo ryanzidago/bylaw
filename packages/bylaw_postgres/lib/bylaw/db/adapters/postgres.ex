@@ -18,25 +18,6 @@ defmodule Bylaw.Db.Adapters.Postgres do
   an optional integration; callers must have `ecto_sql` and a Postgres driver in
   their application when they use repo-backed targets.
 
-  ## Rules DSL
-
-  Every built-in Postgres check can be scoped with `rules:`. Scope is shared
-  across checks; each check defines any additional rule options it needs. Checks
-  with default behavior can be passed as bare modules to run globally. Use
-  `{Check, rules: [...]}` when a check needs required rule options or should run
-  only for matching database objects.
-
-  Shared scope keys are `where:` and `except:`. `where:` applies a rule when any
-  matcher matches, and `except:` suppresses a rule that would otherwise match.
-  Matchers use plural keys with non-empty list values, such as `schemas:`,
-  `tables:`, `columns:`, `constraints:`, `types:`, `referenced_tables:`, and
-  `referenced_columns:` where supported by the check.
-
-  Top-level `validate: false` disables the whole check. Checks with no
-  check-specific rule options accept only shared scope keys inside rules.
-  Checks with required rule options document those options in their module docs
-  with copyable rule examples.
-
   ## Examples
 
       Bylaw.Db.Adapters.Postgres.validate(
