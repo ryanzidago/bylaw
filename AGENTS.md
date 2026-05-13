@@ -12,13 +12,54 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 
 ## Workflow
 
+- Use Worktrunk (`wt`) as the primary interface for worktree lifecycle and
+  management.
 - Do all task work in a linked git worktree under `.worktrees/`.
 - Use a separate linked worktree and branch for each independent task.
+- Create and switch task worktrees with `wt switch --create <branch> --yes` or
+  `wt switch <branch> --yes`.
+- Review PRs with `wt switch pr:<number> --yes` when possible.
+- List worktrees with `wt list`; remove completed worktrees with `wt remove`.
+- Use `wt step diff` to review the full task diff from the branch point.
+- Do not use raw `git worktree` commands for routine task work unless `wt`
+  cannot handle the case.
+- Do not close, reopen, merge, or delete GitHub PRs or remote branches unless
+  the user explicitly asks for that GitHub-side state change.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
 - Add tests before fixing bugs when the current behavior can be reproduced.
+
+Configure Worktrunk once per machine so new worktrees stay inside this repo:
+
+```sh
+mise trust
+mise install
+wt config create
+```
+
+Set the user config value:
+
+```toml
+worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
+```
+
+If user config is unavailable, pass the path template for the command:
+
+```sh
+WORKTRUNK_WORKTREE_PATH='{{ repo_path }}/.worktrees/{{ branch | sanitize }}' wt switch --create <branch> --yes
+```
+
+Useful Worktrunk commands for agents:
+
+```sh
+wt switch --create codex/<task> --yes
+wt switch pr:<number> --yes
+wt step diff
+wt remove
+wt step prune
+```
 
 ## Elixir Conventions
 
@@ -41,6 +82,10 @@ This repository keeps commit-ready Git hooks in `.githooks/` for `pre-commit`, `
 ```sh
 git config core.hooksPath .githooks
 ```
+
+The `.githooks/` scripts are tracked executable files, so they are present in
+new worktrees automatically. Worktrunk runs `git config core.hooksPath
+.githooks` for new worktrees.
 
 If a command cannot run, include the reason in the PR notes.
 

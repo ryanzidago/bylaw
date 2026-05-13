@@ -1,9 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.0-alpha.2 - 2026-05-13
 
 - Add the built-in `Bylaw.HTML.Check.RequireInputAutocomplete` check for
   rendered inputs missing a non-blank `autocomplete` attribute.
+- Add the built-in `Bylaw.HTML.Check.NoInlineStyle` check for rendered elements
+  with inline `style` attributes.
 
 ## 0.1.0-alpha.1 - 2026-05-12
 
