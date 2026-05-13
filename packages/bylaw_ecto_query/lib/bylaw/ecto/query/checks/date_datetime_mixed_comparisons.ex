@@ -37,7 +37,23 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons,
+       rules: [
+         [where: [ecto_schemas: [Event]]],
+         [where: [tables: ["events"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   The check is static. It inspects direct field-to-field comparisons and `in`
   predicates in `where`, `having`, and direct join `on` predicates, reflecting
@@ -58,6 +74,7 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
   @datetime_types [:naive_datetime, :naive_datetime_usec, :utc_datetime, :utc_datetime_usec]
@@ -97,9 +114,10 @@ defmodule Bylaw.Ecto.Query.Checks.DateDatetimeMixedComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :date_datetime_mixed_comparisons, operation, query) do
       operation
       |> issues(query)
       |> result()

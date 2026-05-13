@@ -37,8 +37,15 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
 
   ## Options
 
-  Configurable checks use `rules:` as their only public entry point. `rules:`
-  accepts either one keyword rule or a list of keyword rules:
+    * `:validate` - explicit `false` disables this check.
+    * `:rules` - rule keyword list or non-empty list of rule keyword lists.
+    * `:types` - required non-empty list of forbidden type rules inside each
+      rule. Each type rule can be a string, regex, or keyword list with
+      `:type`, optional `:prefer`, and optional `:reason`.
+
+  This check requires `:types`, so bare-module configuration is not valid.
+
+  Run globally:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
@@ -48,7 +55,11 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes do
        [type: ~r/^character\\(/, prefer: "text"]
      ]
    ]}
+  ```
 
+  Run only for matching rule scopes:
+
+  ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForbiddenColumnTypes,
    rules: [
      [

@@ -36,16 +36,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
 
   ## Options
 
-  Configurable checks use `rules:` as their only public entry point. `rules:`
-  accepts either one keyword rule or a list of keyword rules. A rule applies
-  when a table matches any matcher in `where`; keys inside one matcher are
-  combined. Matching rules accumulate, so the same table can be validated by
-  more than one rule.
+    * `:validate` - explicit `false` disables this check.
+    * `:rules` - rule keyword list or non-empty list of rule keyword lists.
+    * `:columns` - required non-empty list of column names inside each rule.
+
+  This check requires `:columns`, so bare-module configuration is not valid.
+
+  Run globally:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
    rules: [columns: ["tenant_id"]]}
+  ```
 
+  Run only for matching rule scopes:
+
+  ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns,
    rules: [
      [where: [schemas: ["public"]], columns: ["tenant_id"]],
@@ -53,7 +59,8 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RequiredColumns do
    ]}
   ```
 
-  Use rule-level `except: [...]` for exclusions.
+  Matching rules accumulate, so the same table can be validated by more than
+  one rule. Use rule-level `except: [...]` for exclusions.
 
   ## Usage
 

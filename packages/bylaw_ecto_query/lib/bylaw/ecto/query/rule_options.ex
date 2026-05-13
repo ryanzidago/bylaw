@@ -6,7 +6,7 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   @type matcher_value :: module() | atom() | String.t() | Regex.t()
   @type matcher_values :: list(matcher_value())
   @type matcher :: keyword(matcher_values())
-  @type rule :: %{where: list(matcher()), except: list(matcher())}
+  @type rule :: %{opts: keyword(), where: list(matcher()), except: list(matcher())}
 
   @matcher_keys %{
     ecto_schemas: :ecto_schema,
@@ -16,37 +16,68 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   }
   @allowed_operations [:all, :update_all, :delete_all, :stream, :insert_all]
 
-  @spec fetch_rules!(keyword(), atom(), list(atom()), (keyword() -> map())) :: list(map())
-  def fetch_rules!(opts, check, payload_keys, payload_fun) do
+  @spec fetch_rules!(keyword(), atom(), list(atom())) :: list(rule())
+  def fetch_rules!(opts, check, rule_option_keys) do
     case Keyword.fetch(opts, :rules) do
-      {:ok, rules} -> rules!(rules, check, payload_keys, payload_fun)
+      {:ok, rules} -> rules!(rules, check, rule_option_keys)
       :error -> raise ArgumentError, "missing required :rules option"
     end
   end
 
-  @spec rules!(term(), atom(), list(atom()), (keyword() -> map())) :: list(map())
-  def rules!(rules, check, payload_keys, payload_fun) when is_list(rules) do
+  @spec rules_or_default!(keyword(), atom(), list(atom())) :: list(rule())
+  def rules_or_default!(opts, check, rule_option_keys) do
+    case Keyword.fetch(opts, :rules) do
+      {:ok, rules} -> rules!(rules, check, rule_option_keys)
+      :error -> [rule!(Keyword.delete(opts, :rules), check, rule_option_keys)]
+    end
+  end
+
+  @spec scope_rules_or_default!(keyword(), atom()) :: list(rule())
+  def scope_rules_or_default!(opts, check), do: rules_or_default!(opts, check, [])
+
+  @spec scoped?(keyword(), atom(), Bylaw.Ecto.Query.Check.operation(), term()) :: boolean()
+  def scoped?(opts, check, operation, query) do
+    rules = scope_rules_or_default!(opts, check)
+    matching_rules = matching_rules(operation, query, rules)
+
+    not Enum.empty?(matching_rules)
+  end
+
+  @spec rules!(term(), atom(), list(atom())) :: list(rule())
+  def rules!(rules, check, rule_option_keys) when is_list(rules) do
     cond do
       Enum.empty?(rules) ->
         raise_rules_error!(check)
 
       Keyword.keyword?(rules) ->
-        [rule!(rules, check, payload_keys, payload_fun)]
+        [rule!(rules, check, rule_option_keys)]
 
       Enum.all?(rules, &Keyword.keyword?/1) ->
-        Enum.map(rules, &rule!(&1, check, payload_keys, payload_fun))
+        Enum.map(rules, &rule!(&1, check, rule_option_keys))
 
       true ->
         raise_rules_error!(check)
     end
   end
 
-  def rules!(_rules, check, _payload_keys, _payload_fun), do: raise_rules_error!(check)
+  def rules!(_rules, check, _rule_option_keys), do: raise_rules_error!(check)
 
   @spec matching_rules(Bylaw.Ecto.Query.Check.operation(), term(), list(map())) :: list(map())
   def matching_rules(operation, query, rules) do
     effective_query = Introspection.effective_root_query(query)
-    Enum.filter(rules, &in_rule_scope?(operation, effective_query, &1))
+
+    Enum.filter(rules, fn rule ->
+      rule_enabled?(rule) and in_rule_scope?(operation, effective_query, rule)
+    end)
+  end
+
+  @spec matching_rules(Bylaw.Ecto.Query.Check.operation(), term(), list(map()), (keyword() ->
+                                                                                   map())) ::
+          list(map())
+  def matching_rules(operation, query, rules, rule_options_fun) do
+    operation
+    |> matching_rules(query, rules)
+    |> Enum.map(fn rule -> Map.merge(rule, rule_options_fun.(rule.opts)) end)
   end
 
   @spec in_rule_scope?(Bylaw.Ecto.Query.Check.operation(), term(), rule()) :: boolean()
@@ -55,8 +86,8 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
       not matches_any?(operation, query, rule.except)
   end
 
-  defp rule!(rule, check, payload_keys, payload_fun) do
-    allowed_rule_keys = [:where, :except] ++ payload_keys
+  defp rule!(rule, check, rule_option_keys) do
+    allowed_rule_keys = [:where, :except, :validate] ++ rule_option_keys
 
     Enum.each(rule, fn {key, _value} ->
       if key not in allowed_rule_keys do
@@ -64,17 +95,14 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
       end
     end)
 
-    rule
-    |> rule_payload!(payload_fun)
-    |> Map.merge(%{
+    %{
+      opts: rule,
       where: matchers(rule, :where, check),
       except: matchers(rule, :except, check)
-    })
+    }
   end
 
-  defp rule_payload!(opts, payload_fun) do
-    payload_fun.(opts)
-  end
+  defp rule_enabled?(rule), do: Keyword.get(rule.opts, :validate, true) != false
 
   defp matchers(opts, key, check) do
     case Keyword.fetch(opts, key) do

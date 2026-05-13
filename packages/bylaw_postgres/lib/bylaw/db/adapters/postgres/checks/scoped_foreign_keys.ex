@@ -48,22 +48,34 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys do
 
   ## Options
 
-  Configurable checks use `rules:` as their only public entry point. `rules:`
-  accepts either one keyword rule or a list of keyword rules. A foreign key is
-  checked when both the child table and referenced table have every configured
-  `:scope_columns` column. The foreign key must include those columns on both
-  sides so a child row cannot point at a parent row from another scope:
+    * `:validate` - explicit `false` disables this check.
+    * `:rules` - rule keyword list or non-empty list of rule keyword lists.
+    * `:scope_columns` - required non-empty list of scope column names inside
+      each rule.
+
+  This check requires `:scope_columns`, so bare-module configuration is not
+  valid.
+
+  Run globally:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
    rules: [scope_columns: ["tenant_id"]]}
+  ```
 
+  Run only for matching rule scopes:
+
+  ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ScopedForeignKeys,
    rules: [
      [where: [schemas: ["public"]], scope_columns: ["tenant_id"]],
      [where: [referenced_tables: ["accounts"]], scope_columns: ["tenant_id", "workspace_id"]]
    ]}
   ```
+
+  A foreign key is checked when both the child table and referenced table have
+  every configured scope column. The foreign key must include those columns on
+  both sides so a child row cannot point at a parent row from another scope.
 
   ## Usage
 
