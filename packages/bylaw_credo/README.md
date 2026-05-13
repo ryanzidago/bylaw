@@ -30,6 +30,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
+        {Bylaw.Credo.Check.HEEx.PreferLinkForNavigation, []},
         {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []},
         {Bylaw.Credo.Check.HEEx.NoJavascriptHref, []},
         {Bylaw.Credo.Check.HEEx.RequireButtonType, []},
@@ -48,3 +49,8 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
+
+`Bylaw.Credo.Check.HEEx.PreferLinkForNavigation` enforces link semantics for
+durable navigation. It reports explicit LiveView navigation commands wired
+through `phx-click` on HEEx tags and components, so navigation uses real links
+instead of click handlers on other elements.
