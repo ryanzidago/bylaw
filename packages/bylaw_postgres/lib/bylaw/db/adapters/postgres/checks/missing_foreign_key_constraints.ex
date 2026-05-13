@@ -38,17 +38,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints do
 
   ## Options
 
-    * `:validate` - explicit `false` disables this check.
-    * `:rules` - optional rule keyword list or non-empty list of rule keyword
-      lists. Rules use only shared scope keys.
-
-  Run globally with defaults:
+  Use the bare module for zero-config validation across the whole target:
 
   ```elixir
   Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints
   ```
 
-  Run only for matching rule scopes:
+  Use `rules:` when the scope needs column matchers or exclusions:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.MissingForeignKeyConstraints,

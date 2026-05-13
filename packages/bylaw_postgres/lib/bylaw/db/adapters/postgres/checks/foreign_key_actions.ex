@@ -41,22 +41,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
 
   ## Options
 
-    * `:validate` - explicit `false` disables this check.
-    * `:rules` - rule keyword list or non-empty list of rule keyword lists.
-    * `:on_delete` - expected foreign key `ON DELETE` action inside each rule.
-    * `:on_update` - expected foreign key `ON UPDATE` action inside each rule.
-
-  This check requires at least one of `:on_delete` or `:on_update`, so
-  bare-module configuration is not valid.
-
-  Run globally:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules. Use a rule
+  without `:where` when every foreign key in scope should use the same action:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
    rules: [on_delete: :restrict, on_update: :restrict]}
   ```
 
-  Run only for matching rule scopes:
+  Use `rules: [...]` for scoped policy. A foreign key can match more than one
+  rule, and matching rules accumulate.
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions,
@@ -73,8 +68,6 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.ForeignKeyActions do
      ]
    ]}
   ```
-
-  A foreign key can match more than one rule, and matching rules accumulate.
 
   ## Usage
 

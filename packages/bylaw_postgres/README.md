@@ -66,20 +66,8 @@ end
 
 See each check module's documentation for its examples, notes, and options.
 
-## Rules DSL
-
-Every built-in check accepts the same `rules:` DSL. Checks with default behavior
-can be passed as bare modules to run globally:
-
-```elixir
-@checks [
-  Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
-]
-```
-
-Use `{Check, rules: [...]}` when a check needs required rule options or should
-run only when at least one rule matches. Rules use shared scope keys and
-check-specific rule options side by side:
+Configurable Postgres checks use `rules:` as their public configuration entry
+point. `rules:` accepts either one keyword rule or a list of keyword rules:
 
 ```elixir
 @checks [
@@ -93,19 +81,3 @@ check-specific rule options side by side:
   Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
 ]
 ```
-
-Shared scope keys:
-
-- `where:` applies a rule when any matcher matches. Omit it for a global rule.
-- `except:` suppresses a rule that would otherwise match.
-
-Postgres matchers use plural keys with non-empty list values: `schemas:`,
-`tables:`, `columns:`, `constraints:`, `types:`, `referenced_schemas:`,
-`referenced_tables:`, and `referenced_columns:` where supported by the check.
-Matcher values can be strings or regexes. Unknown rule keys and missing required
-check-specific options raise `ArgumentError` messages that name the check.
-Top-level `validate: false` disables the whole check.
-
-Checks with no check-specific rule options accept only shared scope keys inside
-rules. Checks with required rule options document those options in their module
-docs with copyable rule examples.

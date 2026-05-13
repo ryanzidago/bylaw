@@ -37,28 +37,22 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
 
   ## Options
 
-    * `:validate` - explicit `false` disables this check.
-    * `:paths` - required non-empty list of source paths to parse for
-      changeset functions.
-    * `:otp_app` - OTP app used for compiled schema discovery. When the target
-      repo can report `config()[:otp_app]`, this is inferred.
-    * `:schema_modules` - explicit non-empty list of schema modules to inspect
-      instead of discovering schemas from `:otp_app`.
-    * `:rules` - optional rule keyword list or non-empty list of rule keyword
-      lists. Rules use only shared scope keys.
+  The check discovers compiled Ecto schemas through reflection, parses source
+  files for conservative changeset candidates, and only requires
+  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
+  Dynamic cast/change field lists are skipped for v1.
 
-  This check requires `:paths` and schema discovery from the target repo's
-  inferred `:otp_app`, explicit `:otp_app`, or explicit `:schema_modules`, so
-  bare-module configuration is not valid.
-
-  Run globally for discovered schemas:
+  Pass `paths: [...]` so Bylaw can parse source AST for user-defined changeset
+  functions:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
    paths: ["lib/my_app"]}
   ```
 
-  Run globally for explicit schema modules:
+  When the repo can report `config()[:otp_app]`, schema module discovery is
+  derived from it. Use `schema_modules: [...]` when the check should inspect an
+  explicit set of schemas instead:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
@@ -66,17 +60,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints d
    schema_modules: [MyApp.Billing.Invoice, MyApp.Billing.Payment]}
   ```
 
-  Run only for matching rule scopes:
+  Use `rules: [...]` to scope the Postgres constraints considered by the check:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.EctoChangesetForeignKeyConstraints,
    paths: ["lib/my_app"],
    rules: [where: [schemas: ["public"]], except: [[tables: ["events"], columns: ["actor_id"]]]]}
   ```
-
-  The check discovers compiled Ecto schemas through reflection, parses source
-  files for conservative changeset candidates, and only requires
-  `foreign_key_constraint/3` when a candidate casts the local foreign-key field.
 
   ## Usage
 

@@ -38,23 +38,13 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType do
 
   ## Options
 
-    * `:validate` - explicit `false` disables this check.
-    * `:rules` - rule keyword list or non-empty list of rule keyword lists.
-    * `:types` - required non-empty list of allowed primary key type names
-      inside each rule.
-
-  This check requires `:types`, so bare-module configuration is not valid.
-
-  Run globally:
+  Configurable checks use `rules:` as their only public entry point. `rules:`
+  accepts either one keyword rule or a list of keyword rules:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
    rules: [types: ["uuid"]]}
-  ```
 
-  Run only for matching rule scopes:
-
-  ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType,
    rules: [
      [where: [schemas: ["public"]], types: ["uuid"]],
