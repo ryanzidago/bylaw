@@ -2,16 +2,24 @@
 
 ## 0.2.0 - 2026-05-13
 
+### Added
+
 - Add a universal scoped `rules:` DSL for every built-in Ecto query check.
   Shared scope keys are `where:` and `except:`; check-specific rule options are
   documented per check.
+- Support both single-rule shorthand (`rules: [fields: [...]]`) and scoped
+  multi-rule configurations.
+
+### Changed
+
+- Standardize check-specific rule options on explicit keys: `fields:`,
+  `keys:`, and `match:` where accepted by the check.
+
+### Removed
+
 - Simplify `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys` and
   `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates` to use `rules:` as
   their only public configuration entry point.
-- Standardize check-specific rule options on explicit keys: `fields:`,
-  `keys:`, and `match:` where accepted by the check.
-- Support both single-rule shorthand (`rules: [fields: [...]]`) and scoped
-  multi-rule configurations.
 - Remove the older asymmetric configuration forms, including top-level `keys:`,
   top-level `fields:`, and `schemas:`.
 
