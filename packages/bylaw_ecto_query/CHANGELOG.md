@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-05-13
 
 - Simplify `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys` and
   `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates` to use `rules:` as
