@@ -925,9 +925,13 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
     test "raises when rule fields are missing" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "missing required :fields option", fn ->
-        ExplicitVisibilityPredicates.validate(:all, query, rules: [where: [ecto_schemas: [Post]]])
-      end
+      assert_raise ArgumentError,
+                   "expected explicit_visibility_predicates rule to include :fields",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       rules: [where: [ecto_schemas: [Post]]]
+                     )
+                   end
     end
 
     test "raises when fields are empty" do
@@ -1108,11 +1112,13 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicatesTest do
     test "raises for invalid rule fields" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "missing required :fields option", fn ->
-        ExplicitVisibilityPredicates.validate(:all, query,
-          rules: [[where: [ecto_schemas: [Post]]]]
-        )
-      end
+      assert_raise ArgumentError,
+                   "expected explicit_visibility_predicates rule to include :fields",
+                   fn ->
+                     ExplicitVisibilityPredicates.validate(:all, query,
+                       rules: [[where: [ecto_schemas: [Post]]]]
+                     )
+                   end
 
       assert_raise ArgumentError,
                    "expected :fields to be a non-empty list of atoms, got: []",

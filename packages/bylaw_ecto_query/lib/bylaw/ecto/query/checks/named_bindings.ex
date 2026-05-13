@@ -100,9 +100,9 @@ defmodule Bylaw.Ecto.Query.Checks.NamedBindings do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled_in_scope?(check_opts, :named_bindings, operation, query) do
       case issues(operation, query) do
         [] -> :ok
         issues -> {:error, issues}

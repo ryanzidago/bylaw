@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add universal `rules:` scoping to every built-in query check, with shared
+  `where:` / `except:` semantics and check-specific rule payloads.
+- Add rule scoping to scope-only checks while preserving bare-module global
+  behavior.
+- Add rule payload support for `MandatoryJoinKeys`, `HalfOpenTemporalIntervals`,
+  and `UtcDatetimeNaiveComparisons`.
 - Simplify `Bylaw.Ecto.Query.Checks.MandatoryWhereKeys` and
   `Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates` to use `rules:` as
   their only public configuration entry point.

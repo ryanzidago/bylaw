@@ -82,9 +82,14 @@ defmodule Bylaw.Ecto.Query.Checks.HardDeleteOnSoftDeleteSchema do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled_in_scope?(
+         check_opts,
+         :hard_delete_on_soft_delete_schema,
+         operation,
+         query
+       ) do
       validate_enabled(operation, query)
     else
       :ok

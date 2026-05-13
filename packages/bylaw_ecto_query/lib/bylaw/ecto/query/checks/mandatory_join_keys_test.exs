@@ -52,6 +52,86 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeysTest do
   end
 
   describe "validate/3" do
+    test "rules can scope mandatory join keys by root schema" do
+      matching_query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      skipped_query =
+        from(comment in Comment,
+          join: reaction in Reaction,
+          on: reaction.post_id == comment.post_id
+        )
+
+      opts = [rules: [where: [ecto_schemas: [Post]], keys: [:organisation_id]]]
+
+      assert {:error, [%Issue{}]} = MandatoryJoinKeys.validate(:all, matching_query, opts)
+      assert :ok = MandatoryJoinKeys.validate(:all, skipped_query, opts)
+    end
+
+    test "rules can scope mandatory join keys by root table" do
+      matching_query =
+        from(post in "posts",
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      skipped_query =
+        from(comment in "comments",
+          join: reaction in Reaction,
+          on: reaction.post_id == comment.post_id
+        )
+
+      opts = [rules: [where: [tables: ["posts"]], keys: [:organisation_id]]]
+
+      assert {:error, [%Issue{}]} = MandatoryJoinKeys.validate(:all, matching_query, opts)
+      assert :ok = MandatoryJoinKeys.validate(:all, skipped_query, opts)
+    end
+
+    test "except suppresses matching mandatory join key rules" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      opts = [
+        rules: [
+          where: [ecto_schemas: [Post]],
+          except: [tables: ["posts"]],
+          keys: [:organisation_id]
+        ]
+      ]
+
+      assert :ok = MandatoryJoinKeys.validate(:all, query, opts)
+    end
+
+    test "rules require mandatory join key payload per rule" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, ~r/expected mandatory_join_keys rule to include :keys/, fn ->
+        MandatoryJoinKeys.validate(:all, query, rules: [where: [ecto_schemas: [Post]]])
+      end
+    end
+
+    test "invalid mandatory join rule keys name the check" do
+      query =
+        from(post in Post,
+          join: comment in Comment,
+          on: comment.post_id == post.id
+        )
+
+      assert_raise ArgumentError, ~r/unknown mandatory_join_keys rule option: :fields/, fn ->
+        MandatoryJoinKeys.validate(:all, query, rules: [fields: [:organisation_id]])
+      end
+    end
+
     test "returns an issue when an explicit schema join omits the mandatory key equality" do
       query =
         from(post in Post,

@@ -1089,7 +1089,7 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeysTest do
     test "raises for invalid rule payloads" do
       query = from(post in Post)
 
-      assert_raise ArgumentError, "missing required :fields option", fn ->
+      assert_raise ArgumentError, "expected mandatory_where_keys rule to include :fields", fn ->
         MandatoryWhereKeys.validate(:all, query, rules: [[where: [ecto_schemas: [Post]]]])
       end
 

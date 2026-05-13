@@ -69,9 +69,10 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedUpdates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) and unbounded_update?(operation, query) do
+    if CheckOptions.enabled_in_scope?(check_opts, :unbounded_updates, operation, query) and
+         unbounded_update?(operation, query) do
       {:error, [issue(operation)]}
     else
       :ok

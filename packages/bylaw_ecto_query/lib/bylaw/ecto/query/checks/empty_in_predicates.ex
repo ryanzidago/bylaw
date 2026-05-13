@@ -89,9 +89,9 @@ defmodule Bylaw.Ecto.Query.Checks.EmptyInPredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) do
+    if CheckOptions.enabled_in_scope?(check_opts, :empty_in_predicates, operation, query) do
       validate_enabled(operation, query)
     else
       :ok

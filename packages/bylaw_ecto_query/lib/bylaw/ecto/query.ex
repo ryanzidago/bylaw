@@ -60,6 +60,29 @@ defmodule Bylaw.Ecto.Query do
          ]}
       ]
 
+  ## Rules DSL
+
+  Every built-in check can be scoped with `rules:`. Scope is shared across
+  checks; payload is check-specific. Use a bare module for global default
+  behavior. Use `{Check, rules: [...]}` when the check should run only for
+  matching queries.
+
+  Shared scope keys are `where:` and `except:`. `where:` applies a rule when any
+  matcher matches, and `except:` suppresses a rule that would otherwise match.
+  Ecto query matchers use plural keys with list values: `ecto_schemas:`,
+  `tables:`, `db_schemas:`, and `operations:`.
+
+  Rule payload keys by check:
+
+  | Check | Payload keys |
+  | --- | --- |
+  | `MandatoryWhereKeys` | `fields:`, optional `match:` |
+  | `ExplicitVisibilityPredicates` | `fields:` |
+  | `MandatoryJoinKeys` | `keys:`, optional `match:` |
+  | `HalfOpenTemporalIntervals` | optional `fields:` |
+  | `UtcDatetimeNaiveComparisons` | optional `fields:` |
+  | all other built-in checks | none |
+
       iex> import Ecto.Query
       iex> query = from("posts", as: :post, limit: 1)
       iex> {:error, [issue]} =

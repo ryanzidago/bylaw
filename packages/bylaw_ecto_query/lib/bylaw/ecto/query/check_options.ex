@@ -37,6 +37,17 @@ defmodule Bylaw.Ecto.Query.CheckOptions do
   @spec enabled?(keyword()) :: boolean()
   def enabled?(opts), do: Keyword.get(opts, :validate, true) != false
 
+  @spec enabled_in_scope?(keyword(), atom(), Bylaw.Ecto.Query.Check.operation(), term()) ::
+          boolean()
+  def enabled_in_scope?(opts, check, operation, query) do
+    if enabled?(opts) do
+      rules = Bylaw.Ecto.Query.RuleOptions.default_rules!(opts, check)
+      Bylaw.Ecto.Query.RuleOptions.in_any_rule_scope?(operation, query, rules)
+    else
+      false
+    end
+  end
+
   # Configured checks use `:any` by default and may opt into `:all` when every
   # configured key must match. Any other value is treated as invalid config.
   @spec match!(keyword()) :: :any | :all

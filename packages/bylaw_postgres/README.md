@@ -66,8 +66,19 @@ end
 
 See each check module's documentation for its examples, notes, and options.
 
-Configurable Postgres checks use `rules:` as their public configuration entry
-point. `rules:` accepts either one keyword rule or a list of keyword rules:
+## Rules DSL
+
+Every built-in check accepts the same `rules:` DSL. A bare module applies the
+check globally with its default behavior:
+
+```elixir
+@checks [
+  Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
+]
+```
+
+Use `{Check, rules: [...]}` to run a check only when at least one rule matches.
+Rules use shared scope keys and check-specific payload keys side by side:
 
 ```elixir
 @checks [
@@ -81,3 +92,29 @@ point. `rules:` accepts either one keyword rule or a list of keyword rules:
   Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
 ]
 ```
+
+Shared scope keys:
+
+- `where:` applies a rule when any matcher matches. Omit it for a global rule.
+- `except:` suppresses a rule that would otherwise match.
+
+Postgres matchers use plural keys with non-empty list values: `schemas:`,
+`tables:`, `columns:`, `constraints:`, `types:`, `referenced_schemas:`,
+`referenced_tables:`, and `referenced_columns:` where supported by the check.
+Matcher values can be strings or regexes. Unknown rule keys and missing required
+payload keys raise `ArgumentError` messages that name the check.
+
+| Check | Rule payload keys |
+| --- | --- |
+| `DuplicateIndexes` | none |
+| `EctoChangesetCheckConstraints` | none |
+| `EctoChangesetForeignKeyConstraints` | none |
+| `EctoChangesetUniqueConstraints` | none |
+| `ForbiddenColumnTypes` | `types:` |
+| `ForeignKeyActions` | `on_delete:` and/or `on_update:` |
+| `ForeignKeyNullability` | none |
+| `MissingForeignKeyConstraints` | none |
+| `MissingForeignKeyIndexes` | none |
+| `PrimaryKeyType` | `types:` |
+| `RequiredColumns` | `columns:` |
+| `ScopedForeignKeys` | `scope_columns:` |
