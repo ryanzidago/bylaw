@@ -68,8 +68,8 @@ See each check module's documentation for its examples, notes, and options.
 
 ## Rules DSL
 
-Every built-in check accepts the same `rules:` DSL. A bare module applies the
-check globally with its default behavior:
+Every built-in check accepts the same `rules:` DSL. Checks with default behavior
+can be passed as bare modules to run globally:
 
 ```elixir
 @checks [
@@ -77,8 +77,9 @@ check globally with its default behavior:
 ]
 ```
 
-Use `{Check, rules: [...]}` to run a check only when at least one rule matches.
-Rules use shared scope keys and check-specific rule options side by side:
+Use `{Check, rules: [...]}` when a check needs required rule options or should
+run only when at least one rule matches. Rules use shared scope keys and
+check-specific rule options side by side:
 
 ```elixir
 @checks [
