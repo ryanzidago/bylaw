@@ -15,7 +15,7 @@ Add `:bylaw_html` to test dependencies:
 ```elixir
 def deps do
   [
-    {:bylaw_html, "~> 0.1.0-alpha.1", only: :test}
+    {:bylaw_html, "~> 0.1.0-alpha.2", only: :test}
   ]
 end
 ```
