@@ -59,7 +59,9 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
     * `:rules` - required rule keyword list or non-empty list of rule keyword
       lists. A single-rule shorthand such as `rules: [fields: [:deleted_at]]`
       is normalized to one rule.
@@ -70,10 +72,25 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
       `tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and
       `operations: [:all]`.
 
-  Example check spec:
+  This check requires `:fields`, so bare-module configuration is not valid.
+
+  Run globally:
 
       {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
-       rules: [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]]}
+       rules: [fields: [:deleted_at, :archived_at]]}
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+       rules: [
+         [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
+         [where: [tables: ["comments"]], fields: [:deleted_at]]
+       ]}
+
+  Configure a different visibility field for one scope:
+
+      {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
+       rules: [where: [ecto_schemas: [PublishedPost]], fields: [:published_at]]}
 
   ## Usage
 
@@ -127,8 +144,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
       RuleOptions.fetch_rules!(
         check_opts,
         :explicit_visibility_predicates,
-        [:fields],
-        &rule_payload!/1
+        [:fields]
       )
 
     query
@@ -137,7 +153,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     |> result()
   end
 
-  defp rule_payload!(opts) do
+  defp rule_options!(opts) do
     %{fields: opts |> CheckOptions.fetch_non_empty_atoms!(:fields) |> Enum.uniq()}
   end
 
@@ -145,7 +161,7 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
     scope_query = Introspection.effective_root_query(query)
 
     operation
-    |> RuleOptions.matching_rules(scope_query, rules)
+    |> RuleOptions.matching_rules(scope_query, rules, &rule_options!/1)
     |> Enum.flat_map(&issues_for_rule(operation, query, scope_query, &1, branch_path))
   end
 

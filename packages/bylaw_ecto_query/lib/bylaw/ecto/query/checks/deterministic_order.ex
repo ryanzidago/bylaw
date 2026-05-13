@@ -59,7 +59,23 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.DeterministicOrder
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.DeterministicOrder,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["posts"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   ## Usage
 
@@ -72,6 +88,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type field_set :: list(atom())
@@ -88,9 +105,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
 
-    if CheckOptions.enabled?(check_opts) and ordered?(query) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :deterministic_order, operation, query) and
+         ordered?(query) do
       validate_ordered_query(operation, query)
     else
       :ok

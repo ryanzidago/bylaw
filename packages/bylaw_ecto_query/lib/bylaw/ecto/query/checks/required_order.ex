@@ -82,7 +82,23 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   ## Options
 
-    * `:validate` - explicit `false` disables the check. Defaults to `true`.
+    * `:validate` - explicit `false` disables this check. It can be used in the
+      repo-wide check list or in call-site overrides passed to
+      `Bylaw.Ecto.Query.validate/4`.
+
+  Run globally with defaults:
+
+      Bylaw.Ecto.Query.Checks.RequiredOrder
+
+  Run only for matching rule scopes:
+
+      {Bylaw.Ecto.Query.Checks.RequiredOrder,
+       rules: [
+         [where: [ecto_schemas: [Post]]],
+         [where: [tables: ["posts"]]]
+       ]}
+
+  This check has no check-specific rule options.
 
   Queries with `limit`, `offset`, or the `:stream` operation require an
   `order_by` clause. If any `order_by` exists, this check passes and leaves
@@ -99,6 +115,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
+  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type reason :: :limit | :offset | :stream
@@ -115,10 +132,12 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
     required_by = missing_order_reasons(operation, query)
 
-    if CheckOptions.enabled?(check_opts) and not Enum.empty?(required_by) do
+    if CheckOptions.enabled?(check_opts) and
+         RuleOptions.scoped?(check_opts, :required_order, operation, query) and
+         not Enum.empty?(required_by) do
       {:error, [issue(operation, required_by)]}
     else
       :ok
