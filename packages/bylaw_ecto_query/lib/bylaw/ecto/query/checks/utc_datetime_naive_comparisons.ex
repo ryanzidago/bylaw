@@ -68,7 +68,6 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
-  alias Bylaw.Ecto.Query.RuleOptions
 
   @comparison_operators [:==, :!=, :<, :<=, :>, :>=]
   @utc_datetime_types [:utc_datetime, :utc_datetime_usec]
@@ -98,7 +97,7 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :fields, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate, :fields])
 
     if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query, check_opts)
@@ -112,51 +111,19 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
   end
 
   defp validate_enabled(operation, query, check_opts) do
-    rules = rules!(check_opts)
+    case checked_fields(query, check_opts) do
+      [] ->
+        :ok
 
-    operation
-    |> RuleOptions.matching_rules(query, rules)
-    |> Enum.flat_map(fn rule ->
-      case checked_fields(query, rule) do
-        [] -> []
-        fields -> issues(operation, query, fields)
-      end
-    end)
-    |> Enum.uniq_by(&{&1.check, &1.message, &1.meta})
-    |> result()
-  end
-
-  defp rules!(opts) do
-    if Keyword.has_key?(opts, :rules) do
-      reject_top_level_fields_with_rules!(opts)
-
-      RuleOptions.rules!(
-        Keyword.fetch!(opts, :rules),
-        :utc_datetime_naive_comparisons,
-        [:fields],
-        &rule_payload!/1
-      )
-    else
-      [Map.merge(rule_payload!(opts), %{where: [], except: []})]
-    end
-  end
-
-  defp reject_top_level_fields_with_rules!(opts) do
-    if Keyword.has_key?(opts, :fields) do
-      raise ArgumentError,
-            "expected utc_datetime_naive_comparisons to use rule-level :fields when :rules is provided"
-    end
-  end
-
-  defp rule_payload!(opts) do
-    case Keyword.fetch(opts, :fields) do
-      {:ok, fields} -> %{fields: {:ok, normalize_fields!(fields)}}
-      :error -> %{fields: :infer}
+      fields ->
+        operation
+        |> issues(query, fields)
+        |> result()
     end
   end
 
   defp checked_fields(query, opts) do
-    case {opts.fields, Introspection.root_schema(query)} do
+    case {configured_fields(opts), Introspection.root_schema(query)} do
       {{:ok, fields}, {:ok, schema}} ->
         schema_fields = Introspection.schema_fields(schema)
         Enum.filter(fields, &MapSet.member?(schema_fields, &1))
@@ -169,6 +136,13 @@ defmodule Bylaw.Ecto.Query.Checks.UtcDatetimeNaiveComparisons do
 
       {:infer, :unknown} ->
         []
+    end
+  end
+
+  defp configured_fields(opts) do
+    case Keyword.fetch(opts, :fields) do
+      {:ok, fields} -> {:ok, normalize_fields!(fields)}
+      :error -> :infer
     end
   end
 

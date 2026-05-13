@@ -70,10 +70,9 @@ defmodule Bylaw.Ecto.Query.Checks.OffsetWithoutLimit do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
-    if CheckOptions.enabled_in_scope?(check_opts, :offset_without_limit, operation, query) and
-         offset_without_limit?(query) do
+    if CheckOptions.enabled?(check_opts) and offset_without_limit?(query) do
       {:error, [issue(operation)]}
     else
       :ok

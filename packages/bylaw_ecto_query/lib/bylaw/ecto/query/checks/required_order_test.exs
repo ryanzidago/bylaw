@@ -17,63 +17,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
     end
   end
 
-  defmodule Comment do
-    use Ecto.Schema
-
-    schema "comments" do
-      field(:body, :string)
-    end
-  end
-
   describe "validate/3" do
-    test "bare module options keep global behavior" do
-      query = from(post in Post, limit: 10)
-
-      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
-      assert issue.check == RequiredOrder
-    end
-
-    test "rules can scope a scope-only check by Ecto schema" do
-      post_query = from(post in Post, limit: 10)
-      comment_query = from(comment in Comment, limit: 10)
-
-      opts = [rules: [where: [ecto_schemas: [Post]]]]
-
-      assert {:error, [%Issue{}]} = RequiredOrder.validate(:all, post_query, opts)
-      assert :ok = RequiredOrder.validate(:all, comment_query, opts)
-    end
-
-    test "rules can scope a scope-only check by table" do
-      post_query = from(post in "posts", limit: 10)
-      comment_query = from(comment in "comments", limit: 10)
-
-      opts = [rules: [where: [tables: ["posts"]]]]
-
-      assert {:error, [%Issue{}]} = RequiredOrder.validate(:all, post_query, opts)
-      assert :ok = RequiredOrder.validate(:all, comment_query, opts)
-    end
-
-    test "except suppresses an otherwise matching where rule" do
-      query = from(post in Post, limit: 10)
-
-      opts = [
-        rules: [
-          where: [ecto_schemas: [Post]],
-          except: [tables: ["posts"]]
-        ]
-      ]
-
-      assert :ok = RequiredOrder.validate(:all, query, opts)
-    end
-
-    test "invalid rule keys name the check" do
-      query = from(post in Post, limit: 10)
-
-      assert_raise ArgumentError, ~r/unknown required_order rule option: :fields/, fn ->
-        RequiredOrder.validate(:all, query, rules: [fields: [:id]])
-      end
-    end
-
     test "passes when an unordered query shape does not require ordering" do
       query = from(post in Post)
 

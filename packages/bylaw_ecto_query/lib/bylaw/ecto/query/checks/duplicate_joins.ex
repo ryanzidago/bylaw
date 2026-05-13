@@ -93,9 +93,9 @@ defmodule Bylaw.Ecto.Query.Checks.DuplicateJoins do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
-    if CheckOptions.enabled_in_scope?(check_opts, :duplicate_joins, operation, query) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
     else
       :ok

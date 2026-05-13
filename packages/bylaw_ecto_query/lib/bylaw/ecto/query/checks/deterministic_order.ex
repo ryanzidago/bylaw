@@ -88,10 +88,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
-    if CheckOptions.enabled_in_scope?(check_opts, :deterministic_order, operation, query) and
-         ordered?(query) do
+    if CheckOptions.enabled?(check_opts) and ordered?(query) do
       validate_ordered_query(operation, query)
     else
       :ok

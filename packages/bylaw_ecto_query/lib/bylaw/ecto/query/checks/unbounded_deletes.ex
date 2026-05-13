@@ -64,10 +64,9 @@ defmodule Bylaw.Ecto.Query.Checks.UnboundedDeletes do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
-    if CheckOptions.enabled_in_scope?(check_opts, :unbounded_deletes, operation, query) and
-         unbounded_delete?(operation, query) do
+    if CheckOptions.enabled?(check_opts) and unbounded_delete?(operation, query) do
       {:error, [issue(operation)]}
     else
       :ok

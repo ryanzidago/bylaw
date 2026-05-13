@@ -127,17 +127,9 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryWhereKeys do
 
   defp rule_payload!(opts) do
     %{
-      fields: fetch_non_empty_atoms!(opts, :fields),
+      fields: CheckOptions.fetch_non_empty_atoms!(opts, :fields),
       match: CheckOptions.match!(opts)
     }
-  end
-
-  defp fetch_non_empty_atoms!(opts, key) do
-    if not Keyword.has_key?(opts, key) do
-      raise ArgumentError, "expected mandatory_where_keys rule to include #{inspect(key)}"
-    end
-
-    CheckOptions.fetch_non_empty_atoms!(opts, key)
   end
 
   defp issues_for_branch(operation, {branch_path, query}, rules) do

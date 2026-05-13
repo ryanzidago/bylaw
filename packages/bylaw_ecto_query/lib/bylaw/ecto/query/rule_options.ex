@@ -16,14 +16,6 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   }
   @allowed_operations [:all, :update_all, :delete_all, :stream, :insert_all]
 
-  @spec default_rules!(keyword(), atom()) :: list(rule())
-  def default_rules!(opts, check) do
-    case Keyword.fetch(opts, :rules) do
-      {:ok, rules} -> rules!(rules, check, [], fn _rule -> %{} end)
-      :error -> [%{where: [], except: []}]
-    end
-  end
-
   @spec fetch_rules!(keyword(), atom(), list(atom()), (keyword() -> map())) :: list(map())
   def fetch_rules!(opts, check, payload_keys, payload_fun) do
     case Keyword.fetch(opts, :rules) do
@@ -55,13 +47,6 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   def matching_rules(operation, query, rules) do
     effective_query = Introspection.effective_root_query(query)
     Enum.filter(rules, &in_rule_scope?(operation, effective_query, &1))
-  end
-
-  @spec in_any_rule_scope?(Bylaw.Ecto.Query.Check.operation(), term(), list(rule())) :: boolean()
-  def in_any_rule_scope?(operation, query, rules) do
-    operation
-    |> matching_rules(query, rules)
-    |> Enum.any?()
   end
 
   @spec in_rule_scope?(Bylaw.Ecto.Query.Check.operation(), term(), rule()) :: boolean()

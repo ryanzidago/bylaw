@@ -115,11 +115,10 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
     required_by = missing_order_reasons(operation, query)
 
-    if CheckOptions.enabled_in_scope?(check_opts, :required_order, operation, query) and
-         not Enum.empty?(required_by) do
+    if CheckOptions.enabled?(check_opts) and not Enum.empty?(required_by) do
       {:error, [issue(operation, required_by)]}
     else
       :ok

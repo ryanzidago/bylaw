@@ -118,24 +118,20 @@ Zero-config checks stay as bare modules:
 ]
 ```
 
-## Rules DSL
-
-Every built-in check accepts the same `rules:` DSL. A bare module applies the
-check globally with its default behavior:
-
-```elixir
-@query_checks [
-  Bylaw.Ecto.Query.Checks.RequiredOrder
-]
-```
-
-Use `{Check, rules: [...]}` to run a check only when at least one rule matches.
-Rules use shared scope keys and check-specific rule options side by side:
+Configurable checks use `rules:` as their only public entry point. A single
+global rule can use the shorthand keyword form:
 
 ```elixir
 @query_checks [
   {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
-   rules: [fields: [:organization_id]]},
+   rules: [fields: [:organization_id]]}
+]
+```
+
+Scoped rules use the list-of-rules form:
+
+```elixir
+@query_checks [
   {Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates,
    rules: [
      [where: [ecto_schemas: [Post]], fields: [:deleted_at, :archived_at]],
@@ -143,39 +139,6 @@ Rules use shared scope keys and check-specific rule options side by side:
    ]}
 ]
 ```
-
-Shared scope keys:
-
-- `where:` applies a rule when any matcher matches. Omit it for a global rule.
-- `except:` suppresses a rule that would otherwise match.
-
-Ecto query matchers use plural keys with list values: `ecto_schemas: [Post]`,
-`tables: ["posts"]`, `db_schemas: ["tenant_a"]`, and `operations: [:all]`.
-Matcher values can be exact values; table and database schema matchers also
-accept regexes. Unknown rule keys and missing required check-specific options
-raise `ArgumentError` messages that name the check.
-
-| Check | Check-specific rule options |
-| --- | --- |
-| `CartesianJoins` | none |
-| `ConflictingWherePredicates` | none |
-| `DateDatetimeMixedComparisons` | none |
-| `DeterministicOrder` | none |
-| `DuplicateJoins` | none |
-| `EmptyInPredicates` | none |
-| `ExplicitVisibilityPredicates` | `fields:` |
-| `HalfOpenTemporalIntervals` | optional `fields:` |
-| `HardDeleteOnSoftDeleteSchema` | none |
-| `LeftJoinWherePredicates` | none |
-| `MandatoryJoinKeys` | `keys:`, optional `match:` |
-| `MandatoryWhereKeys` | `fields:`, optional `match:` |
-| `ManualJoinInsteadOfAssoc` | none |
-| `NamedBindings` | none |
-| `OffsetWithoutLimit` | none |
-| `RequiredOrder` | none |
-| `UnboundedDeletes` | none |
-| `UnboundedUpdates` | none |
-| `UtcDatetimeNaiveComparisons` | optional `fields:` |
 
 Built-in checks live under `Bylaw.Ecto.Query.Checks.*`. Start with the checks
 that match your application invariants; each check module documents its own

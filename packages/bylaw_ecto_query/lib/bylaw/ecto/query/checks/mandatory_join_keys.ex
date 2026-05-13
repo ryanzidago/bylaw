@@ -75,7 +75,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   alias Bylaw.Ecto.Query.CheckOptions
   alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
-  alias Bylaw.Ecto.Query.RuleOptions
 
   @typedoc false
   @type match :: :any | :all
@@ -99,10 +98,13 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:keys, :match, :validate])
 
     if CheckOptions.enabled?(check_opts) do
-      case validate_enabled(operation, query, check_opts) do
+      keys = CheckOptions.fetch_non_empty_atoms!(check_opts, :keys)
+      match = CheckOptions.match!(check_opts)
+
+      case issues(operation, query, keys, match) do
         [] -> :ok
         issues -> {:error, issues}
       end
@@ -113,63 +115,6 @@ defmodule Bylaw.Ecto.Query.Checks.MandatoryJoinKeys do
 
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
-  end
-
-  defp validate_enabled(operation, query, opts) do
-    rules = rules!(opts)
-
-    operation
-    |> RuleOptions.matching_rules(query, rules)
-    |> Enum.flat_map(&issues(operation, query, &1.keys, &1.match))
-    |> Enum.uniq_by(&{&1.check, &1.message, &1.meta})
-  end
-
-  defp rules!(opts) do
-    if Keyword.has_key?(opts, :rules) do
-      reject_top_level_rule_keys!(opts)
-
-      RuleOptions.rules!(
-        Keyword.fetch!(opts, :rules),
-        :mandatory_join_keys,
-        [:keys, :match],
-        &rule_payload!/1
-      )
-    else
-      [
-        %{
-          keys: CheckOptions.fetch_non_empty_atoms!(opts, :keys),
-          match: CheckOptions.match!(opts),
-          where: [],
-          except: []
-        }
-      ]
-    end
-  end
-
-  defp reject_top_level_rule_keys!(opts) do
-    case Enum.find([:keys, :match], &Keyword.has_key?(opts, &1)) do
-      nil ->
-        :ok
-
-      key ->
-        raise ArgumentError,
-              "expected mandatory_join_keys to use rule-level #{inspect(key)} when :rules is provided"
-    end
-  end
-
-  defp rule_payload!(opts) do
-    %{
-      keys: fetch_non_empty_atoms!(opts, :keys),
-      match: CheckOptions.match!(opts)
-    }
-  end
-
-  defp fetch_non_empty_atoms!(opts, key) do
-    if not Keyword.has_key?(opts, key) do
-      raise ArgumentError, "expected mandatory_join_keys rule to include #{inspect(key)}"
-    end
-
-    CheckOptions.fetch_non_empty_atoms!(opts, key)
   end
 
   defp issues(operation, query, keys, match) when is_map(query) do

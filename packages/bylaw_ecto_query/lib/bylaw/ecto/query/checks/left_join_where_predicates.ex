@@ -87,7 +87,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules])
+    check_opts = CheckOptions.normalize!(opts, [:validate])
 
     validate_query(operation, query, check_opts)
   end
@@ -97,7 +97,7 @@ defmodule Bylaw.Ecto.Query.Checks.LeftJoinWherePredicates do
   end
 
   defp validate_query(operation, query, check_opts) do
-    if CheckOptions.enabled_in_scope?(check_opts, :left_join_where_predicates, operation, query) do
+    if CheckOptions.enabled?(check_opts) do
       validate_enabled(operation, query)
     else
       :ok

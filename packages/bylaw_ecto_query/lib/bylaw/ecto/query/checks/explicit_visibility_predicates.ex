@@ -138,10 +138,6 @@ defmodule Bylaw.Ecto.Query.Checks.ExplicitVisibilityPredicates do
   end
 
   defp rule_payload!(opts) do
-    if not Keyword.has_key?(opts, :fields) do
-      raise ArgumentError, "expected explicit_visibility_predicates rule to include :fields"
-    end
-
     %{fields: opts |> CheckOptions.fetch_non_empty_atoms!(:fields) |> Enum.uniq()}
   end
 
