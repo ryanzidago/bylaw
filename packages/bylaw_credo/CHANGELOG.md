@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.1 - 2026-05-13
+
+- Add the `Bylaw.Credo.Check.HEEx.PreferLinkForNavigation` check for HEEx
+  `phx-click` navigation handlers on non-link tags and components.
+
 ## 0.1.0 - 2026-05-11
 
 Initial package release.
