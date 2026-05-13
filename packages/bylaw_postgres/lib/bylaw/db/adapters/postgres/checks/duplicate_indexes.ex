@@ -30,13 +30,17 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes do
 
   ## Options
 
-  Use the bare module for zero-config validation across the whole target:
+    * `:validate` - explicit `false` disables this check.
+    * `:rules` - optional rule keyword list or non-empty list of rule keyword
+      lists. Rules use only shared scope keys.
+
+  Run globally with defaults:
 
   ```elixir
   Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes
   ```
 
-  Use `rules:` when the scope needs matchers or exclusions:
+  Run only for matching rule scopes:
 
   ```elixir
   {Bylaw.Db.Adapters.Postgres.Checks.DuplicateIndexes,
