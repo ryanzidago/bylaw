@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-05-13
 
 - Replace `only` with `where` in Postgres rule matchers.
 - Require plural matcher keys and non-empty list matcher values in Postgres rules.
