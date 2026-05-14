@@ -63,6 +63,50 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     |> refute_issues()
   end
 
+  test "does not report raw markup inside the preferred module implementation" do
+    """
+    defmodule MyAppWeb.UI.Buttons do
+      def button(assigns) do
+        ~H\"\"\"
+        <button type="button"><%= render_slot(@inner_block) %></button>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/my_app_web/ui/buttons.ex")
+    |> run_check(PreferComponentModule, @button_rule)
+    |> refute_issues()
+  end
+
+  test "still reports other rules inside a preferred module implementation" do
+    rule = [
+      rules: [
+        [
+          prefer: MyAppWeb.UI.Buttons,
+          when: [[html_tag: "button"]]
+        ],
+        [
+          prefer: MyAppWeb.UI.Tables,
+          when: [[html_tag: "table"]]
+        ]
+      ]
+    ]
+
+    """
+    defmodule MyAppWeb.UI.Buttons do
+      def mixed(assigns) do
+        ~H\"\"\"
+        <button type="button">Allowed here</button>
+        <table><tr><td>Still not a button concern</td></tr></table>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/my_app_web/ui/buttons.ex")
+    |> run_check(PreferComponentModule, rule)
+    |> assert_issue(%{line_no: 5, trigger: "<table"})
+  end
+
   test "reports static attrs matching string values" do
     rule = [
       rules: [

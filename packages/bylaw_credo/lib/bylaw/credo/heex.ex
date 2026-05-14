@@ -13,12 +13,13 @@ defmodule Bylaw.Credo.Heex do
     # A HEEx template extracted from a source file.
 
     @enforce_keys [:source, :line, :column]
-    defstruct [:source, :line, :column]
+    defstruct [:source, :line, :column, :module]
 
     @type t :: %__MODULE__{
             source: String.t(),
             line: pos_integer(),
-            column: pos_integer()
+            column: pos_integer(),
+            module: module() | nil
           }
   end
 
@@ -169,7 +170,8 @@ defmodule Bylaw.Credo.Heex do
     case Code.string_to_quoted(source, columns: true, token_metadata: true) do
       {:ok, ast} ->
         ast
-        |> Macro.prewalk([], &collect_sigil_template/2)
+        |> Macro.traverse({[], []}, &collect_sigil_template/2, &pop_module/2)
+        |> elem(1)
         |> elem(1)
         |> Enum.reverse()
 
@@ -179,18 +181,41 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defp collect_sigil_template(
+         {:defmodule, _meta, [module_ast, _body]} = ast,
+         {modules, templates}
+       ) do
+    {ast, {[module_name(module_ast, modules) | modules], templates}}
+  end
+
+  defp collect_sigil_template(
          {:sigil_H, meta, [{:<<>>, text_meta, parts}, _modifiers]} = ast,
-         templates
+         {modules, templates}
        ) do
     source = IO.iodata_to_binary(parts)
     indentation = text_meta[:indentation] || 0
     line = sigil_line(meta)
     column = sigil_column(meta, source, indentation)
 
-    {ast, [%Template{source: source, line: line, column: column} | templates]}
+    template = %Template{source: source, line: line, column: column, module: List.first(modules)}
+
+    {ast, {modules, [template | templates]}}
   end
 
-  defp collect_sigil_template(ast, templates), do: {ast, templates}
+  defp collect_sigil_template(ast, acc), do: {ast, acc}
+
+  defp pop_module({:defmodule, _meta, _args} = ast, {[_module | modules], templates}) do
+    {ast, {modules, templates}}
+  end
+
+  defp pop_module(ast, acc), do: {ast, acc}
+
+  defp module_name({:__aliases__, _meta, parts}, [parent | _parents]) do
+    Module.concat([parent | parts])
+  end
+
+  defp module_name({:__aliases__, _meta, parts}, []), do: Module.concat(parts)
+  defp module_name(module, _modules) when is_atom(module), do: module
+  defp module_name(_module, _modules), do: nil
 
   defp sigil_line(meta) do
     case meta[:delimiter] do

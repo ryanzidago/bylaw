@@ -45,6 +45,9 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   `:prefer` module is the policy target, and callers decide which function from
   that module should replace the flagged markup.
 
+  A rule does not report HEEx templates defined inside its own `:prefer` module.
+  The preferred module is allowed to render the raw primitive it owns.
+
   Matchers in a rule's `:when` list are ORed. Keys inside one matcher are ANDed.
 
   This check uses static HEEx token analysis, so it reports only patterns
@@ -135,8 +138,16 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
 
   defp issues_for_tag(%Heex.Tag{} = tag, %Heex.Template{} = template, rules) do
     rules
-    |> Enum.filter(&tag_rule_match?(&1, tag, template.source))
+    |> Enum.filter(&allowed_tag_rule_match?(&1, tag, template))
     |> Enum.map(&tag_issue(tag, &1))
+  end
+
+  defp allowed_tag_rule_match?(rule, %Heex.Tag{} = tag, %Heex.Template{} = template) do
+    not preferred_module_template?(rule, template) and tag_rule_match?(rule, tag, template.source)
+  end
+
+  defp preferred_module_template?(rule, %Heex.Template{module: module}) do
+    rule.prefer == module
   end
 
   defp tag_rule_match?(rule, %Heex.Tag{} = tag, source) do
@@ -162,6 +173,14 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   defp tag_matcher_key_match?({:regex, regex}, _tag, source), do: Regex.match?(regex, source)
 
   defp regex_issues_for_rule(rule, %Heex.Template{} = template) do
+    if preferred_module_template?(rule, template) do
+      []
+    else
+      regex_issues_for_allowed_rule(rule, template)
+    end
+  end
+
+  defp regex_issues_for_allowed_rule(rule, %Heex.Template{} = template) do
     rule.matchers
     |> Enum.filter(&regex_only_matcher?/1)
     |> Enum.flat_map(fn matcher ->
