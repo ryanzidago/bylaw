@@ -1,0 +1,32 @@
+version: 2
+
+updates:
+  - package-ecosystem: "mix"
+    directories:
+      - "/packages/bylaw_core"
+      - "/packages/bylaw_credo"
+      - "/packages/bylaw_db"
+      - "/packages/bylaw_ecto_query"
+      - "/packages/bylaw_html"
+      - "/packages/bylaw_postgres"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    open-pull-requests-limit: 10
+    groups:
+      hex-dependencies:
+        patterns:
+          - "*"
+        group-by: "dependency-name"
+    ignore:
+      - dependency-name: "bylaw_*"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
