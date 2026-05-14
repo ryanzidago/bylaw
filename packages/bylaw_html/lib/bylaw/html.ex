@@ -20,7 +20,8 @@ defmodule Bylaw.HTML do
         Bylaw.HTML.Check.RequireImageAlt,
         Bylaw.HTML.Check.RequireButtonType,
         Bylaw.HTML.Check.RequireInputAutocomplete,
-        Bylaw.HTML.Check.NoInlineStyle
+        Bylaw.HTML.Check.NoInlineStyle,
+        Bylaw.HTML.Check.NoDuplicateAttributes
       ]
 
       assert :ok = Bylaw.HTML.validate_html(html, checks)
