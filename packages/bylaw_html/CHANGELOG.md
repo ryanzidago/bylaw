@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add the built-in `Bylaw.HTML.Check.NoDuplicateAttributes` check for rendered
+  elements that define the same attribute more than once.
+
 ## 0.1.0-alpha.2 - 2026-05-13
 
 - Add the built-in `Bylaw.HTML.Check.RequireInputAutocomplete` check for
