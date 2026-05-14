@@ -23,7 +23,7 @@ defmodule Bylaw.HTML.Check.NoDuplicateAttributesTest do
       assert issue.check == NoDuplicateAttributes
       assert issue.message == "expected <div> to define id only once"
       assert issue.tag == "div"
-      assert issue.snippet == ~s(<div id="primary" id="secondary">)
+      assert issue.snippet == ~s(<div id="primary" id="secondary">Content</div>)
     end
 
     test "treats attribute names as case-insensitive" do
@@ -73,7 +73,7 @@ defmodule Bylaw.HTML.Check.NoDuplicateAttributesTest do
       assert {:error, [%Issue{} = issue]} = HTML.validate_html(html, [NoDuplicateAttributes])
 
       assert issue.message == "expected <input> to define disabled only once"
-      assert issue.snippet == ~s(<input type=text disabled disabled>)
+      assert issue.snippet == ~s(<input type="text" disabled="disabled" disabled="disabled"/>)
     end
 
     test "supports slash characters in unquoted attribute values" do
