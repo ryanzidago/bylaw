@@ -31,7 +31,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
         {Bylaw.Credo.Check.HEEx.PreferComponentModule,
          rules: [
-           [prefer: MyAppWeb.UI.Buttons, when: [[html_tag: "button"]]]
+           [prefer: [modules: [MyAppWeb.UI.Buttons]], when: [[html_tag: "button"]]]
          ]},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
         {Bylaw.Credo.Check.HEEx.PreferLinkForNavigation, []},

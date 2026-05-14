@@ -7,7 +7,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
   @button_rule [
     rules: [
       [
-        prefer: MyAppWeb.UI.Buttons,
+        prefer: [modules: [MyAppWeb.UI.Buttons]],
         when: [[html_tag: "button"]]
       ]
     ]
@@ -78,15 +78,57 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     |> refute_issues()
   end
 
+  test "supports multiple preferred modules and exempts each implementation" do
+    rule = [
+      rules: [
+        [
+          prefer: [modules: [MyAppWeb.UI.Buttons, MyAppWeb.UI.IconButtons]],
+          when: [[html_tag: "button"]]
+        ]
+      ]
+    ]
+
+    """
+    defmodule Example do
+      def render(assigns) do
+        ~H\"\"\"
+        <button type="button">Save</button>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/example.ex")
+    |> run_check(PreferComponentModule, rule)
+    |> assert_issue(%{
+      line_no: 4,
+      trigger: "<button",
+      message:
+        "Use one of MyAppWeb.UI.Buttons, MyAppWeb.UI.IconButtons for this UI pattern instead of raw or local HEEx markup."
+    })
+
+    """
+    defmodule MyAppWeb.UI.IconButtons do
+      def icon_button(assigns) do
+        ~H\"\"\"
+        <button type="button"><%= render_slot(@inner_block) %></button>
+        \"\"\"
+      end
+    end
+    """
+    |> to_source_file("lib/my_app_web/ui/icon_buttons.ex")
+    |> run_check(PreferComponentModule, rule)
+    |> refute_issues()
+  end
+
   test "still reports other rules inside a preferred module implementation" do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Buttons,
+          prefer: [modules: [MyAppWeb.UI.Buttons]],
           when: [[html_tag: "button"]]
         ],
         [
-          prefer: MyAppWeb.UI.Tables,
+          prefer: [modules: [MyAppWeb.UI.Tables]],
           when: [[html_tag: "table"]]
         ]
       ]
@@ -111,7 +153,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Dropdowns,
+          prefer: [modules: [MyAppWeb.UI.Dropdowns]],
           when: [[attrs: [role: "menu"]]]
         ]
       ]
@@ -140,7 +182,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Links,
+          prefer: [modules: [MyAppWeb.UI.Links]],
           when: [[html_tag: "a", attrs: [phx_click: :present]]]
         ]
       ]
@@ -165,7 +207,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Cards,
+          prefer: [modules: [MyAppWeb.UI.Cards]],
           when: [[attrs: [class: ~r/\bcard\b/]]]
         ]
       ]
@@ -189,7 +231,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Cards,
+          prefer: [modules: [MyAppWeb.UI.Cards]],
           when: [[css_selector: "div.card"]]
         ]
       ]
@@ -214,7 +256,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Tables,
+          prefer: [modules: [MyAppWeb.UI.Tables]],
           when: [[html_tag: "table"], [attrs: [role: "table"]]]
         ]
       ]
@@ -243,7 +285,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Navigation,
+          prefer: [modules: [MyAppWeb.UI.Navigation]],
           when: [[html_tag: "a", attrs: [phx_click: :present]]]
         ]
       ]
@@ -268,7 +310,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Dropdowns,
+          prefer: [modules: [MyAppWeb.UI.Dropdowns]],
           when: [[regex: ~r/data-dropdown/]]
         ]
       ]
@@ -353,7 +395,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     rule = [
       rules: [
         [
-          prefer: MyAppWeb.UI.Buttons,
+          prefer: [modules: [MyAppWeb.UI.Buttons]],
           when: [[unknown: "button"]]
         ]
       ]
@@ -375,6 +417,37 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
 
     assert_raise ArgumentError,
                  "unknown Elixir.Bylaw.Credo.Check.HEEx.PreferComponentModule matcher option: :unknown",
+                 fn ->
+                   PreferComponentModule.run(source_file, rule)
+                 end
+  end
+
+  test "raises when prefer does not declare modules" do
+    rule = [
+      rules: [
+        [
+          prefer: MyAppWeb.UI.Buttons,
+          when: [[html_tag: "button"]]
+        ]
+      ]
+    ]
+
+    source_file =
+      to_source_file(
+        """
+        defmodule Example do
+          def render(assigns) do
+            ~H\"\"\"
+            <button type="button">Save</button>
+            \"\"\"
+          end
+        end
+        """,
+        "lib/example.ex"
+      )
+
+    assert_raise ArgumentError,
+                 "expected Elixir.Bylaw.Credo.Check.HEEx.PreferComponentModule rule :prefer to be [modules: [...]], got: MyAppWeb.UI.Buttons",
                  fn ->
                    PreferComponentModule.run(source_file, rule)
                  end

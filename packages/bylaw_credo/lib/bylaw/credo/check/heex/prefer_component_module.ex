@@ -12,20 +12,20 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   through shared component modules:
 
         {Bylaw.Credo.Check.HEEx.PreferComponentModule,
-         rules: [
-           [
-             prefer: MyAppWeb.UI.Buttons,
-             when: [[html_tag: "button"]]
-           ],
-           [
-             prefer: MyAppWeb.UI.Tables,
-             when: [[html_tag: "table"]]
-           ],
-           [
-             prefer: MyAppWeb.UI.Cards,
-             when: [[attrs: [class: ~r/\\bcard\\b/]]]
-           ]
-         ]}
+           rules: [
+             [
+               prefer: [modules: [MyAppWeb.UI.Buttons]],
+               when: [[html_tag: "button"]]
+             ],
+             [
+               prefer: [modules: [MyAppWeb.UI.Tables]],
+               when: [[html_tag: "table"]]
+             ],
+             [
+               prefer: [modules: [MyAppWeb.UI.Cards]],
+               when: [[attrs: [class: ~r/\\bcard\\b/]]]
+             ]
+           ]}
 
   Avoid:
 
@@ -42,11 +42,11 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   ## Notes
 
   This check does not register or discover component functions. The configured
-  `:prefer` module is the policy target, and callers decide which function from
-  that module should replace the flagged markup.
+  `:prefer` modules are the policy target, and callers decide which function
+  from those modules should replace the flagged markup.
 
-  A rule does not report HEEx templates defined inside its own `:prefer` module.
-  The preferred module is allowed to render the raw primitive it owns.
+  A rule does not report HEEx templates defined inside its own `:prefer`
+  modules. Preferred modules are allowed to render the raw primitives they own.
 
   Matchers in a rule's `:when` list are ORed. Keys inside one matcher are ANDed.
 
@@ -65,10 +65,10 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
         checks: [
           {Bylaw.Credo.Check.HEEx.PreferComponentModule,
            rules: [
-             [prefer: MyAppWeb.UI.Buttons, when: [[html_tag: "button"]]],
-             [prefer: MyAppWeb.UI.Tables, when: [[html_tag: "table"]]],
+             [prefer: [modules: [MyAppWeb.UI.Buttons]], when: [[html_tag: "button"]]],
+             [prefer: [modules: [MyAppWeb.UI.Tables]], when: [[html_tag: "table"]]],
              [
-               prefer: MyAppWeb.UI.Dropdowns,
+               prefer: [modules: [MyAppWeb.UI.Dropdowns, MyAppWeb.UI.Menus]],
                when: [
                  [attrs: [role: "menu"]],
                  [attrs: ["aria-haspopup": "menu"]]
@@ -82,7 +82,8 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   ```
 
   - `:rules` - Non-empty list of rules. Each rule requires `:prefer` and `:when`.
-  - `:prefer` - Component module that should own matching UI.
+  - `:prefer` - Component modules that should own matching UI, configured as
+    `[modules: [MyAppWeb.UI.Buttons]]`.
   - `:when` - Non-empty list of matchers.
 
   Supported matcher keys:
@@ -101,7 +102,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
     explanations: [
       check: @moduledoc,
       params: [
-        rules: "Rules that map matching HEEx UI patterns to a preferred component module."
+        rules: "Rules that map matching HEEx UI patterns to preferred component modules."
       ]
     ]
 
@@ -147,7 +148,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   end
 
   defp preferred_module_template?(rule, %Heex.Template{module: module}) do
-    rule.prefer == module
+    module in rule.preferred_modules
   end
 
   defp tag_rule_match?(rule, %Heex.Tag{} = tag, source) do
@@ -199,7 +200,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
       {line, column} = position_for_index(template, start)
 
       %{
-        prefer: rule.prefer,
+        preferred_modules: rule.preferred_modules,
         line: line,
         column: column,
         trigger: binary_part(template.source, start, length)
@@ -290,7 +291,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
 
   defp tag_issue(%Heex.Tag{} = tag, rule) do
     %{
-      prefer: rule.prefer,
+      preferred_modules: rule.preferred_modules,
       line: tag.line,
       column: tag.column,
       trigger: "<#{tag.name}"
@@ -301,11 +302,17 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
     format_issue(
       issue_meta,
       message:
-        "Use #{inspect(issue.prefer)} for this UI pattern instead of raw or local HEEx markup.",
+        "Use #{preferred_modules_text(issue.preferred_modules)} for this UI pattern instead of raw or local HEEx markup.",
       trigger: issue.trigger,
       line_no: issue.line,
       column: issue.column
     )
+  end
+
+  defp preferred_modules_text([module]), do: inspect(module)
+
+  defp preferred_modules_text(modules) do
+    "one of #{Enum.map_join(modules, ", ", &inspect/1)}"
   end
 
   defp normalize_rules!(rules) when is_list(rules) do
@@ -326,7 +333,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
       validate_allowed_keys!(rule, @allowed_rule_keys, "rule")
 
       %{
-        prefer: prefer!(rule),
+        preferred_modules: preferred_modules!(rule),
         matchers: matchers!(rule)
       }
     else
@@ -336,19 +343,39 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
 
   defp normalize_rule!(rule), do: raise_rule_error!(rule)
 
-  defp prefer!(rule) do
+  defp preferred_modules!(rule) do
     case Keyword.fetch(rule, :prefer) do
-      {:ok, prefer} when is_atom(prefer) and prefer not in [nil, false, true] ->
-        prefer
-
       {:ok, prefer} ->
-        raise ArgumentError,
-              "expected #{__MODULE__} rule :prefer to be a module, got: #{inspect(prefer)}"
+        prefer_modules!(prefer)
 
       :error ->
         raise ArgumentError, "missing required #{__MODULE__} rule option: :prefer"
     end
   end
+
+  defp prefer_modules!(prefer) when is_list(prefer) do
+    case Keyword.fetch(prefer, :modules) do
+      {:ok, modules} when is_list(modules) and modules != [] ->
+        if Enum.all?(modules, &module?/1) do
+          modules
+        else
+          raise_prefer_modules_error!(modules)
+        end
+
+      {:ok, modules} ->
+        raise_prefer_modules_error!(modules)
+
+      :error ->
+        raise ArgumentError, "missing required #{__MODULE__} rule :prefer option: :modules"
+    end
+  end
+
+  defp prefer_modules!(prefer) do
+    raise ArgumentError,
+          "expected #{__MODULE__} rule :prefer to be [modules: [...]], got: #{inspect(prefer)}"
+  end
+
+  defp module?(module), do: is_atom(module) and module not in [nil, false, true]
 
   defp matchers!(rule) do
     case Keyword.fetch(rule, :when) do
@@ -458,6 +485,11 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   defp raise_rule_error!(rule) do
     raise ArgumentError,
           "expected #{__MODULE__} rule to be a keyword list, got: #{inspect(rule)}"
+  end
+
+  defp raise_prefer_modules_error!(modules) do
+    raise ArgumentError,
+          "expected #{__MODULE__} rule :prefer :modules to be a non-empty list of modules, got: #{inspect(modules)}"
   end
 
   defp raise_matchers_error!(matchers) do
