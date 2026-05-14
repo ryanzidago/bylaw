@@ -36,7 +36,8 @@ defmodule MyAppWeb.PageHTMLTest do
     Bylaw.HTML.Check.RequireImageAlt,
     Bylaw.HTML.Check.RequireButtonType,
     Bylaw.HTML.Check.RequireInputAutocomplete,
-    Bylaw.HTML.Check.NoInlineStyle
+    Bylaw.HTML.Check.NoInlineStyle,
+    Bylaw.HTML.Check.NoDuplicateAttributes
   ]
 
   test "home page satisfies Bylaw HTML checks", %{conn: conn} do
@@ -77,7 +78,8 @@ defmodule MyAppWeb.HTMLAssertions do
     Bylaw.HTML.Check.RequireImageAlt,
     Bylaw.HTML.Check.RequireButtonType,
     Bylaw.HTML.Check.RequireInputAutocomplete,
-    Bylaw.HTML.Check.NoInlineStyle
+    Bylaw.HTML.Check.NoInlineStyle,
+    Bylaw.HTML.Check.NoDuplicateAttributes
   ]
 
   def assert_valid_html(html) when is_binary(html) do
