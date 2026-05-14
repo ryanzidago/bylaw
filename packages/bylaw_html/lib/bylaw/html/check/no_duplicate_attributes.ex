@@ -105,10 +105,15 @@ defmodule Bylaw.HTML.Check.NoDuplicateAttributes do
 
   defp duplicate_names(attrs) do
     attrs
-    |> Enum.map(fn {name, _value} -> name end)
-    |> Enum.frequencies()
-    |> Enum.filter(fn {_name, count} -> count > 1 end)
-    |> Enum.map(fn {name, _count} -> name end)
+    |> Enum.reduce({MapSet.new(), MapSet.new()}, fn {name, _value}, {seen, duplicates} ->
+      if MapSet.member?(seen, name) do
+        {seen, MapSet.put(duplicates, name)}
+      else
+        {MapSet.put(seen, name), duplicates}
+      end
+    end)
+    |> elem(1)
+    |> MapSet.to_list()
     |> Enum.sort()
   end
 
