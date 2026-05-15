@@ -282,6 +282,56 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   end
 
   defp traverse_query_logic(
+         {:|>, _pipe_meta,
+          [
+            left,
+            {{:., _dot_meta, [{:__aliases__, _aliases_meta, [:Ecto, :Query]}, function]}, meta,
+             _args}
+          ]} = node,
+         issues,
+         aliases,
+         current_module,
+         issue_meta,
+         config
+       )
+       when function in @ecto_query_functions do
+    {node,
+     maybe_add_schema_issue(
+       issues,
+       issue_meta,
+       config,
+       aliases,
+       current_module,
+       meta,
+       left,
+       "Ecto.Query.#{function}"
+     )}
+  end
+
+  defp traverse_query_logic(
+         {{:., _dot_meta, [{:__aliases__, _aliases_meta, [:Ecto, :Query]}, function]}, meta,
+          [first_arg | _rest]} = node,
+         issues,
+         aliases,
+         current_module,
+         issue_meta,
+         config
+       )
+       when function in @ecto_query_functions do
+    {node,
+     maybe_add_schema_issue(
+       issues,
+       issue_meta,
+       config,
+       aliases,
+       current_module,
+       meta,
+       queryable_from_arg(first_arg),
+       "Ecto.Query.#{function}"
+     )}
+  end
+
+  defp traverse_query_logic(
          {:|>, _pipe_meta, [left, {function, meta, _args}]} = node,
          issues,
          aliases,
@@ -323,6 +373,62 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
        queryable_from_arg(first_arg),
        Atom.to_string(function)
      )}
+  end
+
+  defp traverse_query_logic(
+         {:|>, _pipe_meta, [left, {{:., _dot_meta, [repo, function]}, meta, _args}]} = node,
+         issues,
+         aliases,
+         current_module,
+         issue_meta,
+         config
+       )
+       when function in @repo_query_functions do
+    issues =
+      if repo_module?(repo, aliases, config.repo_modules) do
+        maybe_add_schema_issue(
+          issues,
+          issue_meta,
+          config,
+          aliases,
+          current_module,
+          meta,
+          left,
+          repo_trigger(repo, function)
+        )
+      else
+        issues
+      end
+
+    {node, issues}
+  end
+
+  defp traverse_query_logic(
+         {:|>, _pipe_meta, [left, {{:., _dot_meta, [repo, function]}, meta, _args}]} = node,
+         issues,
+         aliases,
+         current_module,
+         issue_meta,
+         config
+       )
+       when function in @repo_write_functions do
+    issues =
+      if repo_module?(repo, aliases, config.repo_modules) do
+        maybe_add_schema_expression_issue(
+          issues,
+          issue_meta,
+          config,
+          aliases,
+          current_module,
+          meta,
+          left,
+          repo_trigger(repo, function)
+        )
+      else
+        issues
+      end
+
+    {node, issues}
   end
 
   defp traverse_query_logic(
