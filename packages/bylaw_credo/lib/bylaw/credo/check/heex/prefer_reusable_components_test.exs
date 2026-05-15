@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
+defmodule Bylaw.Credo.Check.HEEx.PreferReusableComponentsTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.HEEx.PreferComponentModule
+  alias Bylaw.Credo.Check.HEEx.PreferReusableComponents
   alias Bylaw.Credo.Plugin.HEExSources
 
   @button_rule [
@@ -24,7 +24,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> assert_issue(%{
       line_no: 4,
       trigger: "<button",
@@ -43,7 +43,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> assert_issue(%{line_no: 4, trigger: "<button"})
   end
 
@@ -59,7 +59,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> refute_issues()
   end
 
@@ -74,7 +74,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/my_app_web/ui/buttons.ex")
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> refute_issues()
   end
 
@@ -98,7 +98,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{
       line_no: 4,
       trigger: "<button",
@@ -116,7 +116,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/my_app_web/ui/icon_buttons.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> refute_issues()
   end
 
@@ -145,7 +145,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/my_app_web/ui/buttons.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 5, trigger: "<table"})
   end
 
@@ -169,7 +169,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{
       line_no: 4,
       trigger: "<div",
@@ -199,7 +199,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 4, trigger: "<a"})
   end
 
@@ -223,7 +223,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 4, trigger: "<section"})
   end
 
@@ -248,7 +248,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 4, trigger: "<div"})
   end
 
@@ -273,7 +273,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issues(2)
     |> assert_issues_match([
       %{line_no: 4, trigger: "<table"},
@@ -302,7 +302,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 5, trigger: "<a"})
   end
 
@@ -326,7 +326,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     end
     """
     |> to_source_file("lib/example.ex")
-    |> run_check(PreferComponentModule, rule)
+    |> run_check(PreferReusableComponents, rule)
     |> assert_issue(%{line_no: 4, trigger: "data-dropdown"})
   end
 
@@ -337,7 +337,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     </section>
     """
     |> Credo.SourceFile.parse("lib/example/index.html.heex")
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> assert_issue(%{line_no: 2, trigger: "<button"})
   end
 
@@ -365,7 +365,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
     assert String.ends_with?(filename, "index.html.heex")
 
     source_files
-    |> run_check(PreferComponentModule, @button_rule)
+    |> run_check(PreferReusableComponents, @button_rule)
     |> assert_issue(%{line_no: 2, trigger: "<button"})
   end
 
@@ -385,9 +385,9 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
       )
 
     assert_raise ArgumentError,
-                 "expected Elixir.Bylaw.Credo.Check.HEEx.PreferComponentModule :rules to be a non-empty list of rules",
+                 "expected Elixir.Bylaw.Credo.Check.HEEx.PreferReusableComponents :rules to be a non-empty list of rules",
                  fn ->
-                   PreferComponentModule.run(source_file)
+                   PreferReusableComponents.run(source_file)
                  end
   end
 
@@ -416,9 +416,9 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
       )
 
     assert_raise ArgumentError,
-                 "unknown Elixir.Bylaw.Credo.Check.HEEx.PreferComponentModule matcher option: :unknown",
+                 "unknown Elixir.Bylaw.Credo.Check.HEEx.PreferReusableComponents matcher option: :unknown",
                  fn ->
-                   PreferComponentModule.run(source_file, rule)
+                   PreferReusableComponents.run(source_file, rule)
                  end
   end
 
@@ -447,9 +447,9 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModuleTest do
       )
 
     assert_raise ArgumentError,
-                 "expected Elixir.Bylaw.Credo.Check.HEEx.PreferComponentModule rule :prefer to be [modules: [...]], got: MyAppWeb.UI.Buttons",
+                 "expected Elixir.Bylaw.Credo.Check.HEEx.PreferReusableComponents rule :prefer to be [modules: [...]], got: MyAppWeb.UI.Buttons",
                  fn ->
-                   PreferComponentModule.run(source_file, rule)
+                   PreferReusableComponents.run(source_file, rule)
                  end
   end
 

@@ -1,6 +1,6 @@
-defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
+defmodule Bylaw.Credo.Check.HEEx.PreferReusableComponents do
   @moduledoc """
-  Prefers configured component modules for matching HEEx UI patterns.
+  Prefers configured reusable components for matching HEEx UI patterns.
 
   ## Examples
 
@@ -9,9 +9,9 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   Configure explicit rules for the UI patterns your application wants to route
-  through shared component modules:
+  through shared reusable components:
 
-        {Bylaw.Credo.Check.HEEx.PreferComponentModule,
+        {Bylaw.Credo.Check.HEEx.PreferReusableComponents,
            rules: [
              [
                prefer: [modules: [MyAppWeb.UI.Buttons]],
@@ -63,7 +63,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.HEEx.PreferComponentModule,
+          {Bylaw.Credo.Check.HEEx.PreferReusableComponents,
            rules: [
              [prefer: [modules: [MyAppWeb.UI.Buttons]], when: [[html_tag: "button"]]],
              [prefer: [modules: [MyAppWeb.UI.Tables]], when: [[html_tag: "table"]]],
@@ -102,7 +102,7 @@ defmodule Bylaw.Credo.Check.HEEx.PreferComponentModule do
     explanations: [
       check: @moduledoc,
       params: [
-        rules: "Rules that map matching HEEx UI patterns to preferred component modules."
+        rules: "Rules that map matching HEEx UI patterns to reusable components."
       ]
     ]
 

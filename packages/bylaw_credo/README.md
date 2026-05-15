@@ -29,7 +29,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
-        {Bylaw.Credo.Check.HEEx.PreferComponentModule,
+        {Bylaw.Credo.Check.HEEx.PreferReusableComponents,
          rules: [
            [prefer: [modules: [MyAppWeb.UI.Buttons]], when: [[html_tag: "button"]]]
          ]},
