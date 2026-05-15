@@ -128,6 +128,22 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     |> assert_issue(%{line_no: 6, trigger: "from"})
   end
 
+  test "from schema with keyword clauses is flagged" do
+    """
+    defmodule MyApp.Branches do
+      import Ecto.Query
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        from(Conversation, where: [published: true])
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "from"})
+  end
+
   test "schema piped into where is flagged" do
     """
     defmodule MyApp.Branches do
@@ -143,6 +159,37 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     |> to_source_file("lib/my_app/branches.ex")
     |> run_context_check()
     |> assert_issue(%{line_no: 7, trigger: "where"})
+  end
+
+  test "schema piped into remote Ecto query function is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        Conversation
+        |> Ecto.Query.where([c], c.id == 1)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "Ecto.Query.where"})
+  end
+
+  test "remote Ecto query function against schema is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        Ecto.Query.where(Conversation, [c], c.id == 1)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 5, trigger: "Ecto.Query.where"})
   end
 
   test "repo get_by against schema is flagged" do
@@ -161,6 +208,55 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     |> assert_issue(%{line_no: 6, trigger: "Repo.get_by"})
   end
 
+  test "repo all against schema is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def all do
+        Repo.all(Conversation)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "Repo.all"})
+  end
+
+  test "schema piped into repo all is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def all do
+        Conversation
+        |> Repo.all()
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 7, trigger: "Repo.all"})
+  end
+
+  test "repo aggregate against schema is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def count do
+        Repo.aggregate(Conversation, :count)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "Repo.aggregate"})
+  end
+
   test "repo insert of schema struct is flagged" do
     """
     defmodule MyApp.Branches do
@@ -175,6 +271,55 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     |> to_source_file("lib/my_app/branches.ex")
     |> run_context_check()
     |> assert_issue(%{line_no: 6, trigger: "Repo.insert"})
+  end
+
+  test "schema struct piped into repo insert is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def create(attrs) do
+        %Conversation{name: attrs.name}
+        |> Repo.insert()
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 7, trigger: "Repo.insert"})
+  end
+
+  test "repo update of schema changeset is flagged when detectable" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def update(conversation, attrs) do
+        Repo.update(Conversation.changeset(conversation, attrs))
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "Repo.update"})
+  end
+
+  test "repo delete bang of schema struct is flagged" do
+    """
+    defmodule MyApp.Branches do
+      alias MyApp.Conversations.Conversation
+      alias MyApp.Repo
+
+      def delete do
+        Repo.delete!(%Conversation{})
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{line_no: 6, trigger: "Repo.delete!"})
   end
 
   test "fully qualified schema modules are detected" do
@@ -212,6 +357,26 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     })
   end
 
+  test "alias as syntax is detected" do
+    """
+    defmodule MyApp.Branches do
+      import Ecto.Query
+      alias MyApp.Conversations.Conversation, as: Chat
+
+      def query do
+        from(c in Chat, where: c.id == 1)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> assert_issue(%{
+      line_no: 6,
+      trigger: "from",
+      message: ~r/MyApp\.Conversations\.Conversation/
+    })
+  end
+
   test "excluded modules are respected" do
     """
     defmodule MyApp.Branches.Legacy do
@@ -225,6 +390,22 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     """
     |> to_source_file("lib/my_app/branches/legacy.ex")
     |> run_context_check(excluded_modules: [MyApp.Branches.Legacy])
+    |> refute_issues()
+  end
+
+  test "excluded modules can be configured as strings" do
+    """
+    defmodule MyApp.Branches.Legacy do
+      import Ecto.Query
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        from(c in Conversation, where: c.id == 1)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches/legacy.ex")
+    |> run_context_check(excluded_modules: ["MyApp.Branches.Legacy"])
     |> refute_issues()
   end
 
@@ -256,6 +437,38 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
     """
     |> to_source_file("lib/my_app/branches.ex")
     |> run_context_check(repo_modules: [MyApp.Repo])
+    |> refute_issues()
+  end
+
+  test "does not report when contexts are not configured" do
+    """
+    defmodule MyApp.Branches do
+      import Ecto.Query
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        from(c in Conversation, where: c.id == 1)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_check(ContextOwnsSchemaQueries)
+    |> refute_issues()
+  end
+
+  test "allow owner descendants option permits nested modules" do
+    """
+    defmodule MyApp.Conversations.Detail do
+      import Ecto.Query
+      alias MyApp.Conversations.Conversation
+
+      def query do
+        from(c in Conversation, where: c.visible)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/conversations/detail.ex")
+    |> run_context_check(allow_owner_descendants: true)
     |> refute_issues()
   end
 
