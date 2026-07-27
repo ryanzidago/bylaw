@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 - 2026-07-27
 
 - Add `Bylaw.Db.Adapters.Postgres.UniqueKeys` for reading conservative unique
   ordering keys from Postgres.
