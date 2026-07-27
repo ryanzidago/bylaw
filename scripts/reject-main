@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+case "$branch" in
+  main | master)
+    echo "Direct commits and pushes from '$branch' are disabled." >&2
+    echo "Create a worktree branch first: wt switch --create <branch-name>" >&2
+    exit 1
+    ;;
+esac

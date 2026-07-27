@@ -1,0 +1,121 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
+
+case "$branch" in
+  main | master) ;;
+  *) exit 0 ;;
+esac
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "Warning: jq is unavailable; skipping finished PR worktree cleanup" >&2
+  exit 0
+fi
+
+fixture_root="$(mktemp -d)"
+trap 'rm -rf "$fixture_root"' EXIT HUP INT TERM
+
+worktrees="$fixture_root/worktrees"
+pull_requests="$fixture_root/pull-requests"
+removals="$fixture_root/removals"
+
+if ! wt --config-set 'list.json-schema=1' list --format json >"$worktrees"; then
+  echo "Warning: could not identify worktrees; skipping finished PR cleanup" >&2
+  exit 0
+fi
+
+if ! gh pr list \
+  --state all \
+  --limit 1000 \
+  --json headRefName,state >"$pull_requests"; then
+  echo "Warning: could not read pull requests; skipping finished PR cleanup" >&2
+  exit 0
+fi
+
+if ! jq -e 'type == "array"' "$worktrees" >/dev/null ||
+  ! jq -e 'type == "array"' "$pull_requests" >/dev/null; then
+  echo "Warning: worktree or pull request state was invalid; skipping finished PR cleanup" >&2
+  exit 0
+fi
+
+if ! jq -r '
+    .[]
+    | select(
+        .kind == "worktree"
+        and (.is_main | not)
+        and (.branch | type == "string")
+        and (.path | type == "string")
+      )
+    | [
+        .branch,
+        .path,
+        ([
+          .working_tree.staged,
+          .working_tree.modified,
+          .working_tree.untracked,
+          .working_tree.renamed,
+          .working_tree.deleted,
+          (.operation_state != null),
+          (.worktree.state == "locked")
+        ] | any)
+      ]
+    | @tsv
+  ' "$worktrees" >"$fixture_root/worktree-rows"; then
+  echo "Warning: could not parse worktrees; skipping finished PR cleanup" >&2
+  exit 0
+fi
+
+: >"$removals"
+tab=$'\t'
+
+while IFS="$tab" read -r worktree_branch worktree_path worktree_dirty; do
+  [[ -n "$worktree_branch" ]] || continue
+
+  if ! pr_state="$(
+    jq -r \
+      --arg branch "$worktree_branch" \
+      '
+        [.[] | select(.headRefName == $branch) | .state]
+        | unique
+        | if index("OPEN") then
+            "open"
+          elif index("MERGED") then
+            "merged"
+          elif index("CLOSED") then
+            "closed"
+          else
+            "none"
+          end
+      ' \
+      "$pull_requests"
+  )"; then
+    echo "Warning: could not resolve pull request state; skipping finished PR cleanup" >&2
+    exit 0
+  fi
+
+  case "$pr_state,$worktree_dirty" in
+    merged,false | closed,false)
+      printf '%s\t%s\t%s\n' "$pr_state" "$worktree_branch" "$worktree_path" >>"$removals"
+      ;;
+    merged,true | closed,true)
+      echo "Preserving dirty worktree for $pr_state pull request: $worktree_path" >&2
+      ;;
+  esac
+done <"$fixture_root/worktree-rows"
+
+while IFS="$tab" read -r pr_state worktree_branch worktree_path; do
+  [[ -n "$worktree_branch" ]] || continue
+
+  echo "Removing $worktree_branch worktree for $pr_state pull request"
+
+  remove_args=(--yes remove --foreground --reap)
+
+  if [[ "$pr_state" == "closed" ]]; then
+    remove_args+=(--no-delete-branch)
+  fi
+
+  if ! wt "${remove_args[@]}" "$worktree_path"; then
+    echo "Warning: could not remove finished PR worktree: $worktree_path" >&2
+  fi
+done <"$removals"

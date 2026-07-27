@@ -1,2 +1,4 @@
 [tools]
-worktrunk = "0.50.0"
+gh = "2.96.0"
+jq = "1.8.2"
+worktrunk = "0.69.2"
