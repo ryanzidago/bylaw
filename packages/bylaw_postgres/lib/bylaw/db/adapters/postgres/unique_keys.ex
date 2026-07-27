@@ -104,11 +104,26 @@ defmodule Bylaw.Db.Adapters.Postgres.UniqueKeys do
 
   """
 
+  @typedoc """
+  Database columns that together form one verified unique key.
+  """
   @type unique_key :: nonempty_list(String.t())
+  @typedoc """
+  Verified unique keys keyed by database schema and table.
+
+  A `nil` database schema represents an unqualified table visible through the
+  current Postgres search path.
+  """
   @type catalogue :: %{
           optional({String.t() | nil, String.t()}) => list(unique_key())
         }
+  @typedoc """
+  Option accepted by `fetch!/2`.
+  """
   @type fetch_opt :: {:dynamic_repo, atom() | pid() | nil}
+  @typedoc """
+  Options accepted by `fetch!/2`.
+  """
   @type fetch_opts :: list(fetch_opt())
 
   @row_keys %{
@@ -129,7 +144,9 @@ defmodule Bylaw.Db.Adapters.Postgres.UniqueKeys do
   @doc """
   Fetches verified unique keys from one Postgres repo with options.
 
-  The only supported option is `:dynamic_repo`.
+  The only supported option is `:dynamic_repo`. Pass a dynamic repo name or PID
+  to run the catalogue query against that repo. The previously selected dynamic
+  repo is restored after the query.
   """
   @spec fetch!(repo :: module(), opts :: fetch_opts()) :: catalogue()
   def fetch!(repo, opts) when is_atom(repo) and not is_nil(repo) and is_list(opts) do
