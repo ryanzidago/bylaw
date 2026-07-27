@@ -89,6 +89,7 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
     create_missing_primary_key!(schema)
     create_composite_uuid_primary_key!(schema)
     create_composite_mixed_primary_key!(schema)
+    create_unique_key_examples!(schema)
   end
 
   defp create_pg_named_fixture_schema!(schema) do
@@ -357,6 +358,55 @@ defmodule Bylaw.Db.Postgres.TestDatabase do
       account_id bigint NOT NULL,
       PRIMARY KEY (tenant_id, account_id)
     )
+    """)
+  end
+
+  defp create_unique_key_examples!(schema) do
+    query!("""
+    CREATE TABLE #{table(schema, "unique_key_examples")} (
+      id bigint PRIMARY KEY,
+      slug text NOT NULL UNIQUE,
+      nullable_code text,
+      nulls_not_distinct_code text,
+      organisation_key bigint NOT NULL,
+      sequence bigint NOT NULL,
+      expression_value text NOT NULL,
+      active boolean NOT NULL DEFAULT true,
+      included_code text NOT NULL,
+      included_note text,
+      deferred_code text NOT NULL,
+      custom_operator_code text NOT NULL,
+      UNIQUE (organisation_key, sequence),
+      UNIQUE NULLS NOT DISTINCT (nulls_not_distinct_code),
+      UNIQUE (deferred_code) DEFERRABLE INITIALLY IMMEDIATE
+    )
+    """)
+
+    query!("""
+    CREATE UNIQUE INDEX unique_key_examples_nullable_code_idx
+      ON #{table(schema, "unique_key_examples")} (nullable_code)
+    """)
+
+    query!("""
+    CREATE UNIQUE INDEX unique_key_examples_partial_idx
+      ON #{table(schema, "unique_key_examples")} (expression_value)
+      WHERE active
+    """)
+
+    query!("""
+    CREATE UNIQUE INDEX unique_key_examples_expression_idx
+      ON #{table(schema, "unique_key_examples")} (lower(expression_value))
+    """)
+
+    query!("""
+    CREATE UNIQUE INDEX unique_key_examples_included_idx
+      ON #{table(schema, "unique_key_examples")} (included_code)
+      INCLUDE (included_note)
+    """)
+
+    query!("""
+    CREATE UNIQUE INDEX unique_key_examples_custom_operator_idx
+      ON #{table(schema, "unique_key_examples")} (custom_operator_code text_pattern_ops)
     """)
   end
 
