@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-07-27
 
 - Add `Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries` to enforce configured
   Phoenix context ownership for Ecto schema query and Repo CRUD logic.
