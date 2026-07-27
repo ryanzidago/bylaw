@@ -1,13 +1,10 @@
-<!--
-Replace the three branch placeholders below with full PR URLs after the stack is
-opened. No PRs existed for these branches when this description was prepared.
--->
 <!-- stack:bylaw-ui-mvp:start -->
 ## 🥞 Stack: `bylaw-ui-mvp`
 
-- `codex/bylaw-ui-core-contract` — Add the browser-independent Bylaw UI contract
-  - `codex/bylaw-ui-playwright` — Add the Playwright layout measurement boundary
-    - 👉 **`codex/bylaw-ui-mvp-release` — Publish the Bylaw UI MVP** ← _you are here_
+- https://github.com/ryanzidago/bylaw/pull/170 — Scaffold bylaw-ui package
+  - https://github.com/ryanzidago/bylaw/pull/172 — Implement browser-independent Bylaw UI contract
+    - https://github.com/ryanzidago/bylaw/pull/173 — Add Playwright layout measurement boundary
+      - 👉 **https://github.com/ryanzidago/bylaw/pull/174 — Prepare publishable Bylaw UI MVP** ← _you are here_
 <!-- stack:bylaw-ui-mvp:end -->
 
 ---
@@ -16,9 +13,11 @@ opened. No PRs existed for these branches when this description was prepared.
 
 Frontend teams need deterministic, structured layout checks without coupling rule evaluation to a browser runtime. This stack delivers the initial `bylaw-ui` package: pure geometry contracts, a single-snapshot Playwright measurement boundary, and a publishable package validated against the complete acceptance contract in [#163](https://github.com/ryanzidago/bylaw/issues/163).
 
+Closes #163.
+
 ## What
 
-Stacks on `codex/bylaw-ui-playwright`; replace this branch reference with the full parent PR URL after the stack is opened.
+Stacks on https://github.com/ryanzidago/bylaw/pull/173.
 
 This PR turns the completed core and Playwright layers into a publishable `bylaw-ui` 0.1.0 package. It emits ESM JavaScript and declarations for the root and `bylaw-ui/playwright` entrypoints, adds package metadata and documentation, incorporates the package into repository QA, and closes every remaining acceptance scaffold with meaningful coverage.
 
@@ -28,7 +27,7 @@ The package is also packed and installed into an isolated NodeNext TypeScript co
 
 Consumers need confidence that the package boundary behaves like the source tree: declarations resolve, the optional Playwright entrypoint composes with the root evaluator, browser measurements retain CSS-pixel semantics, and published artifacts exclude development-only files. The release gate catches packaging, module-identity, browser-lifecycle, and acceptance-coverage failures before publication.
 
-Previous steps: the browser-independent contract and Playwright execution boundary are the first two PRs in this stack.
+Previous steps: https://github.com/ryanzidago/bylaw/pull/172 and https://github.com/ryanzidago/bylaw/pull/173 implement the core and browser layers.
 
 Next steps: cross-browser certification may be added after Chromium-backed V1 usage establishes the required compatibility surface.
 
