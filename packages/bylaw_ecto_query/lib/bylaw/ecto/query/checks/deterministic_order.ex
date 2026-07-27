@@ -172,7 +172,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
         if deterministic_database_fields?(query, fields, unique_keys) do
           :ok
         else
-          {:error, [issue(operation, fields, primary_key, unique_keys)]}
+          {:error, [issue(operation, query, fields, primary_key, unique_keys)]}
         end
 
       :error ->
@@ -231,7 +231,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   defp deterministic_database_fields?(query, fields, unique_keys) do
     database_fields =
       query
-      |> database_order_fields(fields)
+      |> database_fields(fields)
       |> MapSet.new()
 
     Enum.any?(unique_keys, fn unique_key ->
@@ -241,7 +241,7 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     end)
   end
 
-  defp database_order_fields(query, fields) do
+  defp database_fields(query, fields) do
     case Introspection.root_schema(query) do
       {:ok, schema} ->
         Enum.flat_map(fields, fn field ->
@@ -338,10 +338,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     }
   end
 
-  defp issue(operation, fields, primary_key, unique_keys) do
+  defp issue(operation, query, fields, primary_key, unique_keys) do
     %Issue{
       check: __MODULE__,
-      message: message(primary_key, unique_keys),
+      message: message(primary_key, database_fields(query, primary_key), unique_keys),
       meta: %{
         operation: operation,
         primary_key: primary_key,
@@ -359,23 +359,25 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     "expected ordered query to include the root primary key: #{format_keys(primary_key)}"
   end
 
-  defp message([], []) do
+  defp message([], [], []) do
     "expected ordered query to include a verified root unique key, but none are known"
   end
 
-  defp message(primary_key, []) do
+  defp message(primary_key, _database_primary_key, []) do
     "expected ordered query to include the root primary key: #{format_keys(primary_key)}"
   end
 
-  defp message(primary_key, unique_keys) do
+  defp message(_primary_key, database_primary_key, unique_keys) do
     primary_keys =
-      if Enum.empty?(primary_key) do
+      if Enum.empty?(database_primary_key) do
         []
       else
-        [Enum.map(primary_key, &Atom.to_string/1)]
+        [database_primary_key]
       end
 
-    "expected ordered query to include a verified root unique key: #{format_unique_keys(primary_keys ++ unique_keys)}"
+    unique_keys = Enum.uniq(primary_keys ++ unique_keys)
+
+    "expected ordered query to include a verified root unique key: #{format_unique_keys(unique_keys)}"
   end
 
   defp format_keys(keys), do: Enum.map_join(keys, ", ", &inspect/1)
