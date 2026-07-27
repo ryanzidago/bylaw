@@ -65,6 +65,42 @@ defmodule MyApp.Repo do
 end
 ```
 
+### Database-backed deterministic ordering
+
+`Bylaw.Ecto.Query.Checks.DeterministicOrder` trusts root Ecto primary keys by
+default. To recognize other verified unique keys, pass a zero-arity resolver
+that returns database columns by `{database_schema, table}`.
+
+Build the check list at runtime when the resolver closes over a repo:
+
+```elixir
+defp query_checks do
+  [
+    {Bylaw.Ecto.Query.Checks.DeterministicOrder,
+     unique_keys: fn ->
+       Bylaw.Db.Adapters.Postgres.UniqueKeys.fetch!(__MODULE__)
+     end}
+  ]
+end
+
+def prepare_query(operation, query, opts) do
+  case Bylaw.Ecto.Query.validate(
+         operation,
+         query,
+         query_checks(),
+         Keyword.get(opts, :bylaw, [])
+       ) do
+    :ok -> {query, opts}
+    {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
+  end
+end
+```
+
+The resolver may use `bylaw_postgres`, another database integration, or static
+application-owned metadata. Bylaw invokes it only when an ordered query has not
+already been proven deterministic by its reflected primary key. Resolver
+failures and malformed catalogues raise instead of silently falling back.
+
 ### Call-site overrides
 
 Ecto passes repo call options to `prepare_query/3`, but Bylaw only uses them
