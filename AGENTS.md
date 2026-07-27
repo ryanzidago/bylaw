@@ -16,16 +16,23 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
   management.
 - Do all task work in a linked git worktree under `.worktrees/`.
 - Use a separate linked worktree and branch for each independent task.
-- Create and switch task worktrees with `wt switch --create <branch> --yes` or
-  `wt switch <branch> --yes`.
-- Review PRs with `wt switch pr:<number> --yes` when possible.
+- Create and switch task worktrees with `wt switch --create <branch>` or
+  `wt switch <branch>`.
+- Review PRs with `wt switch pr:<number>` when possible.
 - List worktrees with `wt list`; remove completed worktrees with `wt remove`.
 - Use `wt step diff` to review the full task diff from the branch point.
+- Create an explicitly stacked worktree from the current branch with
+  `wt stack <branch>`.
 - Do not use raw `git worktree` commands for routine task work unless `wt`
   cannot handle the case.
 - Do not close, reopen, merge, or delete GitHub PRs or remote branches unless
   the user explicitly asks for that GitHub-side state change.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
+- Treat every worktree as owned by the session that created or was assigned to
+  it. Do not remove, reset, or repurpose another session's active worktree.
+- The post-merge hook removes clean worktrees for merged PRs and clean
+  worktrees for closed PRs. It preserves dirty worktrees, open or reopened PRs,
+  branches without PRs, and the local branch for a closed-but-unmerged PR.
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
@@ -37,6 +44,7 @@ Configure Worktrunk once per machine so new worktrees stay inside this repo:
 mise trust
 mise install
 wt config create
+wt config approvals add
 ```
 
 Set the user config value:
@@ -48,14 +56,15 @@ worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 If user config is unavailable, pass the path template for the command:
 
 ```sh
-WORKTRUNK_WORKTREE_PATH='{{ repo_path }}/.worktrees/{{ branch | sanitize }}' wt switch --create <branch> --yes
+WORKTRUNK_WORKTREE_PATH='{{ repo_path }}/.worktrees/{{ branch | sanitize }}' wt switch --create <branch>
 ```
 
 Useful Worktrunk commands for agents:
 
 ```sh
-wt switch --create codex/<task> --yes
-wt switch pr:<number> --yes
+wt switch --create codex/<task>
+wt switch pr:<number>
+wt stack codex/<stacked-task>
 wt step diff
 wt remove
 wt step prune
