@@ -14,22 +14,35 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 
 - Use Worktrunk (`wt`) as the primary interface for worktree lifecycle and
   management.
-- Do all task work in a linked git worktree under `.worktrees/`.
+- Never modify files, stage changes, commit, or push while the current branch
+  is `main` or `master`.
+- Before changing the repository, create a dedicated linked worktree under
+  `.worktrees/`, or reuse the existing worktree for the branch or PR being
+  continued.
 - Use a separate linked worktree and branch for each independent task.
 - Create and switch task worktrees with `wt switch --create <branch>` or
   `wt switch <branch>`.
 - Review PRs with `wt switch pr:<number>` when possible.
-- List worktrees with `wt list`; remove completed worktrees with `wt remove`.
+- If worktree creation fails, inspect `wt list` and the branch state for a
+  partially-created worktree, then attempt safe recovery. If no dedicated
+  worktree can be used, stop and report the blocker instead of changing the
+  primary checkout.
+- List worktrees with `wt list`; remove only the current session's completed
+  worktree with `wt remove`.
 - Use `wt step diff` to review the full task diff from the branch point.
 - Create an explicitly stacked worktree from the current branch with
   `wt stack <branch>`.
+- The `pre-switch` hook refreshes the primary worktree from its upstream with a
+  fast-forward-only update. Investigate failures instead of bypassing the hook
+  or changing the primary checkout.
 - Do not use raw `git worktree` commands for routine task work unless `wt`
   cannot handle the case.
 - Do not close, reopen, merge, or delete GitHub PRs or remote branches unless
   the user explicitly asks for that GitHub-side state change.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
 - Treat every worktree as owned by the session that created or was assigned to
-  it. Do not remove, reset, or repurpose another session's active worktree.
+  it. Do not remove, reset, or repurpose another session's worktree. If
+  ownership or activity is uncertain, leave it in place and report it.
 - The post-merge hook removes clean worktrees for merged PRs and clean
   worktrees for closed PRs. It preserves dirty worktrees, open or reopened PRs,
   branches without PRs, and the local branch for a closed-but-unmerged PR.
@@ -44,7 +57,6 @@ Configure Worktrunk once per machine so new worktrees stay inside this repo:
 mise trust
 mise install
 wt config create
-wt config approvals add
 ```
 
 Set the user config value:
@@ -52,6 +64,15 @@ Set the user config value:
 ```toml
 worktree-path = "{{ repo_path }}/.worktrees/{{ branch | sanitize }}"
 ```
+
+After reviewing `.config/wt.toml`, approve its hooks and aliases once:
+
+```sh
+wt config approvals add
+```
+
+Do not use `--yes` as a routine substitute for saved approval. Reserve it for
+deliberate non-interactive automation.
 
 If user config is unavailable, pass the path template for the command:
 
@@ -67,8 +88,12 @@ wt switch pr:<number>
 wt stack codex/<stacked-task>
 wt step diff
 wt remove
-wt step prune
+wt step prune --dry-run
 ```
+
+Treat `wt step prune --dry-run` as a diagnostic only. Do not run the pruning
+action without resolving every candidate's ownership and confirming that broad
+local branch cleanup is intended.
 
 ## Elixir Conventions
 
