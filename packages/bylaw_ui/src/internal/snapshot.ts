@@ -2,7 +2,7 @@ import type {
   RawElementMeasurement,
   RawMeasurementSnapshot,
   Rectangle,
-} from "./adapter";
+} from "./adapter.js";
 
 type UnknownRecord = Record<string, unknown>;
 

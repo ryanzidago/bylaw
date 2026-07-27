@@ -3,7 +3,7 @@ import type { Page } from "playwright-core";
 import {
   createInternalAdapter,
   type InternalAdapter,
-} from "./internal/adapter";
+} from "./internal/adapter.js";
 
 export function playwright(page: Page): InternalAdapter {
   if (
