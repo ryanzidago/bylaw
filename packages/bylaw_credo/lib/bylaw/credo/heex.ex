@@ -94,15 +94,14 @@ defmodule Bylaw.Credo.Heex do
 
   @eex_expr [:start_expr, :expr, :end_expr, :middle_expr]
   @heex_extensions [".ex", ".exs"]
-  @tokenizer Phoenix.LiveView.Tokenizer
+  @tokenizers [Phoenix.LiveView.TagEngine.Tokenizer, Phoenix.LiveView.Tokenizer]
   @html_engine Phoenix.LiveView.HTMLEngine
-  @tokenizer_available Code.ensure_loaded?(@tokenizer) and Code.ensure_loaded?(@html_engine)
 
   # Returns whether a compatible Phoenix LiveView tokenizer is available.
   @doc false
   @spec available?() :: boolean()
   def available? do
-    @tokenizer_available
+    not is_nil(tokenizer_module()) and Code.ensure_loaded?(@html_engine)
   end
 
   # Extracts HEEx templates from a Credo source file.
@@ -325,24 +324,22 @@ defmodule Bylaw.Credo.Heex do
     }
   end
 
-  if @tokenizer_available do
-    alias Phoenix.LiveView.HTMLEngine
-    alias Phoenix.LiveView.Tokenizer
+  defp tokenizer_module do
+    Enum.find(@tokenizers, &Code.ensure_loaded?/1)
+  end
 
-    defp tokenizer_init(column, file, source) do
-      Tokenizer.init(column, file, source, HTMLEngine)
-    end
+  defp tokenizer_init(column, file, source) do
+    tokenizer = tokenizer_module()
+    tokenizer.init(column, file, source, @html_engine)
+  end
 
-    defp tokenizer_tokenize(text, meta, tokens, cont, state) do
-      Tokenizer.tokenize(text, meta, tokens, cont, state)
-    end
+  defp tokenizer_tokenize(text, meta, tokens, cont, state) do
+    tokenizer = tokenizer_module()
+    tokenizer.tokenize(text, meta, tokens, cont, state)
+  end
 
-    defp tokenizer_finalize(tokens, file, cont, source) do
-      Tokenizer.finalize(tokens, file, cont, source)
-    end
-  else
-    defp tokenizer_init(_column, _file, _source), do: nil
-    defp tokenizer_tokenize(_text, _meta, tokens, cont, _state), do: {tokens, cont}
-    defp tokenizer_finalize(_tokens, _file, _cont, _source), do: []
+  defp tokenizer_finalize(tokens, file, cont, source) do
+    tokenizer = tokenizer_module()
+    tokenizer.finalize(tokens, file, cont, source)
   end
 end
