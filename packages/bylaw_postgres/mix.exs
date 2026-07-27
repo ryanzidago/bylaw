@@ -77,7 +77,10 @@ defmodule BylawPostgres.MixProject do
       source_ref: "v#{@version}",
       extras: ["README.md"],
       groups_for_modules: [
-        "Postgres adapter": [Bylaw.Db.Adapters.Postgres],
+        "Postgres adapter": [
+          Bylaw.Db.Adapters.Postgres,
+          Bylaw.Db.Adapters.Postgres.UniqueKeys
+        ],
         "Postgres checks": ~r/^(Elixir\.)?Bylaw\.Db\.Adapters\.Postgres\.Checks\./,
         "Ecto helpers": ~r/^(Elixir\.)?Bylaw\.Ecto\./
       ],

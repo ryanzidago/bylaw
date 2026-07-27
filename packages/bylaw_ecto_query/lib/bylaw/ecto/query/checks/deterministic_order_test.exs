@@ -39,6 +39,16 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
     end
   end
 
+  defmodule CustomSourcePost do
+    use Ecto.Schema
+
+    @primary_key {:id, :id, source: :post_id}
+    schema "custom_source_posts" do
+      field(:slug, :string, source: :post_slug)
+      field(:title, :string)
+    end
+  end
+
   defmodule Organisation do
     use Ecto.Schema
 
@@ -152,6 +162,188 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
 
       assert issue.meta.primary_key == [:id]
       assert issue.meta.found_order_keys == [:organisation_id, :sequence]
+    end
+
+    test "accepts a single-column unique key returned by a zero-arity resolver" do
+      query = from(post in Post, order_by: [asc: post.slug])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn -> %{{nil, "posts"} => [["slug"]]} end
+               )
+    end
+
+    test "accepts a complete composite unique key returned by the resolver" do
+      query = from(post in Post, order_by: [asc: post.organisation_id, asc: post.sequence])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "posts"} => [["organisation_id", "sequence"]]}
+                 end
+               )
+    end
+
+    test "rejects an incomplete composite unique key returned by the resolver" do
+      query = from(post in Post, order_by: [asc: post.organisation_id])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "posts"} => [["organisation_id", "sequence"]]}
+                 end
+               )
+
+      assert issue.meta.unique_keys == [["organisation_id", "sequence"]]
+      assert issue.meta.found_order_keys == [:organisation_id]
+      assert issue.message =~ ~s/("organisation_id", "sequence")/
+    end
+
+    test "uses the query database schema to select unique keys" do
+      query =
+        Post
+        |> order_by([post], asc: post.slug)
+        |> put_query_prefix("tenant_a")
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{
+                     {"public", "posts"} => [],
+                     {"tenant_a", "posts"} => [["slug"]]
+                   }
+                 end
+               )
+    end
+
+    test "accepts unique keys for schema-less table sources" do
+      query = from(post in "posts", order_by: [asc: field(post, :slug)])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn -> %{{nil, "posts"} => [["slug"]]} end
+               )
+    end
+
+    test "maps Ecto fields to custom database column sources" do
+      query = from(post in CustomSourcePost, order_by: [asc: post.slug])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "custom_source_posts"} => [["post_slug"]]}
+                 end
+               )
+    end
+
+    test "lists each verified root unique key once in the issue message" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "posts"} => [["id"], ["slug"]]}
+                 end
+               )
+
+      assert issue.message ==
+               ~s/expected ordered query to include a verified root unique key: ("id") or ("slug")/
+
+      assert issue.meta.primary_key == [:id]
+      assert issue.meta.unique_keys == [["id"], ["slug"]]
+    end
+
+    test "names verified root unique keys with database columns in the issue message" do
+      query = from(post in CustomSourcePost, order_by: [asc: post.title])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "custom_source_posts"} => [["post_id"], ["post_slug"]]}
+                 end
+               )
+
+      assert issue.message ==
+               ~s/expected ordered query to include a verified root unique key: ("post_id") or ("post_slug")/
+
+      refute issue.message =~ ~s/("id")/
+      assert issue.meta.primary_key == [:id]
+      assert issue.meta.unique_keys == [["post_id"], ["post_slug"]]
+    end
+
+    test "offers the reflected primary key when it is absent from the unique key catalogue" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "posts"} => [["slug"]]}
+                 end
+               )
+
+      assert issue.message ==
+               ~s/expected ordered query to include a verified root unique key: ("id") or ("slug")/
+
+      assert issue.meta.primary_key == [:id]
+      assert issue.meta.unique_keys == [["slug"]]
+    end
+
+    test "keeps issue metadata in its Ecto field and database column domains" do
+      query = from(post in CustomSourcePost, order_by: [asc: post.title])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn ->
+                   %{{nil, "custom_source_posts"} => [["post_id"], ["post_slug"]]}
+                 end
+               )
+
+      assert String.starts_with?(
+               issue.message,
+               "expected ordered query to include a verified root unique key:"
+             )
+
+      assert issue.meta.primary_key == [:id]
+      assert issue.meta.unique_keys == [["post_id"], ["post_slug"]]
+    end
+
+    test "keeps primary-key-only wording when the catalogue has no source entry" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert {:error, [%Issue{} = issue]} =
+               DeterministicOrder.validate(:all, query, unique_keys: fn -> %{} end)
+
+      assert issue.message == "expected ordered query to include the root primary key: :id"
+      assert issue.meta.primary_key == [:id]
+      assert Enum.empty?(issue.meta.unique_keys)
+    end
+
+    test "invokes the resolver only after primary key reflection cannot prove the order" do
+      query = from(post in Post, order_by: [asc: post.id])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn -> flunk("resolver should not run") end
+               )
+    end
+
+    test "does not invoke the resolver for unordered queries" do
+      query = from(post in Post)
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 unique_keys: fn -> flunk("resolver should not run") end
+               )
+    end
+
+    test "does not suppress resolver failures" do
+      query = from(post in Post, order_by: [asc: post.slug])
+
+      assert_raise RuntimeError, "catalogue unavailable", fn ->
+        DeterministicOrder.validate(:all, query,
+          unique_keys: fn -> raise "catalogue unavailable" end
+        )
+      end
     end
 
     test "requires every field in a composite primary key" do
@@ -326,12 +518,60 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderTest do
                DeterministicOrder.validate(:all, query, validate: nil)
     end
 
-    test "raises when unsupported options are configured" do
+    test "raises when the unique keys resolver is not a zero-arity function" do
       query = from(post in Post, order_by: [asc: post.title])
 
-      assert_raise ArgumentError, "unknown option: :unique_keys", fn ->
-        DeterministicOrder.validate(:all, query, unique_keys: [[:external_id], :slug])
-      end
+      assert_raise ArgumentError,
+                   "expected :unique_keys to be a zero-arity function, got: [[:external_id], :slug]",
+                   fn ->
+                     DeterministicOrder.validate(:all, query,
+                       unique_keys: [[:external_id], :slug]
+                     )
+                   end
+    end
+
+    test "raises when the unique keys resolver does not return a map" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError,
+                   "expected :unique_keys resolver to return a map, got: []",
+                   fn ->
+                     DeterministicOrder.validate(:all, query, unique_keys: fn -> [] end)
+                   end
+    end
+
+    test "raises for malformed unique key catalogue source keys" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError,
+                   ~r/expected :unique_keys map keys to be/,
+                   fn ->
+                     DeterministicOrder.validate(:all, query,
+                       unique_keys: fn -> %{"posts" => [["id"]]} end
+                     )
+                   end
+    end
+
+    test "raises for malformed unique key catalogue values" do
+      query = from(post in Post, order_by: [asc: post.title])
+
+      assert_raise ArgumentError,
+                   ~r/expected unique keys for \{nil, "posts"\} to contain/,
+                   fn ->
+                     DeterministicOrder.validate(:all, query,
+                       unique_keys: fn -> %{{nil, "posts"} => [[]]} end
+                     )
+                   end
+    end
+
+    test "accepts unique keys with scoped rules" do
+      query = from(post in Post, order_by: [asc: post.slug])
+
+      assert :ok =
+               DeterministicOrder.validate(:all, query,
+                 rules: [where: [tables: ["posts"]]],
+                 unique_keys: fn -> %{{nil, "posts"} => [["slug"]]} end
+               )
     end
 
     test "raises when check opts are not a keyword list" do

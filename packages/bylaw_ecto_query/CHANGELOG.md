@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Allow `DeterministicOrder` to use a zero-arity resolver that returns verified
+  unique database columns by schema and table.
+
 ## 0.2.0 - 2026-05-13
 
 ### Added

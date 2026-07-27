@@ -66,6 +66,39 @@ end
 
 See each check module's documentation for its examples, notes, and options.
 
+## Ecto query unique keys
+
+`Bylaw.Db.Adapters.Postgres.UniqueKeys.fetch!/1` reads primary and conservative
+unique column sets for use with
+`Bylaw.Ecto.Query.Checks.DeterministicOrder`:
+
+```elixir
+defp query_checks do
+  [
+    {Bylaw.Ecto.Query.Checks.DeterministicOrder,
+     unique_keys: fn ->
+       Bylaw.Db.Adapters.Postgres.UniqueKeys.fetch!(__MODULE__)
+     end}
+  ]
+end
+```
+
+The result is a map keyed by `{database_schema, table}`:
+
+```elixir
+%{
+  {"public", "posts"} => [
+    ["id"],
+    ["slug"],
+    ["organisation_id", "sequence"]
+  ]
+}
+```
+
+The helper is stateless and performs one catalogue query per invocation.
+`DeterministicOrder` skips the resolver when Ecto primary-key reflection already
+proves the ordering.
+
 ## Rules DSL
 
 Every built-in check accepts the same `rules:` DSL. Checks with default behavior

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add `Bylaw.Db.Adapters.Postgres.UniqueKeys` for reading conservative unique
+  ordering keys from Postgres.
+
 ## 0.2.0 - 2026-05-13
 
 - Standardize every built-in Postgres check on the universal `rules:` DSL, with
