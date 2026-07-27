@@ -4,6 +4,7 @@
 
 - Add `Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries` to enforce configured
   Phoenix context ownership for Ecto schema query and Repo CRUD logic.
+- Support HEEx checks with the tokenizer module used by Phoenix LiveView 1.2.
 
 ## 0.1.1 - 2026-05-13
 
