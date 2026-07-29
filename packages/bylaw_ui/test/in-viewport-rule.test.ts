@@ -27,3 +27,11 @@ test("inViewport rejects a target fully off-screen above the viewport", () => {}
 test("inViewport rejects a target fully off-screen to the right", () => {});
 
 test("inViewport rejects a target fully off-screen below the viewport", () => {});
+
+test("inViewport rejects a target clipped beyond two viewport edges", () => {});
+
+test("inViewport rejects a target larger than the viewport", () => {});
+
+test("inViewport evaluates against the viewport captured with the target", () => {});
+
+test("inViewport observes viewport changes between separate checks", () => {});
