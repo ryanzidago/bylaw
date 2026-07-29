@@ -235,27 +235,52 @@ function sizeDiagnostic(finding: LayoutViolationFinding): string[] {
   const tolerance = number(finding.expected, "tolerancePx") ?? 0;
   const widthDifference = number(actual, "widthDifferencePx");
   const heightDifference = number(actual, "heightDifferencePx");
-  const sameSize = finding.relationship === "sameSize";
+  const comparesWidth =
+    finding.relationship === "sameWidth" || finding.relationship === "sameSize";
+  const comparesHeight =
+    finding.relationship === "sameHeight" || finding.relationship === "sameSize";
 
   return compact([
     ...commonLayoutLines(finding),
-    pixelLine("subject width", number(actual, "subjectWidthPx")),
-    pixelLine("reference width", number(actual, "referenceWidthPx")),
-    pixelLine(sameSize ? "width difference" : "difference", widthDifference),
-    pixelLine("subject height", number(actual, "subjectHeightPx")),
-    pixelLine("reference height", number(actual, "referenceHeightPx")),
-    pixelLine(sameSize ? "height difference" : "difference", heightDifference),
+    comparesWidth
+      ? pixelLine("subject width", number(actual, "subjectWidthPx"))
+      : undefined,
+    comparesWidth
+      ? pixelLine("reference width", number(actual, "referenceWidthPx"))
+      : undefined,
+    comparesWidth
+      ? pixelLine(
+          comparesHeight ? "width difference" : "difference",
+          widthDifference,
+        )
+      : undefined,
+    comparesHeight
+      ? pixelLine("subject height", number(actual, "subjectHeightPx"))
+      : undefined,
+    comparesHeight
+      ? pixelLine("reference height", number(actual, "referenceHeightPx"))
+      : undefined,
+    comparesHeight
+      ? pixelLine(
+          comparesWidth ? "height difference" : "difference",
+          heightDifference,
+        )
+      : undefined,
     `allowed tolerance: ${pixels(tolerance)}`,
-    excessLine(
-      sameSize ? "width exceeds tolerance by" : "exceeds tolerance by",
-      widthDifference,
-      tolerance,
-    ),
-    excessLine(
-      sameSize ? "height exceeds tolerance by" : "exceeds tolerance by",
-      heightDifference,
-      tolerance,
-    ),
+    comparesWidth
+      ? excessLine(
+          comparesHeight ? "width exceeds tolerance by" : "exceeds tolerance by",
+          widthDifference,
+          tolerance,
+        )
+      : undefined,
+    comparesHeight
+      ? excessLine(
+          comparesWidth ? "height exceeds tolerance by" : "exceeds tolerance by",
+          heightDifference,
+          tolerance,
+        )
+      : undefined,
   ]);
 }
 

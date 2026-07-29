@@ -266,7 +266,14 @@ function evaluateSize(
           ruleIndex,
           "size-mismatch",
           { tolerancePx },
-          { widthDifferencePx, heightDifferencePx },
+          {
+            subjectWidthPx: subject.width,
+            referenceWidthPx: reference.width,
+            widthDifferencePx,
+            subjectHeightPx: subject.height,
+            referenceHeightPx: reference.height,
+            heightDifferencePx,
+          },
         ),
       ];
 }
