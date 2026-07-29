@@ -35,32 +35,46 @@ import {
   overlap,
   width,
 } from "bylaw-ui";
-import { playwright } from "bylaw-ui/playwright";
+import {
+  playwright,
+  waitForLayoutTargets,
+} from "bylaw-ui/playwright";
 
-const report = await checkLayout({
-  adapter: playwright(page),
-  rules: [
-    align("avatar-icon", "timeline", "centerY", {
-      tolerancePx: 1,
-    }),
-    leftOf("avatar-icon", "timeline", {
-      gap: { minPx: 8, maxPx: 16 },
-    }),
-    overlap("status-badge", "avatar", {
-      horizontal: { minPx: 8 },
-      vertical: { minPx: 8 },
-    }),
-    inside("status-badge", "avatar", {
-      tolerancePx: 4,
-    }),
-    width("sidebar", { minPx: 260, maxPx: 320 }),
-    height("toolbar", { minPx: 48 }),
-    inViewport("dialog"),
-  ],
+const adapter = playwright(page);
+const rules = [
+  align("avatar-icon", "timeline", "centerY", {
+    tolerancePx: 1,
+  }),
+  leftOf("avatar-icon", "timeline", {
+    gap: { minPx: 8, maxPx: 16 },
+  }),
+  overlap("status-badge", "avatar", {
+    horizontal: { minPx: 8 },
+    vertical: { minPx: 8 },
+  }),
+  inside("status-badge", "avatar", {
+    tolerancePx: 4,
+  }),
+  width("sidebar", { minPx: 260, maxPx: 320 }),
+  height("toolbar", { minPx: 48 }),
+  inViewport("dialog"),
+];
+
+await waitForLayoutTargets(adapter, rules, {
+  timeoutMs: 1_000,
+  stableFrames: 2,
 });
 
+const report = await checkLayout({ adapter, rules });
 assertLayout(report);
 ```
+
+Layout readiness and assertion evaluation are separate, explicit operations.
+`waitForLayoutTargets` waits only for referenced targets to resolve and for
+the normalized geometry used by their rules to remain unchanged for the
+requested number of consecutive animation frames. It does not require targets
+to be visible, non-zero-size, or compliant with the rules. The subsequent
+`checkLayout` call takes one immediate snapshot and evaluates the assertions.
 
 Register Playwright locators when rule operands should not depend on production
 markup. Locator composition keeps descendant addressing scoped to its
