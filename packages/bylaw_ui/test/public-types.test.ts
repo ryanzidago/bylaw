@@ -27,7 +27,9 @@ test("align accepts every supported alignment value", () => {
     "centerX",
     "centerY",
   ];
-  expect(values.map((value) => align("a", "b", value).alignment)).toEqual(values);
+  expect(values.map((value) => align("a", "b", value).alignment)).toEqual(
+    values,
+  );
 });
 
 test("align rejects unsupported alignment values at compile time", () => {
@@ -188,9 +190,7 @@ test("unary element findings correlate codes with diagnostic payloads", () => {
  * without casts or defensive property checks.
  */
 test("width findings narrow to their exact diagnostic payload", () => {
-  function actualWidth(
-    finding: LayoutViolationFinding,
-  ): number | undefined {
+  function actualWidth(finding: LayoutViolationFinding): number | undefined {
     if (finding.relationship !== "width") {
       return undefined;
     }

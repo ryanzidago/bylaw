@@ -18,7 +18,9 @@ test("the README documents the public custom adapter compatibility contract", ()
 
 test("the README includes a small non-Playwright adapter example", () => {
   const section = customAdapterSection();
-  expect(section).toMatch(/```ts[\s\S]*createAdapter\([\s\S]*measure[\s\S]*```/);
+  expect(section).toMatch(
+    /```ts[\s\S]*createAdapter\([\s\S]*measure[\s\S]*```/,
+  );
   expect(section).not.toMatch(/```ts[\s\S]*from "bylaw-ui\/playwright"/);
 });
 
@@ -57,7 +59,9 @@ test("the README distinguishes malformed measurements from layout findings", () 
 test("the README keeps target discovery and platform waiting outside the geometry engine", () => {
   const section = customAdapterSection();
   expect(section).toMatch(/target discovery/i);
-  expect(section).toMatch(/(?:waiting|waits)[\s\S]*(?:adapter|platform|consumer)/i);
+  expect(section).toMatch(
+    /(?:waiting|waits)[\s\S]*(?:adapter|platform|consumer)/i,
+  );
 });
 
 test("the README does not assign relationship inference or aesthetic evaluation to adapters", () => {

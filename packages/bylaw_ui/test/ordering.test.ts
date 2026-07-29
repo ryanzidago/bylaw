@@ -92,15 +92,60 @@ const gapCases: Array<{
   range: { minPx?: number; maxPx?: number };
   pass: boolean;
 }> = [
-  { name: "accepts a gap larger than a minimum gap", gap: 5, range: { minPx: 4 }, pass: true },
-  { name: "accepts a gap exactly equal to a minimum gap", gap: 4, range: { minPx: 4 }, pass: true },
-  { name: "rejects a gap smaller than a minimum gap", gap: 3.99, range: { minPx: 4 }, pass: false },
-  { name: "accepts a gap smaller than a maximum gap", gap: 3, range: { maxPx: 4 }, pass: true },
-  { name: "accepts a gap exactly equal to a maximum gap", gap: 4, range: { maxPx: 4 }, pass: true },
-  { name: "rejects a gap larger than a maximum gap", gap: 4.01, range: { maxPx: 4 }, pass: false },
-  { name: "accepts a gap inside a bounded range", gap: 3, range: { minPx: 2, maxPx: 4 }, pass: true },
-  { name: "rejects a gap below a bounded range", gap: 1.99, range: { minPx: 2, maxPx: 4 }, pass: false },
-  { name: "rejects a gap above a bounded range", gap: 4.01, range: { minPx: 2, maxPx: 4 }, pass: false },
+  {
+    name: "accepts a gap larger than a minimum gap",
+    gap: 5,
+    range: { minPx: 4 },
+    pass: true,
+  },
+  {
+    name: "accepts a gap exactly equal to a minimum gap",
+    gap: 4,
+    range: { minPx: 4 },
+    pass: true,
+  },
+  {
+    name: "rejects a gap smaller than a minimum gap",
+    gap: 3.99,
+    range: { minPx: 4 },
+    pass: false,
+  },
+  {
+    name: "accepts a gap smaller than a maximum gap",
+    gap: 3,
+    range: { maxPx: 4 },
+    pass: true,
+  },
+  {
+    name: "accepts a gap exactly equal to a maximum gap",
+    gap: 4,
+    range: { maxPx: 4 },
+    pass: true,
+  },
+  {
+    name: "rejects a gap larger than a maximum gap",
+    gap: 4.01,
+    range: { maxPx: 4 },
+    pass: false,
+  },
+  {
+    name: "accepts a gap inside a bounded range",
+    gap: 3,
+    range: { minPx: 2, maxPx: 4 },
+    pass: true,
+  },
+  {
+    name: "rejects a gap below a bounded range",
+    gap: 1.99,
+    range: { minPx: 2, maxPx: 4 },
+    pass: false,
+  },
+  {
+    name: "rejects a gap above a bounded range",
+    gap: 4.01,
+    range: { minPx: 2, maxPx: 4 },
+    pass: false,
+  },
 ];
 
 for (const scenario of gapCases) {
@@ -108,7 +153,12 @@ for (const scenario of gapCases) {
     const rule = leftOf("subject", "reference", { gap: scenario.range });
     return scenario.pass
       ? expectPass(rule, rect(-10 - scenario.gap), rect())
-      : expectFailure(rule, rect(-10 - scenario.gap), rect(), "gap-out-of-range");
+      : expectFailure(
+          rule,
+          rect(-10 - scenario.gap),
+          rect(),
+          "gap-out-of-range",
+        );
   });
 }
 
@@ -212,7 +262,15 @@ test("accepts touching rectangles with a zero-width gap range", () =>
   ));
 
 test("horizontal ordering ignores vertical separation", () =>
-  expectPass(leftOf("subject", "reference"), rect(-20, 10_000), rect(0, -10_000)));
+  expectPass(
+    leftOf("subject", "reference"),
+    rect(-20, 10_000),
+    rect(0, -10_000),
+  ));
 
 test("vertical ordering ignores horizontal separation", () =>
-  expectPass(above("subject", "reference"), rect(10_000, -20), rect(-10_000, 0)));
+  expectPass(
+    above("subject", "reference"),
+    rect(10_000, -20),
+    rect(-10_000, 0),
+  ));

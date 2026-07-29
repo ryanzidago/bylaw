@@ -21,7 +21,11 @@ import { rect } from "./support";
 type Rectangle = ReturnType<typeof rect>;
 type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
 
-function passes(rule: BinaryLayoutRule, subject: Rectangle, reference: Rectangle) {
+function passes(
+  rule: BinaryLayoutRule,
+  subject: Rectangle,
+  reference: Rectangle,
+) {
   return evaluateGeometry(rule, 0, subject, reference).length === 0;
 }
 
@@ -54,11 +58,26 @@ function randomRectangle(): Rectangle {
 }
 
 const translations: Array<[string, BinaryLayoutRule]> = [
-  ["alignment is unchanged when both rectangles are translated equally", align("a", "b", "centerX", { tolerancePx: 4 })],
-  ["ordering is unchanged when both rectangles are translated equally", leftOf("a", "b", { tolerancePx: 4, gap: { minPx: 1, maxPx: 100 } })],
-  ["overlap is unchanged when both rectangles are translated equally", overlap("a", "b", { horizontal: { minPx: 1, maxPx: 100 } })],
-  ["containment is unchanged when both rectangles are translated equally", inside("a", "b", { tolerancePx: 4 })],
-  ["size comparison is unchanged when both rectangles are translated equally", sameSize("a", "b", { tolerancePx: 4 })],
+  [
+    "alignment is unchanged when both rectangles are translated equally",
+    align("a", "b", "centerX", { tolerancePx: 4 }),
+  ],
+  [
+    "ordering is unchanged when both rectangles are translated equally",
+    leftOf("a", "b", { tolerancePx: 4, gap: { minPx: 1, maxPx: 100 } }),
+  ],
+  [
+    "overlap is unchanged when both rectangles are translated equally",
+    overlap("a", "b", { horizontal: { minPx: 1, maxPx: 100 } }),
+  ],
+  [
+    "containment is unchanged when both rectangles are translated equally",
+    inside("a", "b", { tolerancePx: 4 }),
+  ],
+  [
+    "size comparison is unchanged when both rectangles are translated equally",
+    sameSize("a", "b", { tolerancePx: 4 }),
+  ],
 ];
 
 for (const [name, rule] of translations) {
@@ -76,12 +95,30 @@ for (const [name, rule] of translations) {
 }
 
 const symmetric: Array<[string, BinaryLayoutRule]> = [
-  ["alignment is symmetric when subject and reference are swapped", align("a", "b", "centerY", { tolerancePx: 3 })],
-  ["overlap is symmetric when subject and reference are swapped", overlap("a", "b", { horizontal: { minPx: 2 }, vertical: { maxPx: 30 } })],
-  ["notOverlap is symmetric when subject and reference are swapped", notOverlap("a", "b")],
-  ["sameWidth is symmetric when subject and reference are swapped", sameWidth("a", "b", { tolerancePx: 3 })],
-  ["sameHeight is symmetric when subject and reference are swapped", sameHeight("a", "b", { tolerancePx: 3 })],
-  ["sameSize is symmetric when subject and reference are swapped", sameSize("a", "b", { tolerancePx: 3 })],
+  [
+    "alignment is symmetric when subject and reference are swapped",
+    align("a", "b", "centerY", { tolerancePx: 3 }),
+  ],
+  [
+    "overlap is symmetric when subject and reference are swapped",
+    overlap("a", "b", { horizontal: { minPx: 2 }, vertical: { maxPx: 30 } }),
+  ],
+  [
+    "notOverlap is symmetric when subject and reference are swapped",
+    notOverlap("a", "b"),
+  ],
+  [
+    "sameWidth is symmetric when subject and reference are swapped",
+    sameWidth("a", "b", { tolerancePx: 3 }),
+  ],
+  [
+    "sameHeight is symmetric when subject and reference are swapped",
+    sameHeight("a", "b", { tolerancePx: 3 }),
+  ],
+  [
+    "sameSize is symmetric when subject and reference are swapped",
+    sameSize("a", "b", { tolerancePx: 3 }),
+  ],
 ];
 
 for (const [name, rule] of symmetric) {
@@ -97,10 +134,26 @@ for (const [name, rule] of symmetric) {
 }
 
 for (const [name, forward, reverse] of [
-  ["leftOf subject reference is equivalent to rightOf reference subject", leftOf("a", "b", { tolerancePx: 2 }), rightOf("a", "b", { tolerancePx: 2 })],
-  ["rightOf subject reference is equivalent to leftOf reference subject", rightOf("a", "b", { tolerancePx: 2 }), leftOf("a", "b", { tolerancePx: 2 })],
-  ["above subject reference is equivalent to below reference subject", above("a", "b", { tolerancePx: 2 }), below("a", "b", { tolerancePx: 2 })],
-  ["below subject reference is equivalent to above reference subject", below("a", "b", { tolerancePx: 2 }), above("a", "b", { tolerancePx: 2 })],
+  [
+    "leftOf subject reference is equivalent to rightOf reference subject",
+    leftOf("a", "b", { tolerancePx: 2 }),
+    rightOf("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "rightOf subject reference is equivalent to leftOf reference subject",
+    rightOf("a", "b", { tolerancePx: 2 }),
+    leftOf("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "above subject reference is equivalent to below reference subject",
+    above("a", "b", { tolerancePx: 2 }),
+    below("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "below subject reference is equivalent to above reference subject",
+    below("a", "b", { tolerancePx: 2 }),
+    above("a", "b", { tolerancePx: 2 }),
+  ],
 ] as const) {
   test(name, () => {
     for (let index = 0; index < 200; index += 1) {
@@ -138,12 +191,36 @@ test("every valid rectangle has the same size as itself", () => {
 });
 
 for (const [name, narrow, wide] of [
-  ["increasing alignment tolerance cannot turn a pass into a failure", align("a", "b", "left", { tolerancePx: 1 }), align("a", "b", "left", { tolerancePx: 2 })],
-  ["increasing ordering tolerance cannot turn a pass into a failure", leftOf("a", "b", { tolerancePx: 1 }), leftOf("a", "b", { tolerancePx: 2 })],
-  ["increasing containment tolerance cannot turn a pass into a failure", inside("a", "b", { tolerancePx: 1 }), inside("a", "b", { tolerancePx: 2 })],
-  ["increasing size tolerance cannot turn a pass into a failure", sameSize("a", "b", { tolerancePx: 1 }), sameSize("a", "b", { tolerancePx: 2 })],
-  ["widening a gap range cannot turn a pass into a failure", leftOf("a", "b", { gap: { minPx: 2, maxPx: 4 } }), leftOf("a", "b", { gap: { minPx: 1, maxPx: 5 } })],
-  ["widening an overlap range cannot turn a pass into a failure", overlap("a", "b", { horizontal: { minPx: 2, maxPx: 4 } }), overlap("a", "b", { horizontal: { minPx: 1, maxPx: 5 } })],
+  [
+    "increasing alignment tolerance cannot turn a pass into a failure",
+    align("a", "b", "left", { tolerancePx: 1 }),
+    align("a", "b", "left", { tolerancePx: 2 }),
+  ],
+  [
+    "increasing ordering tolerance cannot turn a pass into a failure",
+    leftOf("a", "b", { tolerancePx: 1 }),
+    leftOf("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "increasing containment tolerance cannot turn a pass into a failure",
+    inside("a", "b", { tolerancePx: 1 }),
+    inside("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "increasing size tolerance cannot turn a pass into a failure",
+    sameSize("a", "b", { tolerancePx: 1 }),
+    sameSize("a", "b", { tolerancePx: 2 }),
+  ],
+  [
+    "widening a gap range cannot turn a pass into a failure",
+    leftOf("a", "b", { gap: { minPx: 2, maxPx: 4 } }),
+    leftOf("a", "b", { gap: { minPx: 1, maxPx: 5 } }),
+  ],
+  [
+    "widening an overlap range cannot turn a pass into a failure",
+    overlap("a", "b", { horizontal: { minPx: 2, maxPx: 4 } }),
+    overlap("a", "b", { horizontal: { minPx: 1, maxPx: 5 } }),
+  ],
 ] as const) {
   test(name, () => {
     for (let index = 0; index < 500; index += 1) {
@@ -169,9 +246,9 @@ test("scaling both rectangles and every numeric constraint equally preserves the
       tolerancePx: 2 * factor,
       gap: { minPx: 3 * factor, maxPx: 20 * factor },
     });
-    expect(passes(scaled, scale(subject, factor), scale(reference, factor))).toBe(
-      passes(original, subject, reference),
-    );
+    expect(
+      passes(scaled, scale(subject, factor), scale(reference, factor)),
+    ).toBe(passes(original, subject, reference));
   }
 });
 
