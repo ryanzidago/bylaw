@@ -177,10 +177,7 @@ function signedGap(
 }
 
 function evaluateOrdering(
-  rule: Extract<
-    LayoutRule,
-    { kind: "above" | "below" | "leftOf" | "rightOf" }
-  >,
+  rule: Extract<LayoutRule, { kind: "above" | "below" | "leftOf" | "rightOf" }>,
   ruleIndex: number,
   subject: Edges,
   reference: Edges,
@@ -195,7 +192,10 @@ function evaluateOrdering(
         rule,
         ruleIndex,
         "ordering-violation",
-        { tolerancePx, ...(rule.options?.gap ? { gap: rule.options.gap } : {}) },
+        {
+          tolerancePx,
+          ...(rule.options?.gap ? { gap: rule.options.gap } : {}),
+        },
         { signedGapPx: gapPx, boundaryCrossingPx },
       ),
     ];
@@ -223,7 +223,8 @@ function overlapDepths(
   return {
     horizontalPx: Math.max(
       0,
-      Math.min(subject.right, reference.right) - Math.max(subject.x, reference.x),
+      Math.min(subject.right, reference.right) -
+        Math.max(subject.x, reference.x),
     ),
     verticalPx: Math.max(
       0,
@@ -245,7 +246,13 @@ function evaluateOverlap(
   if (rule.kind === "notOverlap") {
     return intersects
       ? [
-          violation(rule, ruleIndex, "overlap-out-of-range", { overlap: false }, depths),
+          violation(
+            rule,
+            ruleIndex,
+            "overlap-out-of-range",
+            { overlap: false },
+            depths,
+          ),
         ]
       : [];
   }
@@ -274,7 +281,9 @@ function evaluateOverlap(
             ...(rule.options?.horizontal
               ? { horizontal: rule.options.horizontal }
               : {}),
-            ...(rule.options?.vertical ? { vertical: rule.options.vertical } : {}),
+            ...(rule.options?.vertical
+              ? { vertical: rule.options.vertical }
+              : {}),
           },
           depths,
         ),

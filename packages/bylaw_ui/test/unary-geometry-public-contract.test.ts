@@ -30,11 +30,7 @@ test("exports public unary geometry rule types", () => {
   const widthRule: WidthRule = width("sidebar", { minPx: 260 });
   const heightRule: HeightRule = height("toolbar", { maxPx: 48 });
   const viewportRule: InViewportRule = inViewport("dialog");
-  const unaryRules: UnaryGeometryRule[] = [
-    widthRule,
-    heightRule,
-    viewportRule,
-  ];
+  const unaryRules: UnaryGeometryRule[] = [widthRule, heightRule, viewportRule];
   const layoutRules: LayoutRule[] = unaryRules;
   expect(layoutRules.map(({ kind }) => kind)).toEqual([
     "width",
@@ -73,7 +69,9 @@ test("accepts caller-constructed width rules", async () => {
     range: { minPx: 260, maxPx: 280 },
   };
   const report = await checkLayout({
-    adapter: fixtureAdapter({ sidebar: visible("sidebar", rect(0, 0, 270, 100)) }),
+    adapter: fixtureAdapter({
+      sidebar: visible("sidebar", rect(0, 0, 270, 100)),
+    }),
     rules: [rule],
   });
   expect(report.passed).toBe(true);
@@ -86,7 +84,9 @@ test("accepts caller-constructed height rules", async () => {
     range: { minPx: 48, maxPx: 48 },
   };
   const report = await checkLayout({
-    adapter: fixtureAdapter({ toolbar: visible("toolbar", rect(0, 0, 100, 48)) }),
+    adapter: fixtureAdapter({
+      toolbar: visible("toolbar", rect(0, 0, 100, 48)),
+    }),
     rules: [rule],
   });
   expect(report.passed).toBe(true);
@@ -95,7 +95,9 @@ test("accepts caller-constructed height rules", async () => {
 test("accepts caller-constructed inViewport rules", async () => {
   const rule: InViewportRule = { kind: "inViewport", target: "dialog" };
   const report = await checkLayout({
-    adapter: fixtureAdapter({ dialog: visible("dialog", rect(0, 0, 100, 100)) }),
+    adapter: fixtureAdapter({
+      dialog: visible("dialog", rect(0, 0, 100, 100)),
+    }),
     rules: [rule],
   });
   expect(report.passed).toBe(true);

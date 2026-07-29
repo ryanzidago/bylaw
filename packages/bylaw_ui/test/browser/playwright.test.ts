@@ -1,12 +1,7 @@
 import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { chromium, type Browser, type Page } from "playwright-core";
 
-import {
-  align,
-  checkLayout,
-  sameSize,
-  type LayoutFinding,
-} from "bylaw-ui";
+import { align, checkLayout, sameSize, type LayoutFinding } from "bylaw-ui";
 import { playwright } from "bylaw-ui/playwright";
 import type { RawMeasurementSnapshot } from "../../src/internal/adapter";
 
@@ -137,7 +132,8 @@ for (const [name, testId] of [
         element.setAttribute("style", "width:10px;height:10px");
       }, testId);
       expect((await snapshot(page, [testId])).elements[0]?.count).toBe(1);
-    }));
+    }),
+  );
 }
 
 test("matches data-testid values case-sensitively", () =>
@@ -157,7 +153,9 @@ test("distinguishes test IDs that differ only by case", () =>
       '<div data-testid="Avatar" style="width:10px;height:10px"></div><div data-testid="avatar" style="width:20px;height:20px"></div>',
     );
     const result = await snapshot(page, ["Avatar", "avatar"]);
-    expect(result.elements.map((element) => element.rect?.width)).toEqual([10, 20]);
+    expect(result.elements.map((element) => element.rect?.width)).toEqual([
+      10, 20,
+    ]);
   }));
 
 test("preserves leading and trailing whitespace in test IDs", () =>
@@ -215,10 +213,17 @@ test("uses the axis-aligned rectangle returned by getBoundingClientRect", () =>
       '<div data-testid="box" style="position:absolute;left:100px;top:100px;width:40px;height:20px;transform:rotate(30deg)"></div>',
     );
     const measured = firstRect(await snapshot(page, ["box"]));
-    const direct = await page.locator('[data-testid="box"]').evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
-    });
+    const direct = await page
+      .locator('[data-testid="box"]')
+      .evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        };
+      });
     expect(measured).toEqual(direct);
   }));
 
@@ -321,10 +326,17 @@ test("uses the bounding rectangle of a fragmented inline element", () =>
       '<p style="width:80px;font:16px sans-serif"><span data-testid="inline">a fragmented inline phrase spanning lines</span></p>',
     );
     const measured = firstRect(await snapshot(page, ["inline"]));
-    const direct = await page.locator('[data-testid="inline"]').evaluate((element) => {
-      const bounds = element.getBoundingClientRect();
-      return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height };
-    });
+    const direct = await page
+      .locator('[data-testid="inline"]')
+      .evaluate((element) => {
+        const bounds = element.getBoundingClientRect();
+        return {
+          x: bounds.x,
+          y: bounds.y,
+          width: bounds.width,
+          height: bounds.height,
+        };
+      });
     expect(measured).toEqual(direct);
     expect(measured.height).toBeGreaterThan(16);
   }));
@@ -409,7 +421,9 @@ test("measures all requested elements from one document snapshot", () =>
     const wrapped = {
       evaluate: async (...args: Parameters<Page["evaluate"]>) => {
         calls += 1;
-        return (page.evaluate as (...values: typeof args) => Promise<unknown>)(...args);
+        return (page.evaluate as (...values: typeof args) => Promise<unknown>)(
+          ...args,
+        );
       },
     } as unknown as Page;
     await checkLayout({
@@ -437,13 +451,17 @@ test("does not mix measurements from opposite sides of a synchronous layout muta
     );
     await page.evaluate(() => {
       queueMicrotask(() => {
-        for (const element of document.querySelectorAll<HTMLElement>("[data-testid]")) {
+        for (const element of document.querySelectorAll<HTMLElement>(
+          "[data-testid]",
+        )) {
           element.style.width = "20px";
         }
       });
     });
     const result = await snapshot(page, ["a", "b"]);
-    expect(result.elements.map((element) => element.rect?.width)).toEqual([20, 20]);
+    expect(result.elements.map((element) => element.rect?.width)).toEqual([
+      20, 20,
+    ]);
   }));
 
 test("separate checkLayout calls observe subsequent DOM changes", () =>
@@ -480,23 +498,38 @@ test("measures the element state captured by the browser-side snapshot", () =>
       '<div data-testid="box" style="width:10px;height:10px"></div>',
     );
     const before = await snapshot(page, ["box"]);
-    await page.locator('[data-testid="box"]').evaluate((element: HTMLElement) => {
-      element.style.width = "30px";
-    });
+    await page
+      .locator('[data-testid="box"]')
+      .evaluate((element: HTMLElement) => {
+        element.style.width = "30px";
+      });
     expect(firstRect(before).width).toBe(10);
   }));
 
 for (const [name, markup] of [
-  ["treats a hidden attribute as unavailable even when author CSS overrides display", '<style>[hidden]{display:block}</style><div data-testid="target" hidden style="width:10px;height:10px"></div>'],
-  ["uses computed display values for the element and its ancestors", '<div style="display:none"><div data-testid="target" style="width:10px;height:10px"></div></div>'],
-  ["treats inherited visibility hidden as unavailable", '<div style="visibility:hidden"><div data-testid="target" style="width:10px;height:10px"></div></div>'],
-  ["treats any zero-opacity ancestor as making the element unavailable", '<div style="opacity:0"><div data-testid="target" style="width:10px;height:10px"></div></div>'],
+  [
+    "treats a hidden attribute as unavailable even when author CSS overrides display",
+    '<style>[hidden]{display:block}</style><div data-testid="target" hidden style="width:10px;height:10px"></div>',
+  ],
+  [
+    "uses computed display values for the element and its ancestors",
+    '<div style="display:none"><div data-testid="target" style="width:10px;height:10px"></div></div>',
+  ],
+  [
+    "treats inherited visibility hidden as unavailable",
+    '<div style="visibility:hidden"><div data-testid="target" style="width:10px;height:10px"></div></div>',
+  ],
+  [
+    "treats any zero-opacity ancestor as making the element unavailable",
+    '<div style="opacity:0"><div data-testid="target" style="width:10px;height:10px"></div></div>',
+  ],
 ] as const) {
   test(name, () =>
     withPage(async (page) => {
       await setBody(page, markup);
       expect((await snapshot(page, ["target"])).elements[0]?.hidden).toBe(true);
-    }));
+    }),
+  );
 }
 
 test("treats a descendant that restores visibility visible as available", () =>

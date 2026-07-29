@@ -1,10 +1,5 @@
 export type Alignment =
-  | "left"
-  | "right"
-  | "top"
-  | "bottom"
-  | "centerX"
-  | "centerY";
+  "left" | "right" | "top" | "bottom" | "centerX" | "centerY";
 
 export type PixelRange = {
   minPx?: number;
@@ -87,10 +82,7 @@ export type LayoutRule =
   | UnaryGeometryRule;
 
 export type InvalidRuleCode =
-  | "missing-field"
-  | "invalid-type"
-  | "invalid-value"
-  | "unknown-field";
+  "missing-field" | "invalid-type" | "invalid-value" | "unknown-field";
 
 export type ElementResolutionCode = "missing-element" | "duplicate-element";
 export type ElementVisibilityCode = "hidden-element" | "zero-size-element";
@@ -107,9 +99,7 @@ export type LayoutCode =
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
-  | JsonPrimitive
-  | JsonValue[]
-  | { [key: string]: JsonValue | undefined };
+  JsonPrimitive | JsonValue[] | { [key: string]: JsonValue | undefined };
 
 export type InvalidRuleFinding = {
   category: "invalid-rule";
@@ -243,13 +233,10 @@ export type UnaryLayoutViolationFinding =
   | ViewportLayoutViolationFinding;
 
 export type LayoutViolationFinding =
-  | BinaryLayoutViolationFinding
-  | UnaryLayoutViolationFinding;
+  BinaryLayoutViolationFinding | UnaryLayoutViolationFinding;
 
 export type LayoutFinding =
-  | InvalidRuleFinding
-  | ElementFinding
-  | LayoutViolationFinding;
+  InvalidRuleFinding | ElementFinding | LayoutViolationFinding;
 
 export type LayoutReport = {
   passed: boolean;

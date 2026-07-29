@@ -35,7 +35,8 @@ async function hiddenInDocument(
       current !== null;
       current = current.parentElement
     ) {
-      const style = current.ownerDocument.defaultView?.getComputedStyle(current);
+      const style =
+        current.ownerDocument.defaultView?.getComputedStyle(current);
 
       if (
         current.hasAttribute("hidden") ||
@@ -49,15 +50,11 @@ async function hiddenInDocument(
     const targetVisibility =
       target.ownerDocument.defaultView?.getComputedStyle(target).visibility;
 
-    return (
-      targetVisibility === "hidden" || targetVisibility === "collapse"
-    );
+    return targetVisibility === "hidden" || targetVisibility === "collapse";
   });
 }
 
-async function hiddenByFrame(
-  element: ElementHandle<Node>,
-): Promise<boolean> {
+async function hiddenByFrame(element: ElementHandle<Node>): Promise<boolean> {
   let frame = await element.ownerFrame();
 
   while (frame !== null && frame.parentFrame() !== null) {
@@ -86,8 +83,9 @@ async function hiddenByFrame(
           }
 
           const visibility =
-            target.ownerDocument.defaultView?.getComputedStyle(target)
-              .visibility;
+            target.ownerDocument.defaultView?.getComputedStyle(
+              target,
+            ).visibility;
 
           return visibility === "hidden" || visibility === "collapse";
         })
@@ -224,10 +222,7 @@ export function playwright(
         const registeredMeasurementsBefore = Object.fromEntries(
           await Promise.all(
             registeredEntries.map(async ([testId, elements]) => {
-              const measurement = await registeredMeasurement(
-                testId,
-                elements,
-              );
+              const measurement = await registeredMeasurement(testId, elements);
 
               return [testId, measurement] as const;
             }),

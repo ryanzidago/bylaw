@@ -62,9 +62,9 @@ test("accepts rules produced by the public rule helpers", async () => {
   });
 
   expect(report.rules.total).toBe(rules.length);
-  expect(report.findings.some((finding) => finding.category === "invalid-rule")).toBe(
-    false,
-  );
+  expect(
+    report.findings.some((finding) => finding.category === "invalid-rule"),
+  ).toBe(false);
 });
 
 test("accepts structurally valid inline rules", async () => {

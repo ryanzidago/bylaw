@@ -34,14 +34,14 @@ test("helpers return the canonical public inline rule representation", () => {
     alignment: "centerY",
     options: { tolerancePx: 1 },
   });
-  expect(leftOf("avatar", "timeline", { gap: { minPx: 8, maxPx: 16 } })).toEqual(
-    {
-      kind: "leftOf",
-      subject: "avatar",
-      reference: "timeline",
-      options: { gap: { minPx: 8, maxPx: 16 } },
-    },
-  );
+  expect(
+    leftOf("avatar", "timeline", { gap: { minPx: 8, maxPx: 16 } }),
+  ).toEqual({
+    kind: "leftOf",
+    subject: "avatar",
+    reference: "timeline",
+    options: { gap: { minPx: 8, maxPx: 16 } },
+  });
 });
 
 test("helper-produced rules remain valid after a JSON round trip", async () => {
@@ -349,9 +349,7 @@ test("a JSON round trip preserves the report public semantics", async () => {
 });
 
 test("geometry rules can be evaluated from measured rectangles without Playwright", () => {
-  expect(
-    evaluateGeometry(sameSize("a", "b"), 0, rect(), rect()),
-  ).toEqual([]);
+  expect(evaluateGeometry(sameSize("a", "b"), 0, rect(), rect())).toEqual([]);
 });
 
 test("geometry evaluation can be tested without launching a browser", () => {
@@ -362,7 +360,9 @@ test("geometry evaluation can be tested without launching a browser", () => {
 
 test("pure geometry evaluation performs no browser operations", () => {
   const originalDocument = globalThis.document;
-  expect(evaluateGeometry(notOverlap("a", "b"), 0, rect(), rect(20))).toEqual([]);
+  expect(evaluateGeometry(notOverlap("a", "b"), 0, rect(), rect(20))).toEqual(
+    [],
+  );
   expect(globalThis.document).toBe(originalDocument);
 });
 
@@ -407,7 +407,9 @@ test("uses a distinct execution error for malformed adapter output", () => {
   expect(new LayoutExecutionError("malformed")).not.toBeInstanceOf(
     LayoutAssertionError,
   );
-  expect(new LayoutExecutionError("malformed").name).toBe("LayoutExecutionError");
+  expect(new LayoutExecutionError("malformed").name).toBe(
+    "LayoutExecutionError",
+  );
 });
 
 test("adapter and execution errors are not instances of LayoutAssertionError", () => {
