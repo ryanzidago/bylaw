@@ -120,58 +120,127 @@ export type InvalidRuleFinding = {
   reason: string;
 };
 
-export type BinaryElementFinding = {
-  category: "element-resolution" | "element-visibility";
-  code: ElementResolutionCode | ElementVisibilityCode;
+type BinaryElementFindingIdentity = {
   ruleIndex: number;
   message: string;
   subject: string;
   reference: string;
   operand: "subject" | "reference";
   testId: string;
-  expected: { matchCount: number } | { visible: true; positiveSize: true };
-  actual: { matchCount: number } | { hidden: boolean; width: number; height: number };
 };
 
-export type UnaryElementFinding = {
-  category: "element-resolution" | "element-visibility";
-  code: ElementResolutionCode | ElementVisibilityCode;
+type UnaryElementFindingIdentity = {
   ruleIndex: number;
   message: string;
   target: string;
   operand: "target";
   testId: string;
-  expected: { matchCount: number } | { visible: true; positiveSize: true };
-  actual:
-    | { matchCount: number }
-    | { hidden: true }
-    | { hidden: false; width: number; height: number };
 };
+
+type ResolutionFinding = {
+  category: "element-resolution";
+  code: ElementResolutionCode;
+  expected: { matchCount: number };
+  actual: { matchCount: number };
+};
+
+type BinaryVisibilityFinding =
+  | {
+      category: "element-visibility";
+      code: "hidden-element";
+      expected: { visible: true; positiveSize: true };
+      actual: { hidden: true; width: number; height: number };
+    }
+  | {
+      category: "element-visibility";
+      code: "zero-size-element";
+      expected: { visible: true; positiveSize: true };
+      actual: { hidden: false; width: number; height: number };
+    };
+
+type UnaryVisibilityFinding =
+  | {
+      category: "element-visibility";
+      code: "hidden-element";
+      expected: { visible: true; positiveSize: true };
+      actual: { hidden: true };
+    }
+  | {
+      category: "element-visibility";
+      code: "zero-size-element";
+      expected: { visible: true; positiveSize: true };
+      actual: { hidden: false; width: number; height: number };
+    };
+
+export type BinaryElementFinding = BinaryElementFindingIdentity &
+  (ResolutionFinding | BinaryVisibilityFinding);
+
+export type UnaryElementFinding = UnaryElementFindingIdentity &
+  (ResolutionFinding | UnaryVisibilityFinding);
 
 export type ElementFinding = BinaryElementFinding | UnaryElementFinding;
 
+type BinaryLayoutCode = Exclude<
+  LayoutCode,
+  "dimension-out-of-range" | "viewport-overflow"
+>;
+
 export type BinaryLayoutViolationFinding = {
   category: "layout";
-  code: LayoutCode;
+  code: BinaryLayoutCode;
   ruleIndex: number;
   message: string;
   subject: string;
   reference: string;
-  relationship: LayoutRule["kind"];
+  relationship: Exclude<LayoutRule, UnaryGeometryRule>["kind"];
   expected: { [key: string]: JsonValue | undefined };
   actual: { [key: string]: JsonValue | undefined };
 };
 
-export type UnaryLayoutViolationFinding = {
+export type WidthLayoutViolationFinding = {
   category: "layout";
-  code: LayoutCode;
+  code: "dimension-out-of-range";
   ruleIndex: number;
   message: string;
   target: string;
-  relationship: UnaryGeometryRule["kind"];
-  expected: { [key: string]: JsonValue | undefined };
-  actual: { [key: string]: JsonValue | undefined };
+  relationship: "width";
+  expected: { range: PixelRange };
+  actual: { widthPx: number };
 };
+
+export type HeightLayoutViolationFinding = {
+  category: "layout";
+  code: "dimension-out-of-range";
+  ruleIndex: number;
+  message: string;
+  target: string;
+  relationship: "height";
+  expected: { range: PixelRange };
+  actual: { heightPx: number };
+};
+
+type ViewportEdges = {
+  leftPx: number;
+  topPx: number;
+  rightPx: number;
+  bottomPx: number;
+};
+
+export type ViewportLayoutViolationFinding = {
+  category: "layout";
+  code: "viewport-overflow";
+  ruleIndex: number;
+  message: string;
+  target: string;
+  relationship: "inViewport";
+  expected: { viewport: ViewportEdges };
+  actual: { target: ViewportEdges };
+};
+
+export type UnaryLayoutViolationFinding =
+  | WidthLayoutViolationFinding
+  | HeightLayoutViolationFinding
+  | ViewportLayoutViolationFinding;
 
 export type LayoutViolationFinding =
   | BinaryLayoutViolationFinding

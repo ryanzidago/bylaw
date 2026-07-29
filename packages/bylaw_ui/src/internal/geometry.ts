@@ -1,10 +1,14 @@
 import type {
+  BinaryLayoutViolationFinding,
+  HeightLayoutViolationFinding,
   LayoutRule,
   LayoutViolationFinding,
   PixelRange,
   ToleranceRule,
   UnaryGeometryRule,
   UnaryLayoutViolationFinding,
+  ViewportLayoutViolationFinding,
+  WidthLayoutViolationFinding,
 } from "../types.js";
 import type { Rectangle } from "./adapter.js";
 
@@ -33,10 +37,10 @@ function inRange(value: number, range: PixelRange): boolean {
 function violation(
   rule: BinaryLayoutRule,
   ruleIndex: number,
-  code: LayoutViolationFinding["code"],
-  expected: LayoutViolationFinding["expected"],
-  actual: LayoutViolationFinding["actual"],
-): LayoutViolationFinding {
+  code: BinaryLayoutViolationFinding["code"],
+  expected: BinaryLayoutViolationFinding["expected"],
+  actual: BinaryLayoutViolationFinding["actual"],
+): BinaryLayoutViolationFinding {
   return {
     category: "layout",
     code,
@@ -50,22 +54,65 @@ function violation(
   };
 }
 
-function unaryViolation(
-  rule: UnaryGeometryRule,
+function dimensionViolation(
+  rule: Extract<UnaryGeometryRule, { kind: "width" | "height" }>,
   ruleIndex: number,
-  code: UnaryLayoutViolationFinding["code"],
-  expected: UnaryLayoutViolationFinding["expected"],
-  actual: UnaryLayoutViolationFinding["actual"],
-): UnaryLayoutViolationFinding {
+  value: number,
+): WidthLayoutViolationFinding | HeightLayoutViolationFinding {
+  if (rule.kind === "width") {
+    return {
+      category: "layout",
+      code: "dimension-out-of-range",
+      ruleIndex,
+      message: `Rule ${ruleIndex} (${rule.target} ${rule.kind}) failed: dimension-out-of-range`,
+      target: rule.target,
+      relationship: "width",
+      expected: { range: rule.range },
+      actual: { widthPx: value },
+    };
+  }
+
   return {
     category: "layout",
-    code,
+    code: "dimension-out-of-range",
     ruleIndex,
-    message: `Rule ${ruleIndex} (${rule.target} ${rule.kind}) failed: ${code}`,
+    message: `Rule ${ruleIndex} (${rule.target} ${rule.kind}) failed: dimension-out-of-range`,
     target: rule.target,
-    relationship: rule.kind,
-    expected,
-    actual,
+    relationship: "height",
+    expected: { range: rule.range },
+    actual: { heightPx: value },
+  };
+}
+
+function viewportViolation(
+  rule: Extract<UnaryGeometryRule, { kind: "inViewport" }>,
+  ruleIndex: number,
+  target: Edges,
+  viewport: { width: number; height: number },
+): ViewportLayoutViolationFinding {
+  return {
+    category: "layout",
+    code: "viewport-overflow",
+    ruleIndex,
+    message: `Rule ${ruleIndex} (${rule.target} ${rule.kind}) failed: viewport-overflow`,
+    target: rule.target,
+    relationship: "inViewport",
+    expected: {
+      viewport: {
+        leftPx: 0,
+        topPx: 0,
+        rightPx: viewport.width,
+        bottomPx: viewport.height,
+      },
+    },
+    actual: {
+      target: {
+        leftPx: target.x,
+        topPx: target.y,
+        rightPx: target.right,
+        bottomPx: target.bottom,
+      },
+    },
   };
 }
 
@@ -334,17 +381,7 @@ export function evaluateUnaryGeometry(
 
     return inRange(value, rule.range)
       ? []
-      : [
-          unaryViolation(
-            rule,
-            ruleIndex,
-            "dimension-out-of-range",
-            { range: rule.range },
-            rule.kind === "width"
-              ? { widthPx: value }
-              : { heightPx: value },
-          ),
-        ];
+      : [dimensionViolation(rule, ruleIndex, value)];
   }
 
   const target = edges(targetRect);
@@ -356,27 +393,5 @@ export function evaluateUnaryGeometry(
 
   return contained
     ? []
-    : [
-        unaryViolation(
-          rule,
-          ruleIndex,
-          "viewport-overflow",
-          {
-            viewport: {
-              leftPx: 0,
-              topPx: 0,
-              rightPx: viewport.width,
-              bottomPx: viewport.height,
-            },
-          },
-          {
-            target: {
-              leftPx: target.x,
-              topPx: target.y,
-              rightPx: target.right,
-              bottomPx: target.bottom,
-            },
-          },
-        ),
-      ];
+    : [viewportViolation(rule, ruleIndex, target, viewport)];
 }
