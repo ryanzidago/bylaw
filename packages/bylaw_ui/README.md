@@ -17,15 +17,30 @@ those rule families are not released APIs yet.
 
 ## Install
 
+`bylaw-ui` is not published to npm yet. To try it from a Bylaw checkout, build
+the package and install that local directory into the application you want to
+check:
+
 ```sh
-npm install bylaw-ui playwright-core
+git clone https://github.com/ryanzidago/bylaw.git
+cd bylaw/packages/bylaw_ui
+bun install --frozen-lockfile
+bun run build
+
+cd /path/to/your-application
+bun add --dev /path/to/bylaw/packages/bylaw_ui @playwright/test
 ```
 
+Building before the local install ensures the application receives the compiled
+entrypoints. The package also runs its QA suite when it is packed for
+publication. When it is published, the application install becomes
+`bun add --dev bylaw-ui @playwright/test`.
+
 Chromium is the verified V1 browser target. Install the browser build matching
-your Playwright version:
+the application's Playwright version:
 
 ```sh
-npx playwright-core install chromium
+bunx playwright install chromium
 ```
 
 ## Current API
@@ -178,6 +193,97 @@ The JSON-serializable report is suitable for direct coding-agent feedback:
 Use `assertLayout` when the surrounding test runner should fail. Its
 `LayoutAssertionError` includes actionable geometry diagnostics and retains the
 original structured report for programmatic consumers.
+
+## Put contracts into an agent repair loop
+
+Keep state setup, logical targets, and contracts together so a coding agent can
+discover and change them in one place:
+
+```text
+tests/ui/
+  pull-request-layout.spec.ts
+```
+
+```ts
+// tests/ui/pull-request-layout.spec.ts
+import { test } from "@playwright/test";
+import {
+  align,
+  assertLayout,
+  checkLayout,
+  height,
+  inside,
+  leftOf,
+  width,
+} from "bylaw-ui";
+import { playwright, waitForLayoutTargets } from "bylaw-ui/playwright";
+
+test("desktop split view satisfies its UI contracts", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/pull/55/files");
+  await page.getByRole("button", { name: "Split" }).click();
+
+  const changedFiles = page.getByRole("region", { name: "Changed files" });
+  const adapter = playwright(page, {
+    targets: {
+      sidebar: page.getByRole("navigation", { name: "File tree" }),
+      toolbar: page.getByRole("toolbar"),
+      "toolbar-title": page.getByRole("heading", { name: "Files changed" }),
+      "toolbar-actions": page.getByRole("group", { name: "File actions" }),
+      "file-content": changedFiles,
+      "changed-file": changedFiles.getByRole("article", {
+        name: /package\.json/,
+      }),
+      "viewed-control": changedFiles.getByRole("checkbox", {
+        name: "Viewed",
+      }),
+    },
+  });
+  const rules = [
+    width("sidebar", { minPx: 260, maxPx: 280 }),
+    height("toolbar", { minPx: 48 }),
+    leftOf("sidebar", "file-content", {
+      gap: { minPx: 8, maxPx: 24 },
+    }),
+    align("toolbar-title", "toolbar-actions", "centerY", {
+      tolerancePx: 1,
+    }),
+    inside("viewed-control", "changed-file"),
+  ];
+
+  await waitForLayoutTargets(adapter, rules, {
+    timeoutMs: 1_000,
+    stableFrames: 2,
+  });
+
+  assertLayout(await checkLayout({ adapter, rules }));
+});
+```
+
+Extract shared targets or rules only after multiple state tests need them.
+
+Run the state directly while iterating:
+
+```sh
+bunx playwright test tests/ui/pull-request-layout.spec.ts
+```
+
+When an agent receives a failing report:
+
+1. Confirm that the test reached the intended viewport and application state.
+2. Resolve missing, duplicate, hidden, or unstable targets before interpreting
+   geometry findings.
+3. Use each finding's target names, measured geometry, and expected constraint
+   to locate the product code responsible for the mismatch.
+4. Fix the product UI when the stated contract is still correct. Change a
+   contract only when the product requirement changed.
+5. Run the focused state again, then run the application's normal UI test suite.
+
+Do not widen tolerances, replace semantic locators with brittle selectors, or
+change production markup merely to clear a report. A stable `data-testid` can be
+an intentional product testing boundary, but registered role, label, and scoped
+locators are preferred when they express the target clearly. Keep screenshot
+review for subjective qualities that geometry contracts cannot represent.
 
 ## Reports and errors
 
