@@ -31,7 +31,8 @@ function object(
 }
 
 function pixels(value: number): string {
-  return `${Object.is(value, -0) ? 0 : value}px`;
+  const normalized = Number.parseFloat(value.toPrecision(15));
+  return `${Object.is(normalized, -0) ? 0 : normalized}px`;
 }
 
 function pixelLine(
