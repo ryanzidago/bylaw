@@ -285,29 +285,6 @@ an intentional product testing boundary, but registered role, label, and scoped
 locators are preferred when they express the target clearly. Keep screenshot
 review for subjective qualities that geometry contracts cannot represent.
 
-### Optional repository instructions
-
-You do not need an `AGENTS.md` to use `bylaw-ui`. Add guidance to an existing
-repository instruction file only when coding agents are expected to maintain
-the UI contracts. For example:
-
-```md
-For objective UI geometry requirements, use `bylaw-ui`.
-
-Group contracts by representative rendered state. Use semantic Playwright
-locators, call `waitForLayoutTargets` before `checkLayout`, and evaluate all
-contracts for one state from a single snapshot.
-
-Treat missing, duplicate, hidden, and unstable targets as state or locator
-problems first. Do not weaken tolerances or alter locators merely to clear a
-failure. Use screenshots separately for subjective visual assessment.
-```
-
-Place these instructions in the consumer repository's existing `AGENTS.md` or
-equivalent file. The Bylaw package does not ship its own agent instruction file:
-package documentation explains the reusable API, while each consumer owns its
-state setup, test commands, product requirements, and agent workflow.
-
 ## Reports and errors
 
 `checkLayout` always returns a `Promise<LayoutReport>`. It collects independent
