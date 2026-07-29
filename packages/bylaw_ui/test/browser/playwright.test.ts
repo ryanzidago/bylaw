@@ -77,6 +77,26 @@ test("the Playwright integration accepts a playwright-core Page", () =>
     expect(playwright(page)).toBeDefined();
   }));
 
+/**
+ * Issue: Array values pass runtime validation as Playwright options.
+ * Why it matters: JavaScript callers receive an adapter for a malformed public
+ * input instead of an immediate actionable boundary error.
+ */
+test("rejects an array as Playwright options", () =>
+  withPage(async (page) => {
+    expect(() => playwright(page, [] as never)).toThrow(TypeError);
+  }));
+
+/**
+ * Issue: Array target registries pass runtime validation as objects.
+ * Why it matters: Numeric array properties can silently become logical target
+ * registrations outside the declared public contract.
+ */
+test("rejects an array as the Playwright target registry", () =>
+  withPage(async (page) => {
+    expect(() => playwright(page, { targets: [] as never })).toThrow(TypeError);
+  }));
+
 test("the Playwright entrypoint has no import-time browser side effects", async () => {
   const before = browser.contexts().length;
   await import("bylaw-ui/playwright");
