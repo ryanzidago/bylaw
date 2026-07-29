@@ -32,9 +32,7 @@ export type LayoutReadinessObservation = {
 export class LayoutReadinessTimeoutError extends Error {
   readonly unresolvedTargets: string[];
   readonly unstableTargets: string[];
-  readonly lastObserved: Readonly<
-    Record<string, LayoutReadinessObservation>
-  >;
+  readonly lastObserved: Readonly<Record<string, LayoutReadinessObservation>>;
 
   constructor(
     unresolvedTargets: string[],
@@ -76,7 +74,10 @@ type PlaywrightAdapterMetadata = {
   targets: PlaywrightTargetRegistry;
 };
 
-const adapterMetadata = new WeakMap<InternalAdapter, PlaywrightAdapterMetadata>();
+const adapterMetadata = new WeakMap<
+  InternalAdapter,
+  PlaywrightAdapterMetadata
+>();
 
 async function hiddenInDocument(
   element: ElementHandle<Node>,
@@ -470,7 +471,9 @@ type StabilityState = {
   stableFrames: number;
 };
 
-function isCollectionRule(rule: LayoutRule | CollectionRule): rule is CollectionRule {
+function isCollectionRule(
+  rule: LayoutRule | CollectionRule,
+): rule is CollectionRule {
   return rule.kind === "collectionEqualWidth";
 }
 
@@ -594,10 +597,7 @@ function assertReadinessOptions(
     throw new TypeError("layout readiness timeoutMs must be a positive number");
   }
 
-  if (
-    !Number.isInteger(options.stableFrames) ||
-    options.stableFrames <= 0
-  ) {
+  if (!Number.isInteger(options.stableFrames) || options.stableFrames <= 0) {
     throw new TypeError(
       "layout readiness stableFrames must be a positive integer",
     );
@@ -744,9 +744,7 @@ export async function waitForLayoutTargets(
     await animationFrame(metadata.page);
 
     const testIds = [...requirements.keys()];
-    const snapshot = (await adapter.measure(
-      testIds,
-    )) as RawMeasurementSnapshot;
+    const snapshot = (await adapter.measure(testIds)) as RawMeasurementSnapshot;
 
     for (const measurement of snapshot.elements) {
       const requirement = requirements.get(measurement.testId)!;
