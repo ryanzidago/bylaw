@@ -46,10 +46,10 @@ test("an ambiguous singular target type requires multiple matches and no element
 });
 
 test("target resolution types reject contradictory count and element state at compile time", () => {
+  // @ts-expect-error unresolved targets cannot contain element state
   const target: SingularTargetResolution = {
     target: "missing",
     matchCount: 0,
-    // @ts-expect-error unresolved targets cannot contain element state
     hidden: false,
     rect: { x: 0, y: 0, width: 10, height: 10 },
   };
