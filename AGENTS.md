@@ -49,6 +49,13 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
+- Write created artifacts, including pull requests, GitHub issues, plans, and
+  handoff notes, for a zero-context reader. Each artifact should stand on its
+  own so another human or LLM can act on it without access to prior
+  conversations. Include the problem, why it matters, the relevant context and
+  constraints, the intended outcome, and enough scope, acceptance criteria,
+  decisions, references, and verification details to continue the work
+  confidently.
 - Use acceptance-test-driven development for behavior changes:
   1. Inventory the acceptance criteria as named, empty acceptance tests at the
      appropriate boundary. Do not mark them as TODO, skip them, tag them to be
