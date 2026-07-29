@@ -13,13 +13,14 @@ import {
   sameSize,
   sameWidth,
   type LayoutRule,
+  type CollectionRule,
   type UnaryGeometryRule,
 } from "bylaw-ui";
 import { evaluateGeometry } from "../src/internal/geometry";
 import { rect } from "./support";
 
 type Rectangle = ReturnType<typeof rect>;
-type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule | CollectionRule>;
 
 function passes(
   rule: BinaryLayoutRule,

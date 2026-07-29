@@ -1,4 +1,6 @@
 import type {
+  CollectionFinding,
+  CollectionRule,
   ElementFinding,
   InvalidRuleFinding,
   LayoutFinding,
@@ -12,6 +14,7 @@ import {
   isInternalAdapter,
   type InternalAdapter,
   type RawElementMeasurement,
+  type RawCollectionMeasurement,
 } from "./internal/adapter.js";
 import {
   evaluateGeometry,
@@ -51,7 +54,10 @@ function assertInput(value: unknown): asserts value is {
   }
 }
 
-type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+type SingularLayoutRule = Exclude<
+  LayoutRule,
+  UnaryGeometryRule | CollectionRule
+>;
 
 function isUnaryRule(rule: LayoutRule): rule is UnaryGeometryRule {
   return (
@@ -61,8 +67,17 @@ function isUnaryRule(rule: LayoutRule): rule is UnaryGeometryRule {
   );
 }
 
+function isCollectionRule(rule: LayoutRule): rule is CollectionRule {
+  return (
+    rule.kind === "everyInside" ||
+    rule.kind === "equalWidths" ||
+    rule.kind === "verticallyOrdered" ||
+    rule.kind === "pairwiseNotOverlap"
+  );
+}
+
 function binaryElementFinding(
-  rule: BinaryLayoutRule,
+  rule: SingularLayoutRule,
   ruleIndex: number,
   operand: "subject" | "reference",
   measurement: RawElementMeasurement,
@@ -74,6 +89,7 @@ function binaryElementFinding(
     reference: rule.reference,
     operand,
     testId,
+    target: testId,
   };
 
   if (measurement.count === 0) {
@@ -135,6 +151,246 @@ function binaryElementFinding(
   }
 
   return null;
+}
+
+function collectionElementFindings(
+  rule: CollectionRule,
+  ruleIndex: number,
+  measurement: RawCollectionMeasurement,
+): CollectionFinding[] {
+  const target = rule.collection.target;
+  if (measurement.matches.length === 0) {
+    return [
+      {
+        category: "element-resolution",
+        code: "empty-collection",
+        ruleIndex,
+        message: `Rule ${ruleIndex} collection target ${JSON.stringify(target)} matched 0 elements`,
+        target,
+        operand: "collection",
+        expected: { minMatchCount: 1 },
+        actual: { matchCount: 0 },
+      },
+    ];
+  }
+
+  return measurement.matches.flatMap((match, collectionIndex) => {
+    if (!match.hidden && match.rect.width !== 0 && match.rect.height !== 0) {
+      return [];
+    }
+    return [
+      {
+        category: "element-visibility" as const,
+        code: match.hidden
+          ? ("hidden-element" as const)
+          : ("zero-size-element" as const),
+        ruleIndex,
+        message: `Rule ${ruleIndex} has ${match.hidden ? "hidden" : "zero-size"} collection target ${JSON.stringify(target)} member [${collectionIndex}]`,
+        target,
+        collectionIndex,
+        operand: "collection" as const,
+        expected: { visible: true as const, positiveSize: true as const },
+        actual: {
+          hidden: match.hidden,
+          width: match.rect.width,
+          height: match.rect.height,
+        },
+      },
+    ];
+  });
+}
+
+function overlapDepths(
+  a: RawCollectionMeasurement["matches"][number]["rect"],
+  b: RawCollectionMeasurement["matches"][number]["rect"],
+) {
+  return {
+    horizontalPx: Math.max(
+      0,
+      Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x),
+    ),
+    verticalPx: Math.max(
+      0,
+      Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y),
+    ),
+  };
+}
+
+function collectionLayoutFindings(
+  rule: CollectionRule,
+  ruleIndex: number,
+  measurement: RawCollectionMeasurement,
+  container?: RawElementMeasurement,
+): CollectionFinding[] {
+  const target = rule.collection.target;
+  const matches = measurement.matches;
+  const common = {
+    category: "layout" as const,
+    ruleIndex,
+  };
+
+  if (rule.kind === "everyInside") {
+    if (!container?.rect)
+      throw new Error("Available containers must have rectangles");
+    const tolerancePx = rule.options?.tolerancePx ?? 0;
+    return matches.flatMap((match, collectionIndex) => {
+      const memberRect = match.rect;
+      const containerRect = container.rect!;
+      const overlap = overlapDepths(memberRect, containerRect);
+      const actual = {
+        memberRect,
+        containerRect,
+        leftPx: Math.max(0, containerRect.x - memberRect.x),
+        rightPx: Math.max(
+          0,
+          memberRect.x +
+            memberRect.width -
+            (containerRect.x + containerRect.width),
+        ),
+        topPx: Math.max(0, containerRect.y - memberRect.y),
+        bottomPx: Math.max(
+          0,
+          memberRect.y +
+            memberRect.height -
+            (containerRect.y + containerRect.height),
+        ),
+        ...overlap,
+      };
+      const passes =
+        overlap.horizontalPx > 0 &&
+        overlap.verticalPx > 0 &&
+        actual.leftPx <= tolerancePx &&
+        actual.rightPx <= tolerancePx &&
+        actual.topPx <= tolerancePx &&
+        actual.bottomPx <= tolerancePx;
+      return passes
+        ? []
+        : [
+            {
+              ...common,
+              relationship: "everyInside" as const,
+              code: "collection-containment-overflow" as const,
+              message: `Rule ${ruleIndex} collection target ${JSON.stringify(target)} member [${collectionIndex}] is not inside ${JSON.stringify(rule.container)}`,
+              target,
+              collectionIndex,
+              expected: { tolerancePx, positiveIntersection: true },
+              actual,
+            },
+          ];
+    });
+  }
+
+  if (rule.kind === "equalWidths") {
+    const reference = matches[0]!;
+    const tolerancePx = rule.options?.tolerancePx ?? 0;
+    return matches.slice(1).flatMap((match, offset) => {
+      const collectionIndex = offset + 1;
+      const differencePx =
+        Math.round(
+          Math.abs(match.rect.width - reference.rect.width) * 1_000_000_000_000,
+        ) / 1_000_000_000_000;
+      return differencePx <= tolerancePx
+        ? []
+        : [
+            {
+              ...common,
+              relationship: "equalWidths" as const,
+              code: "collection-width-mismatch" as const,
+              message: `Rule ${ruleIndex} collection target ${JSON.stringify(target)} member [${collectionIndex}] width differs`,
+              target,
+              collectionIndex,
+              expected: { tolerancePx },
+              actual: {
+                referenceRect: reference.rect,
+                memberRect: match.rect,
+                referenceWidthPx: reference.rect.width,
+                memberWidthPx: match.rect.width,
+                differencePx,
+              },
+            },
+          ];
+    });
+  }
+
+  if (rule.kind === "verticallyOrdered") {
+    return matches
+      .slice(0, -1)
+      .flatMap((subject, index): CollectionFinding[] => {
+        const reference = matches[index + 1]!;
+        const gapPx = reference.rect.y - (subject.rect.y + subject.rect.height);
+        const pair = {
+          subject: { target, collectionIndex: index },
+          reference: { target, collectionIndex: index + 1 },
+        };
+        if (gapPx < 0) {
+          return [
+            {
+              ...common,
+              relationship: "verticallyOrdered" as const,
+              ...pair,
+              code: "collection-ordering-violation" as const,
+              message: `Rule ${ruleIndex} collection members [${index}] and [${index + 1}] are out of order`,
+              expected: {
+                ...(rule.options?.gap ? { gap: rule.options.gap } : {}),
+              },
+              actual: {
+                subjectRect: subject.rect,
+                referenceRect: reference.rect,
+                gapPx,
+              },
+            },
+          ];
+        }
+        const gap = rule.options?.gap;
+        const valid =
+          gap === undefined ||
+          ((gap.minPx === undefined || gapPx >= gap.minPx) &&
+            (gap.maxPx === undefined || gapPx <= gap.maxPx));
+        return valid
+          ? []
+          : [
+              {
+                ...common,
+                relationship: "verticallyOrdered" as const,
+                ...pair,
+                code: "collection-gap-out-of-range" as const,
+                message: `Rule ${ruleIndex} collection members [${index}] and [${index + 1}] have an invalid gap`,
+                expected: { gap: gap! },
+                actual: {
+                  subjectRect: subject.rect,
+                  referenceRect: reference.rect,
+                  gapPx,
+                },
+              },
+            ];
+      });
+  }
+
+  const findings: CollectionFinding[] = [];
+  for (let left = 0; left < matches.length; left += 1) {
+    for (let right = left + 1; right < matches.length; right += 1) {
+      const subject = matches[left]!;
+      const reference = matches[right]!;
+      const depths = overlapDepths(subject.rect, reference.rect);
+      if (depths.horizontalPx > 0 && depths.verticalPx > 0) {
+        findings.push({
+          ...common,
+          relationship: "pairwiseNotOverlap",
+          code: "collection-overlap",
+          message: `Rule ${ruleIndex} collection members [${left}] and [${right}] overlap`,
+          subject: { target, collectionIndex: left },
+          reference: { target, collectionIndex: right },
+          expected: { overlap: false },
+          actual: {
+            subjectRect: subject.rect,
+            referenceRect: reference.rect,
+            ...depths,
+          },
+        });
+      }
+    }
+  }
+  return findings;
 }
 
 function unaryElementFinding(
@@ -244,28 +500,101 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
     };
   }
 
-  const testIds = [
-    ...new Set(
-      validRules.flatMap(({ rule }) =>
-        isUnaryRule(rule) ? [rule.target] : [rule.subject, rule.reference],
-      ),
-    ),
-  ];
-  const measured = await input.adapter.measure(testIds);
+  const requestedTargets = validRules.flatMap(({ rule }) => {
+    if (isUnaryRule(rule)) return [rule.target];
+    if (isCollectionRule(rule)) {
+      return rule.kind === "everyInside"
+        ? [rule.collection, rule.container]
+        : [rule.collection];
+    }
+    return [rule.subject, rule.reference];
+  });
+  const uniqueTargets = requestedTargets.filter(
+    (target, index) =>
+      requestedTargets.findIndex((candidate) =>
+        typeof target === "string" && typeof candidate === "string"
+          ? target === candidate
+          : typeof target !== "string" &&
+            typeof candidate !== "string" &&
+            target.target === candidate.target,
+      ) === index,
+  );
+  const measured = isAdapter(input.adapter)
+    ? await input.adapter.measure(uniqueTargets)
+    : await input.adapter.measure(
+        uniqueTargets as unknown as readonly string[],
+      );
   const snapshot = isAdapter(input.adapter)
-    ? validatePublicSnapshot(measured, testIds)
-    : validateSnapshot(measured, testIds);
-  const byTestId = new Map(
-    snapshot.elements.map((measurement) => [measurement.testId, measurement]),
+    ? validatePublicSnapshot(measured, uniqueTargets)
+    : validateSnapshot(measured, uniqueTargets);
+  const byRequest = new Map(
+    snapshot.elements.map((measurement) => [
+      `${"matches" in measurement ? "collection" : "singular"}:${measurement.testId}`,
+      measurement,
+    ]),
   );
   const skippedRuleIndexes = new Set<number>();
   let passed = 0;
 
   for (const { rule, ruleIndex } of validRules) {
-    if (isUnaryRule(rule)) {
-      const target = byTestId.get(rule.target);
+    if (isCollectionRule(rule)) {
+      const collectionMeasurement = byRequest.get(
+        `collection:${rule.collection.target}`,
+      );
+      if (!collectionMeasurement || !("matches" in collectionMeasurement)) {
+        throw new Error(
+          "Validated snapshot must contain the requested collection",
+        );
+      }
+      const memberFindings = collectionElementFindings(
+        rule,
+        ruleIndex,
+        collectionMeasurement,
+      );
+      let container: RawElementMeasurement | undefined;
+      let containerUnavailable = false;
+      if (rule.kind === "everyInside") {
+        const measuredContainer = byRequest.get(`singular:${rule.container}`);
+        if (!measuredContainer || "matches" in measuredContainer) {
+          throw new Error(
+            "Validated snapshot must contain the requested container",
+          );
+        }
+        container = measuredContainer;
+        const containerFinding = unaryElementFinding(
+          { kind: "inViewport", target: rule.container },
+          ruleIndex,
+          container,
+        );
+        if (containerFinding) {
+          findings.push(containerFinding);
+          containerUnavailable = true;
+        }
+      }
+      if (memberFindings.length > 0 || containerUnavailable) {
+        findings.push(...memberFindings);
+        skippedRuleIndexes.add(ruleIndex);
+        continue;
+      }
+      const layoutFindings = collectionLayoutFindings(
+        rule,
+        ruleIndex,
+        collectionMeasurement,
+        container,
+      );
+      if (layoutFindings.length > 0) {
+        findings.push(...layoutFindings);
+        failedRuleIndexes.add(ruleIndex);
+      } else {
+        passed += 1;
+      }
+      continue;
+    }
 
-      if (!target) {
+    if (isUnaryRule(rule)) {
+      const target = byRequest.get(`singular:${rule.target}`);
+
+      if (!target || "matches" in target) {
         throw new Error(
           "Validated snapshot must contain every requested test ID",
         );
@@ -300,10 +629,15 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
       continue;
     }
 
-    const subject = byTestId.get(rule.subject);
-    const reference = byTestId.get(rule.reference);
+    const subject = byRequest.get(`singular:${rule.subject}`);
+    const reference = byRequest.get(`singular:${rule.reference}`);
 
-    if (!subject || !reference) {
+    if (
+      !subject ||
+      !reference ||
+      "matches" in subject ||
+      "matches" in reference
+    ) {
       throw new Error(
         "Validated snapshot must contain every requested test ID",
       );

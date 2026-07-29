@@ -5,18 +5,25 @@ import {
   createAdapter,
   sameSize,
   width,
+  type CollectionTarget,
   type MeasurementSnapshot,
 } from "bylaw-ui";
 
-function snapshot(targets: readonly string[]): MeasurementSnapshot {
+type RequestedTarget = string | CollectionTarget;
+
+function snapshot(targets: readonly RequestedTarget[]): MeasurementSnapshot {
   return {
     viewport: { width: 1280, height: 720 },
-    targets: targets.map((target) => ({
-      target,
-      matchCount: 1,
-      hidden: false,
-      rect: { x: 0, y: 0, width: 10, height: 10 },
-    })),
+    targets: targets.map((target) =>
+      typeof target === "string"
+        ? {
+            target,
+            matchCount: 1,
+            hidden: false,
+            rect: { x: 0, y: 0, width: 10, height: 10 },
+          }
+        : { target: target.target, matches: [] },
+    ),
   };
 }
 
@@ -73,7 +80,7 @@ test("a factory-created adapter invokes the consumer measure function", async ()
 });
 
 test("a factory-created adapter passes every unique referenced target to measure", async () => {
-  let received: readonly string[] = [];
+  let received: readonly RequestedTarget[] = [];
   const adapter = createAdapter({
     measure: async (targets) => {
       received = targets;
@@ -113,7 +120,7 @@ test("a factory-created adapter invokes measure once for one layout check", asyn
  * and surface an internal invariant error instead of a valid layout result.
  */
 test("a factory-created adapter receives an immutable target inventory", async () => {
-  let receivedTargets: readonly string[] = [];
+  let receivedTargets: readonly RequestedTarget[] = [];
   const adapter = createAdapter({
     measure: async (targets) => {
       receivedTargets = targets;
