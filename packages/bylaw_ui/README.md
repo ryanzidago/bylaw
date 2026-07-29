@@ -196,76 +196,60 @@ original structured report for programmatic consumers.
 
 ## Put contracts into an agent repair loop
 
-Keep state setup, logical targets, and contracts close enough that a coding
-agent can discover and change them together. One practical organization is:
+Keep state setup, logical targets, and contracts together so a coding agent can
+discover and change them in one place:
 
 ```text
 tests/ui/
-  contracts/
-    pull-request-layout.ts
   pull-request-layout.spec.ts
 ```
-
-The contract module exports targets and rules for each representative state:
-
-```ts
-// tests/ui/contracts/pull-request-layout.ts
-import type { Page } from "@playwright/test";
-import { align, height, inside, leftOf, width } from "bylaw-ui";
-
-export const desktopSplitRules = [
-  width("sidebar", { minPx: 260, maxPx: 280 }),
-  height("toolbar", { minPx: 48 }),
-  leftOf("sidebar", "file-content", {
-    gap: { minPx: 8, maxPx: 24 },
-  }),
-  align("toolbar-title", "toolbar-actions", "centerY", {
-    tolerancePx: 1,
-  }),
-  inside("viewed-control", "changed-file"),
-];
-
-export function desktopSplitTargets(page: Page) {
-  const changedFiles = page.getByRole("region", { name: "Changed files" });
-
-  return {
-    sidebar: page.getByRole("navigation", { name: "File tree" }),
-    toolbar: page.getByRole("toolbar"),
-    "toolbar-title": page.getByRole("heading", { name: "Files changed" }),
-    "toolbar-actions": page.getByRole("group", { name: "File actions" }),
-    "file-content": changedFiles,
-    "changed-file": changedFiles.getByRole("article", {
-      name: /package\.json/,
-    }),
-    "viewed-control": changedFiles.getByRole("checkbox", {
-      name: "Viewed",
-    }),
-  };
-}
-```
-
-The Playwright spec owns navigation and state setup, then evaluates all rules for
-that state in one snapshot:
 
 ```ts
 // tests/ui/pull-request-layout.spec.ts
 import { test } from "@playwright/test";
-import { assertLayout, checkLayout } from "bylaw-ui";
-import { playwright, waitForLayoutTargets } from "bylaw-ui/playwright";
 import {
-  desktopSplitRules,
-  desktopSplitTargets,
-} from "./contracts/pull-request-layout.js";
+  align,
+  assertLayout,
+  checkLayout,
+  height,
+  inside,
+  leftOf,
+  width,
+} from "bylaw-ui";
+import { playwright, waitForLayoutTargets } from "bylaw-ui/playwright";
 
 test("desktop split view satisfies its UI contracts", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto("/pull/55/files");
   await page.getByRole("button", { name: "Split" }).click();
 
-  const rules = desktopSplitRules;
+  const changedFiles = page.getByRole("region", { name: "Changed files" });
   const adapter = playwright(page, {
-    targets: desktopSplitTargets(page),
+    targets: {
+      sidebar: page.getByRole("navigation", { name: "File tree" }),
+      toolbar: page.getByRole("toolbar"),
+      "toolbar-title": page.getByRole("heading", { name: "Files changed" }),
+      "toolbar-actions": page.getByRole("group", { name: "File actions" }),
+      "file-content": changedFiles,
+      "changed-file": changedFiles.getByRole("article", {
+        name: /package\.json/,
+      }),
+      "viewed-control": changedFiles.getByRole("checkbox", {
+        name: "Viewed",
+      }),
+    },
   });
+  const rules = [
+    width("sidebar", { minPx: 260, maxPx: 280 }),
+    height("toolbar", { minPx: 48 }),
+    leftOf("sidebar", "file-content", {
+      gap: { minPx: 8, maxPx: 24 },
+    }),
+    align("toolbar-title", "toolbar-actions", "centerY", {
+      tolerancePx: 1,
+    }),
+    inside("viewed-control", "changed-file"),
+  ];
 
   await waitForLayoutTargets(adapter, rules, {
     timeoutMs: 1_000,
@@ -275,6 +259,8 @@ test("desktop split view satisfies its UI contracts", async ({ page }) => {
   assertLayout(await checkLayout({ adapter, rules }));
 });
 ```
+
+Extract shared targets or rules only after multiple state tests need them.
 
 Run the state directly while iterating:
 
