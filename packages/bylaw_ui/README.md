@@ -15,6 +15,9 @@ The current release evaluates objective geometry contracts. Style, typography,
 and asset contracts belong to the target product model described below, but
 those rule families are not released APIs yet.
 
+For a compact overview of every released API capability, see the
+[API cheatsheet](CHEATSHEET.md).
+
 ## Install
 
 `bylaw-ui` is not published to npm yet. To try it from a Bylaw checkout, build
