@@ -49,7 +49,21 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
-- Add tests before fixing bugs when the current behavior can be reproduced.
+- Use acceptance-test-driven development for behavior changes:
+  1. Inventory the acceptance criteria as named, empty acceptance tests at the
+     appropriate boundary. Do not skip or ignore them; at this stage they
+     document the agreed test plan.
+  2. After the acceptance inventory is agreed, implement the test bodies and
+     run them against the unchanged behavior to prove they fail.
+  3. Implement the smallest change that makes the tests pass.
+  4. Refactor while keeping the tests green.
+
+  Use `test "name" do end` for an empty acceptance test.
+
+  Do not use `describe` blocks to organize tests. Keep test names descriptive
+  and split a growing suite into multiple focused test files, including
+  multiple test files for the same module or feature when appropriate.
+- Add or update tests for behavior changes and regressions.
 
 Configure Worktrunk once per machine so new worktrees stay inside this repo:
 
