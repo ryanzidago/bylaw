@@ -34,8 +34,50 @@ function pixels(value: number): string {
   return `${Object.is(value, -0) ? 0 : value}px`;
 }
 
-function calculatedPixels(value: number): string {
-  return pixels(Number.parseFloat(value.toPrecision(15)));
+function decimalParts(value: number): { coefficient: bigint; scale: number } {
+  const match = value
+    .toString()
+    .match(/^(-?)(\d+)(?:\.(\d+))?(?:e([+-]?\d+))?$/i);
+
+  if (match === null) {
+    throw new TypeError(`Cannot format non-finite pixel value: ${value}`);
+  }
+
+  const fraction = match[3] ?? "";
+  const exponent = Number(match[4] ?? 0);
+  const sign = match[1] === "-" ? -1n : 1n;
+  let coefficient = sign * BigInt(`${match[2]}${fraction}`);
+  let scale = fraction.length - exponent;
+
+  if (scale < 0) {
+    coefficient *= 10n ** BigInt(-scale);
+    scale = 0;
+  }
+
+  return { coefficient, scale };
+}
+
+function calculatedPixels(minuend: number, subtrahend: number): string {
+  const left = decimalParts(minuend);
+  const right = decimalParts(subtrahend);
+  const scale = Math.max(left.scale, right.scale);
+  const leftCoefficient =
+    left.coefficient * 10n ** BigInt(scale - left.scale);
+  const rightCoefficient =
+    right.coefficient * 10n ** BigInt(scale - right.scale);
+  const difference = leftCoefficient - rightCoefficient;
+  const sign = difference < 0n ? "-" : "";
+  const digits = (difference < 0n ? -difference : difference)
+    .toString()
+    .padStart(scale + 1, "0");
+
+  if (scale === 0) return `${sign}${digits}px`;
+
+  const integer = digits.slice(0, -scale);
+  const fraction = digits.slice(-scale).replace(/0+$/, "");
+  return fraction.length === 0
+    ? `${sign}${integer}px`
+    : `${sign}${integer}.${fraction}px`;
 }
 
 function pixelLine(
@@ -51,7 +93,7 @@ function excessLine(
   tolerance: number,
 ): string | undefined {
   return value !== undefined && value > tolerance
-    ? `${label}: ${calculatedPixels(value - tolerance)}`
+    ? `${label}: ${calculatedPixels(value, tolerance)}`
     : undefined;
 }
 
@@ -78,10 +120,10 @@ function rangeViolation(
 ): string | undefined {
   if (value === undefined || allowed === undefined) return undefined;
   if (allowed.minPx !== undefined && value < allowed.minPx) {
-    return `${label} below minimum by: ${calculatedPixels(allowed.minPx - value)}`;
+    return `${label} below minimum by: ${calculatedPixels(allowed.minPx, value)}`;
   }
   if (allowed.maxPx !== undefined && value > allowed.maxPx) {
-    return `${label} above maximum by: ${calculatedPixels(value - allowed.maxPx)}`;
+    return `${label} above maximum by: ${calculatedPixels(value, allowed.maxPx)}`;
   }
   return undefined;
 }
