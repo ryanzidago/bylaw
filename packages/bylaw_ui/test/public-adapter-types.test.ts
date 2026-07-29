@@ -123,6 +123,27 @@ test("the adapter implementation receives readonly requested targets", () => {
   expect(implementation.measure).toBeFunction();
 });
 
+/**
+ * @doc Issue: AdapterImplementation declares measure as a method, whose
+ * parameter is bivariant and therefore accepts an implementation that requires
+ * a mutable string array despite the public readonly contract.
+ * Why it matters: Consumers can publish an adapter that typechecks but attempts
+ * unsupported mutations and fails only when a layout check reaches production.
+ */
+test("the adapter implementation rejects a mutable target parameter", () => {
+  if (false) {
+    const implementation: AdapterImplementation = {
+      // @ts-expect-error adapter implementations must accept readonly targets
+      measure: async (targets: string[]) => ({
+        viewport: { width: 1, height: 1 },
+        targets: targets.map((target) => ({ target, matchCount: 0 })),
+      }),
+    };
+    expect(implementation).toBeDefined();
+  }
+  expect(true).toBe(true);
+});
+
 test("the adapter implementation return type matches the documented measurement lifecycle", () => {
   const implementation: AdapterImplementation = {
     measure: async (targets): Promise<MeasurementSnapshot> => ({
