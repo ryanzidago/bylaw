@@ -245,11 +245,10 @@ test("ignores horizontal movement for top alignment readiness", () =>
         requestAnimationFrame(move);
       });
 
-      await waitForLayoutTargets(
-        page,
-        [align("subject", "reference", "top")],
-        { timeoutMs: 300, stableFrames: 3 },
-      );
+      await waitForLayoutTargets(page, [align("subject", "reference", "top")], {
+        timeoutMs: 300,
+        stableFrames: 3,
+      });
     },
   ));
 
