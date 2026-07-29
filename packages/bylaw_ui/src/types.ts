@@ -59,12 +59,32 @@ export type ToleranceRule = {
   options?: ToleranceOptions;
 };
 
+export type WidthRule = {
+  kind: "width";
+  target: string;
+  range: PixelRange;
+};
+
+export type HeightRule = {
+  kind: "height";
+  target: string;
+  range: PixelRange;
+};
+
+export type InViewportRule = {
+  kind: "inViewport";
+  target: string;
+};
+
+export type UnaryGeometryRule = WidthRule | HeightRule | InViewportRule;
+
 export type LayoutRule =
   | AlignRule
   | OrderingRule
   | OverlapRule
   | NotOverlapRule
-  | ToleranceRule;
+  | ToleranceRule
+  | UnaryGeometryRule;
 
 export type InvalidRuleCode =
   | "missing-field"
@@ -81,7 +101,9 @@ export type LayoutCode =
   | "missing-overlap"
   | "overlap-out-of-range"
   | "containment-overflow"
-  | "size-mismatch";
+  | "size-mismatch"
+  | "dimension-out-of-range"
+  | "viewport-overflow";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
@@ -98,7 +120,7 @@ export type InvalidRuleFinding = {
   reason: string;
 };
 
-export type ElementFinding = {
+export type BinaryElementFinding = {
   category: "element-resolution" | "element-visibility";
   code: ElementResolutionCode | ElementVisibilityCode;
   ruleIndex: number;
@@ -111,7 +133,24 @@ export type ElementFinding = {
   actual: { matchCount: number } | { hidden: boolean; width: number; height: number };
 };
 
-export type LayoutViolationFinding = {
+export type UnaryElementFinding = {
+  category: "element-resolution" | "element-visibility";
+  code: ElementResolutionCode | ElementVisibilityCode;
+  ruleIndex: number;
+  message: string;
+  target: string;
+  operand: "target";
+  testId: string;
+  expected: { matchCount: number } | { visible: true; positiveSize: true };
+  actual:
+    | { matchCount: number }
+    | { hidden: true }
+    | { hidden: false; width: number; height: number };
+};
+
+export type ElementFinding = BinaryElementFinding | UnaryElementFinding;
+
+export type BinaryLayoutViolationFinding = {
   category: "layout";
   code: LayoutCode;
   ruleIndex: number;
@@ -122,6 +161,21 @@ export type LayoutViolationFinding = {
   expected: { [key: string]: JsonValue | undefined };
   actual: { [key: string]: JsonValue | undefined };
 };
+
+export type UnaryLayoutViolationFinding = {
+  category: "layout";
+  code: LayoutCode;
+  ruleIndex: number;
+  message: string;
+  target: string;
+  relationship: UnaryGeometryRule["kind"];
+  expected: { [key: string]: JsonValue | undefined };
+  actual: { [key: string]: JsonValue | undefined };
+};
+
+export type LayoutViolationFinding =
+  | BinaryLayoutViolationFinding
+  | UnaryLayoutViolationFinding;
 
 export type LayoutFinding =
   | InvalidRuleFinding

@@ -3,8 +3,12 @@ import type {
   LayoutViolationFinding,
   PixelRange,
   ToleranceRule,
+  UnaryGeometryRule,
+  UnaryLayoutViolationFinding,
 } from "../types.js";
 import type { Rectangle } from "./adapter.js";
+
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
 
 type Edges = Rectangle & {
   right: number;
@@ -27,7 +31,7 @@ function inRange(value: number, range: PixelRange): boolean {
 }
 
 function violation(
-  rule: LayoutRule,
+  rule: BinaryLayoutRule,
   ruleIndex: number,
   code: LayoutViolationFinding["code"],
   expected: LayoutViolationFinding["expected"],
@@ -40,6 +44,25 @@ function violation(
     message: `Rule ${ruleIndex} (${rule.subject} ${rule.kind} ${rule.reference}) failed: ${code}`,
     subject: rule.subject,
     reference: rule.reference,
+    relationship: rule.kind,
+    expected,
+    actual,
+  };
+}
+
+function unaryViolation(
+  rule: UnaryGeometryRule,
+  ruleIndex: number,
+  code: UnaryLayoutViolationFinding["code"],
+  expected: UnaryLayoutViolationFinding["expected"],
+  actual: UnaryLayoutViolationFinding["actual"],
+): UnaryLayoutViolationFinding {
+  return {
+    category: "layout",
+    code,
+    ruleIndex,
+    message: `Rule ${ruleIndex} (${rule.target} ${rule.kind}) failed: ${code}`,
+    target: rule.target,
     relationship: rule.kind,
     expected,
     actual,
@@ -272,7 +295,7 @@ function evaluateSize(
 }
 
 export function evaluateGeometry(
-  rule: LayoutRule,
+  rule: BinaryLayoutRule,
   ruleIndex: number,
   subjectRect: Rectangle,
   referenceRect: Rectangle,
@@ -298,4 +321,62 @@ export function evaluateGeometry(
     case "sameSize":
       return evaluateSize(rule, ruleIndex, subject, reference);
   }
+}
+
+export function evaluateUnaryGeometry(
+  rule: UnaryGeometryRule,
+  ruleIndex: number,
+  targetRect: Rectangle,
+  viewport: { width: number; height: number },
+): UnaryLayoutViolationFinding[] {
+  if (rule.kind === "width" || rule.kind === "height") {
+    const value = rule.kind === "width" ? targetRect.width : targetRect.height;
+
+    return inRange(value, rule.range)
+      ? []
+      : [
+          unaryViolation(
+            rule,
+            ruleIndex,
+            "dimension-out-of-range",
+            { range: rule.range },
+            rule.kind === "width"
+              ? { widthPx: value }
+              : { heightPx: value },
+          ),
+        ];
+  }
+
+  const target = edges(targetRect);
+  const contained =
+    target.x >= 0 &&
+    target.y >= 0 &&
+    target.right <= viewport.width &&
+    target.bottom <= viewport.height;
+
+  return contained
+    ? []
+    : [
+        unaryViolation(
+          rule,
+          ruleIndex,
+          "viewport-overflow",
+          {
+            viewport: {
+              leftPx: 0,
+              topPx: 0,
+              rightPx: viewport.width,
+              bottomPx: viewport.height,
+            },
+          },
+          {
+            target: {
+              leftPx: target.x,
+              topPx: target.y,
+              rightPx: target.right,
+              bottomPx: target.bottom,
+            },
+          },
+        ),
+      ];
 }

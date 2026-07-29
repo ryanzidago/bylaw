@@ -9,8 +9,14 @@ export class LayoutAssertionError extends Error {
         const operands =
           "subject" in finding
             ? ` [${JSON.stringify(finding.subject)}, ${JSON.stringify(finding.reference)}]`
+            : "target" in finding
+              ? ` [${JSON.stringify(finding.target)}]`
             : "";
-        return `- rule ${finding.ruleIndex}${operands}: ${finding.message}`;
+        const diagnostic =
+          finding.category === "layout" && "target" in finding
+            ? `; actual ${JSON.stringify(finding.actual)}; expected ${JSON.stringify(finding.expected)}`
+            : "";
+        return `- rule ${finding.ruleIndex}${operands}: ${finding.message}${diagnostic}`;
       })
       .join("\n");
 
