@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 import type { Page } from "playwright-core";
 
 import {
+  align,
   checkLayout,
   inViewport,
   sameSize,
@@ -218,6 +219,37 @@ test("ignores geometry changes that are not needed by the referenced rules", () 
         timeoutMs: 300,
         stableFrames: 3,
       });
+    },
+  ));
+
+/**
+ * @doc Issue: Alignment readiness tracks every rectangle field even when the
+ * selected alignment uses only one coordinate.
+ * Why it matters: An unrelated animation can make a stable alignment target
+ * time out forever, defeating rule-specific readiness on animated pages.
+ */
+test("ignores horizontal movement for top alignment readiness", () =>
+  withPage(
+    '<div data-testid="subject" style="position:absolute;top:20px;width:20px;height:20px"></div><div data-testid="reference" style="position:absolute;top:20px;width:20px;height:20px"></div>',
+    async (page) => {
+      await page.evaluate(() => {
+        const subject = document.querySelector<HTMLElement>(
+          '[data-testid="subject"]',
+        )!;
+
+        const move = () => {
+          subject.style.left = `${Number.parseFloat(subject.style.left || "0") + 1}px`;
+          requestAnimationFrame(move);
+        };
+
+        requestAnimationFrame(move);
+      });
+
+      await waitForLayoutTargets(
+        page,
+        [align("subject", "reference", "top")],
+        { timeoutMs: 300, stableFrames: 3 },
+      );
     },
   ));
 
@@ -625,6 +657,36 @@ test("reports unresolved and unstable members of the same collection independent
       }
     },
   ));
+
+/**
+ * @doc Issue: A collection that remains empty times out without naming the
+ * collection as unresolved or providing any last observation.
+ * Why it matters: Consumers cannot identify which registered collection
+ * prevented readiness, leaving the timeout diagnostics unactionable.
+ */
+test("identifies a still-empty collection in timeout diagnostics", () =>
+  withPage("", async (page) => {
+    const collectionRule = {
+      kind: "collectionEqualWidth",
+      collection: "members",
+    } as unknown as LayoutRule;
+
+    try {
+      await waitForLayoutTargets(
+        page,
+        [collectionRule],
+        { timeoutMs: 100 },
+        { members: page.locator(".member") },
+      );
+      throw new Error("expected readiness to time out");
+    } catch (error) {
+      const timeout = readinessError(error);
+      expect(timeout.unresolvedTargets).toContain("members");
+      expect(timeout.lastObserved).toMatchObject({
+        members: { matchCount: 0 },
+      });
+    }
+  }));
 
 test("leaves checkLayout as an immediate single-snapshot operation", () =>
   withPage(
