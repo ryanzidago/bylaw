@@ -286,3 +286,72 @@ test("fractional range violations render without floating-point artifacts", () =
 
   expect(message).toContain("above maximum by: 0.1px");
 });
+
+/**
+ * @doc
+ * Issue: Formatting every pixel value to 15 significant digits changes exact
+ * integer measurements before rendering them.
+ * Why it matters: The diagnostic can report a different measured geometry than
+ * the structured report, sending callers toward the wrong layout value.
+ */
+test("geometry diagnostics preserve exact integer measurements", () => {
+  const { expect } = require("bun:test");
+  const { LayoutAssertionError } = require("bylaw-ui");
+  const finding = {
+    category: "layout",
+    code: "size-mismatch",
+    ruleIndex: 0,
+    message: "legacy",
+    subject: "a",
+    reference: "b",
+    relationship: "sameWidth",
+    expected: { tolerancePx: 0 },
+    actual: {
+      subjectWidthPx: 1_000_000_000_000_001,
+      referenceWidthPx: 1_000_000_000_000_003,
+      widthDifferencePx: 2,
+    },
+  };
+  const message = new LayoutAssertionError({
+    passed: false,
+    rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
+    findings: [finding],
+  }).message;
+
+  expect(message).toContain("subject width: 1000000000000001px");
+  expect(message).toContain("reference width: 1000000000000003px");
+});
+
+/**
+ * @doc
+ * Issue: Formatting every pixel value to 15 significant digits rounds raw
+ * fractional measurements even when they contain no arithmetic artifact.
+ * Why it matters: Diagnostics should preserve caller-supplied measurements and
+ * normalize only artifacts introduced while calculating violation amounts.
+ */
+test("geometry diagnostics preserve raw fractional measurements", () => {
+  const { expect } = require("bun:test");
+  const { LayoutAssertionError } = require("bylaw-ui");
+  const finding = {
+    category: "layout",
+    code: "size-mismatch",
+    ruleIndex: 0,
+    message: "legacy",
+    subject: "a",
+    reference: "b",
+    relationship: "sameWidth",
+    expected: { tolerancePx: 0 },
+    actual: {
+      subjectWidthPx: 0.1234567890123456,
+      referenceWidthPx: 1,
+      widthDifferencePx: 0.8765432109876544,
+    },
+  };
+  const message = new LayoutAssertionError({
+    passed: false,
+    rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
+    findings: [finding],
+  }).message;
+
+  expect(message).toContain("subject width: 0.1234567890123456px");
+});
