@@ -222,3 +222,67 @@ test("geometry diagnostics render negative zero as zero pixels", () => {
   const m = new LayoutAssertionError({ passed: false, rules: { total: 1, passed: 0, failed: 1, skipped: 0 }, findings: [f] }).message;
   expect(m).toContain("signed gap: 0px"); expect(m).not.toContain("-0px");
 });
+
+/**
+ * @doc
+ * Issue: Subtracting a fractional tolerance from a measured difference can
+ * expose JavaScript floating-point artifacts in the rendered excess.
+ * Why it matters: Assertion diagnostics should report readable CSS-pixel
+ * measurements instead of values such as 0.19999999999999998px.
+ */
+test("fractional tolerance excesses render without floating-point artifacts", () => {
+  const { expect } = require("bun:test");
+  const { LayoutAssertionError } = require("bylaw-ui");
+  const finding = {
+    category: "layout",
+    code: "size-mismatch",
+    ruleIndex: 0,
+    message: "legacy",
+    subject: "a",
+    reference: "b",
+    relationship: "sameWidth",
+    expected: { tolerancePx: 0.1 },
+    actual: {
+      subjectWidthPx: 99.7,
+      referenceWidthPx: 100,
+      widthDifferencePx: 0.3,
+    },
+  };
+  const message = new LayoutAssertionError({
+    passed: false,
+    rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
+    findings: [finding],
+  }).message;
+
+  expect(message).toContain("exceeds tolerance by: 0.2px");
+});
+
+/**
+ * @doc
+ * Issue: Subtracting fractional range bounds from measured geometry can expose
+ * JavaScript floating-point artifacts in the rendered violation amount.
+ * Why it matters: Range diagnostics should remain readable and actionable for
+ * ordinary fractional CSS-pixel constraints.
+ */
+test("fractional range violations render without floating-point artifacts", () => {
+  const { expect } = require("bun:test");
+  const { LayoutAssertionError } = require("bylaw-ui");
+  const finding = {
+    category: "layout",
+    code: "gap-out-of-range",
+    ruleIndex: 0,
+    message: "legacy",
+    subject: "a",
+    reference: "b",
+    relationship: "leftOf",
+    expected: { gap: { maxPx: 0.6 }, tolerancePx: 0 },
+    actual: { signedGapPx: 0.7, boundaryCrossingPx: 0 },
+  };
+  const message = new LayoutAssertionError({
+    passed: false,
+    rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
+    findings: [finding],
+  }).message;
+
+  expect(message).toContain("above maximum by: 0.1px");
+});
