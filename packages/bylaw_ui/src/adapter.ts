@@ -78,7 +78,8 @@ export function createAdapter(implementation?: unknown): Adapter {
     targets: readonly string[],
   ) => unknown;
   const adapter = Object.freeze({
-    measure: async (targets: readonly string[]) => measure(targets),
+    measure: async (targets: readonly string[]) =>
+      measure(Object.freeze([...targets])),
   });
   adapters.add(adapter);
 
