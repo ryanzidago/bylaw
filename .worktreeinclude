@@ -3,4 +3,5 @@
 /priv/plts/
 /packages/*/_build/
 /packages/*/deps/
+/packages/*/node_modules/
 /packages/*/priv/plts/
