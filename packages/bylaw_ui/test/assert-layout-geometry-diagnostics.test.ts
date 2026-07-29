@@ -24,6 +24,12 @@ test("ordering violation diagnostics report the allowed tolerance and excess bou
 test("bounded gap diagnostics report the measured gap and both allowed endpoints", () => {
 });
 
+test("bounded gap diagnostics report distance below the minimum endpoint", () => {
+});
+
+test("bounded gap diagnostics report distance above the maximum endpoint", () => {
+});
+
 test("minimum-only gap diagnostics report how far the measurement is below the minimum", () => {
 });
 
@@ -31,6 +37,9 @@ test("maximum-only gap diagnostics report how far the measurement exceeds the ma
 });
 
 test("missing overlap diagnostics report horizontal and vertical overlap depths including zeroes", () => {
+});
+
+test("missing overlap diagnostics state that positive overlap is required on both axes", () => {
 });
 
 test("constrained overlap diagnostics report measured depths and each configured range", () => {
@@ -49,6 +58,9 @@ test("overlap diagnostics do not report a range violation for a valid axis", () 
 });
 
 test("notOverlap diagnostics report positive overlap depths on both axes", () => {
+});
+
+test("notOverlap diagnostics state that positive overlap is prohibited", () => {
 });
 
 test("containment diagnostics report overflow on all four sides including zeroes", () => {
