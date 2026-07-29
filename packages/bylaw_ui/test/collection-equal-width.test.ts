@@ -24,10 +24,12 @@ async function checkWidths(
     adapter: createAdapter({
       measure: async () => ({
         viewport: { width: 500, height: 500 },
-        targets: [{
-          target: "cards",
-          matches: widths.map(member),
-        }],
+        targets: [
+          {
+            target: "cards",
+            matches: widths.map(member),
+          },
+        ],
       }),
     }),
     rules: [equalWidths(collection("cards"), options)],
@@ -74,7 +76,11 @@ test("fails when a width difference exceeds the configured tolerance", async () 
   expect(report.findings[0]).toMatchObject({
     code: "collection-width-mismatch",
     expected: { tolerancePx: 1 },
-    actual: { referenceWidthPx: 100, memberWidthPx: 101.01, differencePx: 1.01 },
+    actual: {
+      referenceWidthPx: 100,
+      memberWidthPx: 101.01,
+      differencePx: 1.01,
+    },
   });
 });
 
@@ -84,10 +90,7 @@ test("fails when the first collection member has a different width", async () =>
     CollectionFinding,
     { collectionIndex: number }
   >[];
-  expect(findings.map((finding) => finding.collectionIndex)).toEqual([
-    1,
-    2,
-  ]);
+  expect(findings.map((finding) => finding.collectionIndex)).toEqual([1, 2]);
 });
 
 test("fails when a middle collection member has a different width", async () => {
@@ -108,10 +111,7 @@ test("reports every collection member whose width violates the collection contra
     CollectionFinding,
     { collectionIndex: number }
   >[];
-  expect(findings.map((finding) => finding.collectionIndex)).toEqual([
-    1,
-    2,
-  ]);
+  expect(findings.map((finding) => finding.collectionIndex)).toEqual([1, 2]);
 });
 
 test("compares equal widths against the first collection member as a deterministic reference", async () => {

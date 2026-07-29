@@ -102,7 +102,10 @@ test("collection rule helpers do not mutate supplied targets or options", () => 
 });
 
 test("an ESM TypeScript consumer can use collection rules from the packed package", async () => {
-  const javascript = await import("../dist/index.js") as Record<string, unknown>;
+  const javascript = (await import("../dist/index.js")) as Record<
+    string,
+    unknown
+  >;
   expect(javascript.collection).toBeFunction();
   expect(javascript.equalWidths).toBeFunction();
 });
@@ -117,7 +120,7 @@ test("published declarations preserve the distinction between singular and colle
 });
 
 test("a packed Playwright consumer can evaluate collection rules over repeated elements", async () => {
-  const root = await import("../dist/index.js") as Record<string, unknown>;
+  const root = (await import("../dist/index.js")) as Record<string, unknown>;
   const browser = await import("../dist/playwright.js");
   expect(root.collection).toBeFunction();
   expect(root.equalWidths).toBeFunction();

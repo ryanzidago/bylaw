@@ -1,12 +1,7 @@
 import { expect, test } from "bun:test";
 import type { ElementHandle, Locator, Page } from "playwright-core";
 
-import {
-  checkLayout,
-  collection,
-  equalWidths,
-  everyInside,
-} from "bylaw-ui";
+import { checkLayout, collection, equalWidths, everyInside } from "bylaw-ui";
 import { playwright } from "bylaw-ui/playwright";
 import { browserHarness, expectPassed } from "./logical-target-support";
 
@@ -25,7 +20,9 @@ test("collection members and singular targets are measured in one coherent brows
           if (resolutions === 1) {
             await page.locator(".container").evaluate((container) => {
               container.style.width = "200px";
-              for (const card of container.querySelectorAll<HTMLElement>(".card")) {
+              for (const card of container.querySelectorAll<HTMLElement>(
+                ".card",
+              )) {
                 card.style.width = "40px";
               }
             });
@@ -35,7 +32,10 @@ test("collection members and singular targets are measured in one coherent brows
       } as Locator;
       const report = await checkLayout({
         adapter: playwright(page, {
-          targets: { cards: changingCards, container: page.locator(".container") },
+          targets: {
+            cards: changingCards,
+            container: page.locator(".container"),
+          },
         }),
         rules: [everyInside(collection("cards"), "container")],
       });
@@ -118,13 +118,15 @@ test("collection measurement disposes every resolved element handle after succes
   const page = {
     evaluate: async () => ({
       viewport: { width: 100, height: 100 },
-      targets: [{
-        target: "cards",
-        matches: handles.map(() => ({
-          hidden: false,
-          rect: { x: 0, y: 0, width: 10, height: 10 },
-        })),
-      }],
+      targets: [
+        {
+          target: "cards",
+          matches: handles.map(() => ({
+            hidden: false,
+            rect: { x: 0, y: 0, width: 10, height: 10 },
+          })),
+        },
+      ],
     }),
   } as unknown as Page;
   const report = await checkLayout({

@@ -19,10 +19,12 @@ async function checkRows(
     adapter: createAdapter({
       measure: async () => ({
         viewport: { width: 500, height: 500 },
-        targets: [{
-          target: "rows",
-          matches: rectangles.map((rect) => ({ hidden: false, rect })),
-        }],
+        targets: [
+          {
+            target: "rows",
+            matches: rectangles.map((rect) => ({ hidden: false, rect })),
+          },
+        ],
       }),
     }),
     rules: [verticallyOrdered(collection("rows"), gap ? { gap } : undefined)],
@@ -61,10 +63,17 @@ test("passes with a maximum-only adjacent gap range", async () => {
 });
 
 test("passes when adjacent members touch and zero gap is allowed", async () => {
-  expect((await checkRows([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 0, y: 10, width: 10, height: 10 },
-  ], { minPx: 0, maxPx: 0 })).passed).toBe(true);
+  expect(
+    (
+      await checkRows(
+        [
+          { x: 0, y: 0, width: 10, height: 10 },
+          { x: 0, y: 10, width: 10, height: 10 },
+        ],
+        { minPx: 0, maxPx: 0 },
+      )
+    ).passed,
+  ).toBe(true);
 });
 
 test("passes vertical ordering when a collection contains one member", async () => {
@@ -105,10 +114,13 @@ test("fails when two adjacent collection members are out of vertical order", asy
 });
 
 test("fails when an adjacent gap is smaller than the allowed minimum", async () => {
-  const report = await checkRows([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 0, y: 14, width: 10, height: 10 },
-  ], { minPx: 5 });
+  const report = await checkRows(
+    [
+      { x: 0, y: 0, width: 10, height: 10 },
+      { x: 0, y: 14, width: 10, height: 10 },
+    ],
+    { minPx: 5 },
+  );
   expect(report.findings[0]).toMatchObject({
     code: "collection-gap-out-of-range",
     expected: { gap: { minPx: 5 } },
@@ -117,10 +129,13 @@ test("fails when an adjacent gap is smaller than the allowed minimum", async () 
 });
 
 test("fails when an adjacent gap is larger than the allowed maximum", async () => {
-  const report = await checkRows([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 0, y: 16, width: 10, height: 10 },
-  ], { maxPx: 5 });
+  const report = await checkRows(
+    [
+      { x: 0, y: 0, width: 10, height: 10 },
+      { x: 0, y: 16, width: 10, height: 10 },
+    ],
+    { maxPx: 5 },
+  );
   expect(report.findings[0]).toMatchObject({
     code: "collection-gap-out-of-range",
     expected: { gap: { maxPx: 5 } },
@@ -129,14 +144,20 @@ test("fails when an adjacent gap is larger than the allowed maximum", async () =
 });
 
 test("distinguishes an out-of-order pair from an ordered pair with an invalid gap", async () => {
-  const outOfOrder = await checkRows([
-    { x: 0, y: 10, width: 10, height: 10 },
-    { x: 0, y: 5, width: 10, height: 10 },
-  ], { minPx: 2 });
-  const badGap = await checkRows([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 0, y: 11, width: 10, height: 10 },
-  ], { minPx: 2 });
+  const outOfOrder = await checkRows(
+    [
+      { x: 0, y: 10, width: 10, height: 10 },
+      { x: 0, y: 5, width: 10, height: 10 },
+    ],
+    { minPx: 2 },
+  );
+  const badGap = await checkRows(
+    [
+      { x: 0, y: 0, width: 10, height: 10 },
+      { x: 0, y: 11, width: 10, height: 10 },
+    ],
+    { minPx: 2 },
+  );
   expect(outOfOrder.findings[0]).toMatchObject({
     code: "collection-ordering-violation",
   });
@@ -155,32 +176,48 @@ test("reports every adjacent pair whose vertical ordering fails", async () => {
     CollectionFinding,
     { subject: unknown; reference: unknown }
   >[];
-  expect(findings.map((finding) => [
-    finding.subject.collectionIndex,
-    finding.reference.collectionIndex,
-  ])).toEqual([[0, 1], [1, 2]]);
+  expect(
+    findings.map((finding) => [
+      finding.subject.collectionIndex,
+      finding.reference.collectionIndex,
+    ]),
+  ).toEqual([
+    [0, 1],
+    [1, 2],
+  ]);
 });
 
 test("reports every adjacent pair whose gap is outside the allowed range", async () => {
-  const report = await checkRows([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 0, y: 11, width: 10, height: 10 },
-    { x: 0, y: 31, width: 10, height: 10 },
-  ], { minPx: 2, maxPx: 5 });
+  const report = await checkRows(
+    [
+      { x: 0, y: 0, width: 10, height: 10 },
+      { x: 0, y: 11, width: 10, height: 10 },
+      { x: 0, y: 31, width: 10, height: 10 },
+    ],
+    { minPx: 2, maxPx: 5 },
+  );
   const findings = report.findings as Extract<
     CollectionFinding,
     { subject: unknown; reference: unknown }
   >[];
-  expect(findings.map((finding) => [
-    finding.subject.collectionIndex,
-    finding.reference.collectionIndex,
-  ])).toEqual([[0, 1], [1, 2]]);
+  expect(
+    findings.map((finding) => [
+      finding.subject.collectionIndex,
+      finding.reference.collectionIndex,
+    ]),
+  ).toEqual([
+    [0, 1],
+    [1, 2],
+  ]);
 });
 
 test("preserves fractional gaps between collection members", async () => {
-  const report = await checkRows([
-    { x: 0, y: 0.25, width: 10, height: 10.25 },
-    { x: 0, y: 11.75, width: 10, height: 10 },
-  ], { minPx: 1.5, maxPx: 1.5 });
+  const report = await checkRows(
+    [
+      { x: 0, y: 0.25, width: 10, height: 10.25 },
+      { x: 0, y: 11.75, width: 10, height: 10 },
+    ],
+    { minPx: 1.5, maxPx: 1.5 },
+  );
   expect(report.passed).toBe(true);
 });

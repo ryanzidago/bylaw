@@ -15,10 +15,12 @@ async function checkRectangles(rectangles: Rectangle[]): Promise<LayoutReport> {
     adapter: createAdapter({
       measure: async () => ({
         viewport: { width: 500, height: 500 },
-        targets: [{
-          target: "controls",
-          matches: rectangles.map((rect) => ({ hidden: false, rect })),
-        }],
+        targets: [
+          {
+            target: "controls",
+            matches: rectangles.map((rect) => ({ hidden: false, rect })),
+          },
+        ],
       }),
     }),
     rules: [pairwiseNotOverlap(collection("controls"))],
@@ -26,38 +28,54 @@ async function checkRectangles(rectangles: Rectangle[]): Promise<LayoutReport> {
 }
 
 test("passes when no collection members overlap", async () => {
-  expect((await checkRectangles([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 20, y: 20, width: 10, height: 10 },
-  ])).passed).toBe(true);
+  expect(
+    (
+      await checkRectangles([
+        { x: 0, y: 0, width: 10, height: 10 },
+        { x: 20, y: 20, width: 10, height: 10 },
+      ])
+    ).passed,
+  ).toBe(true);
 });
 
 test("passes when collection members only touch at their boundaries", async () => {
-  expect((await checkRectangles([
-    { x: 0, y: 0, width: 10, height: 10 },
-    { x: 10, y: 0, width: 10, height: 10 },
-    { x: 20, y: 10, width: 10, height: 10 },
-  ])).passed).toBe(true);
+  expect(
+    (
+      await checkRectangles([
+        { x: 0, y: 0, width: 10, height: 10 },
+        { x: 10, y: 0, width: 10, height: 10 },
+        { x: 20, y: 10, width: 10, height: 10 },
+      ])
+    ).passed,
+  ).toBe(true);
 });
 
 test("passes when collection members intersect horizontally but are vertically separate", async () => {
-  expect((await checkRectangles([
-    { x: 0, y: 0, width: 20, height: 10 },
-    { x: 5, y: 20, width: 20, height: 10 },
-  ])).passed).toBe(true);
+  expect(
+    (
+      await checkRectangles([
+        { x: 0, y: 0, width: 20, height: 10 },
+        { x: 5, y: 20, width: 20, height: 10 },
+      ])
+    ).passed,
+  ).toBe(true);
 });
 
 test("passes when collection members intersect vertically but are horizontally separate", async () => {
-  expect((await checkRectangles([
-    { x: 0, y: 0, width: 10, height: 20 },
-    { x: 20, y: 5, width: 10, height: 20 },
-  ])).passed).toBe(true);
+  expect(
+    (
+      await checkRectangles([
+        { x: 0, y: 0, width: 10, height: 20 },
+        { x: 20, y: 5, width: 10, height: 20 },
+      ])
+    ).passed,
+  ).toBe(true);
 });
 
 test("passes pairwise non-overlap when a collection contains one member", async () => {
-  expect((await checkRectangles([
-    { x: 0, y: 0, width: 10, height: 10 },
-  ])).passed).toBe(true);
+  expect(
+    (await checkRectangles([{ x: 0, y: 0, width: 10, height: 10 }])).passed,
+  ).toBe(true);
 });
 
 test("fails when two adjacent collection members overlap", async () => {
@@ -113,10 +131,16 @@ test("reports every overlapping pair in the collection", async () => {
     CollectionFinding,
     { subject: unknown; reference: unknown }
   >[];
-  expect(findings.map((finding) => [
-    finding.subject.collectionIndex,
-    finding.reference.collectionIndex,
-  ])).toEqual([[0, 1], [0, 2], [1, 2]]);
+  expect(
+    findings.map((finding) => [
+      finding.subject.collectionIndex,
+      finding.reference.collectionIndex,
+    ]),
+  ).toEqual([
+    [0, 1],
+    [0, 2],
+    [1, 2],
+  ]);
 });
 
 test("does not report the same overlapping pair twice", async () => {

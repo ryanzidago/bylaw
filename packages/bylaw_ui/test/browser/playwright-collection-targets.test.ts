@@ -37,10 +37,12 @@ test("an exact data-testid collection preserves DOM order", () =>
         CollectionFinding,
         { collectionIndex: number }
       >[];
-      expect(findings.map(({ collectionIndex }) => collectionIndex))
-        .toEqual([1, 2]);
-      expect(findings.map(({ actual }) => actual.referenceWidthPx))
-        .toEqual([30, 30]);
+      expect(findings.map(({ collectionIndex }) => collectionIndex)).toEqual([
+        1, 2,
+      ]);
+      expect(findings.map(({ actual }) => actual.referenceWidthPx)).toEqual([
+        30, 30,
+      ]);
     },
   ));
 
@@ -119,7 +121,10 @@ test("a Playwright rule evaluates a collection locator against a singular locato
     async (page) => {
       const report = await checkLayout({
         adapter: playwright(page, {
-          targets: { cards: page.locator(".card"), container: page.locator(".container") },
+          targets: {
+            cards: page.locator(".card"),
+            container: page.locator(".container"),
+          },
         }),
         rules: [everyInside(collection("cards"), "container")],
       });
@@ -131,7 +136,9 @@ test("Playwright collection resolution does not mutate the DOM", () =>
   withPage(
     '<main id="root"><div class="card" style="width:20px;height:10px"></div><div class="card" style="width:20px;height:10px"></div></main>',
     async (page) => {
-      const before = await page.locator("#root").evaluate((node) => node.outerHTML);
+      const before = await page
+        .locator("#root")
+        .evaluate((node) => node.outerHTML);
       const report = await checkLayout({
         adapter: playwright(page, {
           targets: { cards: page.locator(".card") },

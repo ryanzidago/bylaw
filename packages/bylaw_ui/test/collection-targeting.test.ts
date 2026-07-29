@@ -12,10 +12,7 @@ import {
 
 const rectangle = { x: 0, y: 0, width: 10, height: 10 };
 
-function match(
-  rect = rectangle,
-  overrides: { hidden?: boolean } = {},
-) {
+function match(rect = rectangle, overrides: { hidden?: boolean } = {}) {
   return { hidden: overrides.hidden ?? false, rect };
 }
 
@@ -30,10 +27,12 @@ function adapterFor(targets: object[], onMeasure?: (targets: unknown) => void) {
 
 test("a collection target resolves every matching element", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [match(), match(), match()],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [match(), match(), match()],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   expect(report.passed).toBe(true);
@@ -41,20 +40,19 @@ test("a collection target resolves every matching element", async () => {
 
 test("a collection target preserves adapter element order", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [match({ ...rectangle, width: 30 }), match(), match()],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [match({ ...rectangle, width: 30 }), match(), match()],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   const findings = report.findings as Extract<
     CollectionFinding,
     { collectionIndex: number }
   >[];
-  expect(findings.map((finding) => finding.collectionIndex)).toEqual([
-    1,
-    2,
-  ]);
+  expect(findings.map((finding) => finding.collectionIndex)).toEqual([1, 2]);
 });
 
 test("a collection target accepts exactly one matching element", async () => {
@@ -94,10 +92,12 @@ test("an empty collection skips geometry evaluation", async () => {
 
 test("a hidden collection member reports its collection index and target element", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [match(), match(rectangle, { hidden: true }), match()],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [match(), match(rectangle, { hidden: true }), match()],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   expect(report.findings[0]).toMatchObject({
@@ -110,10 +110,12 @@ test("a hidden collection member reports its collection index and target element
 
 test("a zero-size collection member reports its collection index and target element", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [match(), match({ ...rectangle, width: 0 }), match()],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [match(), match({ ...rectangle, width: 0 }), match()],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   expect(report.findings[0]).toMatchObject({
@@ -126,35 +128,36 @@ test("a zero-size collection member reports its collection index and target elem
 
 test("reports every unavailable collection member in collection order", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [
-        match(rectangle, { hidden: true }),
-        match(),
-        match({ ...rectangle, height: 0 }),
-      ],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [
+          match(rectangle, { hidden: true }),
+          match(),
+          match({ ...rectangle, height: 0 }),
+        ],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   const findings = report.findings as Extract<
     CollectionFinding,
     { collectionIndex: number }
   >[];
-  expect(findings.map((finding) => finding.collectionIndex)).toEqual([
-    0,
-    2,
-  ]);
+  expect(findings.map((finding) => finding.collectionIndex)).toEqual([0, 2]);
 });
 
 test("a collection rule skips geometry evaluation when any member is unavailable", async () => {
   const report = await checkLayout({
-    adapter: adapterFor([{
-      target: "cards",
-      matches: [
-        match({ ...rectangle, width: 10 }),
-        match({ ...rectangle, width: 20 }, { hidden: true }),
-      ],
-    }]),
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [
+          match({ ...rectangle, width: 10 }),
+          match({ ...rectangle, width: 20 }, { hidden: true }),
+        ],
+      },
+    ]),
     rules: [equalWidths(collection("cards"))],
   });
   expect(report.rules.skipped).toBe(1);

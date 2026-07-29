@@ -45,10 +45,7 @@ function check(rule: LayoutRule, targets: object[]) {
   });
 }
 
-const filesContainer = singular(
-  "files-changed",
-  rect(100, 50, 800, 600),
-);
+const filesContainer = singular("files-changed", rect(100, 50, 800, 600));
 const validCards = repeated("file-card", [
   rect(120, 80, 760, 120),
   rect(120, 220, 760, 120),
@@ -81,10 +78,9 @@ test("reports the file card that overflows the files changed container", async (
 });
 
 test("validates equal widths across every file card", async () => {
-  const report = await check(
-    equalWidths(collection("file-card")),
-    [validCards],
-  );
+  const report = await check(equalWidths(collection("file-card")), [
+    validCards,
+  ]);
   expect(report.passed).toBe(true);
 });
 
@@ -142,10 +138,9 @@ test("validates that unified diff rows do not overlap", async () => {
     rect(100, 124, 800, 24),
     rect(100, 148, 800, 24),
   ]);
-  expect((await check(
-    pairwiseNotOverlap(collection("unified-row")),
-    [rows],
-  )).passed).toBe(true);
+  expect(
+    (await check(pairwiseNotOverlap(collection("unified-row")), [rows])).passed,
+  ).toBe(true);
 });
 
 test("reports both unified diff rows that overlap", async () => {
@@ -153,10 +148,9 @@ test("reports both unified diff rows that overlap", async () => {
     rect(100, 100, 800, 24),
     rect(100, 120, 800, 24),
   ]);
-  const report = await check(
-    pairwiseNotOverlap(collection("unified-row")),
-    [rows],
-  );
+  const report = await check(pairwiseNotOverlap(collection("unified-row")), [
+    rows,
+  ]);
   expect(report.findings[0]).toMatchObject({
     subject: { target: "unified-row", collectionIndex: 0 },
     reference: { target: "unified-row", collectionIndex: 1 },
@@ -169,10 +163,10 @@ test("validates pairwise non-overlap across repeated toolbar controls", async ()
     rect(60, 20, 32, 32),
     rect(100, 20, 32, 32),
   ]);
-  expect((await check(
-    pairwiseNotOverlap(collection("toolbar-control")),
-    [controls],
-  )).passed).toBe(true);
+  expect(
+    (await check(pairwiseNotOverlap(collection("toolbar-control")), [controls]))
+      .passed,
+  ).toBe(true);
 });
 
 test("rejects a singular toolbar target when multiple controls match", async () => {

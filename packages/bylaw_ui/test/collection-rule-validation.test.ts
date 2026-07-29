@@ -18,11 +18,7 @@ function validate(rule: unknown): Promise<LayoutReport> {
   });
 }
 
-async function expectInvalid(
-  rule: unknown,
-  fieldPath: string,
-  code?: string,
-) {
+async function expectInvalid(rule: unknown, fieldPath: string, code?: string) {
   const report = await validate(rule);
   expect(report.rules).toEqual({ total: 1, passed: 0, failed: 1, skipped: 0 });
   expect(report.findings).toContainEqual(
@@ -41,16 +37,12 @@ test("a public helper rejects an empty collection target name", () => {
 
 test("a public helper rejects a runtime-invalid collection target declaration", () => {
   expect(() =>
-    equalWidths({ kind: "collection", target: 42 } as never)
+    equalWidths({ kind: "collection", target: 42 } as never),
   ).toThrow("collection");
 });
 
 test("a caller-constructed collection rule reports a missing collection operand", () =>
-  expectInvalid(
-    { kind: "equalWidths" },
-    "collection",
-    "missing-field",
-  ));
+  expectInvalid({ kind: "equalWidths" }, "collection", "missing-field"));
 
 test("a containment collection rule reports a missing singular container operand", () =>
   expectInvalid(
@@ -64,14 +56,14 @@ test("a containment collection rule reports a missing singular container operand
 
 test("collection containment rejects a negative tolerance", () => {
   expect(() =>
-    everyInside(collection("cards"), "container", { tolerancePx: -1 })
+    everyInside(collection("cards"), "container", { tolerancePx: -1 }),
   ).toThrow("options.tolerancePx");
 });
 
 test("collection equal-width rejects a negative tolerance", () => {
-  expect(() =>
-    equalWidths(collection("cards"), { tolerancePx: -1 })
-  ).toThrow("options.tolerancePx");
+  expect(() => equalWidths(collection("cards"), { tolerancePx: -1 })).toThrow(
+    "options.tolerancePx",
+  );
 });
 
 test("collection tolerances reject non-finite values", () => {
@@ -81,45 +73,45 @@ test("collection tolerances reject non-finite values", () => {
     Number.NEGATIVE_INFINITY,
   ]) {
     expect(() =>
-      everyInside(collection("cards"), "container", { tolerancePx })
+      everyInside(collection("cards"), "container", { tolerancePx }),
     ).toThrow("options.tolerancePx");
-    expect(() =>
-      equalWidths(collection("cards"), { tolerancePx })
-    ).toThrow("options.tolerancePx");
+    expect(() => equalWidths(collection("cards"), { tolerancePx })).toThrow(
+      "options.tolerancePx",
+    );
   }
 });
 
 test("collection vertical ordering rejects an empty gap range", () => {
-  expect(() =>
-    verticallyOrdered(collection("rows"), { gap: {} })
-  ).toThrow("options.gap");
+  expect(() => verticallyOrdered(collection("rows"), { gap: {} })).toThrow(
+    "options.gap",
+  );
 });
 
 test("collection vertical ordering rejects a minimum greater than its maximum", () => {
   expect(() =>
     verticallyOrdered(collection("rows"), {
       gap: { minPx: 9, maxPx: 8 },
-    })
+    }),
   ).toThrow("options.gap");
 });
 
 test("collection vertical ordering rejects negative gap bounds", () => {
   expect(() =>
-    verticallyOrdered(collection("rows"), { gap: { minPx: -1 } })
+    verticallyOrdered(collection("rows"), { gap: { minPx: -1 } }),
   ).toThrow("options.gap.minPx");
   expect(() =>
-    verticallyOrdered(collection("rows"), { gap: { maxPx: -1 } })
+    verticallyOrdered(collection("rows"), { gap: { maxPx: -1 } }),
   ).toThrow("options.gap.maxPx");
 });
 
 test("collection vertical ordering rejects non-finite gap bounds", () => {
   expect(() =>
-    verticallyOrdered(collection("rows"), { gap: { minPx: Number.NaN } })
+    verticallyOrdered(collection("rows"), { gap: { minPx: Number.NaN } }),
   ).toThrow("options.gap.minPx");
   expect(() =>
     verticallyOrdered(collection("rows"), {
       gap: { maxPx: Number.POSITIVE_INFINITY },
-    })
+    }),
   ).toThrow("options.gap.maxPx");
 });
 
@@ -136,7 +128,7 @@ test("collection rules report unknown fields as invalid", () =>
 
 test("collection rule helpers reject unsupported option fields", () => {
   expect(() =>
-    equalWidths(collection("cards"), { unsupported: true } as never)
+    equalWidths(collection("cards"), { unsupported: true } as never),
   ).toThrow("options.unsupported");
 });
 

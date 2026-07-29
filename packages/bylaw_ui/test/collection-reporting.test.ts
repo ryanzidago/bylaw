@@ -68,8 +68,7 @@ test("collection indexes are zero-based and follow adapter element order", async
     { collectionIndex: number }
   >[];
   expect(findings.map(({ collectionIndex }) => collectionIndex)).toEqual([
-    1,
-    2,
+    1, 2,
   ]);
 });
 
@@ -198,10 +197,7 @@ test("collection reports remain JSON-serializable without adapter browser or DOM
 
 test("collection findings follow rule order", async () => {
   const report = await reportFor(
-    [
-      equalWidths(collection("cards")),
-      pairwiseNotOverlap(collection("cards")),
-    ],
+    [equalWidths(collection("cards")), pairwiseNotOverlap(collection("cards"))],
     [cards([rect(0, 0, 10), rect(5, 5, 11)])],
   );
   expect(report.findings.map(({ ruleIndex }) => ruleIndex)).toEqual([0, 1]);
@@ -217,8 +213,7 @@ test("individual collection findings follow collection order", async () => {
     { collectionIndex: number }
   >[];
   expect(findings.map(({ collectionIndex }) => collectionIndex)).toEqual([
-    1,
-    2,
+    1, 2,
   ]);
 });
 
@@ -231,21 +226,29 @@ test("pairwise collection findings follow deterministic pair order", async () =>
     CollectionFinding,
     { subject: unknown; reference: unknown }
   >[];
-  expect(findings.map(({ subject, reference }) => [
-    subject.collectionIndex,
-    reference.collectionIndex,
-  ])).toEqual([[0, 1], [0, 2], [1, 2]]);
+  expect(
+    findings.map(({ subject, reference }) => [
+      subject.collectionIndex,
+      reference.collectionIndex,
+    ]),
+  ).toEqual([
+    [0, 1],
+    [0, 2],
+    [1, 2],
+  ]);
 });
 
 test("pairwise collection findings use ascending lexicographic index order", async () => {
   const report = await reportFor(
     [pairwiseNotOverlap(collection("cards"))],
-    [cards([
-      rect(0, 0, 20, 20),
-      rect(2, 2, 20, 20),
-      rect(4, 4, 20, 20),
-      rect(6, 6, 20, 20),
-    ])],
+    [
+      cards([
+        rect(0, 0, 20, 20),
+        rect(2, 2, 20, 20),
+        rect(4, 4, 20, 20),
+        rect(6, 6, 20, 20),
+      ]),
+    ],
   );
   const findings = report.findings as Extract<
     CollectionFinding,

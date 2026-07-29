@@ -48,24 +48,34 @@ test("passes when every collection member is contained by the target element", a
 });
 
 test("passes when collection members touch the target boundaries", async () => {
-  expect((await checkMembers([
-    { x: 0, y: 0, width: 20, height: 20 },
-    { x: 80, y: 80, width: 20, height: 20 },
-  ])).passed).toBe(true);
+  expect(
+    (
+      await checkMembers([
+        { x: 0, y: 0, width: 20, height: 20 },
+        { x: 80, y: 80, width: 20, height: 20 },
+      ])
+    ).passed,
+  ).toBe(true);
 });
 
 test("accepts collection member overflow within the configured tolerance", async () => {
-  expect((await checkMembers(
-    [{ x: -0.5, y: 0, width: 100.5, height: 100 }],
-    { tolerancePx: 1 },
-  )).passed).toBe(true);
+  expect(
+    (
+      await checkMembers([{ x: -0.5, y: 0, width: 100.5, height: 100 }], {
+        tolerancePx: 1,
+      })
+    ).passed,
+  ).toBe(true);
 });
 
 test("accepts collection member overflow equal to the configured tolerance", async () => {
-  expect((await checkMembers(
-    [{ x: -1, y: -1, width: 102, height: 102 }],
-    { tolerancePx: 1 },
-  )).passed).toBe(true);
+  expect(
+    (
+      await checkMembers([{ x: -1, y: -1, width: 102, height: 102 }], {
+        tolerancePx: 1,
+      })
+    ).passed,
+  ).toBe(true);
 });
 
 test("fails when collection member overflow exceeds the configured tolerance", async () => {
@@ -128,11 +138,7 @@ test("reports every collection member that overflows the target element", async 
     CollectionFinding,
     { collectionIndex: number }
   >[];
-  expect(findings.map((finding) => finding.collectionIndex)).toEqual([
-    0,
-    1,
-    2,
-  ]);
+  expect(findings.map((finding) => finding.collectionIndex)).toEqual([0, 1, 2]);
 });
 
 test("reports collection member overflow across each target boundary", async () => {
