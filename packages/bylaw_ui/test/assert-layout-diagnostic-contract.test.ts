@@ -18,6 +18,9 @@ test("multiple failures use stable separators that keep each diagnostic readable
 test("multiple operand findings for one skipped rule do not inflate the failed rule count", () => {
 });
 
+test("the assertion summary distinguishes failed rules from skipped rules", () => {
+});
+
 test("a realistic broken page renders actionable alignment, gap, overlap, containment, and size diagnostics together", () => {
 });
 
