@@ -33,16 +33,35 @@ test("an entirely invalid inline rule list returns findings without invoking Pla
 });
 
 for (const [name, input, message] of [
-  ["throws a TypeError when rules is missing", { adapter: fixtureAdapter({}) }, "rules"],
+  [
+    "throws a TypeError when rules is missing",
+    { adapter: fixtureAdapter({}) },
+    "rules",
+  ],
   ["throws a TypeError when the adapter is missing", { rules: [] }, "adapter"],
-  ["throws a TypeError for an unsupported adapter value", { adapter: {}, rules: [] }, "unsupported"],
-  ["throws a TypeError when rules is not an array", { adapter: fixtureAdapter({}), rules: {} }, "array"],
-  ["throws a TypeError when the checkLayout argument is not an object", null, "object"],
+  [
+    "throws a TypeError for an unsupported adapter value",
+    { adapter: {}, rules: [] },
+    "unsupported",
+  ],
+  [
+    "throws a TypeError when rules is not an array",
+    { adapter: fixtureAdapter({}), rules: {} },
+    "array",
+  ],
+  [
+    "throws a TypeError when the checkLayout argument is not an object",
+    null,
+    "object",
+  ],
 ] as const) {
   test(name, () => {
-    expect(
-      checkLayout(input as never),
-    ).rejects.toThrow(expect.objectContaining({ name: "TypeError", message: expect.stringContaining(message) }));
+    expect(checkLayout(input as never)).rejects.toThrow(
+      expect.objectContaining({
+        name: "TypeError",
+        message: expect.stringContaining(message),
+      }),
+    );
   });
 }
 

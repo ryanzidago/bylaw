@@ -145,7 +145,12 @@ test("device scale factors 1 and 2 preserve CSS-pixel semantics", async () => {
         const adapter = playwright(page);
         const measured = (await adapter.measure(["box"])) as {
           elements: Array<{
-            rect: { x: number; y: number; width: number; height: number } | null;
+            rect: {
+              x: number;
+              y: number;
+              width: number;
+              height: number;
+            } | null;
           }>;
         };
         expect(measured.elements[0]?.rect).toEqual({

@@ -8,13 +8,7 @@ import {
   width,
   type LayoutRule,
 } from "bylaw-ui";
-import {
-  fixtureAdapter,
-  hidden,
-  rect,
-  unresolved,
-  visible,
-} from "./support";
+import { fixtureAdapter, hidden, rect, unresolved, visible } from "./support";
 
 test("width produces a unary rule without a reference target", () => {
   expect(width("sidebar", { minPx: 260, maxPx: 280 })).toEqual({
@@ -145,7 +139,9 @@ test("a unary rule with a zero-height target is skipped with a zero-size-element
 
 test("a width finding reports the actual width and expected pixel range", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ panel: visible("panel", rect(0, 0, 241.5, 100)) }),
+    adapter: fixtureAdapter({
+      panel: visible("panel", rect(0, 0, 241.5, 100)),
+    }),
     rules: [width("panel", { minPx: 260, maxPx: 280 })],
   });
   expect(report.findings[0]).toMatchObject({
@@ -157,7 +153,9 @@ test("a width finding reports the actual width and expected pixel range", async 
 
 test("a height finding reports the actual height and expected pixel range", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ toolbar: visible("toolbar", rect(0, 0, 100, 39.25)) }),
+    adapter: fixtureAdapter({
+      toolbar: visible("toolbar", rect(0, 0, 100, 39.25)),
+    }),
     rules: [height("toolbar", { minPx: 48, maxPx: 48 })],
   });
   expect(report.findings[0]).toMatchObject({
@@ -187,7 +185,9 @@ test("an inViewport finding reports the actual target and viewport edges", async
 
 test("unary findings identify the subject without a reference target", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ sidebar: visible("sidebar", rect(0, 0, 200, 100)) }),
+    adapter: fixtureAdapter({
+      sidebar: visible("sidebar", rect(0, 0, 200, 100)),
+    }),
     rules: [width("sidebar", { minPx: 260 })],
   });
   expect(report.findings[0]).toMatchObject({ target: "sidebar" });
@@ -216,19 +216,25 @@ test("several failing unary rules produce distinct findings and accurate rule co
 
 test("a width assertion error includes the actual width and expected pixel range", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ sidebar: visible("sidebar", rect(0, 0, 241.5, 100)) }),
+    adapter: fixtureAdapter({
+      sidebar: visible("sidebar", rect(0, 0, 241.5, 100)),
+    }),
     rules: [width("sidebar", { minPx: 260, maxPx: 280 })],
   });
   expect(() => assertLayout(report)).toThrow(
     expect.objectContaining({
-      message: expect.stringMatching(/sidebar[\s\S]*241\.5[\s\S]*260[\s\S]*280/i),
+      message: expect.stringMatching(
+        /sidebar[\s\S]*241\.5[\s\S]*260[\s\S]*280/i,
+      ),
     }),
   );
 });
 
 test("a height assertion error includes the actual height and expected pixel range", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ toolbar: visible("toolbar", rect(0, 0, 100, 39.25)) }),
+    adapter: fixtureAdapter({
+      toolbar: visible("toolbar", rect(0, 0, 100, 39.25)),
+    }),
     rules: [height("toolbar", { minPx: 48, maxPx: 48 })],
   });
   expect(() => assertLayout(report)).toThrow(
@@ -240,19 +246,25 @@ test("a height assertion error includes the actual height and expected pixel ran
 
 test("an inViewport assertion error includes the actual target and viewport edges", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ dialog: visible("dialog", rect(-5, 700, 1_300, 40)) }),
+    adapter: fixtureAdapter({
+      dialog: visible("dialog", rect(-5, 700, 1_300, 40)),
+    }),
     rules: [inViewport("dialog")],
   });
   expect(() => assertLayout(report)).toThrow(
     expect.objectContaining({
-      message: expect.stringMatching(/dialog[\s\S]*-5[\s\S]*700[\s\S]*1295[\s\S]*740/i),
+      message: expect.stringMatching(
+        /dialog[\s\S]*-5[\s\S]*700[\s\S]*1295[\s\S]*740/i,
+      ),
     }),
   );
 });
 
 test("an inViewport assertion error includes the expected viewport constraint", async () => {
   const report = await checkLayout({
-    adapter: fixtureAdapter({ dialog: visible("dialog", rect(-1, 0, 100, 100)) }),
+    adapter: fixtureAdapter({
+      dialog: visible("dialog", rect(-1, 0, 100, 100)),
+    }),
     rules: [inViewport("dialog")],
   });
   expect(() => assertLayout(report)).toThrow(
@@ -263,7 +275,9 @@ test("an inViewport assertion error includes the expected viewport constraint", 
 });
 
 test("the README documents unary geometry rules and when to prefer relative rules", async () => {
-  const readme = await Bun.file(new URL("../README.md", import.meta.url)).text();
+  const readme = await Bun.file(
+    new URL("../README.md", import.meta.url),
+  ).text();
   expect(readme).toContain("width(");
   expect(readme).toContain("height(");
   expect(readme).toContain("inViewport(");

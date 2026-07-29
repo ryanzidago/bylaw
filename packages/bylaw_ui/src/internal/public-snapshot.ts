@@ -167,7 +167,9 @@ function rawTarget(
   if ("matchCount" in resolution) {
     if (resolution.matchCount === 1) {
       if (resolution.hidden === undefined || resolution.rect === undefined) {
-        throw new Error("Validated resolved targets must contain element state");
+        throw new Error(
+          "Validated resolved targets must contain element state",
+        );
       }
 
       return {

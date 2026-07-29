@@ -106,7 +106,11 @@ export function validateSnapshot(
   value: unknown,
   requestedTestIds: readonly string[],
 ): RawMeasurementSnapshot {
-  if (!isRecord(value) || !isRecord(value.viewport) || !Array.isArray(value.elements)) {
+  if (
+    !isRecord(value) ||
+    !isRecord(value.viewport) ||
+    !Array.isArray(value.elements)
+  ) {
     malformed("snapshot must contain viewport and elements");
   }
 

@@ -21,7 +21,9 @@ function checked<T extends LayoutRule>(rule: T): T {
 
   if (findings.length > 0) {
     throw new TypeError(
-      findings.map(({ fieldPath, reason }) => `${fieldPath}: ${reason}`).join("; "),
+      findings
+        .map(({ fieldPath, reason }) => `${fieldPath}: ${reason}`)
+        .join("; "),
     );
   }
 
@@ -202,17 +204,11 @@ function unaryRangeRule(
   return checked({ kind, target, range: { ...range } });
 }
 
-export function width(
-  target: string,
-  range: PixelRange,
-): WidthRule {
+export function width(target: string, range: PixelRange): WidthRule {
   return unaryRangeRule("width", target, range) as WidthRule;
 }
 
-export function height(
-  target: string,
-  range: PixelRange,
-): HeightRule {
+export function height(target: string, range: PixelRange): HeightRule {
   return unaryRangeRule("height", target, range) as HeightRule;
 }
 

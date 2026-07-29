@@ -28,8 +28,7 @@ type UnresolvedSingularTarget = {
 };
 
 export type SingularTargetResolution =
-  | ResolvedSingularTarget
-  | UnresolvedSingularTarget;
+  ResolvedSingularTarget | UnresolvedSingularTarget;
 
 export type CollectionTargetResolution = {
   target: string;
@@ -64,14 +63,18 @@ export function createAdapter(implementation?: unknown): Adapter {
     implementation === null ||
     Array.isArray(implementation)
   ) {
-    throw new TypeError("createAdapter expects an adapter implementation object");
+    throw new TypeError(
+      "createAdapter expects an adapter implementation object",
+    );
   }
 
   if (
     !("measure" in implementation) ||
     typeof implementation.measure !== "function"
   ) {
-    throw new TypeError("createAdapter implementation.measure must be a function");
+    throw new TypeError(
+      "createAdapter implementation.measure must be a function",
+    );
   }
 
   const measure = implementation.measure.bind(implementation) as (

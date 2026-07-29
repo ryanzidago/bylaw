@@ -12,12 +12,7 @@ import {
   type Rectangle,
 } from "../src/internal/adapter";
 
-export function rect(
-  x = 0,
-  y = 0,
-  width = 10,
-  height = 10,
-): Rectangle {
+export function rect(x = 0, y = 0, width = 10, height = 10): Rectangle {
   return { x, y, width, height };
 }
 

@@ -3,7 +3,10 @@ import { expect, test } from "bun:test";
 import { align, type Alignment } from "bylaw-ui";
 import { expectFailure, expectPass, rect } from "./support";
 
-const aligned: Record<Alignment, [ReturnType<typeof rect>, ReturnType<typeof rect>]> = {
+const aligned: Record<
+  Alignment,
+  [ReturnType<typeof rect>, ReturnType<typeof rect>]
+> = {
   left: [rect(4, 0, 10, 10), rect(4, 30, 30, 20)],
   right: [rect(4, 0, 10, 10), rect(-16, 30, 30, 20)],
   top: [rect(0, 4, 10, 10), rect(30, 4, 20, 30)],
@@ -12,9 +15,9 @@ const aligned: Record<Alignment, [ReturnType<typeof rect>, ReturnType<typeof rec
   centerY: [rect(0, 5, 10, 10), rect(30, -5, 20, 30)],
 };
 
-for (const [alignment, [subject, reference]] of Object.entries(aligned) as Array<
-  [Alignment, [ReturnType<typeof rect>, ReturnType<typeof rect>]]
->) {
+for (const [alignment, [subject, reference]] of Object.entries(
+  aligned,
+) as Array<[Alignment, [ReturnType<typeof rect>, ReturnType<typeof rect>]]>) {
   const label =
     alignment === "centerX"
       ? "horizontal centers"

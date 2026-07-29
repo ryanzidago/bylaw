@@ -217,7 +217,9 @@ test("does not mutate the DOM while resolving registered targets", () =>
   withPage(
     '<div id="root"><div class="subject" style="width:20px;height:20px"></div><div class="reference" style="width:20px;height:20px"></div></div>',
     async (page) => {
-      const before = await page.locator("#root").evaluate((element) => element.outerHTML);
+      const before = await page
+        .locator("#root")
+        .evaluate((element) => element.outerHTML);
       const report = await checkLayout({
         adapter: playwright(page, {
           targets: {
