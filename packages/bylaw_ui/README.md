@@ -28,6 +28,40 @@ your Playwright version:
 npx playwright-core install chromium
 ```
 
+## Current API
+
+The package has two entrypoints:
+
+- `bylaw-ui` exports the browser-independent rules, evaluator, report assertion,
+  public adapter factory, error classes, and their TypeScript types.
+- `bylaw-ui/playwright` exports `playwright`, `waitForLayoutTargets`,
+  `LayoutReadinessTimeoutError`, and their TypeScript types.
+
+Rules use logical target names. Binary rules take `subject, reference` in that
+order:
+
+| Contract                          | Helper                                 | Options                        |
+| --------------------------------- | -------------------------------------- | ------------------------------ |
+| Align edges or centers            | `align(subject, reference, alignment)` | `tolerancePx`                  |
+| Place one target above another    | `above(subject, reference)`            | `tolerancePx`, `gap`           |
+| Place one target below another    | `below(subject, reference)`            | `tolerancePx`, `gap`           |
+| Place one target left of another  | `leftOf(subject, reference)`           | `tolerancePx`, `gap`           |
+| Place one target right of another | `rightOf(subject, reference)`          | `tolerancePx`, `gap`           |
+| Require overlap                   | `overlap(subject, reference)`          | horizontal and vertical ranges |
+| Prohibit overlap                  | `notOverlap(subject, reference)`       | none                           |
+| Contain one target inside another | `inside(subject, reference)`           | `tolerancePx`                  |
+| Match width                       | `sameWidth(subject, reference)`        | `tolerancePx`                  |
+| Match height                      | `sameHeight(subject, reference)`       | `tolerancePx`                  |
+| Match width and height            | `sameSize(subject, reference)`         | `tolerancePx`                  |
+| Constrain one target's width      | `width(target, range)`                 | inclusive pixel range          |
+| Constrain one target's height     | `height(target, range)`                | inclusive pixel range          |
+| Keep one target in the viewport   | `inViewport(target)`                   | none                           |
+
+An alignment is `left`, `right`, `top`, `bottom`, `centerX`, or `centerY`.
+Pixel ranges use an inclusive `minPx`, `maxPx`, or both. Rule helpers validate
+their inputs immediately; structurally valid `LayoutRule` objects can also be
+serialized and supplied directly to `checkLayout`.
+
 ## Use one snapshot for many contracts
 
 Import rules and reporting from the package root. Import the browser integration
@@ -145,6 +179,27 @@ Use `assertLayout` when the surrounding test runner should fail. Its
 `LayoutAssertionError` includes actionable geometry diagnostics and retains the
 original structured report for programmatic consumers.
 
+## Reports and errors
+
+`checkLayout` always returns a `Promise<LayoutReport>`. It collects independent
+findings in supplied rule order and does not throw for an invalid rule, an
+unresolved or unavailable target, or a violated geometry contract:
+
+- Invalid rules and geometry violations count as `failed`.
+- Rules whose targets are missing, duplicated, hidden, or zero-size count as
+  `skipped` and include element-resolution or element-visibility findings.
+- A report passes only when every rule passes and `findings` is empty.
+
+`assertLayout(report)` returns normally for a passing report. For a failing
+report it throws `LayoutAssertionError`, whose message includes the relevant
+measured geometry and allowed constraint and whose `report` property is the
+original report.
+
+Boundary and platform failures remain exceptions. Invalid call shapes throw
+`TypeError`; malformed custom-adapter snapshots throw
+`MeasurementValidationError` before evaluation; browser or adapter errors
+propagate unchanged.
+
 ## Group contracts by rendered state
 
 A UI normally needs a few representative states rather than one test per
@@ -181,6 +236,63 @@ for (const [state, rules] of Object.entries(stateContracts)) {
 Choose states that materially change what is rendered or which contracts
 apply. Desktop unified, desktop split, mobile, loading, and error are examples,
 not a required state taxonomy.
+
+## Resolve targets
+
+Pass logical names to rules and register their Playwright locators on the
+adapter. Locators can use roles, labels, text, test IDs, filtering, frame
+locators, and normal Playwright composition. Registered locators are resolved
+from the current page state without Playwright auto-waiting.
+
+Every target used by a current geometry rule is singular. Exactly one match is
+required. Zero and multiple matches become explicit report findings; Bylaw
+never selects the first match. A registered locator takes precedence over
+fallback lookup even when it resolves to zero or multiple elements.
+
+An unregistered logical name falls back to an exact, case-sensitive
+`data-testid` value. Whitespace and special characters are preserved. Prefer a
+registered semantic locator when the rule should not depend on production test
+markup.
+
+## Wait for layout readiness
+
+`waitForLayoutTargets` accepts only an adapter returned by `playwright`. It is
+not available for public custom adapters, whose consumers own platform-specific
+waiting.
+
+```ts
+import {
+  LayoutReadinessTimeoutError,
+  playwright,
+  waitForLayoutTargets,
+} from "bylaw-ui/playwright";
+
+const adapter = playwright(page, { targets });
+
+try {
+  await waitForLayoutTargets(adapter, rules, {
+    timeoutMs: 1_000,
+    stableFrames: 2,
+  });
+} catch (error) {
+  if (error instanceof LayoutReadinessTimeoutError) {
+    console.error({
+      unresolved: error.unresolvedTargets,
+      unstable: error.unstableTargets,
+      lastObserved: error.lastObserved,
+    });
+  }
+
+  throw error;
+}
+```
+
+`timeoutMs` must be a positive finite number and `stableFrames` must be a
+positive integer. Stability tracks only the normalized geometry required by
+the supplied rules, plus viewport dimensions for `inViewport`. A timeout
+identifies unresolved and unstable targets and preserves their last observed
+match count and geometry. Readiness does not assert rule compliance,
+visibility, or positive size.
 
 ## Ownership boundaries
 
@@ -394,6 +506,13 @@ A singular target uses `matchCount: 0` when missing, `matchCount: 1` with
 A collection target uses `matches`, including an empty collection when it has
 no members. Results must correlate one-to-one with the targets requested by
 Bylaw.
+
+Collection results are part of the public measurement compatibility boundary,
+but the current package does not export collection evaluation rules. Do not
+expect a current rule to evaluate every member: one member resolves as a
+singular target, an empty collection is missing, and multiple members are
+ambiguous. Follow [#177](https://github.com/ryanzidago/bylaw/issues/177) for the
+planned collection-rule API.
 
 Malformed snapshots throw `MeasurementValidationError` before any rule is
 evaluated and never become layout findings or partial reports. Errors thrown or
