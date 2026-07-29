@@ -121,6 +121,7 @@ export type LayoutViolationFinding = {
   relationship: LayoutRule["kind"];
   expected: { [key: string]: JsonValue | undefined };
   actual: { [key: string]: JsonValue | undefined };
+  measurements?: { [key: string]: JsonValue | undefined };
 };
 
 export type LayoutFinding =

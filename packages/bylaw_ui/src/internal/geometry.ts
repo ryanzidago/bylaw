@@ -280,7 +280,8 @@ export function evaluateGeometry(
   const subject = edges(subjectRect);
   const reference = edges(referenceRect);
 
-  switch (rule.kind) {
+  const findings = (() => {
+    switch (rule.kind) {
     case "align":
       return evaluateAlignment(rule, ruleIndex, subject, reference);
     case "above":
@@ -297,5 +298,22 @@ export function evaluateGeometry(
     case "sameHeight":
     case "sameSize":
       return evaluateSize(rule, ruleIndex, subject, reference);
+    }
+  })();
+
+  if (
+    findings.length > 0 &&
+    (rule.kind === "sameWidth" ||
+      rule.kind === "sameHeight" ||
+      rule.kind === "sameSize")
+  ) {
+    findings[0]!.measurements = {
+      subjectWidthPx: subject.width,
+      referenceWidthPx: reference.width,
+      subjectHeightPx: subject.height,
+      referenceHeightPx: reference.height,
+    };
   }
+
+  return findings;
 }
