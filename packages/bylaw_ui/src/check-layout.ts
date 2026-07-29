@@ -4,15 +4,15 @@ import type {
   LayoutFinding,
   LayoutReport,
   LayoutRule,
-} from "./types";
+} from "./types.js";
 import {
   isInternalAdapter,
   type InternalAdapter,
   type RawElementMeasurement,
-} from "./internal/adapter";
-import { evaluateGeometry } from "./internal/geometry";
-import { validateSnapshot } from "./internal/snapshot";
-import { validateRule } from "./internal/validation";
+} from "./internal/adapter.js";
+import { evaluateGeometry } from "./internal/geometry.js";
+import { validateSnapshot } from "./internal/snapshot.js";
+import { validateRule } from "./internal/validation.js";
 
 export type CheckLayoutInput = {
   adapter: InternalAdapter;

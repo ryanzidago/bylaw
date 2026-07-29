@@ -1,4 +1,4 @@
-import type { LayoutReport } from "./types";
+import type { LayoutReport } from "./types.js";
 
 export class LayoutAssertionError extends Error {
   readonly report: LayoutReport;

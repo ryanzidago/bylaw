@@ -77,4 +77,11 @@ run_stage "credo" mix credo --strict
 run_stage "test" mix test "$@"
 run_stage "docs" mix docs
 
+(
+  cd "packages/bylaw_ui"
+  bun install --frozen-lockfile
+  bunx playwright-core install chromium
+  bun run check
+)
+
 echo "qa passed"

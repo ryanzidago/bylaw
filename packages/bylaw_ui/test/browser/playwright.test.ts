@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, expect, test } from "bun:test";
+import { afterAll, afterEach, beforeAll, expect, test } from "bun:test";
 import { chromium, type Browser, type Page } from "playwright-core";
 
 import {
@@ -18,6 +18,10 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await browser.close();
+});
+
+afterEach(() => {
+  expect(browser.contexts()).toHaveLength(0);
 });
 
 async function withPage<T>(

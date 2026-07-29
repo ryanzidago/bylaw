@@ -4,6 +4,10 @@
     "module": "Preserve",
     "moduleResolution": "bundler",
     "noEmit": true,
+    "paths": {
+      "bylaw-ui": ["./src/index.ts"],
+      "bylaw-ui/playwright": ["./src/playwright.ts"]
+    },
     "strict": true,
     "types": ["bun"]
   },

@@ -20,7 +20,7 @@ export type RawMeasurementSnapshot = {
   elements: RawElementMeasurement[];
 };
 
-const adapterBrand = Symbol("bylaw-ui internal adapter");
+const adapterBrand = Symbol.for("bylaw-ui.internal.adapter");
 
 export type InternalAdapter = {
   readonly [adapterBrand]: true;
