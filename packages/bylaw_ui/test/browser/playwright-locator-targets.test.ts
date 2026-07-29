@@ -108,6 +108,93 @@ test("supports composed Playwright locators", () =>
     },
   ));
 
+/**
+ * Issue: A registered locator inside an iframe is measured in frame-local
+ * coordinates instead of top-level viewport coordinates.
+ * Why it matters: The public registry accepts Playwright Locator values without
+ * excluding frame locators, but common embedded UI targets fail at runtime.
+ */
+test("measures registered Playwright locators in top-level viewport coordinates", () =>
+  withPage(
+    '<iframe title="Embedded UI" style="position:absolute;left:100px;top:100px;border:0" srcdoc="<style>html,body{margin:0}</style><button style=&quot;width:80px;height:24px&quot;>Edit</button>"></iframe><div class="peer" style="position:absolute;left:100px;top:100px;width:80px;height:24px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            edit: page
+              .frameLocator('iframe[title="Embedded UI"]')
+              .getByRole("button", { name: "Edit" }),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [
+          sameSize("edit", "peer"),
+          align("edit", "peer", "left"),
+          align("edit", "peer", "top"),
+        ],
+      });
+      expectPassed(report, 3);
+    },
+  ));
+
+/**
+ * Issue: Registered targets inside transformed iframes retain their unscaled
+ * frame-local dimensions.
+ * Why it matters: Rules report false geometry findings when an embedded UI is
+ * rendered through a CSS transform.
+ */
+test("measures registered targets through transformed iframes", () =>
+  withPage(
+    '<iframe title="Scaled UI" style="position:absolute;left:100px;top:100px;width:200px;height:100px;border:0;transform:scale(2);transform-origin:top left" srcdoc="<style>html,body{margin:0}</style><button style=&quot;width:80px;height:24px&quot;>Edit</button>"></iframe><div class="peer" style="position:absolute;left:100px;top:100px;width:160px;height:48px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            edit: page
+              .frameLocator('iframe[title="Scaled UI"]')
+              .getByRole("button", { name: "Edit" }),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [
+          sameSize("edit", "peer"),
+          align("edit", "peer", "left"),
+          align("edit", "peer", "top"),
+        ],
+      });
+      expectPassed(report, 3);
+    },
+  ));
+
+/**
+ * Issue: Registered handles from cross-origin frames cannot be adopted by the
+ * top-level page evaluation.
+ * Why it matters: Valid Playwright frame locators throw instead of producing a
+ * layout report for embedded third-party UI.
+ */
+test("measures registered targets inside cross-origin iframes", () =>
+  withPage(
+    '<iframe title="External UI" style="position:absolute;left:100px;top:100px;border:0" src="data:text/html,<style>html,body{margin:0}</style><button style=width:80px;height:24px>Edit</button>"></iframe><div class="peer" style="position:absolute;left:100px;top:100px;width:80px;height:24px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            edit: page
+              .frameLocator('iframe[title="External UI"]')
+              .getByRole("button", { name: "Edit" }),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [
+          sameSize("edit", "peer"),
+          align("edit", "peer", "left"),
+          align("edit", "peer", "top"),
+        ],
+      });
+      expectPassed(report, 3);
+    },
+  ));
+
 test("does not require logical target names to match DOM attributes", () =>
   withPage(
     '<main id="production-shell" style="width:200px;height:100px"><span class="item" style="display:block;width:40px;height:20px"></span></main>',

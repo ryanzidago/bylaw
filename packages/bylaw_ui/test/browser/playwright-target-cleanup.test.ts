@@ -4,6 +4,11 @@ import type { ElementHandle, Locator, Page } from "playwright-core";
 import { checkLayout, sameSize } from "bylaw-ui";
 import { playwright } from "bylaw-ui/playwright";
 
+/**
+ * Issue: Resolved element handles leak when another registered locator rejects.
+ * Why it matters: Repeated failed checks retain browser-side objects and can
+ * exhaust Playwright resources in a long-running test process.
+ */
 test("disposes resolved element handles when another registered target fails", async () => {
   let disposals = 0;
   const handle = {
