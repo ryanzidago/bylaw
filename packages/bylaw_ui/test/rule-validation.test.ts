@@ -27,9 +27,9 @@ async function expectInvalid(
   const report = await validate(rule);
   expect(report.passed).toBe(false);
   expect(report.rules).toEqual({ total: 1, passed: 0, failed: 1, skipped: 0 });
-  expect(report.findings.some((finding) => finding.category === "invalid-rule")).toBe(
-    true,
-  );
+  expect(
+    report.findings.some((finding) => finding.category === "invalid-rule"),
+  ).toBe(true);
 
   if (fieldPath !== undefined) {
     expect(report.findings).toContainEqual(
@@ -45,12 +45,42 @@ async function expectInvalid(
 }
 
 const requiredIdCases = [
-  ["reports an empty subject test ID as invalid", { kind: "sameSize", subject: "", reference: "b" }, "subject", "invalid-value"],
-  ["reports an empty reference test ID as invalid", { kind: "sameSize", subject: "a", reference: "" }, "reference", "invalid-value"],
-  ["reports a missing subject test ID as invalid", { kind: "sameSize", reference: "b" }, "subject", "missing-field"],
-  ["reports a missing reference test ID as invalid", { kind: "sameSize", subject: "a" }, "reference", "missing-field"],
-  ["reports a non-string subject test ID as invalid at runtime", { kind: "sameSize", subject: 1, reference: "b" }, "subject", "invalid-type"],
-  ["reports a non-string reference test ID as invalid at runtime", { kind: "sameSize", subject: "a", reference: false }, "reference", "invalid-type"],
+  [
+    "reports an empty subject test ID as invalid",
+    { kind: "sameSize", subject: "", reference: "b" },
+    "subject",
+    "invalid-value",
+  ],
+  [
+    "reports an empty reference test ID as invalid",
+    { kind: "sameSize", subject: "a", reference: "" },
+    "reference",
+    "invalid-value",
+  ],
+  [
+    "reports a missing subject test ID as invalid",
+    { kind: "sameSize", reference: "b" },
+    "subject",
+    "missing-field",
+  ],
+  [
+    "reports a missing reference test ID as invalid",
+    { kind: "sameSize", subject: "a" },
+    "reference",
+    "missing-field",
+  ],
+  [
+    "reports a non-string subject test ID as invalid at runtime",
+    { kind: "sameSize", subject: 1, reference: "b" },
+    "subject",
+    "invalid-type",
+  ],
+  [
+    "reports a non-string reference test ID as invalid at runtime",
+    { kind: "sameSize", subject: "a", reference: false },
+    "reference",
+    "invalid-type",
+  ],
 ] as const;
 
 for (const [name, rule, path, code] of requiredIdCases) {
@@ -74,7 +104,8 @@ test("reports an unknown alignment value as invalid", () =>
 test("reports a missing rule kind as invalid", () =>
   expectInvalid({ subject: "a", reference: "b" }, "kind", "missing-field"));
 
-test("reports a null rule as invalid", () => expectInvalid(null, "$", "invalid-type"));
+test("reports a null rule as invalid", () =>
+  expectInvalid(null, "$", "invalid-type"));
 test("reports a non-object rule as invalid", () =>
   expectInvalid("sameSize", "$", "invalid-type"));
 
@@ -84,8 +115,16 @@ for (const [name, value, pass] of [
   ["accepts a positive fractional tolerance", 0.1, true],
   ["reports a negative tolerance as invalid", -1, false],
   ["reports NaN tolerance as invalid", Number.NaN, false],
-  ["reports positive infinity tolerance as invalid", Number.POSITIVE_INFINITY, false],
-  ["reports negative infinity tolerance as invalid", Number.NEGATIVE_INFINITY, false],
+  [
+    "reports positive infinity tolerance as invalid",
+    Number.POSITIVE_INFINITY,
+    false,
+  ],
+  [
+    "reports negative infinity tolerance as invalid",
+    Number.NEGATIVE_INFINITY,
+    false,
+  ],
   ["reports a nonnumeric tolerance as invalid at runtime", "1", false],
 ] as const) {
   test(name, async () => {
@@ -98,9 +137,9 @@ for (const [name, value, pass] of [
     const report = await validate(rule);
 
     if (pass) {
-      expect(report.findings.some((finding) => finding.category === "invalid-rule")).toBe(
-        false,
-      );
+      expect(
+        report.findings.some((finding) => finding.category === "invalid-rule"),
+      ).toBe(false);
     } else {
       expect(report.findings).toContainEqual(
         expect.objectContaining({
@@ -113,33 +152,81 @@ for (const [name, value, pass] of [
 }
 
 const validRanges = [
-  ["accepts a gap range containing only a minimum", leftOf("a", "b", { gap: { minPx: 1 } })],
-  ["accepts a gap range containing only a maximum", leftOf("a", "b", { gap: { maxPx: 1 } })],
-  ["accepts a gap range containing both bounds", leftOf("a", "b", { gap: { minPx: 1, maxPx: 2 } })],
-  ["accepts equal gap bounds, including zero", leftOf("a", "b", { gap: { minPx: 0, maxPx: 0 } })],
-  ["accepts an overlap range containing only a minimum", overlap("a", "b", { horizontal: { minPx: 0 } })],
-  ["accepts an overlap range containing only a positive maximum", overlap("a", "b", { horizontal: { maxPx: 1 } })],
-  ["accepts an overlap range containing both bounds when its maximum is positive", overlap("a", "b", { horizontal: { minPx: 0, maxPx: 1 } })],
-  ["accepts equal positive overlap bounds", overlap("a", "b", { horizontal: { minPx: 1, maxPx: 1 } })],
+  [
+    "accepts a gap range containing only a minimum",
+    leftOf("a", "b", { gap: { minPx: 1 } }),
+  ],
+  [
+    "accepts a gap range containing only a maximum",
+    leftOf("a", "b", { gap: { maxPx: 1 } }),
+  ],
+  [
+    "accepts a gap range containing both bounds",
+    leftOf("a", "b", { gap: { minPx: 1, maxPx: 2 } }),
+  ],
+  [
+    "accepts equal gap bounds, including zero",
+    leftOf("a", "b", { gap: { minPx: 0, maxPx: 0 } }),
+  ],
+  [
+    "accepts an overlap range containing only a minimum",
+    overlap("a", "b", { horizontal: { minPx: 0 } }),
+  ],
+  [
+    "accepts an overlap range containing only a positive maximum",
+    overlap("a", "b", { horizontal: { maxPx: 1 } }),
+  ],
+  [
+    "accepts an overlap range containing both bounds when its maximum is positive",
+    overlap("a", "b", { horizontal: { minPx: 0, maxPx: 1 } }),
+  ],
+  [
+    "accepts equal positive overlap bounds",
+    overlap("a", "b", { horizontal: { minPx: 1, maxPx: 1 } }),
+  ],
 ] as const;
 
 for (const [name, rule] of validRanges) {
   test(name, async () => {
     const report = await validate(rule);
-    expect(report.findings.some((finding) => finding.category === "invalid-rule")).toBe(
-      false,
-    );
+    expect(
+      report.findings.some((finding) => finding.category === "invalid-rule"),
+    ).toBe(false);
   });
 }
 
 const invalidRanges = [
   ["reports an empty range as invalid", {}, "options.gap"],
-  ["reports a negative minimum bound as invalid", { minPx: -1 }, "options.gap.minPx"],
-  ["reports a negative maximum bound as invalid", { maxPx: -1 }, "options.gap.maxPx"],
-  ["reports a minimum greater than the maximum as invalid", { minPx: 2, maxPx: 1 }, "options.gap"],
-  ["reports a NaN range bound as invalid", { minPx: Number.NaN }, "options.gap.minPx"],
-  ["reports an infinite range bound as invalid", { maxPx: Number.POSITIVE_INFINITY }, "options.gap.maxPx"],
-  ["reports a nonnumeric range bound as invalid at runtime", { minPx: "1" }, "options.gap.minPx"],
+  [
+    "reports a negative minimum bound as invalid",
+    { minPx: -1 },
+    "options.gap.minPx",
+  ],
+  [
+    "reports a negative maximum bound as invalid",
+    { maxPx: -1 },
+    "options.gap.maxPx",
+  ],
+  [
+    "reports a minimum greater than the maximum as invalid",
+    { minPx: 2, maxPx: 1 },
+    "options.gap",
+  ],
+  [
+    "reports a NaN range bound as invalid",
+    { minPx: Number.NaN },
+    "options.gap.minPx",
+  ],
+  [
+    "reports an infinite range bound as invalid",
+    { maxPx: Number.POSITIVE_INFINITY },
+    "options.gap.maxPx",
+  ],
+  [
+    "reports a nonnumeric range bound as invalid at runtime",
+    { minPx: "1" },
+    "options.gap.minPx",
+  ],
 ] as const;
 
 for (const [name, gap, path] of invalidRanges) {
@@ -147,7 +234,8 @@ for (const [name, gap, path] of invalidRanges) {
     expectInvalid(
       { kind: "leftOf", subject: "a", reference: "b", options: { gap } },
       path,
-    ));
+    ),
+  );
 }
 
 test("reports a non-object options value as invalid at runtime", () =>
@@ -159,15 +247,24 @@ test("reports a non-object options value as invalid at runtime", () =>
 
 for (const [name, kind, field] of [
   ["reports a non-object gap range as invalid at runtime", "leftOf", "gap"],
-  ["reports a non-object horizontal overlap range as invalid at runtime", "overlap", "horizontal"],
-  ["reports a non-object vertical overlap range as invalid at runtime", "overlap", "vertical"],
+  [
+    "reports a non-object horizontal overlap range as invalid at runtime",
+    "overlap",
+    "horizontal",
+  ],
+  [
+    "reports a non-object vertical overlap range as invalid at runtime",
+    "overlap",
+    "vertical",
+  ],
 ] as const) {
   test(name, () =>
     expectInvalid(
       { kind, subject: "a", reference: "b", options: { [field]: 1 } },
       `options.${field}`,
       "invalid-type",
-    ));
+    ),
+  );
 }
 
 test("reports every invalid field on a rule rather than stopping at the first", async () => {
@@ -265,9 +362,9 @@ test("treats an undefined optional property as omitted", async () => {
     reference: "b",
     options: { tolerancePx: undefined },
   });
-  expect(report.findings.some((finding) => finding.category === "invalid-rule")).toBe(
-    false,
-  );
+  expect(
+    report.findings.some((finding) => finding.category === "invalid-rule"),
+  ).toBe(false);
 });
 
 test("reports a null optional property as invalid", () =>
@@ -290,24 +387,42 @@ test("reports every unknown and invalid field on the same rule", async () => {
     extra: 1,
     options: { tolerancePx: -1, extra: 2 },
   });
-  expect(report.findings.map((finding) => "fieldPath" in finding && finding.fieldPath)).toEqual([
-    "extra",
-    "options.extra",
-    "options.tolerancePx",
-  ]);
+  expect(
+    report.findings.map(
+      (finding) => "fieldPath" in finding && finding.fieldPath,
+    ),
+  ).toEqual(["extra", "options.extra", "options.tolerancePx"]);
 });
 
 for (const [name, axis, range] of [
-  ["reports a horizontal overlap maximum of zero as invalid", "horizontal", { maxPx: 0 }],
-  ["reports a vertical overlap maximum of zero as invalid", "vertical", { maxPx: 0 }],
-  ["reports an overlap range fixed at zero as invalid", "horizontal", { minPx: 0, maxPx: 0 }],
+  [
+    "reports a horizontal overlap maximum of zero as invalid",
+    "horizontal",
+    { maxPx: 0 },
+  ],
+  [
+    "reports a vertical overlap maximum of zero as invalid",
+    "vertical",
+    { maxPx: 0 },
+  ],
+  [
+    "reports an overlap range fixed at zero as invalid",
+    "horizontal",
+    { minPx: 0, maxPx: 0 },
+  ],
 ] as const) {
   test(name, () =>
     expectInvalid(
-      { kind: "overlap", subject: "a", reference: "b", options: { [axis]: range } },
+      {
+        kind: "overlap",
+        subject: "a",
+        reference: "b",
+        options: { [axis]: range },
+      },
       `options.${axis}.maxPx`,
       "invalid-value",
-    ));
+    ),
+  );
 }
 
 test("continues accepting zero as an overlap minimum", () => {
@@ -351,9 +466,9 @@ test("public helpers throw synchronously for unknown option fields", () => {
 });
 
 test("public helpers throw synchronously for options unsupported by their rule kind", () => {
-  expect(() => (notOverlap as never as (...args: unknown[]) => unknown)("a", "b", {})).toThrow(
-    TypeError,
-  );
+  expect(() =>
+    (notOverlap as never as (...args: unknown[]) => unknown)("a", "b", {}),
+  ).toThrow(TypeError);
 });
 
 test("the same invalid values in caller-constructed inline rules become findings", async () => {

@@ -34,21 +34,75 @@ function checkSnapshot(snapshot: unknown) {
 }
 
 for (const [name, mutate] of [
-  ["rejects a non-finite rectangle coordinate", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.x = Number.NaN; }],
-  ["rejects a non-finite rectangle dimension", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.width = Number.POSITIVE_INFINITY; }],
-  ["rejects a negative rectangle width", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.width = -1; }],
-  ["rejects a negative rectangle height", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.height = -1; }],
-  ["rejects a non-finite viewport width", (snapshot: RawMeasurementSnapshot) => { snapshot.viewport.width = Number.NaN; }],
-  ["rejects a non-finite viewport height", (snapshot: RawMeasurementSnapshot) => { snapshot.viewport.height = Number.POSITIVE_INFINITY; }],
-  ["rejects a non-positive viewport width", (snapshot: RawMeasurementSnapshot) => { snapshot.viewport.width = 0; }],
-  ["rejects a non-positive viewport height", (snapshot: RawMeasurementSnapshot) => { snapshot.viewport.height = -1; }],
-  ["rejects finite rectangle values whose derived right edge is non-finite", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.x = Number.MAX_VALUE; snapshot.elements[0]!.rect!.width = Number.MAX_VALUE; }],
-  ["rejects finite rectangle values whose derived bottom edge is non-finite", (snapshot: RawMeasurementSnapshot) => { snapshot.elements[0]!.rect!.y = Number.MAX_VALUE; snapshot.elements[0]!.rect!.height = Number.MAX_VALUE; }],
+  [
+    "rejects a non-finite rectangle coordinate",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.x = Number.NaN;
+    },
+  ],
+  [
+    "rejects a non-finite rectangle dimension",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.width = Number.POSITIVE_INFINITY;
+    },
+  ],
+  [
+    "rejects a negative rectangle width",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.width = -1;
+    },
+  ],
+  [
+    "rejects a negative rectangle height",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.height = -1;
+    },
+  ],
+  [
+    "rejects a non-finite viewport width",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.viewport.width = Number.NaN;
+    },
+  ],
+  [
+    "rejects a non-finite viewport height",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.viewport.height = Number.POSITIVE_INFINITY;
+    },
+  ],
+  [
+    "rejects a non-positive viewport width",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.viewport.width = 0;
+    },
+  ],
+  [
+    "rejects a non-positive viewport height",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.viewport.height = -1;
+    },
+  ],
+  [
+    "rejects finite rectangle values whose derived right edge is non-finite",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.x = Number.MAX_VALUE;
+      snapshot.elements[0]!.rect!.width = Number.MAX_VALUE;
+    },
+  ],
+  [
+    "rejects finite rectangle values whose derived bottom edge is non-finite",
+    (snapshot: RawMeasurementSnapshot) => {
+      snapshot.elements[0]!.rect!.y = Number.MAX_VALUE;
+      snapshot.elements[0]!.rect!.height = Number.MAX_VALUE;
+    },
+  ],
 ] as const) {
   test(name, async () => {
     const snapshot = validSnapshot();
     mutate(snapshot);
-    const error = await checkSnapshot(snapshot).catch((caught: unknown) => caught);
+    const error = await checkSnapshot(snapshot).catch(
+      (caught: unknown) => caught,
+    );
     expect(error).toBeInstanceOf(Error);
     expect(error).not.toBeInstanceOf(LayoutAssertionError);
     expect((error as Error).name).toBe("LayoutExecutionError");
@@ -73,7 +127,9 @@ test("rejects an internally inconsistent measurement result", async () => {
 });
 
 test("malformed integration output rejects as an execution failure", async () => {
-  const error = await checkSnapshot({ nope: true }).catch((caught: unknown) => caught);
+  const error = await checkSnapshot({ nope: true }).catch(
+    (caught: unknown) => caught,
+  );
   expect(error).toBeInstanceOf(Error);
   expect((error as Error).name).toBe("LayoutExecutionError");
 });

@@ -17,8 +17,12 @@ test("distinguishes identical descendants scoped within different containers", (
       const report = await checkLayout({
         adapter: playwright(page, {
           targets: {
-            firstAction: page.locator("#first").getByRole("button", { name: "Open" }),
-            secondAction: page.locator("#second").getByRole("button", { name: "Open" }),
+            firstAction: page
+              .locator("#first")
+              .getByRole("button", { name: "Open" }),
+            secondAction: page
+              .locator("#second")
+              .getByRole("button", { name: "Open" }),
           },
         }),
         rules: [sameSize("firstAction", "secondAction")],

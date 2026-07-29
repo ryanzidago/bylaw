@@ -26,9 +26,9 @@ async function expectInvalid(
     passed: false,
     rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
   });
-  expect(report.findings.some(({ category }) => category === "invalid-rule")).toBe(
-    true,
-  );
+  expect(
+    report.findings.some(({ category }) => category === "invalid-rule"),
+  ).toBe(true);
   if (fieldPath !== undefined) {
     expect(report.findings).toContainEqual(
       expect.objectContaining({
@@ -56,11 +56,7 @@ test("reports an empty unary target as invalid", () =>
   ));
 
 test("reports a non-string unary target as invalid at runtime", () =>
-  expectInvalid(
-    { kind: "inViewport", target: 42 },
-    "target",
-    "invalid-type",
-  ));
+  expectInvalid({ kind: "inViewport", target: 42 }, "target", "invalid-type"));
 
 test("reports a reference field on a unary rule as unknown", () =>
   expectInvalid(
@@ -75,11 +71,7 @@ test("reports a reference field on a unary rule as unknown", () =>
   ));
 
 test("reports a missing width range as invalid", () =>
-  expectInvalid(
-    { kind: "width", target: "target" },
-    "range",
-    "missing-field",
-  ));
+  expectInvalid({ kind: "width", target: "target" }, "range", "missing-field"));
 
 test("reports a missing height range as invalid", () =>
   expectInvalid(
@@ -193,9 +185,9 @@ test("reports every invalid field on a unary rule rather than stopping at the fi
 test("public unary helpers throw synchronously for invalid runtime ranges", () => {
   expect(() => width("target", {})).toThrow(TypeError);
   expect(() => height("target", { minPx: -1 })).toThrow(TypeError);
-  expect(() =>
-    width("target", { maxPx: Number.POSITIVE_INFINITY }),
-  ).toThrow(TypeError);
+  expect(() => width("target", { maxPx: Number.POSITIVE_INFINITY })).toThrow(
+    TypeError,
+  );
   expect(() =>
     height("target", { minPx: "10" } as unknown as { minPx: number }),
   ).toThrow(TypeError);
@@ -203,7 +195,7 @@ test("public unary helpers throw synchronously for invalid runtime ranges", () =
 
 test("public unary helpers throw synchronously for invalid runtime targets", () => {
   expect(() => width("", { minPx: 10 })).toThrow(TypeError);
-  expect(() =>
-    height(42 as unknown as string, { minPx: 10 }),
-  ).toThrow(TypeError);
+  expect(() => height(42 as unknown as string, { minPx: 10 })).toThrow(
+    TypeError,
+  );
 });

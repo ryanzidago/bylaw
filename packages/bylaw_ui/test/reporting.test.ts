@@ -239,7 +239,9 @@ test("produces deterministic findings for identical inputs", async () => {
 test("counts an invalid rule with an unavailable operand as failed rather than skipped", async () => {
   const report = await checkLayout({
     adapter: fixtureAdapter({}),
-    rules: [{ kind: "sameSize", subject: "", reference: "missing" } as LayoutRule],
+    rules: [
+      { kind: "sameSize", subject: "", reference: "missing" } as LayoutRule,
+    ],
   });
   expect(report.rules).toEqual({ total: 1, passed: 0, failed: 1, skipped: 0 });
 });
@@ -247,21 +249,25 @@ test("counts an invalid rule with an unavailable operand as failed rather than s
 test("does not report element-resolution findings for an invalid rule", async () => {
   const report = await checkLayout({
     adapter: fixtureAdapter({}),
-    rules: [{ kind: "sameSize", subject: "", reference: "missing" } as LayoutRule],
+    rules: [
+      { kind: "sameSize", subject: "", reference: "missing" } as LayoutRule,
+    ],
   });
-  expect(report.findings.some(({ category }) => category === "element-resolution")).toBe(
-    false,
-  );
+  expect(
+    report.findings.some(({ category }) => category === "element-resolution"),
+  ).toBe(false);
 });
 
 test("does not report visibility findings for an invalid rule", async () => {
   const report = await checkLayout({
     adapter: fixtureAdapter({ missing: hidden("missing") }),
-    rules: [{ kind: "sameSize", subject: "", reference: "missing" } as LayoutRule],
+    rules: [
+      { kind: "sameSize", subject: "", reference: "missing" } as LayoutRule,
+    ],
   });
-  expect(report.findings.some(({ category }) => category === "element-visibility")).toBe(
-    false,
-  );
+  expect(
+    report.findings.some(({ category }) => category === "element-visibility"),
+  ).toBe(false);
 });
 
 test("counts identical supplied rules separately", async () => {

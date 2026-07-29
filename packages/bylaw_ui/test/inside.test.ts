@@ -4,12 +4,27 @@ import { inside } from "bylaw-ui";
 import { expectFailure, expectPass, rect } from "./support";
 
 const contained = [
-  ["inside passes when the subject is strictly inside the reference", rect(2, 2, 4, 4)],
+  [
+    "inside passes when the subject is strictly inside the reference",
+    rect(2, 2, 4, 4),
+  ],
   ["inside passes when subject and reference rectangles are identical", rect()],
-  ["inside passes when the subject shares the reference left edge", rect(0, 2, 4, 4)],
-  ["inside passes when the subject shares the reference right edge", rect(6, 2, 4, 4)],
-  ["inside passes when the subject shares the reference top edge", rect(2, 0, 4, 4)],
-  ["inside passes when the subject shares the reference bottom edge", rect(2, 6, 4, 4)],
+  [
+    "inside passes when the subject shares the reference left edge",
+    rect(0, 2, 4, 4),
+  ],
+  [
+    "inside passes when the subject shares the reference right edge",
+    rect(6, 2, 4, 4),
+  ],
+  [
+    "inside passes when the subject shares the reference top edge",
+    rect(2, 0, 4, 4),
+  ],
+  [
+    "inside passes when the subject shares the reference bottom edge",
+    rect(2, 6, 4, 4),
+  ],
   ["inside passes when the subject shares every reference boundary", rect()],
 ] as const;
 
@@ -22,9 +37,18 @@ const overflowCases = [
   ["inside fails when the subject overflows the right edge", rect(7, 2, 4, 4)],
   ["inside fails when the subject overflows the top edge", rect(2, -1, 4, 4)],
   ["inside fails when the subject overflows the bottom edge", rect(2, 7, 4, 4)],
-  ["inside fails when the subject is larger on both horizontal sides", rect(-1, 2, 12, 4)],
-  ["inside fails when the subject is larger on both vertical sides", rect(2, -1, 4, 12)],
-  ["inside fails when the subject encloses the reference", rect(-1, -1, 12, 12)],
+  [
+    "inside fails when the subject is larger on both horizontal sides",
+    rect(-1, 2, 12, 4),
+  ],
+  [
+    "inside fails when the subject is larger on both vertical sides",
+    rect(2, -1, 4, 12),
+  ],
+  [
+    "inside fails when the subject encloses the reference",
+    rect(-1, -1, 12, 12),
+  ],
 ] as const;
 
 for (const [name, subject] of overflowCases) {
@@ -34,7 +58,8 @@ for (const [name, subject] of overflowCases) {
       subject,
       rect(),
       "containment-overflow",
-    ));
+    ),
+  );
 }
 
 const sides = [

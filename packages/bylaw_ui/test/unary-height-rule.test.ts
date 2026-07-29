@@ -76,14 +76,12 @@ test("height preserves fractional CSS-pixel measurements and bounds", async () =
 test("height ignores the target width and viewport-relative position", async () => {
   const rule = height("target", { minPx: 10, maxPx: 10 });
   const reports = await Promise.all(
-    [
-      rect(-999_999, 999_999, 1, 10),
-      rect(999_999, -999_999, 10_000, 10),
-    ].map((rectangle) =>
-      checkLayout({
-        adapter: fixtureAdapter({ target: visible("target", rectangle) }),
-        rules: [rule],
-      }),
+    [rect(-999_999, 999_999, 1, 10), rect(999_999, -999_999, 10_000, 10)].map(
+      (rectangle) =>
+        checkLayout({
+          adapter: fixtureAdapter({ target: visible("target", rectangle) }),
+          rules: [rule],
+        }),
     ),
   );
   expect(reports.map(({ passed }) => passed)).toEqual([true, true]);
