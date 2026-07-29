@@ -6,7 +6,9 @@ import { expectFailure, expectPass, rect } from "./support";
 for (const dimension of ["Width", "Height"] as const) {
   const helper = dimension === "Width" ? sameWidth : sameHeight;
   const subject = (difference: number) =>
-    dimension === "Width" ? rect(100, -50, 10 + difference, 5) : rect(100, -50, 5, 10 + difference);
+    dimension === "Width"
+      ? rect(100, -50, 10 + difference, 5)
+      : rect(100, -50, 5, 10 + difference);
   const reference =
     dimension === "Width" ? rect(-100, 50, 10, 99) : rect(-100, 50, 99, 10);
   const label = `same${dimension}`;
@@ -58,11 +60,11 @@ for (const dimension of ["Width", "Height"] as const) {
     ));
 
   test(`${label} ignores rectangle position`, () =>
-    expectPass(
-      helper("subject", "reference"),
-      subject(0),
-      { ...reference, x: 999_999, y: -999_999 },
-    ));
+    expectPass(helper("subject", "reference"), subject(0), {
+      ...reference,
+      x: 999_999,
+      y: -999_999,
+    }));
 
   test(`${label} rejects unequal ${dimension.toLowerCase()}s when tolerance is omitted`, () =>
     expectFailure(
@@ -74,7 +76,11 @@ for (const dimension of ["Width", "Height"] as const) {
 }
 
 test("sameSize passes when both dimensions are equal", () =>
-  expectPass(sameSize("subject", "reference"), rect(0, 0, 10, 20), rect(50, 50, 10, 20)));
+  expectPass(
+    sameSize("subject", "reference"),
+    rect(0, 0, 10, 20),
+    rect(50, 50, 10, 20),
+  ));
 
 test("sameSize passes when both differences are within tolerance", () =>
   expectPass(
@@ -93,7 +99,10 @@ test("sameSize passes when both differences equal tolerance", () =>
 for (const [name, subject] of [
   ["sameSize fails when only width exceeds tolerance", rect(0, 0, 11.01, 20)],
   ["sameSize fails when only height exceeds tolerance", rect(0, 0, 10, 21.01)],
-  ["sameSize fails when both dimensions exceed tolerance", rect(0, 0, 11.01, 21.01)],
+  [
+    "sameSize fails when both dimensions exceed tolerance",
+    rect(0, 0, 11.01, 21.01),
+  ],
 ] as const) {
   test(name, () =>
     expectFailure(
@@ -101,7 +110,8 @@ for (const [name, subject] of [
       subject,
       rect(50, 50, 10, 20),
       "size-mismatch",
-    ));
+    ),
+  );
 }
 
 test("sameSize applies the same tolerance independently to both dimensions", () =>

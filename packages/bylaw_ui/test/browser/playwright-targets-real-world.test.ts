@@ -19,7 +19,9 @@ test("checks a file row scoped within the changed-files container without modify
       </main>
     `,
     async (page) => {
-      const before = await page.locator("main").evaluate((element) => element.outerHTML);
+      const before = await page
+        .locator("main")
+        .evaluate((element) => element.outerHTML);
       const changedFiles = page.getByRole("region", { name: "Changed files" });
       const report = await checkLayout({
         adapter: playwright(page, {

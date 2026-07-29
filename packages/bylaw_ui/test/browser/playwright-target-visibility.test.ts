@@ -2,10 +2,7 @@ import { test } from "bun:test";
 
 import { checkLayout, sameSize } from "bylaw-ui";
 import { playwright } from "bylaw-ui/playwright";
-import {
-  browserHarness,
-  expectElementFinding,
-} from "./logical-target-support";
+import { browserHarness, expectElementFinding } from "./logical-target-support";
 
 const withPage = browserHarness();
 

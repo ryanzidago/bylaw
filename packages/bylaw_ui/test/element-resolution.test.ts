@@ -1,13 +1,7 @@
 import { expect, test } from "bun:test";
 
 import { checkLayout, sameSize } from "bylaw-ui";
-import {
-  fixtureAdapter,
-  hidden,
-  rect,
-  unresolved,
-  visible,
-} from "./support";
+import { fixtureAdapter, hidden, rect, unresolved, visible } from "./support";
 
 test("evaluates a rule when both test IDs resolve exactly once", async () => {
   const report = await checkLayout({
@@ -23,10 +17,20 @@ test("evaluates a rule when both test IDs resolve exactly once", async () => {
 for (const [name, subjectCount, referenceCount, expectedCodes] of [
   ["reports a missing subject element", 0, 1, ["missing-element"]],
   ["reports a missing reference element", 1, 0, ["missing-element"]],
-  ["reports both elements when both are missing", 0, 0, ["missing-element", "missing-element"]],
+  [
+    "reports both elements when both are missing",
+    0,
+    0,
+    ["missing-element", "missing-element"],
+  ],
   ["reports a duplicated subject test ID", 2, 1, ["duplicate-element"]],
   ["reports a duplicated reference test ID", 1, 2, ["duplicate-element"]],
-  ["reports both elements when both test IDs are duplicated", 2, 3, ["duplicate-element", "duplicate-element"]],
+  [
+    "reports both elements when both test IDs are duplicated",
+    2,
+    3,
+    ["duplicate-element", "duplicate-element"],
+  ],
 ] as const) {
   test(name, async () => {
     const measurements = {
@@ -43,7 +47,12 @@ for (const [name, subjectCount, referenceCount, expectedCodes] of [
       adapter: fixtureAdapter(measurements),
       rules: [sameSize("subject", "reference")],
     });
-    expect(report.rules).toEqual({ total: 1, passed: 0, failed: 0, skipped: 1 });
+    expect(report.rules).toEqual({
+      total: 1,
+      passed: 0,
+      failed: 0,
+      skipped: 1,
+    });
     expect(report.findings.map(({ code }) => code)).toEqual([...expectedCodes]);
   });
 }
@@ -87,7 +96,10 @@ test("evaluates a rule whose subject and reference use the same test ID", async 
 for (const [name, measurements] of [
   [
     "skips a rule whose subject measurement is unavailable",
-    { subject: unresolved("subject", 0), reference: visible("reference", rect()) },
+    {
+      subject: unresolved("subject", 0),
+      reference: visible("reference", rect()),
+    },
   ],
   [
     "skips a rule whose reference measurement is unavailable",
@@ -137,8 +149,16 @@ test("reports which rules were affected by an unavailable element", async () => 
     rules: [sameSize("missing", "one"), sameSize("one", "missing")],
   });
   expect(report.findings).toEqual([
-    expect.objectContaining({ ruleIndex: 0, operand: "subject", testId: "missing" }),
-    expect.objectContaining({ ruleIndex: 1, operand: "reference", testId: "missing" }),
+    expect.objectContaining({
+      ruleIndex: 0,
+      operand: "subject",
+      testId: "missing",
+    }),
+    expect.objectContaining({
+      ruleIndex: 1,
+      operand: "reference",
+      testId: "missing",
+    }),
   ]);
 });
 
@@ -150,7 +170,7 @@ test("does not report a skipped rule as a geometric violation", async () => {
     }),
     rules: [sameSize("subject", "reference")],
   });
-  expect(report.findings.every((finding) => finding.category !== "layout")).toBe(
-    true,
-  );
+  expect(
+    report.findings.every((finding) => finding.category !== "layout"),
+  ).toBe(true);
 });

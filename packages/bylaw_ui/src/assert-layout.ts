@@ -24,10 +24,7 @@ function boolean(data: DiagnosticData, key: string): boolean | undefined {
   return typeof value === "boolean" ? value : undefined;
 }
 
-function object(
-  data: DiagnosticData,
-  key: string,
-): DiagnosticData | undefined {
+function object(data: DiagnosticData, key: string): DiagnosticData | undefined {
   const value = data[key];
   return typeof value === "object" && value !== null && !Array.isArray(value)
     ? value
@@ -65,8 +62,7 @@ function calculatedPixels(minuend: number, subtrahend: number): string {
   const left = decimalParts(minuend);
   const right = decimalParts(subtrahend);
   const scale = Math.max(left.scale, right.scale);
-  const leftCoefficient =
-    left.coefficient * 10n ** BigInt(scale - left.scale);
+  const leftCoefficient = left.coefficient * 10n ** BigInt(scale - left.scale);
   const rightCoefficient =
     right.coefficient * 10n ** BigInt(scale - right.scale);
   const difference = leftCoefficient - rightCoefficient;
@@ -106,7 +102,9 @@ function range(data: DiagnosticData | undefined): PixelRange | undefined {
 
   const minPx = number(data, "minPx");
   const maxPx = number(data, "maxPx");
-  return minPx === undefined && maxPx === undefined ? undefined : { minPx, maxPx };
+  return minPx === undefined && maxPx === undefined
+    ? undefined
+    : { minPx, maxPx };
 }
 
 function rangeDescription(value: PixelRange): string {
@@ -221,7 +219,9 @@ function gapDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   return compact([
     ...commonLayoutLines(finding),
     pixelLine("measured gap", measured),
-    allowed === undefined ? undefined : `allowed gap: ${rangeDescription(allowed)}`,
+    allowed === undefined
+      ? undefined
+      : `allowed gap: ${rangeDescription(allowed)}`,
     rangeViolation("", measured, allowed)?.trimStart(),
   ]);
 }
@@ -250,7 +250,9 @@ function overlapDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   ]);
 }
 
-function containmentDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
+function containmentDiagnostic(
+  finding: BinaryLayoutViolationFinding,
+): string[] {
   const actual = finding.actual;
   const tolerance = number(finding.expected, "tolerancePx") ?? 0;
   const sides = ["left", "right", "top", "bottom"] as const;
@@ -259,14 +261,18 @@ function containmentDiagnostic(finding: BinaryLayoutViolationFinding): string[] 
 
   return compact([
     ...commonLayoutLines(finding),
-    ...sides.map((side) => pixelLine(`${side} overflow`, number(actual, `${side}Px`))),
+    ...sides.map((side) =>
+      pixelLine(`${side} overflow`, number(actual, `${side}Px`)),
+    ),
     pixelLine("horizontal intersection", number(actual, "horizontalPx")),
     pixelLine("vertical intersection", number(actual, "verticalPx")),
     finding.expected.positiveIntersection === true
       ? "required intersection: positive on both axes"
       : undefined,
     `allowed tolerance: ${pixels(tolerance)}`,
-    Number.isFinite(maximum) ? `maximum overflow: ${pixels(maximum)}` : undefined,
+    Number.isFinite(maximum)
+      ? `maximum overflow: ${pixels(maximum)}`
+      : undefined,
     Number.isFinite(maximum)
       ? excessLine("exceeds tolerance by", maximum, tolerance)
       : undefined,
@@ -288,7 +294,8 @@ function sizeDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const comparesWidth =
     finding.relationship === "sameWidth" || finding.relationship === "sameSize";
   const comparesHeight =
-    finding.relationship === "sameHeight" || finding.relationship === "sameSize";
+    finding.relationship === "sameHeight" ||
+    finding.relationship === "sameSize";
 
   return compact([
     ...commonLayoutLines(finding),
@@ -319,14 +326,18 @@ function sizeDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
     `allowed tolerance: ${pixels(tolerance)}`,
     comparesWidth
       ? excessLine(
-          comparesHeight ? "width exceeds tolerance by" : "exceeds tolerance by",
+          comparesHeight
+            ? "width exceeds tolerance by"
+            : "exceeds tolerance by",
           widthDifference,
           tolerance,
         )
       : undefined,
     comparesHeight
       ? excessLine(
-          comparesWidth ? "height exceeds tolerance by" : "exceeds tolerance by",
+          comparesWidth
+            ? "height exceeds tolerance by"
+            : "exceeds tolerance by",
           heightDifference,
           tolerance,
         )
@@ -352,9 +363,7 @@ function dimensionDiagnostic(
   ]);
 }
 
-function viewportDiagnostic(
-  finding: ViewportLayoutViolationFinding,
-): string[] {
+function viewportDiagnostic(finding: ViewportLayoutViolationFinding): string[] {
   const target = finding.actual.target;
   const viewport = finding.expected.viewport;
 
@@ -397,7 +406,9 @@ function findingDiagnostic(finding: LayoutFinding): string {
     case "element-visibility":
       return elementDiagnostic(finding).join("\n");
     case "layout":
-      return [...layoutDiagnostic(finding), `message: ${finding.message}`].join("\n");
+      return [...layoutDiagnostic(finding), `message: ${finding.message}`].join(
+        "\n",
+      );
   }
 }
 
@@ -410,7 +421,9 @@ export class LayoutAssertionError extends Error {
 
   constructor(report: LayoutReport) {
     const details = report.findings.map(findingDiagnostic).join("\n\n");
-    super(`${reportSummary(report)}${details.length > 0 ? `\n\n${details}` : ""}`);
+    super(
+      `${reportSummary(report)}${details.length > 0 ? `\n\n${details}` : ""}`,
+    );
     this.name = "LayoutAssertionError";
     this.report = report;
   }
