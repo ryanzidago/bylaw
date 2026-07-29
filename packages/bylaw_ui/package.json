@@ -33,7 +33,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepack": "bun run qa",
-    "qa": "bun run format:check && bun run typecheck && bun run build && bun test",
+    "qa": "bun run format:check && bun run build && bun run typecheck && bun test",
     "test": "bun test",
     "test:browser": "bun test test/browser",
     "test:package": "bun run scripts/test-package-consumption.ts",
