@@ -64,7 +64,10 @@ test("exports the Playwright integration from the Playwright entrypoint", async 
 
 test("exports playwright from bylaw-ui/playwright", async () => {
   const entrypoint = await import("bylaw-ui/playwright");
-  expect(entrypoint).toEqual({ playwright });
+  expect(entrypoint).toMatchObject({
+    playwright,
+    waitForLayoutTargets: expect.any(Function),
+  });
 });
 
 test("does not export playwright from the package root", async () => {
