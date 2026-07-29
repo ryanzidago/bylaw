@@ -81,7 +81,7 @@ run_stage "docs" mix docs
   cd "packages/bylaw_ui"
   bun install --frozen-lockfile
   bunx playwright-core install chromium
-  bun run check
+  bun run qa
 )
 
 echo "qa passed"

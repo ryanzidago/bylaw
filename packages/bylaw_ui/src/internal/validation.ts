@@ -144,7 +144,12 @@ function validateRange(
   for (const field of Object.keys(value)) {
     if (!allowed.has(field)) {
       findings.push(
-        finding(ruleIndex, "unknown-field", `${path}.${field}`, "is not supported"),
+        finding(
+          ruleIndex,
+          "unknown-field",
+          `${path}.${field}`,
+          "is not supported",
+        ),
       );
     }
   }
@@ -154,12 +159,7 @@ function validateRange(
 
   if (!hasMin && !hasMax) {
     findings.push(
-      finding(
-        ruleIndex,
-        "invalid-value",
-        path,
-        "must contain minPx or maxPx",
-      ),
+      finding(ruleIndex, "invalid-value", path, "must contain minPx or maxPx"),
     );
   }
 
@@ -183,12 +183,7 @@ function validateRange(
     value.minPx > value.maxPx
   ) {
     findings.push(
-      finding(
-        ruleIndex,
-        "invalid-value",
-        path,
-        "minPx must not exceed maxPx",
-      ),
+      finding(ruleIndex, "invalid-value", path, "minPx must not exceed maxPx"),
     );
   }
 
@@ -220,9 +215,7 @@ function validateOptions(
   }
 
   if (!isRecord(rule.options)) {
-    return [
-      finding(ruleIndex, "invalid-type", "options", "must be an object"),
-    ];
+    return [finding(ruleIndex, "invalid-type", "options", "must be an object")];
   }
 
   if (kind === "notOverlap") {
@@ -279,12 +272,7 @@ function validateOptions(
   for (const axis of ["horizontal", "vertical"] as const) {
     if (axis in options && options[axis] !== undefined && allowed.has(axis)) {
       findings.push(
-        ...validateRange(
-          options[axis],
-          `options.${axis}`,
-          ruleIndex,
-          true,
-        ),
+        ...validateRange(options[axis], `options.${axis}`, ruleIndex, true),
       );
     }
   }
@@ -297,9 +285,7 @@ export function validateRule(
   ruleIndex: number,
 ): InvalidRuleFinding[] {
   if (!isRecord(value)) {
-    return [
-      finding(ruleIndex, "invalid-type", "$", "rule must be an object"),
-    ];
+    return [finding(ruleIndex, "invalid-type", "$", "rule must be an object")];
   }
 
   const findings: InvalidRuleFinding[] = [];
@@ -313,7 +299,12 @@ export function validateRule(
     );
   } else if (!ruleKinds.has(kind)) {
     findings.push(
-      finding(ruleIndex, "invalid-value", "kind", "is not a supported rule kind"),
+      finding(
+        ruleIndex,
+        "invalid-value",
+        "kind",
+        "is not a supported rule kind",
+      ),
     );
   }
 

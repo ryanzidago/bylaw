@@ -76,9 +76,9 @@ test("does not choose the first match for an ambiguous registered target", () =>
         testId: "ambiguous",
         actual: { matchCount: 2 },
       });
-      expect(report.findings.some(({ category }) => category === "layout")).toBe(
-        false,
-      );
+      expect(
+        report.findings.some(({ category }) => category === "layout"),
+      ).toBe(false);
     },
   ));
 

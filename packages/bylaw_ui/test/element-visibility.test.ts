@@ -45,7 +45,10 @@ for (const name of [
 for (const [name, subject] of [
   ["reports an element with zero width as unavailable", rect(0, 0, 0, 10)],
   ["reports an element with zero height as unavailable", rect(0, 0, 10, 0)],
-  ["reports an element with zero width and zero height as unavailable", rect(0, 0, 0, 0)],
+  [
+    "reports an element with zero width and zero height as unavailable",
+    rect(0, 0, 0, 0),
+  ],
 ] as const) {
   test(name, async () => {
     const report = await checkLayout({

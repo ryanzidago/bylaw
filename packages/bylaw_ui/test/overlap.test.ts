@@ -32,7 +32,8 @@ for (const scenario of overlapPasses) {
       overlap("subject", "reference"),
       scenario.subject,
       scenario.reference,
-    ));
+    ),
+  );
 }
 
 const missingOverlap = [
@@ -80,7 +81,8 @@ for (const scenario of missingOverlap) {
       scenario.subject,
       scenario.reference,
       "missing-overlap",
-    ));
+    ),
+  );
 }
 
 const axisCases = [
@@ -258,11 +260,15 @@ const notOverlapPasses = [
 
 for (const [name, subject] of notOverlapPasses) {
   test(name, () =>
-    expectPass(notOverlap("subject", "reference"), subject, rect()));
+    expectPass(notOverlap("subject", "reference"), subject, rect()),
+  );
 }
 
 const notOverlapFailures = [
-  ["notOverlap fails when rectangles intersect positively on both axes", rect(5, 5)],
+  [
+    "notOverlap fails when rectangles intersect positively on both axes",
+    rect(5, 5),
+  ],
   ["notOverlap fails when one rectangle contains the other", rect(2, 2, 2, 2)],
   ["notOverlap fails for identical rectangles", rect()],
 ] as const;
@@ -274,7 +280,8 @@ for (const [name, subject] of notOverlapFailures) {
       subject,
       rect(),
       "overlap-out-of-range",
-    ));
+    ),
+  );
 }
 
 test("notOverlap does not apply implicit tolerance", () =>
