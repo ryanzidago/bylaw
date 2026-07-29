@@ -94,6 +94,48 @@ visibility, and geometry findings in one JSON-serializable report. Use
 `assertLayout` when a failing report should throw `LayoutAssertionError`; the
 error retains the original report by identity.
 
+## Collection targets
+
+Use `collection(name)` when a rule must evaluate every element matched by a
+logical target. Collection intent is explicit and separate from singular
+targets:
+
+```ts
+import {
+  collection,
+  equalWidths,
+  everyInside,
+  pairwiseNotOverlap,
+  verticallyOrdered,
+} from "bylaw-ui";
+
+const cards = collection("file-card");
+
+const report = await checkLayout({
+  adapter: playwright(page),
+  rules: [
+    everyInside(cards, "files-changed"),
+    equalWidths(cards, { tolerancePx: 1 }),
+    verticallyOrdered(cards, { gap: { minPx: 8, maxPx: 16 } }),
+    pairwiseNotOverlap(cards),
+  ],
+});
+```
+
+The adapter's target order determines collection evaluation order and
+reporting order. Member indexes are zero-based. Equal-width rules use the first
+member as their reference, vertical-ordering rules compare adjacent members,
+and pairwise findings use ascending index order.
+
+An empty collection is an element-resolution failure and skips geometry
+evaluation. Hidden or zero-size members likewise make the collection
+unavailable for geometry.
+
+## Singular targets
+
+Strings declare singular targets. If a singular target has multiple matches,
+Bylaw reports an error and never selects the first match.
+
 ## Geometry contract
 
 - Relationship helpers use `subject, reference` argument order.

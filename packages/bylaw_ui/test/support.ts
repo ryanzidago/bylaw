@@ -4,6 +4,7 @@ import {
   checkLayout,
   type LayoutFinding,
   type LayoutRule,
+  type CollectionRule,
   type UnaryGeometryRule,
 } from "bylaw-ui";
 import {
@@ -41,19 +42,36 @@ export function fixtureAdapter(
   measurements: Record<string, RawElementMeasurement>,
   onMeasure?: (testIds: readonly string[]) => void,
 ) {
-  return createInternalAdapter(async (testIds) => {
-    onMeasure?.(testIds);
+  return createInternalAdapter(async (rawTargets) => {
+    const targets = rawTargets as unknown as readonly (
+      string | import("bylaw-ui").CollectionTarget
+    )[];
+    onMeasure?.(
+      targets.map((target) =>
+        typeof target === "string" ? target : target.target,
+      ),
+    );
 
     return {
       viewport: { width: 1280, height: 720 },
-      elements: testIds.map(
-        (testId) => measurements[testId] ?? unresolved(testId, 0),
-      ),
+      elements: targets.map((requested) => {
+        const testId =
+          typeof requested === "string" ? requested : requested.target;
+        return typeof requested === "string"
+          ? (measurements[testId] ?? unresolved(testId, 0))
+          : {
+              testId,
+              count: 0,
+              hidden: null,
+              rect: null,
+              matches: [],
+            };
+      }),
     };
   });
 }
 
-type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule | CollectionRule>;
 
 export async function checkRule(
   rule: BinaryLayoutRule,

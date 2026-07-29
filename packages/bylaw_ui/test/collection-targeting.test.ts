@@ -262,3 +262,47 @@ test("a rule can use a collection target and a singular target as distinct opera
   });
   expect(report.passed).toBe(true);
 });
+
+/**
+ * @doc
+ * Issue: Snapshot correlation collapses singular and collection requests that
+ * use the same target name, even though their declarations are distinct.
+ * Why it matters: A check cannot validate a repeated group while also reporting
+ * that the same selector is ambiguous for a singular rule.
+ */
+test("the same target name can be measured as both a collection and a singular target", async () => {
+  const report = await checkLayout({
+    adapter: adapterFor([
+      {
+        target: "cards",
+        matches: [match(), match()],
+      },
+      {
+        target: "cards",
+        matchCount: 2,
+      },
+      {
+        target: "reference",
+        matchCount: 1,
+        hidden: false,
+        rect: rectangle,
+      },
+    ]),
+    rules: [equalWidths(collection("cards")), sameWidth("cards", "reference")],
+  });
+
+  expect(report.rules).toEqual({
+    total: 2,
+    passed: 1,
+    failed: 0,
+    skipped: 1,
+  });
+  expect(report.findings).toEqual([
+    expect.objectContaining({
+      category: "element-resolution",
+      code: "duplicate-element",
+      target: "cards",
+      actual: { matchCount: 2 },
+    }),
+  ]);
+});

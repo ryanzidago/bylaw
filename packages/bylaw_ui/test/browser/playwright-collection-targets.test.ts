@@ -132,6 +132,29 @@ test("a Playwright rule evaluates a collection locator against a singular locato
     },
   ));
 
+/**
+ * @doc
+ * Issue: Registered Playwright measurements are keyed only by target name, so
+ * a collection request and singular request with the same name overwrite each
+ * other instead of retaining their distinct resolution modes.
+ *
+ * Why it matters: A valid collection rule can fail during snapshot validation
+ * when one registered locator intentionally serves both operands.
+ */
+test("a registered locator can be measured as both a collection and singular target with the same name", () =>
+  withPage(
+    '<section class="card" style="width:100px;height:100px"></section>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: { card: page.locator(".card") },
+        }),
+        rules: [everyInside(collection("card"), "card")],
+      });
+      expectPassed(report);
+    },
+  ));
+
 test("Playwright collection resolution does not mutate the DOM", () =>
   withPage(
     '<main id="root"><div class="card" style="width:20px;height:10px"></div><div class="card" style="width:20px;height:10px"></div></main>',

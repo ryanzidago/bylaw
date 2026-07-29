@@ -10,6 +10,45 @@ export type ToleranceOptions = {
   tolerancePx?: number;
 };
 
+export type CollectionTarget = {
+  kind: "collection";
+  target: string;
+};
+
+export type CollectionOrderingOptions = {
+  gap?: PixelRange;
+};
+
+export type EveryInsideRule = {
+  kind: "everyInside";
+  collection: CollectionTarget;
+  container: string;
+  options?: ToleranceOptions;
+};
+
+export type EqualWidthsRule = {
+  kind: "equalWidths";
+  collection: CollectionTarget;
+  options?: ToleranceOptions;
+};
+
+export type VerticallyOrderedRule = {
+  kind: "verticallyOrdered";
+  collection: CollectionTarget;
+  options?: CollectionOrderingOptions;
+};
+
+export type PairwiseNotOverlapRule = {
+  kind: "pairwiseNotOverlap";
+  collection: CollectionTarget;
+};
+
+export type CollectionRule =
+  | EveryInsideRule
+  | EqualWidthsRule
+  | VerticallyOrderedRule
+  | PairwiseNotOverlapRule;
+
 export type OrderingOptions = ToleranceOptions & {
   gap?: PixelRange;
 };
@@ -79,12 +118,14 @@ export type LayoutRule =
   | OverlapRule
   | NotOverlapRule
   | ToleranceRule
-  | UnaryGeometryRule;
+  | UnaryGeometryRule
+  | CollectionRule;
 
 export type InvalidRuleCode =
   "missing-field" | "invalid-type" | "invalid-value" | "unknown-field";
 
-export type ElementResolutionCode = "missing-element" | "duplicate-element";
+export type ElementResolutionCode =
+  "missing-element" | "duplicate-element" | "empty-collection";
 export type ElementVisibilityCode = "hidden-element" | "zero-size-element";
 export type LayoutCode =
   | "alignment-mismatch"
@@ -95,7 +136,12 @@ export type LayoutCode =
   | "containment-overflow"
   | "size-mismatch"
   | "dimension-out-of-range"
-  | "viewport-overflow";
+  | "viewport-overflow"
+  | "collection-containment-overflow"
+  | "collection-width-mismatch"
+  | "collection-ordering-violation"
+  | "collection-gap-out-of-range"
+  | "collection-overlap";
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
@@ -117,6 +163,7 @@ type BinaryElementFindingIdentity = {
   reference: string;
   operand: "subject" | "reference";
   testId: string;
+  target?: string;
 };
 
 type UnaryElementFindingIdentity = {
@@ -172,7 +219,7 @@ export type ElementFinding = BinaryElementFinding | UnaryElementFinding;
 
 type BinaryLayoutCode = Exclude<
   LayoutCode,
-  "dimension-out-of-range" | "viewport-overflow"
+  "dimension-out-of-range" | "viewport-overflow" | `collection-${string}`
 >;
 
 export type BinaryLayoutViolationFinding = {
@@ -235,8 +282,83 @@ export type UnaryLayoutViolationFinding =
 export type LayoutViolationFinding =
   BinaryLayoutViolationFinding | UnaryLayoutViolationFinding;
 
+type CollectionMember = {
+  target: string;
+  collectionIndex: number;
+};
+
+export type CollectionFinding =
+  | {
+      category: "element-resolution";
+      code: "empty-collection";
+      ruleIndex: number;
+      message: string;
+      target: string;
+      operand: "collection";
+      expected: { minMatchCount: number };
+      actual: { matchCount: number };
+    }
+  | {
+      category: "element-visibility";
+      code: ElementVisibilityCode;
+      ruleIndex: number;
+      message: string;
+      target: string;
+      collectionIndex: number;
+      operand: "collection";
+      expected: { visible: true; positiveSize: true };
+      actual: { [key: string]: JsonValue | undefined };
+    }
+  | {
+      category: "layout";
+      code: "collection-containment-overflow";
+      ruleIndex: number;
+      message: string;
+      relationship: "everyInside";
+      target: string;
+      collectionIndex: number;
+      expected: { [key: string]: JsonValue | undefined };
+      actual: { [key: string]: JsonValue | undefined };
+    }
+  | {
+      category: "layout";
+      code: "collection-width-mismatch";
+      ruleIndex: number;
+      message: string;
+      relationship: "equalWidths";
+      target: string;
+      collectionIndex: number;
+      expected: { [key: string]: JsonValue | undefined };
+      actual: { [key: string]: JsonValue | undefined };
+    }
+  | {
+      category: "layout";
+      code: "collection-ordering-violation" | "collection-gap-out-of-range";
+      ruleIndex: number;
+      message: string;
+      relationship: "verticallyOrdered";
+      subject: CollectionMember;
+      reference: CollectionMember;
+      expected: { [key: string]: JsonValue | undefined };
+      actual: { [key: string]: JsonValue | undefined };
+    }
+  | {
+      category: "layout";
+      code: "collection-overlap";
+      ruleIndex: number;
+      message: string;
+      relationship: "pairwiseNotOverlap";
+      subject: CollectionMember;
+      reference: CollectionMember;
+      expected: { [key: string]: JsonValue | undefined };
+      actual: { [key: string]: JsonValue | undefined };
+    };
+
 export type LayoutFinding =
-  InvalidRuleFinding | ElementFinding | LayoutViolationFinding;
+  | InvalidRuleFinding
+  | ElementFinding
+  | LayoutViolationFinding
+  | CollectionFinding;
 
 export type LayoutReport = {
   passed: boolean;

@@ -1,5 +1,6 @@
 import type {
   BinaryLayoutViolationFinding,
+  CollectionRule,
   HeightLayoutViolationFinding,
   LayoutRule,
   LayoutViolationFinding,
@@ -12,7 +13,7 @@ import type {
 } from "../types.js";
 import type { Rectangle } from "./adapter.js";
 
-type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule | CollectionRule>;
 
 type Edges = Rectangle & {
   right: number;

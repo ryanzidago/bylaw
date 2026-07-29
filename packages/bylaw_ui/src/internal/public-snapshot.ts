@@ -5,6 +5,7 @@ import type {
   SingularTargetResolution,
 } from "../adapter.js";
 import type {
+  RawCollectionMeasurement,
   RawElementMeasurement,
   RawMeasurementSnapshot,
 } from "./adapter.js";
@@ -163,7 +164,7 @@ function targetResolution(
 
 function rawTarget(
   resolution: SingularTargetResolution | CollectionTargetResolution,
-): RawElementMeasurement {
+): RawElementMeasurement | RawCollectionMeasurement {
   if ("matchCount" in resolution) {
     if (resolution.matchCount === 1) {
       if (resolution.hidden === undefined || resolution.rect === undefined) {
@@ -188,26 +189,20 @@ function rawTarget(
     };
   }
 
-  if (resolution.matches.length === 1) {
-    return {
-      testId: resolution.target,
-      count: 1,
-      hidden: resolution.matches[0]!.hidden,
-      rect: resolution.matches[0]!.rect,
-    };
-  }
-
   return {
     testId: resolution.target,
     count: resolution.matches.length,
     hidden: null,
     rect: null,
+    matches: resolution.matches,
   };
 }
 
 export function validatePublicSnapshot(
   value: unknown,
-  requestedTargets: readonly string[],
+  requestedTargets: readonly (
+    string | import("../types.js").CollectionTarget
+  )[],
 ): RawMeasurementSnapshot {
   if (!isRecord(value)) {
     malformed("snapshot must be an object");
@@ -230,16 +225,27 @@ export function validatePublicSnapshot(
     malformed("viewport dimensions must be positive");
   }
 
-  const requested = new Set(requestedTargets);
+  const requestedNames = requestedTargets.map((target) =>
+    typeof target === "string" ? target : target.target,
+  );
+  const requested = new Set(requestedNames);
   const targets = value.targets.map((entry, index) =>
     targetResolution(entry, `targets[${index}]`, requested),
   );
-  const measured = new Set(targets.map(({ target }) => target));
-
+  const expectedKeys = requestedTargets.map((target) =>
+    typeof target === "string"
+      ? `singular:${target}`
+      : `collection:${target.target}`,
+  );
+  const measuredKeys = targets.map(
+    (target) =>
+      `${"matches" in target ? "collection" : "singular"}:${target.target}`,
+  );
   if (
-    measured.size !== targets.length ||
-    measured.size !== requested.size ||
-    [...requested].some((target) => !measured.has(target))
+    new Set(expectedKeys).size !== expectedKeys.length ||
+    new Set(measuredKeys).size !== measuredKeys.length ||
+    expectedKeys.length !== measuredKeys.length ||
+    expectedKeys.some((key) => !measuredKeys.includes(key))
   ) {
     malformed("targets must correlate one-to-one with requested targets");
   }

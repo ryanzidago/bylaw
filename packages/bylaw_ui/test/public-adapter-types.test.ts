@@ -2,6 +2,7 @@ import { expect, test } from "bun:test";
 
 import type {
   AdapterImplementation,
+  CollectionTarget,
   CollectionTargetResolution,
   MeasurementSnapshot,
   MeasurementValidationError,
@@ -124,6 +125,27 @@ test("the adapter implementation receives readonly requested targets", () => {
 });
 
 /**
+ * @doc
+ * Issue: AdapterImplementation still declares every requested target as a
+ * string even though collection checks pass CollectionTarget declarations.
+ * Why it matters: A conforming adapter can typecheck while treating collection
+ * requests as strings, then fail at runtime when Bylaw passes an object.
+ */
+test("the adapter implementation target type includes collection declarations", () => {
+  if (false) {
+    type RequestedTarget = Parameters<
+      AdapterImplementation["measure"]
+    >[0][number];
+    const acceptsRequestedTarget = (_target: RequestedTarget) => {};
+    const acceptsEverySupportedTarget: (
+      target: string | CollectionTarget,
+    ) => void = acceptsRequestedTarget;
+    expect(acceptsEverySupportedTarget).toBeFunction();
+  }
+  expect(true).toBe(true);
+});
+
+/**
  * @doc Issue: AdapterImplementation declares measure as a method, whose
  * parameter is bivariant and therefore accepts an implementation that requires
  * a mutable string array despite the public readonly contract.
@@ -148,7 +170,11 @@ test("the adapter implementation return type matches the documented measurement 
   const implementation: AdapterImplementation = {
     measure: async (targets): Promise<MeasurementSnapshot> => ({
       viewport: { width: 1440, height: 900 },
-      targets: targets.map((target) => ({ target, matchCount: 0 })),
+      targets: targets.map((target) =>
+        typeof target === "string"
+          ? { target, matchCount: 0 }
+          : { target: target.target, matches: [] },
+      ),
     }),
   };
   expect(implementation.measure(["missing"])).resolves.toMatchObject({

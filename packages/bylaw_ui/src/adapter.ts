@@ -42,7 +42,7 @@ export type MeasurementSnapshot = {
 
 export type AdapterImplementation = {
   measure: (
-    targets: readonly string[],
+    targets: readonly (string | import("./types.js").CollectionTarget)[],
   ) => MeasurementSnapshot | Promise<MeasurementSnapshot>;
 };
 
@@ -50,7 +50,9 @@ declare const adapterTypeBrand: unique symbol;
 
 export type Adapter = {
   readonly [adapterTypeBrand]: true;
-  measure(targets: readonly string[]): Promise<unknown>;
+  measure(
+    targets: readonly (string | import("./types.js").CollectionTarget)[],
+  ): Promise<unknown>;
 };
 
 const adapters = new WeakSet<object>();
@@ -78,11 +80,19 @@ export function createAdapter(implementation?: unknown): Adapter {
   }
 
   const measure = implementation.measure.bind(implementation) as (
-    targets: readonly string[],
+    targets: readonly (string | import("./types.js").CollectionTarget)[],
   ) => unknown;
   const adapter = Object.freeze({
-    measure: async (targets: readonly string[]) =>
-      measure(Object.freeze([...targets])),
+    measure: async (
+      targets: readonly (string | import("./types.js").CollectionTarget)[],
+    ) =>
+      measure(
+        Object.freeze(
+          targets.map((target) =>
+            typeof target === "string" ? target : Object.freeze({ ...target }),
+          ),
+        ),
+      ),
   });
   adapters.add(adapter);
 

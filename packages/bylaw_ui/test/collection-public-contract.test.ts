@@ -89,6 +89,32 @@ test("collection rules and findings expose supported public types", () => {
   expect([target, finding]).toHaveLength(2);
 });
 
+/**
+ * @doc
+ * Issue: CollectionFinding allows a width-mismatch code to claim an unrelated
+ * pairwiseNotOverlap relationship.
+ * Why it matters: Consumers cannot safely narrow collection diagnostics by
+ * relationship, so an exhaustively handled report can accept impossible data.
+ */
+test("collection finding relationships reject codes from other rule kinds", () => {
+  if (false) {
+    const finding: CollectionFinding = {
+      category: "layout",
+      code: "collection-width-mismatch",
+      ruleIndex: 0,
+      message: "width mismatch",
+      // @ts-expect-error width mismatches only belong to equalWidths rules
+      relationship: "pairwiseNotOverlap",
+      target: "cards",
+      collectionIndex: 1,
+      expected: { tolerancePx: 0 },
+      actual: { differencePx: 1 },
+    };
+    expect(finding).toBeDefined();
+  }
+  expect(true).toBe(true);
+});
+
 test("collection rule helpers do not mutate supplied targets or options", () => {
   const target = collection("rows");
   const options = { gap: { minPx: 4, maxPx: 8 } };

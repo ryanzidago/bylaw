@@ -1,5 +1,6 @@
 import type {
   BinaryLayoutViolationFinding,
+  CollectionFinding,
   ElementFinding,
   HeightLayoutViolationFinding,
   InvalidRuleFinding,
@@ -398,22 +399,75 @@ function layoutDiagnostic(finding: LayoutViolationFinding): string[] {
   }
 }
 
+function collectionDiagnostic(finding: CollectionFinding): string[] {
+  if (finding.code === "empty-collection") {
+    return [
+      `collection target ${JSON.stringify(finding.target)} matched 0 elements`,
+      `rule ${finding.ruleIndex}`,
+      `message: ${finding.message}`,
+    ];
+  }
+
+  if (
+    finding.code === "hidden-element" ||
+    finding.code === "zero-size-element"
+  ) {
+    return [
+      `target ${JSON.stringify(finding.target)} member [${finding.collectionIndex}]`,
+      `message: ${finding.message}`,
+    ];
+  }
+
+  const identity =
+    "collectionIndex" in finding
+      ? [
+          `target ${JSON.stringify(finding.target)} member [${finding.collectionIndex}]`,
+        ]
+      : [
+          `target ${JSON.stringify(finding.subject.target)} member [${finding.subject.collectionIndex}]`,
+          `target ${JSON.stringify(finding.reference.target)} member [${finding.reference.collectionIndex}]`,
+        ];
+  if (finding.code === "collection-width-mismatch") {
+    return [
+      ...identity,
+      `expected width difference <= ${pixels(number(finding.expected, "tolerancePx") ?? 0)}`,
+      `actual difference ${pixels(number(finding.actual, "differencePx") ?? 0)}`,
+      `message: ${finding.message}`,
+    ];
+  }
+  return [...identity, `message: ${finding.message}`];
+}
+
 function findingDiagnostic(finding: LayoutFinding): string {
   switch (finding.category) {
     case "invalid-rule":
       return invalidRuleDiagnostic(finding).join("\n");
     case "element-resolution":
     case "element-visibility":
-      return elementDiagnostic(finding).join("\n");
+      return (
+        finding.code === "empty-collection" ||
+        ("operand" in finding && finding.operand === "collection")
+          ? collectionDiagnostic(finding as CollectionFinding)
+          : elementDiagnostic(finding)
+      ).join("\n");
     case "layout":
-      return [...layoutDiagnostic(finding), `message: ${finding.message}`].join(
-        "\n",
-      );
+      return (
+        finding.code.startsWith("collection-")
+          ? collectionDiagnostic(finding as CollectionFinding)
+          : [
+              ...layoutDiagnostic(finding as LayoutViolationFinding),
+              `message: ${finding.message}`,
+            ]
+      ).join("\n");
   }
 }
 
 function reportSummary(report: LayoutReport): string {
-  return `Layout assertion failed: ${report.rules.failed} failed, ${report.rules.skipped} skipped`;
+  const failedLabel =
+    report.rules.failed === 1 ? "failed rule" : "failed rules";
+  const skippedLabel =
+    report.rules.skipped === 1 ? "skipped rule" : "skipped rules";
+  return `Layout assertion failed: ${report.rules.failed} failed, ${report.rules.skipped} skipped (${report.rules.failed} ${failedLabel}, ${report.rules.skipped} ${skippedLabel})`;
 }
 
 export class LayoutAssertionError extends Error {

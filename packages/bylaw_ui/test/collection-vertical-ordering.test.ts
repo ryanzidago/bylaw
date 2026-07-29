@@ -215,7 +215,7 @@ test("preserves fractional gaps between collection members", async () => {
   const report = await checkRows(
     [
       { x: 0, y: 0.25, width: 10, height: 10.25 },
-      { x: 0, y: 11.75, width: 10, height: 10 },
+      { x: 0, y: 12, width: 10, height: 10 },
     ],
     { minPx: 1.5, maxPx: 1.5 },
   );
