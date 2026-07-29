@@ -7,3 +7,5 @@ test("reports a registered target that matches multiple elements", () => {});
 test("does not choose the first match for an ambiguous registered target", () => {});
 
 test("identifies unresolved registered targets by logical name", () => {});
+
+test("does not resolve registered targets that are not referenced by any rule", () => {});
