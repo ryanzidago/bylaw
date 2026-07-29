@@ -104,7 +104,10 @@ function range(data: DiagnosticData | undefined): PixelRange | undefined {
   const maxPx = number(data, "maxPx");
   return minPx === undefined && maxPx === undefined
     ? undefined
-    : { minPx, maxPx };
+    : {
+        ...(minPx === undefined ? {} : { minPx }),
+        ...(maxPx === undefined ? {} : { maxPx }),
+      };
 }
 
 function rangeDescription(value: PixelRange): string {
