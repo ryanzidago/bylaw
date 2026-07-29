@@ -614,6 +614,41 @@ test("restarts collection stability when membership changes", () =>
     },
   ));
 
+/**
+ * @doc Issue: Collection readiness treats locator result order as membership,
+ * so reordering the same stable elements restarts the stability streak.
+ * Why it matters: A collection whose members and relevant geometry are stable
+ * can time out solely because the DOM order changes.
+ */
+test("ignores collection reordering when membership is unchanged", () =>
+  withPage(
+    '<div id="members"><div class="member" data-member="first" style="width:20px;height:20px"></div><div class="member" data-member="second" style="width:20px;height:20px"></div></div>',
+    async (page) => {
+      const collectionRule = {
+        kind: "collectionEqualWidth",
+        collection: "members",
+      } as unknown as LayoutRule;
+
+      await page.evaluate(() => {
+        const members = document.querySelector("#members")!;
+
+        const reorder = () => {
+          members.append(members.firstElementChild!);
+          requestAnimationFrame(reorder);
+        };
+
+        requestAnimationFrame(reorder);
+      });
+
+      await waitForLayoutTargets(
+        page,
+        [collectionRule],
+        { timeoutMs: 300, stableFrames: 3 },
+        { members: page.locator(".member") },
+      );
+    },
+  ));
+
 test("reports unresolved and unstable members of the same collection independently", () =>
   withPage(
     '<div class="member" data-member="stable" style="width:20px;height:20px"></div><div class="member" data-member="unstable" style="width:20px;height:20px"></div>',
