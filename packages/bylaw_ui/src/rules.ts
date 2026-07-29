@@ -9,8 +9,8 @@ import type {
   OverlapRule,
   ToleranceOptions,
   ToleranceRule,
-} from "./types";
-import { validateRule } from "./internal/validation";
+} from "./types.js";
+import { validateRule } from "./internal/validation.js";
 
 function checked<T extends LayoutRule>(rule: T): T {
   const findings = validateRule(rule, 0);

@@ -3,8 +3,8 @@ import type {
   LayoutViolationFinding,
   PixelRange,
   ToleranceRule,
-} from "../types";
-import type { Rectangle } from "./adapter";
+} from "../types.js";
+import type { Rectangle } from "./adapter.js";
 
 type Edges = Rectangle & {
   right: number;

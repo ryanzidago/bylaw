@@ -1,5 +1,5 @@
-export { assertLayout, LayoutAssertionError } from "./assert-layout";
-export { checkLayout } from "./check-layout";
+export { assertLayout, LayoutAssertionError } from "./assert-layout.js";
+export { checkLayout } from "./check-layout.js";
 export {
   above,
   align,
@@ -12,7 +12,7 @@ export {
   sameHeight,
   sameSize,
   sameWidth,
-} from "./rules";
+} from "./rules.js";
 export type {
   Alignment,
   AlignRule,
@@ -30,4 +30,4 @@ export type {
   PixelRange,
   ToleranceOptions,
   ToleranceRule,
-} from "./types";
+} from "./types.js";

@@ -2,7 +2,7 @@ import type {
   InvalidRuleCode,
   InvalidRuleFinding,
   LayoutRule,
-} from "../types";
+} from "../types.js";
 
 const ruleKinds = new Set([
   "align",
