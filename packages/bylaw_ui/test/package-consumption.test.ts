@@ -10,7 +10,10 @@ test("can be imported by an ESM TypeScript consumer", async () => {
 
 test("the Playwright entrypoint can be imported independently", async () => {
   const entrypoint = await import("bylaw-ui/playwright");
-  expect(entrypoint).toEqual({ playwright: expect.any(Function) });
+  expect(entrypoint).toMatchObject({
+    playwright: expect.any(Function),
+    waitForLayoutTargets: expect.any(Function),
+  });
 });
 
 test("the published package includes usable JavaScript and type declarations", async () => {

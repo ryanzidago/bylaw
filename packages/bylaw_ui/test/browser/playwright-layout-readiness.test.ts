@@ -517,12 +517,14 @@ test("waits for every member of a referenced collection to exist and stabilize",
       } as unknown as LayoutRule;
 
       await page.evaluate(() => {
-        setTimeout(() => {
-          document.body.insertAdjacentHTML(
-            "beforeend",
-            '<div class="member" style="width:20px;height:20px"></div>',
-          );
-        }, 100);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            document.body.insertAdjacentHTML(
+              "beforeend",
+              '<div class="member" style="width:20px;height:20px"></div>',
+            );
+          });
+        });
       });
 
       await waitForLayoutTargets(
