@@ -1,4 +1,5 @@
 import type {
+  RawCollectionMeasurement,
   RawElementMeasurement,
   RawMeasurementSnapshot,
   Rectangle,
@@ -60,13 +61,37 @@ function element(
   value: unknown,
   path: string,
   requested: Set<string>,
-): RawElementMeasurement {
+): RawElementMeasurement | RawCollectionMeasurement {
   if (!isRecord(value)) {
     malformed(`${path} must be an object`);
   }
 
   if (typeof value.testId !== "string" || !requested.has(value.testId)) {
     malformed(`${path}.testId does not correlate to a requested element`);
+  }
+
+  if ("matches" in value) {
+    if (!Array.isArray(value.matches)) {
+      malformed(`${path}.matches must be an array`);
+    }
+    return {
+      testId: value.testId,
+      count: value.matches.length,
+      hidden: null,
+      rect: null,
+      matches: value.matches.map((match, index) => {
+        if (!isRecord(match)) {
+          malformed(`${path}.matches[${index}] must be an object`);
+        }
+        if (typeof match.hidden !== "boolean") {
+          malformed(`${path}.matches[${index}].hidden must be boolean`);
+        }
+        return {
+          hidden: match.hidden,
+          rect: rectangle(match.rect, `${path}.matches[${index}].rect`),
+        };
+      }),
+    };
   }
 
   if (
@@ -104,7 +129,9 @@ function element(
 
 export function validateSnapshot(
   value: unknown,
-  requestedTestIds: readonly string[],
+  requestedTargets: readonly (
+    string | import("../types.js").CollectionTarget
+  )[],
 ): RawMeasurementSnapshot {
   if (
     !isRecord(value) ||
@@ -123,16 +150,27 @@ export function validateSnapshot(
     malformed("viewport dimensions must be positive");
   }
 
-  const requested = new Set(requestedTestIds);
+  const requestedNames = requestedTargets.map((target) =>
+    typeof target === "string" ? target : target.target,
+  );
+  const requested = new Set(requestedNames);
   const elements = value.elements.map((entry, index) =>
     element(entry, `elements[${index}]`, requested),
   );
-  const measured = new Set(elements.map(({ testId }) => testId));
-
+  const expectedKeys = requestedTargets.map((target) =>
+    typeof target === "string"
+      ? `singular:${target}`
+      : `collection:${target.target}`,
+  );
+  const measuredKeys = elements.map(
+    (measurement) =>
+      `${"matches" in measurement ? "collection" : "singular"}:${measurement.testId}`,
+  );
   if (
-    measured.size !== elements.length ||
-    measured.size !== requested.size ||
-    [...requested].some((testId) => !measured.has(testId))
+    new Set(expectedKeys).size !== expectedKeys.length ||
+    new Set(measuredKeys).size !== measuredKeys.length ||
+    expectedKeys.length !== measuredKeys.length ||
+    expectedKeys.some((key) => !measuredKeys.includes(key))
   ) {
     malformed("elements must correlate one-to-one with requested test IDs");
   }

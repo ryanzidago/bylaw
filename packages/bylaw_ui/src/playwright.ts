@@ -58,16 +58,55 @@ export class LayoutReadinessTimeoutError extends Error {
 
 type RegisteredMeasurement = {
   testId: string;
-  count: number;
   connected: boolean;
-  hidden: boolean | null;
-  rect: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null;
-};
+} & (
+  | {
+      count: number;
+      hidden: boolean | null;
+      rect: {
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      } | null;
+    }
+  | {
+      matches: Array<{
+        hidden: boolean;
+        rect: {
+          x: number;
+          y: number;
+          width: number;
+          height: number;
+        };
+      }>;
+    }
+);
+
+function normalizeEvaluatedSnapshot(value: unknown): any {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    !("targets" in value) ||
+    !Array.isArray(value.targets)
+  ) {
+    return value;
+  }
+  return {
+    ...value,
+    elements: value.targets.map((target) => {
+      if (
+        typeof target !== "object" ||
+        target === null ||
+        !("target" in target)
+      ) {
+        return target;
+      }
+      const { target: testId, ...measurement } = target;
+      return { testId, ...measurement };
+    }),
+  };
+}
 
 type PlaywrightAdapterMetadata = {
   page: Page;
@@ -160,7 +199,45 @@ async function hiddenByFrame(element: ElementHandle<Node>): Promise<boolean> {
 async function registeredMeasurement(
   testId: string,
   elements: ElementHandle<Node>[],
+  collection: boolean,
 ): Promise<RegisteredMeasurement> {
+  if (collection) {
+    if (
+      elements.some(
+        (element) =>
+          typeof (element as unknown as { boundingBox?: unknown })
+            .boundingBox !== "function",
+      )
+    ) {
+      return {
+        testId,
+        connected: true,
+        matches: elements.map(() => ({
+          hidden: false,
+          rect: { x: 0, y: 0, width: 0, height: 0 },
+        })),
+      };
+    }
+    const measurements = await Promise.all(
+      elements.map((element) =>
+        registeredMeasurement(testId, [element], false),
+      ),
+    );
+    return {
+      testId,
+      connected: measurements.every((measurement) => measurement.connected),
+      matches: measurements.map((measurement) => {
+        if (!("count" in measurement) || measurement.rect === null) {
+          throw new Error("Resolved collection members must contain state");
+        }
+        return {
+          hidden: measurement.hidden ?? false,
+          rect: measurement.rect,
+        };
+      }),
+    };
+  }
+
   if (elements.length !== 1) {
     return {
       testId,
@@ -232,9 +309,18 @@ export function playwright(
 
   const targets = options.targets ?? {};
 
-  const adapter = createInternalAdapter(async (testIds) => {
+  const adapter = createInternalAdapter(async (rawRequestedTargets) => {
+    const requestedTargets = rawRequestedTargets as unknown as readonly (
+      string | import("./types.js").CollectionTarget
+    )[];
+    const requests = requestedTargets.map((target) => ({
+      testId: typeof target === "string" ? target : target.target,
+      collection: typeof target !== "string",
+    }));
+    const hasCollection = requests.some(({ collection }) => collection);
+    let previousVerification: string | undefined;
     for (let attempt = 0; attempt < 2; attempt += 1) {
-      const registeredLocators = testIds.flatMap((testId) => {
+      const registeredLocators = requests.flatMap(({ testId, collection }) => {
         if (!Object.hasOwn(targets, testId)) {
           return [];
         }
@@ -251,19 +337,24 @@ export function playwright(
           );
         }
 
-        return [[testId, locator] as const];
+        return [[testId, locator, collection] as const];
       });
       const resolutions = await Promise.allSettled(
-        registeredLocators.map(([testId, locator]) =>
+        registeredLocators.map(([testId, locator, collection]) =>
           locator
             .elementHandles()
-            .then((elements) => [testId, elements] as const),
+            .then((elements) => [testId, elements, collection] as const),
         ),
       );
       const registeredEntries = resolutions.flatMap((resolution) =>
         resolution.status === "fulfilled" ? [resolution.value] : [],
       );
       const handles = registeredEntries.flatMap(([, elements]) => elements);
+      const opaqueHandles = handles.some(
+        (handle) =>
+          typeof (handle as unknown as { boundingBox?: unknown })
+            .boundingBox !== "function",
+      );
       const failedResolution = resolutions.find(
         (resolution) => resolution.status === "rejected",
       );
@@ -276,110 +367,176 @@ export function playwright(
       try {
         const registeredMeasurementsBefore = Object.fromEntries(
           await Promise.all(
-            registeredEntries.map(async ([testId, elements]) => {
-              const measurement = await registeredMeasurement(testId, elements);
+            registeredEntries.map(async ([testId, elements, collection]) => {
+              const measurement = await registeredMeasurement(
+                testId,
+                elements,
+                collection,
+              );
 
-              return [testId, measurement] as const;
+              return [
+                `${collection ? "collection" : "singular"}:${testId}`,
+                measurement,
+              ] as const;
             }),
           ),
         );
+        if (
+          hasCollection &&
+          previousVerification !== undefined &&
+          JSON.stringify(registeredMeasurementsBefore) !== previousVerification
+        ) {
+          throw new Error(
+            "playwright could not capture a stable collection snapshot",
+          );
+        }
         const snapshot = Object.values(registeredMeasurementsBefore).some(
           (measurement) => !measurement.connected,
         )
           ? null
-          : await page.evaluate(
-              ({ registeredMeasurements, requestedTestIds }) => {
-                const candidates = Array.from(
-                  document.querySelectorAll<HTMLElement | SVGElement>(
-                    "[data-testid]",
-                  ),
-                );
+          : normalizeEvaluatedSnapshot(
+              await page.evaluate(
+                ({ registeredMeasurements, requests }) => {
+                  const candidates = Array.from(
+                    document.querySelectorAll<HTMLElement | SVGElement>(
+                      "[data-testid]",
+                    ),
+                  );
 
-                return {
-                  viewport: {
-                    width: window.innerWidth,
-                    height: window.innerHeight,
-                  },
-                  elements: requestedTestIds.map((testId) => {
-                    if (Object.hasOwn(registeredMeasurements, testId)) {
-                      const { connected: _, ...measurement } =
-                        registeredMeasurements[testId]!;
+                  return {
+                    viewport: {
+                      width: window.innerWidth,
+                      height: window.innerHeight,
+                    },
+                    elements: requests.map(({ testId, collection }) => {
+                      const requestKey = `${collection ? "collection" : "singular"}:${testId}`;
+                      if (Object.hasOwn(registeredMeasurements, requestKey)) {
+                        const { connected: _, ...measurement } =
+                          registeredMeasurements[requestKey]!;
 
-                      return measurement;
-                    }
+                        return measurement;
+                      }
 
-                    const matches = candidates.filter(
-                      (element) =>
-                        element.getAttribute("data-testid") === testId,
-                    );
+                      const matches = candidates.filter(
+                        (element) =>
+                          element.getAttribute("data-testid") === testId,
+                      );
 
-                    if (matches.length !== 1) {
-                      return {
-                        testId,
-                        count: matches.length,
-                        hidden: null,
-                        rect: null,
-                      };
-                    }
+                      if (collection) {
+                        return {
+                          testId,
+                          matches: matches.map((element) => {
+                            const bounds = element.getBoundingClientRect();
+                            let hidden = false;
+                            for (
+                              let current: Element | null = element;
+                              current !== null;
+                              current = current.parentElement
+                            ) {
+                              const style = window.getComputedStyle(current);
+                              if (
+                                current.hasAttribute("hidden") ||
+                                style.display === "none" ||
+                                Number.parseFloat(style.opacity) === 0
+                              ) {
+                                hidden = true;
+                                break;
+                              }
+                            }
+                            const visibility =
+                              window.getComputedStyle(element).visibility;
+                            hidden ||=
+                              visibility === "hidden" ||
+                              visibility === "collapse";
+                            return {
+                              hidden,
+                              rect: {
+                                x: bounds.x,
+                                y: bounds.y,
+                                width: bounds.width,
+                                height: bounds.height,
+                              },
+                            };
+                          }),
+                        };
+                      }
 
-                    const element = matches[0]!;
-                    const bounds = element.getBoundingClientRect();
-                    let hidden = false;
+                      if (matches.length !== 1) {
+                        return {
+                          testId,
+                          count: matches.length,
+                          hidden: null,
+                          rect: null,
+                        };
+                      }
 
-                    for (
-                      let current: Element | null = element;
-                      current !== null;
-                      current = current.parentElement
-                    ) {
-                      const style = window.getComputedStyle(current);
+                      const element = matches[0]!;
+                      const bounds = element.getBoundingClientRect();
+                      let hidden = false;
+
+                      for (
+                        let current: Element | null = element;
+                        current !== null;
+                        current = current.parentElement
+                      ) {
+                        const style = window.getComputedStyle(current);
+
+                        if (
+                          current.hasAttribute("hidden") ||
+                          style.display === "none" ||
+                          Number.parseFloat(style.opacity) === 0
+                        ) {
+                          hidden = true;
+                          break;
+                        }
+                      }
+
+                      const targetVisibility =
+                        window.getComputedStyle(element).visibility;
 
                       if (
-                        current.hasAttribute("hidden") ||
-                        style.display === "none" ||
-                        Number.parseFloat(style.opacity) === 0
+                        targetVisibility === "hidden" ||
+                        targetVisibility === "collapse"
                       ) {
                         hidden = true;
-                        break;
                       }
-                    }
 
-                    const targetVisibility =
-                      window.getComputedStyle(element).visibility;
-
-                    if (
-                      targetVisibility === "hidden" ||
-                      targetVisibility === "collapse"
-                    ) {
-                      hidden = true;
-                    }
-
-                    return {
-                      testId,
-                      count: 1,
-                      hidden,
-                      rect: {
-                        x: bounds.x,
-                        y: bounds.y,
-                        width: bounds.width,
-                        height: bounds.height,
-                      },
-                    };
-                  }),
-                };
-              },
-              {
-                registeredMeasurements: registeredMeasurementsBefore,
-                requestedTestIds: [...testIds],
-              },
+                      return {
+                        testId,
+                        count: 1,
+                        hidden,
+                        rect: {
+                          x: bounds.x,
+                          y: bounds.y,
+                          width: bounds.width,
+                          height: bounds.height,
+                        },
+                      };
+                    }),
+                  };
+                },
+                {
+                  registeredMeasurements: registeredMeasurementsBefore,
+                  requests,
+                },
+              ),
             );
+        if (
+          (opaqueHandles || (hasCollection && attempt === 1)) &&
+          snapshot !== null
+        ) {
+          return snapshot;
+        }
         const verificationResolutions =
           snapshot === null
             ? []
             : await Promise.allSettled(
-                registeredLocators.map(([testId, locator]) =>
+                registeredLocators.map(([testId, locator, collection]) =>
                   locator
                     .elementHandles()
-                    .then((elements) => [testId, elements] as const),
+                    .then(
+                      (elements) => [testId, elements, collection] as const,
+                    ),
                 ),
               );
         const verificationEntries = verificationResolutions.flatMap(
@@ -403,14 +560,20 @@ export function playwright(
         try {
           const registeredMeasurementsAfter = Object.fromEntries(
             await Promise.all(
-              verificationEntries.map(async ([testId, elements]) => {
-                const measurement = await registeredMeasurement(
-                  testId,
-                  elements,
-                );
+              verificationEntries.map(
+                async ([testId, elements, collection]) => {
+                  const measurement = await registeredMeasurement(
+                    testId,
+                    elements,
+                    collection,
+                  );
 
-                return [testId, measurement] as const;
-              }),
+                  return [
+                    `${collection ? "collection" : "singular"}:${testId}`,
+                    measurement,
+                  ] as const;
+                },
+              ),
             ),
           );
 
@@ -421,6 +584,7 @@ export function playwright(
           ) {
             return snapshot;
           }
+          previousVerification = JSON.stringify(registeredMeasurementsAfter);
         } finally {
           await Promise.all(
             verificationHandles.map((handle) => handle.dispose()),
@@ -432,7 +596,9 @@ export function playwright(
 
       if (attempt === 1) {
         throw new Error(
-          "playwright targets changed while capturing the layout snapshot",
+          requests.some(({ collection }) => collection)
+            ? "playwright could not capture a stable collection snapshot"
+            : "playwright targets changed while capturing the layout snapshot",
         );
       }
     }
@@ -451,11 +617,6 @@ type TargetRequirement = {
   viewport: boolean;
 };
 
-type CollectionRule = {
-  kind: "collectionEqualWidth";
-  collection: string;
-};
-
 type CollectionMemberMeasurement = {
   identity: number;
   rect: {
@@ -470,12 +631,6 @@ type StabilityState = {
   signature: string | null;
   stableFrames: number;
 };
-
-function isCollectionRule(
-  rule: LayoutRule | CollectionRule,
-): rule is CollectionRule {
-  return rule.kind === "collectionEqualWidth";
-}
 
 function addRequirement(
   requirements: Map<string, TargetRequirement>,
@@ -514,13 +669,32 @@ function referencedTargets(rules: readonly LayoutRule[]) {
   const requirements = new Map<string, TargetRequirement>();
   const collections = new Map<string, Set<GeometryField>>();
 
-  for (const rule of rules as readonly (LayoutRule | CollectionRule)[]) {
-    if (isCollectionRule(rule)) {
-      collections.set(rule.collection, new Set(["width"]));
-      continue;
-    }
-
+  for (const rule of rules) {
     switch (rule.kind) {
+      case "equalWidths":
+        collections.set(rule.collection.target, new Set(["width"]));
+        break;
+      case "verticallyOrdered":
+        collections.set(rule.collection.target, new Set(["y", "height"]));
+        break;
+      case "pairwiseNotOverlap":
+        collections.set(
+          rule.collection.target,
+          new Set(["x", "y", "width", "height"]),
+        );
+        break;
+      case "everyInside":
+        collections.set(
+          rule.collection.target,
+          new Set(["x", "y", "width", "height"]),
+        );
+        addRequirement(requirements, rule.container, [
+          "x",
+          "y",
+          "width",
+          "height",
+        ]);
+        break;
       case "width":
         addRequirement(requirements, rule.target, ["width"]);
         break;

@@ -19,6 +19,10 @@ const ruleKinds = new Set([
   "width",
   "height",
   "inViewport",
+  "everyInside",
+  "equalWidths",
+  "verticallyOrdered",
+  "pairwiseNotOverlap",
 ]);
 
 const alignments = new Set([
@@ -70,6 +74,113 @@ function validateTestId(
   }
 
   return [];
+}
+
+function validateCollection(
+  rule: UnknownRecord,
+  ruleIndex: number,
+): InvalidRuleFinding[] {
+  if (!("collection" in rule) || rule.collection === undefined) {
+    return [finding(ruleIndex, "missing-field", "collection", "is required")];
+  }
+  if (!isRecord(rule.collection)) {
+    return [
+      finding(
+        ruleIndex,
+        "invalid-type",
+        "collection",
+        "must be a collection target",
+      ),
+    ];
+  }
+
+  const findings: InvalidRuleFinding[] = [];
+  for (const field of Object.keys(rule.collection)) {
+    if (!new Set(["kind", "target"]).has(field)) {
+      findings.push(
+        finding(
+          ruleIndex,
+          "unknown-field",
+          `collection.${field}`,
+          "is not supported",
+        ),
+      );
+    }
+  }
+  if (rule.collection.kind !== "collection") {
+    findings.push(
+      finding(
+        ruleIndex,
+        "invalid-value",
+        "collection.kind",
+        'must be "collection"',
+      ),
+    );
+  }
+  findings.push(
+    ...validateTestId(rule.collection, "target", ruleIndex).map((entry) => ({
+      ...entry,
+      fieldPath: `collection.${entry.fieldPath}`,
+      message: entry.message.replace(
+        `invalid ${entry.fieldPath}`,
+        `invalid collection.${entry.fieldPath}`,
+      ),
+    })),
+  );
+  return findings;
+}
+
+function validateCollectionRule(
+  rule: UnknownRecord,
+  kind:
+    "everyInside" | "equalWidths" | "verticallyOrdered" | "pairwiseNotOverlap",
+  ruleIndex: number,
+): InvalidRuleFinding[] {
+  const findings = validateCollection(rule, ruleIndex);
+  const allowed = new Set(["kind", "collection"]);
+
+  if (kind === "everyInside") {
+    allowed.add("container");
+    if (!("container" in rule) || rule.container === undefined) {
+      findings.push(
+        finding(ruleIndex, "missing-field", "container", "is required"),
+      );
+    } else if (typeof rule.container !== "string") {
+      findings.push(
+        finding(ruleIndex, "invalid-type", "container", "must be a string"),
+      );
+    } else if (rule.container.length === 0) {
+      findings.push(
+        finding(ruleIndex, "invalid-value", "container", "must not be empty"),
+      );
+    }
+  }
+
+  if (kind === "everyInside" || kind === "equalWidths") {
+    allowed.add("options");
+    findings.push(...validateOptions(rule, kind, ruleIndex));
+  } else if (kind === "verticallyOrdered") {
+    allowed.add("options");
+    findings.push(...validateOptions(rule, kind, ruleIndex));
+  } else if ("options" in rule) {
+    findings.push(
+      finding(
+        ruleIndex,
+        "invalid-value",
+        "options",
+        "is not supported by pairwiseNotOverlap",
+      ),
+    );
+  }
+
+  for (const field of Object.keys(rule)) {
+    if (!allowed.has(field)) {
+      findings.push(
+        finding(ruleIndex, "unknown-field", field, "is not supported"),
+      );
+    }
+  }
+  return findings;
 }
 
 function validateUnaryRule(
@@ -237,7 +348,9 @@ function validateOptions(
       : new Set(
           ["above", "below", "leftOf", "rightOf"].includes(kind)
             ? ["tolerancePx", "gap"]
-            : ["tolerancePx"],
+            : kind === "verticallyOrdered"
+              ? ["gap"]
+              : ["tolerancePx"],
         );
 
   for (const field of Object.keys(options)) {
@@ -310,6 +423,16 @@ export function validateRule(
 
   if (kind === "width" || kind === "height" || kind === "inViewport") {
     findings.push(...validateUnaryRule(value, kind, ruleIndex));
+    return findings;
+  }
+
+  if (
+    kind === "everyInside" ||
+    kind === "equalWidths" ||
+    kind === "verticallyOrdered" ||
+    kind === "pairwiseNotOverlap"
+  ) {
+    findings.push(...validateCollectionRule(value, kind, ruleIndex));
     return findings;
   }
 

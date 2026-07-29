@@ -1,6 +1,10 @@
 import type {
   Alignment,
   AlignRule,
+  CollectionOrderingOptions,
+  CollectionTarget,
+  EqualWidthsRule,
+  EveryInsideRule,
   HeightRule,
   InViewportRule,
   LayoutRule,
@@ -13,6 +17,8 @@ import type {
   ToleranceOptions,
   ToleranceRule,
   WidthRule,
+  PairwiseNotOverlapRule,
+  VerticallyOrderedRule,
 } from "./types.js";
 import { validateRule } from "./internal/validation.js";
 
@@ -214,4 +220,80 @@ export function height(target: string, range: PixelRange): HeightRule {
 
 export function inViewport(target: string): InViewportRule {
   return checked({ kind: "inViewport", target });
+}
+
+export function collection(target: string): CollectionTarget {
+  const declaration = { kind: "collection" as const, target };
+  const findings = validateRule(
+    { kind: "equalWidths", collection: declaration },
+    0,
+  );
+  const targetFinding = findings.find(({ fieldPath }) =>
+    fieldPath.startsWith("collection"),
+  );
+  if (targetFinding) {
+    throw new TypeError(`${targetFinding.fieldPath}: ${targetFinding.reason}`);
+  }
+  return declaration;
+}
+
+function copyCollection(target: CollectionTarget): CollectionTarget {
+  return { ...target };
+}
+
+export function everyInside(
+  target: CollectionTarget,
+  container: string,
+  options?: ToleranceOptions,
+): EveryInsideRule {
+  return checked(
+    withOptions<EveryInsideRule>(
+      {
+        kind: "everyInside",
+        collection: copyCollection(target),
+        container,
+      },
+      copyToleranceOptions(options),
+    ),
+  );
+}
+
+export function equalWidths(
+  target: CollectionTarget,
+  options?: ToleranceOptions,
+): EqualWidthsRule {
+  return checked(
+    withOptions<EqualWidthsRule>(
+      { kind: "equalWidths", collection: copyCollection(target) },
+      copyToleranceOptions(options),
+    ),
+  );
+}
+
+export function verticallyOrdered(
+  target: CollectionTarget,
+  options?: CollectionOrderingOptions,
+): VerticallyOrderedRule {
+  return checked(
+    withOptions<VerticallyOrderedRule>(
+      { kind: "verticallyOrdered", collection: copyCollection(target) },
+      options === undefined
+        ? undefined
+        : {
+            ...(options.gap === undefined ? {} : { gap: { ...options.gap } }),
+          },
+    ),
+  );
+}
+
+export function pairwiseNotOverlap(
+  target: CollectionTarget,
+): PairwiseNotOverlapRule {
+  if (arguments.length > 1) {
+    throw new TypeError("options: is not supported by pairwiseNotOverlap");
+  }
+  return checked({
+    kind: "pairwiseNotOverlap",
+    collection: copyCollection(target),
+  });
 }

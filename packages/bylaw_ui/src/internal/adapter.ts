@@ -12,12 +12,23 @@ export type RawElementMeasurement = {
   rect: Rectangle | null;
 };
 
+export type RawCollectionMeasurement = {
+  testId: string;
+  count: number;
+  hidden: null;
+  rect: null;
+  matches: Array<{
+    hidden: boolean;
+    rect: Rectangle;
+  }>;
+};
+
 export type RawMeasurementSnapshot = {
   viewport: {
     width: number;
     height: number;
   };
-  elements: RawElementMeasurement[];
+  elements: Array<RawElementMeasurement | RawCollectionMeasurement>;
 };
 
 const adapterBrand = Symbol.for("bylaw-ui.internal.adapter");

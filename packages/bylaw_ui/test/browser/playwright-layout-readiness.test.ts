@@ -4,6 +4,8 @@ import type { Page } from "playwright-core";
 import {
   align,
   checkLayout,
+  collection,
+  equalWidths,
   inViewport,
   sameSize,
   sameWidth,
@@ -542,10 +544,7 @@ test("waits for every member of a referenced collection to exist and stabilize",
   withPage(
     '<div class="member" style="width:20px;height:20px"></div>',
     async (page) => {
-      const collectionRule = {
-        kind: "collectionEqualWidth",
-        collection: "members",
-      } as unknown as LayoutRule;
+      const collectionRule = equalWidths(collection("members"));
 
       await page.evaluate(() => {
         requestAnimationFrame(() => {
@@ -575,10 +574,7 @@ test("restarts collection stability when membership changes", () =>
   withPage(
     '<div class="member" data-member="first" style="width:20px;height:20px"></div>',
     async (page) => {
-      const collectionRule = {
-        kind: "collectionEqualWidth",
-        collection: "members",
-      } as unknown as LayoutRule;
+      const collectionRule = equalWidths(collection("members"));
 
       await page.evaluate(() => {
         let frames = 0;
@@ -623,10 +619,7 @@ test("ignores collection reordering when membership is unchanged", () =>
   withPage(
     '<div id="members"><div class="member" data-member="first" style="width:20px;height:20px"></div><div class="member" data-member="second" style="width:20px;height:20px"></div></div>',
     async (page) => {
-      const collectionRule = {
-        kind: "collectionEqualWidth",
-        collection: "members",
-      } as unknown as LayoutRule;
+      const collectionRule = equalWidths(collection("members"));
 
       await page.evaluate(() => {
         const members = document.querySelector("#members")!;
@@ -652,10 +645,7 @@ test("reports unresolved and unstable members of the same collection independent
   withPage(
     '<div class="member" data-member="stable" style="width:20px;height:20px"></div><div class="member" data-member="unstable" style="width:20px;height:20px"></div>',
     async (page) => {
-      const collectionRule = {
-        kind: "collectionEqualWidth",
-        collection: "members",
-      } as unknown as LayoutRule;
+      const collectionRule = equalWidths(collection("members"));
 
       await page.evaluate(() => {
         const unstable = document.querySelector<HTMLElement>(
@@ -700,10 +690,7 @@ test("reports unresolved and unstable members of the same collection independent
  */
 test("identifies a still-empty collection in timeout diagnostics", () =>
   withPage("", async (page) => {
-    const collectionRule = {
-      kind: "collectionEqualWidth",
-      collection: "members",
-    } as unknown as LayoutRule;
+    const collectionRule = equalWidths(collection("members"));
 
     try {
       await waitForLayoutTargets(
