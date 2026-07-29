@@ -16,6 +16,9 @@ const ruleKinds = new Set([
   "sameWidth",
   "sameHeight",
   "sameSize",
+  "width",
+  "height",
+  "inViewport",
 ]);
 
 const alignments = new Set([
@@ -51,7 +54,7 @@ function finding(
 
 function validateTestId(
   rule: UnknownRecord,
-  field: "subject" | "reference",
+  field: "subject" | "reference" | "target",
   ruleIndex: number,
 ): InvalidRuleFinding[] {
   if (!(field in rule) || rule[field] === undefined) {
@@ -67,6 +70,39 @@ function validateTestId(
   }
 
   return [];
+}
+
+function validateUnaryRule(
+  rule: UnknownRecord,
+  kind: "width" | "height" | "inViewport",
+  ruleIndex: number,
+): InvalidRuleFinding[] {
+  const findings: InvalidRuleFinding[] = [];
+  const allowed = new Set(
+    kind === "inViewport" ? ["kind", "target"] : ["kind", "target", "range"],
+  );
+
+  for (const field of Object.keys(rule)) {
+    if (!allowed.has(field)) {
+      findings.push(
+        finding(ruleIndex, "unknown-field", field, "is not supported"),
+      );
+    }
+  }
+
+  findings.push(...validateTestId(rule, "target", ruleIndex));
+
+  if (kind !== "inViewport") {
+    if (!("range" in rule) || rule.range === undefined) {
+      findings.push(
+        finding(ruleIndex, "missing-field", "range", "is required"),
+      );
+    } else {
+      findings.push(...validateRange(rule.range, "range", ruleIndex, false));
+    }
+  }
+
+  return findings;
 }
 
 function validateFiniteNonnegative(
@@ -279,6 +315,11 @@ export function validateRule(
     findings.push(
       finding(ruleIndex, "invalid-value", "kind", "is not a supported rule kind"),
     );
+  }
+
+  if (kind === "width" || kind === "height" || kind === "inViewport") {
+    findings.push(...validateUnaryRule(value, kind, ruleIndex));
+    return findings;
   }
 
   findings.push(...validateTestId(value, "subject", ruleIndex));

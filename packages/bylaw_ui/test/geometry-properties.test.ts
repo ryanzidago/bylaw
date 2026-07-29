@@ -13,13 +13,15 @@ import {
   sameSize,
   sameWidth,
   type LayoutRule,
+  type UnaryGeometryRule,
 } from "bylaw-ui";
 import { evaluateGeometry } from "../src/internal/geometry";
 import { rect } from "./support";
 
 type Rectangle = ReturnType<typeof rect>;
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
 
-function passes(rule: LayoutRule, subject: Rectangle, reference: Rectangle) {
+function passes(rule: BinaryLayoutRule, subject: Rectangle, reference: Rectangle) {
   return evaluateGeometry(rule, 0, subject, reference).length === 0;
 }
 
@@ -51,7 +53,7 @@ function randomRectangle(): Rectangle {
   );
 }
 
-const translations: Array<[string, LayoutRule]> = [
+const translations: Array<[string, BinaryLayoutRule]> = [
   ["alignment is unchanged when both rectangles are translated equally", align("a", "b", "centerX", { tolerancePx: 4 })],
   ["ordering is unchanged when both rectangles are translated equally", leftOf("a", "b", { tolerancePx: 4, gap: { minPx: 1, maxPx: 100 } })],
   ["overlap is unchanged when both rectangles are translated equally", overlap("a", "b", { horizontal: { minPx: 1, maxPx: 100 } })],
@@ -73,7 +75,7 @@ for (const [name, rule] of translations) {
   });
 }
 
-const symmetric: Array<[string, LayoutRule]> = [
+const symmetric: Array<[string, BinaryLayoutRule]> = [
   ["alignment is symmetric when subject and reference are swapped", align("a", "b", "centerY", { tolerancePx: 3 })],
   ["overlap is symmetric when subject and reference are swapped", overlap("a", "b", { horizontal: { minPx: 2 }, vertical: { maxPx: 30 } })],
   ["notOverlap is symmetric when subject and reference are swapped", notOverlap("a", "b")],

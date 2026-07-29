@@ -1,10 +1,14 @@
 import type {
+  BinaryLayoutViolationFinding,
   ElementFinding,
+  HeightLayoutViolationFinding,
   InvalidRuleFinding,
   JsonValue,
   LayoutFinding,
   LayoutReport,
   LayoutViolationFinding,
+  ViewportLayoutViolationFinding,
+  WidthLayoutViolationFinding,
 } from "./types.js";
 
 type DiagnosticData = { [key: string]: JsonValue | undefined };
@@ -165,7 +169,7 @@ function elementDiagnostic(finding: ElementFinding): string[] {
   ]);
 }
 
-function commonLayoutLines(finding: LayoutViolationFinding): string[] {
+function commonLayoutLines(finding: BinaryLayoutViolationFinding): string[] {
   return [
     `${finding.relationship} failed:`,
     `rule ${finding.ruleIndex}`,
@@ -186,7 +190,7 @@ function toleranceLines(
   ]);
 }
 
-function alignmentDiagnostic(finding: LayoutViolationFinding): string[] {
+function alignmentDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const expected = finding.expected;
   const actual = finding.actual;
   return compact([
@@ -201,7 +205,7 @@ function alignmentDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
-function orderingDiagnostic(finding: LayoutViolationFinding): string[] {
+function orderingDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const actual = finding.actual;
   return compact([
     ...commonLayoutLines(finding),
@@ -211,7 +215,7 @@ function orderingDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
-function gapDiagnostic(finding: LayoutViolationFinding): string[] {
+function gapDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const measured = number(finding.actual, "signedGapPx");
   const allowed = range(object(finding.expected, "gap"));
   return compact([
@@ -222,7 +226,7 @@ function gapDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
-function overlapDiagnostic(finding: LayoutViolationFinding): string[] {
+function overlapDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const horizontal = number(finding.actual, "horizontalPx");
   const vertical = number(finding.actual, "verticalPx");
   const horizontalRange = range(object(finding.expected, "horizontal"));
@@ -246,7 +250,7 @@ function overlapDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
-function containmentDiagnostic(finding: LayoutViolationFinding): string[] {
+function containmentDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const actual = finding.actual;
   const tolerance = number(finding.expected, "tolerancePx") ?? 0;
   const sides = ["left", "right", "top", "bottom"] as const;
@@ -276,7 +280,7 @@ function containmentDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
-function sizeDiagnostic(finding: LayoutViolationFinding): string[] {
+function sizeDiagnostic(finding: BinaryLayoutViolationFinding): string[] {
   const actual = finding.actual;
   const tolerance = number(finding.expected, "tolerancePx") ?? 0;
   const widthDifference = number(actual, "widthDifferencePx");
@@ -330,6 +334,39 @@ function sizeDiagnostic(finding: LayoutViolationFinding): string[] {
   ]);
 }
 
+function dimensionDiagnostic(
+  finding: WidthLayoutViolationFinding | HeightLayoutViolationFinding,
+): string[] {
+  const measured =
+    finding.relationship === "width"
+      ? finding.actual.widthPx
+      : finding.actual.heightPx;
+
+  return compact([
+    `${finding.relationship} failed:`,
+    `rule ${finding.ruleIndex}`,
+    `target: ${JSON.stringify(finding.target)}`,
+    pixelLine(`measured ${finding.relationship}`, measured),
+    `allowed ${finding.relationship}: ${rangeDescription(finding.expected.range)}`,
+    rangeViolation(finding.relationship, measured, finding.expected.range),
+  ]);
+}
+
+function viewportDiagnostic(
+  finding: ViewportLayoutViolationFinding,
+): string[] {
+  const target = finding.actual.target;
+  const viewport = finding.expected.viewport;
+
+  return [
+    `${finding.relationship} failed:`,
+    `rule ${finding.ruleIndex}`,
+    `target: ${JSON.stringify(finding.target)}`,
+    `target edges: left ${pixels(target.leftPx)}, top ${pixels(target.topPx)}, right ${pixels(target.rightPx)}, bottom ${pixels(target.bottomPx)}`,
+    `viewport edges: left ${pixels(viewport.leftPx)}, top ${pixels(viewport.topPx)}, right ${pixels(viewport.rightPx)}, bottom ${pixels(viewport.bottomPx)}`,
+  ];
+}
+
 function layoutDiagnostic(finding: LayoutViolationFinding): string[] {
   switch (finding.code) {
     case "alignment-mismatch":
@@ -345,6 +382,10 @@ function layoutDiagnostic(finding: LayoutViolationFinding): string[] {
       return containmentDiagnostic(finding);
     case "size-mismatch":
       return sizeDiagnostic(finding);
+    case "dimension-out-of-range":
+      return dimensionDiagnostic(finding);
+    case "viewport-overflow":
+      return viewportDiagnostic(finding);
   }
 }
 

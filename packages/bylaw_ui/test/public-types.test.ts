@@ -10,9 +10,11 @@ import {
   overlap,
   sameSize,
   type Alignment,
+  type ElementFinding,
   type LayoutFinding,
   type LayoutReport,
   type LayoutRule,
+  type LayoutViolationFinding,
 } from "bylaw-ui";
 import { fixtureAdapter } from "./support";
 
@@ -109,4 +111,92 @@ test("exports the public LayoutFinding type", () => {
     reason: "required",
   };
   expect(finding.category).toBe("invalid-rule");
+});
+
+/**
+ * @doc
+ * Issue: Binary findings accept unary relationship kinds.
+ * Why it matters: Consumers cannot safely distinguish target-only findings from
+ * subject/reference findings using the public relationship discriminant.
+ */
+test("binary findings reject unary relationship kinds at compile time", () => {
+  const finding: Extract<LayoutViolationFinding, { subject: string }> = {
+    category: "layout",
+    code: "alignment-mismatch",
+    ruleIndex: 0,
+    message: "impossible binary viewport finding",
+    subject: "subject",
+    reference: "reference",
+    // @ts-expect-error binary findings cannot describe unary relationships
+    relationship: "inViewport",
+    expected: {},
+    actual: {},
+  };
+
+  expect(finding).toBeDefined();
+});
+
+/**
+ * @doc
+ * Issue: Unary layout findings accept codes belonging to binary rules.
+ * Why it matters: Narrowing by relationship does not guarantee that the code
+ * and diagnostic payload belong to the same rule.
+ */
+test("unary layout findings reject unrelated violation codes at compile time", () => {
+  const finding: Extract<LayoutViolationFinding, { target: string }> = {
+    category: "layout",
+    // @ts-expect-error width findings only use dimension-out-of-range
+    code: "alignment-mismatch",
+    ruleIndex: 0,
+    message: "impossible width finding",
+    target: "sidebar",
+    relationship: "width",
+    expected: { range: { minPx: 260 } },
+    actual: { widthPx: 240 },
+  };
+
+  expect(finding).toBeDefined();
+});
+
+/**
+ * @doc
+ * Issue: Unary element findings allow resolution codes with visibility payloads.
+ * Why it matters: Consumers cannot safely interpret expected and actual after
+ * narrowing on an element finding's code.
+ */
+test("unary element findings correlate codes with diagnostic payloads", () => {
+  const finding: Extract<ElementFinding, { target: string }> = {
+    category: "element-resolution",
+    code: "missing-element",
+    ruleIndex: 0,
+    message: "missing target",
+    target: "sidebar",
+    operand: "target",
+    testId: "sidebar",
+    expected: { matchCount: 1 },
+    // @ts-expect-error missing-element requires a match-count payload
+    actual: { hidden: true },
+  };
+
+  expect(finding).toBeDefined();
+});
+
+/**
+ * @doc
+ * Issue: A width relationship does not narrow its diagnostic payload.
+ * Why it matters: Callers should be able to consume structured width findings
+ * without casts or defensive property checks.
+ */
+test("width findings narrow to their exact diagnostic payload", () => {
+  function actualWidth(
+    finding: LayoutViolationFinding,
+  ): number | undefined {
+    if (finding.relationship !== "width") {
+      return undefined;
+    }
+
+    return finding.actual.widthPx;
+  }
+
+  expect(actualWidth).toBeFunction();
 });

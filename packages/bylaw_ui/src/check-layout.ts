@@ -4,13 +4,18 @@ import type {
   LayoutFinding,
   LayoutReport,
   LayoutRule,
+  UnaryElementFinding,
+  UnaryGeometryRule,
 } from "./types.js";
 import {
   isInternalAdapter,
   type InternalAdapter,
   type RawElementMeasurement,
 } from "./internal/adapter.js";
-import { evaluateGeometry } from "./internal/geometry.js";
+import {
+  evaluateGeometry,
+  evaluateUnaryGeometry,
+} from "./internal/geometry.js";
 import { validateSnapshot } from "./internal/snapshot.js";
 import { validateRule } from "./internal/validation.js";
 
@@ -44,8 +49,18 @@ function assertInput(value: unknown): asserts value is {
   }
 }
 
-function elementFinding(
-  rule: LayoutRule,
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+
+function isUnaryRule(rule: LayoutRule): rule is UnaryGeometryRule {
+  return (
+    rule.kind === "width" ||
+    rule.kind === "height" ||
+    rule.kind === "inViewport"
+  );
+}
+
+function binaryElementFinding(
+  rule: BinaryLayoutRule,
   ruleIndex: number,
   operand: "subject" | "reference",
   measurement: RawElementMeasurement,
@@ -118,6 +133,73 @@ function elementFinding(
   return null;
 }
 
+function unaryElementFinding(
+  rule: UnaryGeometryRule,
+  ruleIndex: number,
+  measurement: RawElementMeasurement,
+): UnaryElementFinding | null {
+  const common = {
+    ruleIndex,
+    target: rule.target,
+    operand: "target" as const,
+    testId: rule.target,
+  };
+
+  if (measurement.count === 0) {
+    return {
+      ...common,
+      category: "element-resolution",
+      code: "missing-element",
+      message: `Rule ${ruleIndex} cannot resolve target ${JSON.stringify(rule.target)}`,
+      expected: { matchCount: 1 },
+      actual: { matchCount: 0 },
+    };
+  }
+
+  if (measurement.count > 1) {
+    return {
+      ...common,
+      category: "element-resolution",
+      code: "duplicate-element",
+      message: `Rule ${ruleIndex} resolves target ${JSON.stringify(rule.target)} more than once`,
+      expected: { matchCount: 1 },
+      actual: { matchCount: measurement.count },
+    };
+  }
+
+  if (measurement.rect === null || measurement.hidden === null) {
+    throw new Error("Validated resolved measurements must contain element state");
+  }
+
+  if (measurement.hidden) {
+    return {
+      ...common,
+      category: "element-visibility",
+      code: "hidden-element",
+      message: `Rule ${ruleIndex} has hidden target ${JSON.stringify(rule.target)}`,
+      expected: { visible: true, positiveSize: true },
+      actual: { hidden: true },
+    };
+  }
+
+  if (measurement.rect.width === 0 || measurement.rect.height === 0) {
+    return {
+      ...common,
+      category: "element-visibility",
+      code: "zero-size-element",
+      message: `Rule ${ruleIndex} has zero-size target ${JSON.stringify(rule.target)}`,
+      expected: { visible: true, positiveSize: true },
+      actual: {
+        hidden: false,
+        width: measurement.rect.width,
+        height: measurement.rect.height,
+      },
+    };
+  }
+
+  return null;
+}
+
 export async function checkLayout(input: CheckLayoutInput): Promise<LayoutReport>;
 export async function checkLayout(input: unknown): Promise<LayoutReport> {
   assertInput(input);
@@ -153,7 +235,9 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
 
   const testIds = [
     ...new Set(
-      validRules.flatMap(({ rule }) => [rule.subject, rule.reference]),
+      validRules.flatMap(({ rule }) =>
+        isUnaryRule(rule) ? [rule.target] : [rule.subject, rule.reference],
+      ),
     ),
   ];
   const snapshot = validateSnapshot(await input.adapter.measure(testIds), testIds);
@@ -164,6 +248,42 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
   let passed = 0;
 
   for (const { rule, ruleIndex } of validRules) {
+    if (isUnaryRule(rule)) {
+      const target = byTestId.get(rule.target);
+
+      if (!target) {
+        throw new Error("Validated snapshot must contain every requested test ID");
+      }
+
+      const targetFinding = unaryElementFinding(rule, ruleIndex, target);
+
+      if (targetFinding !== null) {
+        findings.push(targetFinding);
+        skippedRuleIndexes.add(ruleIndex);
+        continue;
+      }
+
+      if (target.rect === null) {
+        throw new Error("Available measurements must contain rectangles");
+      }
+
+      const layoutFindings = evaluateUnaryGeometry(
+        rule,
+        ruleIndex,
+        target.rect,
+        snapshot.viewport,
+      );
+
+      if (layoutFindings.length > 0) {
+        findings.push(...layoutFindings);
+        failedRuleIndexes.add(ruleIndex);
+      } else {
+        passed += 1;
+      }
+
+      continue;
+    }
+
     const subject = byTestId.get(rule.subject);
     const reference = byTestId.get(rule.reference);
 
@@ -172,10 +292,10 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
     }
 
     const elementFindings = [
-      elementFinding(rule, ruleIndex, "subject", subject),
+      binaryElementFinding(rule, ruleIndex, "subject", subject),
       ...(rule.subject === rule.reference
         ? []
-        : [elementFinding(rule, ruleIndex, "reference", reference)]),
+        : [binaryElementFinding(rule, ruleIndex, "reference", reference)]),
     ].filter((value): value is ElementFinding => value !== null);
 
     if (elementFindings.length > 0) {
