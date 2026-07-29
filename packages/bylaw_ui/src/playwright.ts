@@ -495,6 +495,23 @@ function addRequirement(
   requirements.set(testId, requirement);
 }
 
+function alignmentFields(
+  alignment: Extract<LayoutRule, { kind: "align" }>["alignment"],
+): readonly GeometryField[] {
+  switch (alignment) {
+    case "left":
+      return ["x"];
+    case "right":
+    case "centerX":
+      return ["x", "width"];
+    case "top":
+      return ["y"];
+    case "bottom":
+    case "centerY":
+      return ["y", "height"];
+  }
+}
+
 function referencedTargets(rules: readonly LayoutRule[]) {
   const requirements = new Map<string, TargetRequirement>();
   const collections = new Map<string, Set<GeometryField>>();
@@ -531,6 +548,22 @@ function referencedTargets(rules: readonly LayoutRule[]) {
       case "sameSize":
         addRequirement(requirements, rule.subject, ["width", "height"]);
         addRequirement(requirements, rule.reference, ["width", "height"]);
+        break;
+      case "align": {
+        const fields = alignmentFields(rule.alignment);
+        addRequirement(requirements, rule.subject, fields);
+        addRequirement(requirements, rule.reference, fields);
+        break;
+      }
+      case "above":
+      case "below":
+        addRequirement(requirements, rule.subject, ["y", "height"]);
+        addRequirement(requirements, rule.reference, ["y", "height"]);
+        break;
+      case "leftOf":
+      case "rightOf":
+        addRequirement(requirements, rule.subject, ["x", "width"]);
+        addRequirement(requirements, rule.reference, ["x", "width"]);
         break;
       default:
         addRequirement(requirements, rule.subject, [
@@ -693,7 +726,10 @@ export async function waitForLayoutTargets(
     {
       membership: string | null;
       members: Map<number, StabilityState & { label: string }>;
-      history: Map<number, { label: string; observation: LayoutReadinessObservation }>;
+      history: Map<
+        number,
+        { label: string; observation: LayoutReadinessObservation }
+      >;
       nextLabel: number;
     }
   >();
@@ -746,12 +782,19 @@ export async function waitForLayoutTargets(
       const state = collectionStates.get(collection)!;
       const membership = measurements
         .map((measurement) => measurement.identity)
+        .sort((left, right) => left - right)
         .join(",");
       const membershipChanged =
         state.membership !== null && membership !== state.membership;
       const currentIdentities = new Set(
         measurements.map((measurement) => measurement.identity),
       );
+
+      if (measurements.length === 0) {
+        lastObserved[collection] = { matchCount: 0 };
+      } else {
+        delete lastObserved[collection];
+      }
 
       for (const [identity, member] of state.members) {
         if (!currentIdentities.has(identity)) {
@@ -827,7 +870,11 @@ export async function waitForLayoutTargets(
         )
         .map(([testId]) => testId);
 
-      for (const state of collectionStates.values()) {
+      for (const [collection, state] of collectionStates) {
+        if (state.members.size === 0) {
+          unresolvedTargets.push(collection);
+        }
+
         for (const { label, observation } of state.history.values()) {
           lastObserved[label] = observation;
 
