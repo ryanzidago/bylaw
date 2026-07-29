@@ -106,6 +106,26 @@ test("a factory-created adapter invokes measure once for one layout check", asyn
   expect(calls).toBe(1);
 });
 
+/**
+ * @doc Issue: The adapter receives the engine's mutable target inventory, so a
+ * consumer can change the request that snapshot validation uses while measuring.
+ * Why it matters: An accidental mutation can bypass one-to-one correlation checks
+ * and surface an internal invariant error instead of a valid layout result.
+ */
+test("a factory-created adapter receives an immutable target inventory", async () => {
+  let receivedTargets: readonly string[] = [];
+  const adapter = createAdapter({
+    measure: async (targets) => {
+      receivedTargets = targets;
+      return snapshot(targets);
+    },
+  });
+
+  await checkLayout({ adapter, rules: [width("sidebar", { minPx: 1 })] });
+
+  expect(Object.isFrozen(receivedTargets)).toBe(true);
+});
+
 test("a factory-created adapter cannot have its validated measure function replaced", () => {
   const adapter = createAdapter({ measure: async () => snapshot([]) });
   expect(() => {
