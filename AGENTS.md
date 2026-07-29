@@ -39,6 +39,9 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
   cannot handle the case.
 - Do not close, reopen, merge, or delete GitHub PRs or remote branches unless
   the user explicitly asks for that GitHub-side state change.
+- When creating a GitHub PR from an issue, include a closing keyword such as
+  `Closes #123` in the PR description when merging the PR will fully satisfy
+  the issue, so GitHub automatically closes the issue when the PR is merged.
 - When doing code review for a PR, use the PR's linked worktree when one exists and applies.
 - Treat every worktree as owned by the session that created or was assigned to
   it. Do not remove, reset, or repurpose another session's worktree. If
