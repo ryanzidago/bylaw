@@ -28,19 +28,19 @@ bun install --frozen-lockfile
 bun run build
 
 cd /path/to/your-application
-npm install --save-dev /path/to/bylaw/packages/bylaw_ui @playwright/test
+bun add --dev /path/to/bylaw/packages/bylaw_ui @playwright/test
 ```
 
 Building before the local install ensures the application receives the compiled
 entrypoints. The package also runs its QA suite when it is packed for
 publication. When it is published, the application install becomes
-`npm install --save-dev bylaw-ui @playwright/test`.
+`bun add --dev bylaw-ui @playwright/test`.
 
 Chromium is the verified V1 browser target. Install the browser build matching
 the application's Playwright version:
 
 ```sh
-npx playwright install chromium
+bunx playwright install chromium
 ```
 
 ## Current API
@@ -279,7 +279,7 @@ test("desktop split view satisfies its UI contracts", async ({ page }) => {
 Run the state directly while iterating:
 
 ```sh
-npx playwright test tests/ui/pull-request-layout.spec.ts
+bunx playwright test tests/ui/pull-request-layout.spec.ts
 ```
 
 When an agent receives a failing report:
