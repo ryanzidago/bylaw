@@ -51,8 +51,9 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - Prefer focused, explicit modules over broad orchestration APIs.
 - Use acceptance-test-driven development for behavior changes:
   1. Inventory the acceptance criteria as named, empty acceptance tests at the
-     appropriate boundary. Do not skip or ignore them; at this stage they
-     document the agreed test plan.
+     appropriate boundary. Do not mark them as TODO, skip them, tag them to be
+     excluded, or otherwise prevent them from running. Even while empty, they
+     must run with the normal test suite and document the agreed test plan.
   2. After the acceptance inventory is agreed, implement the test bodies and
      run them against the unchanged behavior to prove they fail.
   3. Implement the smallest change that makes the tests pass.
