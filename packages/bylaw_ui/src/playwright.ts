@@ -617,11 +617,6 @@ type TargetRequirement = {
   viewport: boolean;
 };
 
-type LegacyCollectionRule = {
-  kind: "collectionEqualWidth";
-  collection: string;
-};
-
 type CollectionMemberMeasurement = {
   identity: number;
   rect: {
@@ -636,12 +631,6 @@ type StabilityState = {
   signature: string | null;
   stableFrames: number;
 };
-
-function isCollectionRule(
-  rule: LayoutRule | LegacyCollectionRule,
-): rule is LegacyCollectionRule {
-  return rule.kind === "collectionEqualWidth";
-}
 
 function addRequirement(
   requirements: Map<string, TargetRequirement>,
@@ -680,12 +669,7 @@ function referencedTargets(rules: readonly LayoutRule[]) {
   const requirements = new Map<string, TargetRequirement>();
   const collections = new Map<string, Set<GeometryField>>();
 
-  for (const rule of rules as readonly (LayoutRule | LegacyCollectionRule)[]) {
-    if (isCollectionRule(rule)) {
-      collections.set(rule.collection, new Set(["width"]));
-      continue;
-    }
-
+  for (const rule of rules) {
     switch (rule.kind) {
       case "equalWidths":
         collections.set(rule.collection.target, new Set(["width"]));
