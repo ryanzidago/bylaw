@@ -97,7 +97,9 @@ function binaryElementFinding(
   }
 
   if (measurement.rect === null || measurement.hidden === null) {
-    throw new Error("Validated resolved measurements must contain element state");
+    throw new Error(
+      "Validated resolved measurements must contain element state",
+    );
   }
 
   if (measurement.hidden) {
@@ -168,7 +170,9 @@ function unaryElementFinding(
   }
 
   if (measurement.rect === null || measurement.hidden === null) {
-    throw new Error("Validated resolved measurements must contain element state");
+    throw new Error(
+      "Validated resolved measurements must contain element state",
+    );
   }
 
   if (measurement.hidden) {
@@ -200,7 +204,9 @@ function unaryElementFinding(
   return null;
 }
 
-export async function checkLayout(input: CheckLayoutInput): Promise<LayoutReport>;
+export async function checkLayout(
+  input: CheckLayoutInput,
+): Promise<LayoutReport>;
 export async function checkLayout(input: unknown): Promise<LayoutReport> {
   assertInput(input);
 
@@ -209,7 +215,10 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
   const failedRuleIndexes = new Set<number>();
 
   input.rules.forEach((value, ruleIndex) => {
-    const invalidFindings: InvalidRuleFinding[] = validateRule(value, ruleIndex);
+    const invalidFindings: InvalidRuleFinding[] = validateRule(
+      value,
+      ruleIndex,
+    );
 
     if (invalidFindings.length > 0) {
       findings.push(...invalidFindings);
@@ -240,7 +249,10 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
       ),
     ),
   ];
-  const snapshot = validateSnapshot(await input.adapter.measure(testIds), testIds);
+  const snapshot = validateSnapshot(
+    await input.adapter.measure(testIds),
+    testIds,
+  );
   const byTestId = new Map(
     snapshot.elements.map((measurement) => [measurement.testId, measurement]),
   );
@@ -252,7 +264,9 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
       const target = byTestId.get(rule.target);
 
       if (!target) {
-        throw new Error("Validated snapshot must contain every requested test ID");
+        throw new Error(
+          "Validated snapshot must contain every requested test ID",
+        );
       }
 
       const targetFinding = unaryElementFinding(rule, ruleIndex, target);
@@ -288,7 +302,9 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
     const reference = byTestId.get(rule.reference);
 
     if (!subject || !reference) {
-      throw new Error("Validated snapshot must contain every requested test ID");
+      throw new Error(
+        "Validated snapshot must contain every requested test ID",
+      );
     }
 
     const elementFindings = [

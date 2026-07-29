@@ -1,10 +1,4 @@
-import {
-  mkdir,
-  mkdtemp,
-  readFile,
-  readdir,
-  rm,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -40,13 +34,7 @@ const temporaryDirectory = await mkdtemp(join(tmpdir(), "bylaw-ui-consumer-"));
 
 try {
   await run(
-    [
-      "bun",
-      "pm",
-      "pack",
-      "--destination",
-      temporaryDirectory,
-    ],
+    ["bun", "pm", "pack", "--destination", temporaryDirectory],
     packageDirectory,
   );
 
