@@ -5,8 +5,8 @@ import {
   below,
   leftOf,
   rightOf,
-  type LayoutRule,
   type OrderingOptions,
+  type OrderingRule,
 } from "bylaw-ui";
 import { expectFailure, expectPass, rect } from "./support";
 
@@ -14,7 +14,7 @@ type OrderingHelper = (
   subject: string,
   reference: string,
   options?: OrderingOptions,
-) => LayoutRule;
+) => OrderingRule;
 
 const relationships: Array<{
   name: "leftOf" | "rightOf" | "above" | "below";
