@@ -9,7 +9,13 @@ test("each failure renders the rule before measurements, constraints, and violat
 test("multiple failures preserve the order of findings in the original report", () => {
 });
 
+test("identical reports produce identical diagnostic messages", () => {
+});
+
 test("multiple failures use stable separators that keep each diagnostic readable", () => {
+});
+
+test("multiple operand findings for one skipped rule do not inflate the failed rule count", () => {
 });
 
 test("a realistic broken page renders actionable alignment, gap, overlap, containment, and size diagnostics together", () => {
