@@ -355,3 +355,40 @@ test("geometry diagnostics preserve raw fractional measurements", () => {
 
   expect(message).toContain("subject width: 0.1234567890123456px");
 });
+
+/**
+ * @doc
+ * Issue: Formatting calculated violation amounts to 15 significant digits
+ * changes exact integer results.
+ * Why it matters: A diagnostic can disagree with its measured difference even
+ * when subtracting the tolerance introduces no floating-point artifact.
+ */
+test("geometry diagnostics preserve exact calculated violation amounts", () => {
+  const { expect } = require("bun:test");
+  const { LayoutAssertionError } = require("bylaw-ui");
+  const exactDifference = Number.MAX_SAFE_INTEGER;
+  const finding = {
+    category: "layout",
+    code: "size-mismatch",
+    ruleIndex: 0,
+    message: "legacy",
+    subject: "a",
+    reference: "b",
+    relationship: "sameWidth",
+    expected: { tolerancePx: 0 },
+    actual: {
+      subjectWidthPx: exactDifference,
+      referenceWidthPx: 0,
+      widthDifferencePx: exactDifference,
+    },
+  };
+  const message = new LayoutAssertionError({
+    passed: false,
+    rules: { total: 1, passed: 0, failed: 1, skipped: 0 },
+    findings: [finding],
+  }).message;
+
+  expect(message).toContain(
+    "exceeds tolerance by: 9007199254740991px",
+  );
+});
