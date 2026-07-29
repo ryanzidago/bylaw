@@ -28,9 +28,12 @@ import {
   align,
   assertLayout,
   checkLayout,
+  height,
+  inViewport,
   inside,
   leftOf,
   overlap,
+  width,
 } from "bylaw-ui";
 import { playwright } from "bylaw-ui/playwright";
 
@@ -50,6 +53,9 @@ const report = await checkLayout({
     inside("status-badge", "avatar", {
       tolerancePx: 4,
     }),
+    width("sidebar", { minPx: 260, maxPx: 320 }),
+    height("toolbar", { minPx: 48 }),
+    inViewport("dialog"),
   ],
 });
 
@@ -91,6 +97,8 @@ error retains the original report by identity.
 ## Geometry contract
 
 - Relationship helpers use `subject, reference` argument order.
+- Unary geometry helpers evaluate a single target: `width(target, range)`,
+  `height(target, range)`, and `inViewport(target)`.
 - Measurements use viewport-relative `Element.getBoundingClientRect()` border
   rectangles in fractional CSS pixels.
 - Registered locators resolve immediately from the current page state without
@@ -104,6 +112,10 @@ error retains the original report by identity.
 V1 verifies alignment, directional ordering and gaps, overlap depth,
 non-overlap, containment, width, height, and size. It does not judge typography,
 color, hierarchy, aesthetics, occlusion, or irregular shapes.
+
+Use unary width and height rules for absolute pixel constraints. Prefer the
+relative `sameWidth`, `sameHeight`, and `sameSize` rules when the contract is
+that two rendered elements should match.
 
 ## License
 

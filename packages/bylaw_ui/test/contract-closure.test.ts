@@ -326,7 +326,14 @@ test("consumers can interpret findings without parsing human-readable messages",
     category: "layout",
     code: "size-mismatch",
     ruleIndex: 0,
-    actual: { widthDifferencePx: 10, heightDifferencePx: 10 },
+    actual: {
+      subjectWidthPx: 10,
+      referenceWidthPx: 20,
+      widthDifferencePx: 10,
+      subjectHeightPx: 10,
+      referenceHeightPx: 20,
+      heightDifferencePx: 10,
+    },
   });
 });
 
