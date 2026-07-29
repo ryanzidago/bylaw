@@ -4,6 +4,8 @@ export {
   above,
   align,
   below,
+  height,
+  inViewport,
   inside,
   leftOf,
   notOverlap,
@@ -12,11 +14,14 @@ export {
   sameHeight,
   sameSize,
   sameWidth,
+  width,
 } from "./rules.js";
 export type {
   Alignment,
   AlignRule,
   ElementFinding,
+  HeightRule,
+  InViewportRule,
   InvalidRuleFinding,
   LayoutFinding,
   LayoutReport,
@@ -30,4 +35,6 @@ export type {
   PixelRange,
   ToleranceOptions,
   ToleranceRule,
+  UnaryGeometryRule,
+  WidthRule,
 } from "./types.js";

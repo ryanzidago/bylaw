@@ -1,6 +1,11 @@
 import { expect } from "bun:test";
 
-import { checkLayout, type LayoutFinding, type LayoutRule } from "bylaw-ui";
+import {
+  checkLayout,
+  type LayoutFinding,
+  type LayoutRule,
+  type UnaryGeometryRule,
+} from "bylaw-ui";
 import {
   createInternalAdapter,
   type RawElementMeasurement,
@@ -53,8 +58,10 @@ export function fixtureAdapter(
   });
 }
 
+type BinaryLayoutRule = Exclude<LayoutRule, UnaryGeometryRule>;
+
 export async function checkRule(
-  rule: LayoutRule,
+  rule: BinaryLayoutRule,
   subjectRect: Rectangle,
   referenceRect: Rectangle,
 ) {
@@ -73,7 +80,7 @@ export async function checkRule(
 }
 
 export async function expectPass(
-  rule: LayoutRule,
+  rule: BinaryLayoutRule,
   subjectRect: Rectangle,
   referenceRect: Rectangle,
 ) {
@@ -84,7 +91,7 @@ export async function expectPass(
 }
 
 export async function expectFailure(
-  rule: LayoutRule,
+  rule: BinaryLayoutRule,
   subjectRect: Rectangle,
   referenceRect: Rectangle,
   code: LayoutFinding["code"],
