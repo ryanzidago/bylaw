@@ -3,13 +3,58 @@ import type { ElementHandle, Locator, Page } from "playwright-core";
 import {
   createInternalAdapter,
   type InternalAdapter,
+  type RawElementMeasurement,
+  type RawMeasurementSnapshot,
 } from "./internal/adapter.js";
+import type { LayoutRule } from "./types.js";
 
 export type PlaywrightTargetRegistry = Readonly<Record<string, Locator>>;
 
 export type PlaywrightOptions = {
   targets?: PlaywrightTargetRegistry;
 };
+
+export type LayoutReadinessOptions = {
+  timeoutMs: number;
+  stableFrames: number;
+};
+
+export type LayoutReadinessObservation = {
+  matchCount: number;
+  geometry?: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
+export class LayoutReadinessTimeoutError extends Error {
+  readonly unresolvedTargets: string[];
+  readonly unstableTargets: string[];
+  readonly lastObserved: Readonly<Record<string, LayoutReadinessObservation>>;
+
+  constructor(
+    unresolvedTargets: string[],
+    unstableTargets: string[],
+    lastObserved: Readonly<Record<string, LayoutReadinessObservation>>,
+  ) {
+    const details = [
+      unresolvedTargets.length > 0
+        ? `unresolved targets: ${unresolvedTargets.join(", ")}`
+        : null,
+      unstableTargets.length > 0
+        ? `unstable targets: ${unstableTargets.join(", ")}`
+        : null,
+    ].filter((detail): detail is string => detail !== null);
+
+    super(`Layout readiness timed out (${details.join("; ")})`);
+    this.name = "LayoutReadinessTimeoutError";
+    this.unresolvedTargets = unresolvedTargets;
+    this.unstableTargets = unstableTargets;
+    this.lastObserved = lastObserved;
+  }
+}
 
 type RegisteredMeasurement = {
   testId: string;
@@ -62,6 +107,16 @@ function normalizeEvaluatedSnapshot(value: unknown): any {
     }),
   };
 }
+
+type PlaywrightAdapterMetadata = {
+  page: Page;
+  targets: PlaywrightTargetRegistry;
+};
+
+const adapterMetadata = new WeakMap<
+  InternalAdapter,
+  PlaywrightAdapterMetadata
+>();
 
 async function hiddenInDocument(
   element: ElementHandle<Node>,
@@ -254,7 +309,7 @@ export function playwright(
 
   const targets = options.targets ?? {};
 
-  return createInternalAdapter(async (rawRequestedTargets) => {
+  const adapter = createInternalAdapter(async (rawRequestedTargets) => {
     const requestedTargets = rawRequestedTargets as unknown as readonly (
       string | import("./types.js").CollectionTarget
     )[];
@@ -550,4 +605,479 @@ export function playwright(
 
     throw new Error("playwright could not capture the layout snapshot");
   });
+
+  adapterMetadata.set(adapter, { page, targets });
+  return adapter;
+}
+
+type GeometryField = "x" | "y" | "width" | "height";
+
+type TargetRequirement = {
+  fields: Set<GeometryField>;
+  viewport: boolean;
+};
+
+type LegacyCollectionRule = {
+  kind: "collectionEqualWidth";
+  collection: string;
+};
+
+type CollectionMemberMeasurement = {
+  identity: number;
+  rect: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
+};
+
+type StabilityState = {
+  signature: string | null;
+  stableFrames: number;
+};
+
+function isCollectionRule(
+  rule: LayoutRule | LegacyCollectionRule,
+): rule is LegacyCollectionRule {
+  return rule.kind === "collectionEqualWidth";
+}
+
+function addRequirement(
+  requirements: Map<string, TargetRequirement>,
+  testId: string,
+  fields: readonly GeometryField[],
+  viewport = false,
+) {
+  const requirement = requirements.get(testId) ?? {
+    fields: new Set<GeometryField>(),
+    viewport: false,
+  };
+
+  fields.forEach((field) => requirement.fields.add(field));
+  requirement.viewport ||= viewport;
+  requirements.set(testId, requirement);
+}
+
+function alignmentFields(
+  alignment: Extract<LayoutRule, { kind: "align" }>["alignment"],
+): readonly GeometryField[] {
+  switch (alignment) {
+    case "left":
+      return ["x"];
+    case "right":
+    case "centerX":
+      return ["x", "width"];
+    case "top":
+      return ["y"];
+    case "bottom":
+    case "centerY":
+      return ["y", "height"];
+  }
+}
+
+function referencedTargets(rules: readonly LayoutRule[]) {
+  const requirements = new Map<string, TargetRequirement>();
+  const collections = new Map<string, Set<GeometryField>>();
+
+  for (const rule of rules as readonly (LayoutRule | LegacyCollectionRule)[]) {
+    if (isCollectionRule(rule)) {
+      collections.set(rule.collection, new Set(["width"]));
+      continue;
+    }
+
+    switch (rule.kind) {
+      case "equalWidths":
+        collections.set(rule.collection.target, new Set(["width"]));
+        break;
+      case "verticallyOrdered":
+        collections.set(rule.collection.target, new Set(["y", "height"]));
+        break;
+      case "pairwiseNotOverlap":
+        collections.set(
+          rule.collection.target,
+          new Set(["x", "y", "width", "height"]),
+        );
+        break;
+      case "everyInside":
+        collections.set(
+          rule.collection.target,
+          new Set(["x", "y", "width", "height"]),
+        );
+        addRequirement(requirements, rule.container, [
+          "x",
+          "y",
+          "width",
+          "height",
+        ]);
+        break;
+      case "width":
+        addRequirement(requirements, rule.target, ["width"]);
+        break;
+      case "height":
+        addRequirement(requirements, rule.target, ["height"]);
+        break;
+      case "inViewport":
+        addRequirement(
+          requirements,
+          rule.target,
+          ["x", "y", "width", "height"],
+          true,
+        );
+        break;
+      case "sameWidth":
+        addRequirement(requirements, rule.subject, ["width"]);
+        addRequirement(requirements, rule.reference, ["width"]);
+        break;
+      case "sameHeight":
+        addRequirement(requirements, rule.subject, ["height"]);
+        addRequirement(requirements, rule.reference, ["height"]);
+        break;
+      case "sameSize":
+        addRequirement(requirements, rule.subject, ["width", "height"]);
+        addRequirement(requirements, rule.reference, ["width", "height"]);
+        break;
+      case "align": {
+        const fields = alignmentFields(rule.alignment);
+        addRequirement(requirements, rule.subject, fields);
+        addRequirement(requirements, rule.reference, fields);
+        break;
+      }
+      case "above":
+      case "below":
+        addRequirement(requirements, rule.subject, ["y", "height"]);
+        addRequirement(requirements, rule.reference, ["y", "height"]);
+        break;
+      case "leftOf":
+      case "rightOf":
+        addRequirement(requirements, rule.subject, ["x", "width"]);
+        addRequirement(requirements, rule.reference, ["x", "width"]);
+        break;
+      default:
+        addRequirement(requirements, rule.subject, [
+          "x",
+          "y",
+          "width",
+          "height",
+        ]);
+        addRequirement(requirements, rule.reference, [
+          "x",
+          "y",
+          "width",
+          "height",
+        ]);
+    }
+  }
+
+  return { requirements, collections };
+}
+
+function assertReadinessOptions(
+  options: LayoutReadinessOptions,
+): asserts options is LayoutReadinessOptions {
+  if (
+    typeof options !== "object" ||
+    options === null ||
+    Array.isArray(options)
+  ) {
+    throw new TypeError("layout readiness options must be an object");
+  }
+
+  if (!Number.isFinite(options.timeoutMs) || options.timeoutMs <= 0) {
+    throw new TypeError("layout readiness timeoutMs must be a positive number");
+  }
+
+  if (!Number.isInteger(options.stableFrames) || options.stableFrames <= 0) {
+    throw new TypeError(
+      "layout readiness stableFrames must be a positive integer",
+    );
+  }
+}
+
+function measurementSignature(
+  measurement: RawElementMeasurement,
+  requirement: TargetRequirement,
+  viewport: RawMeasurementSnapshot["viewport"],
+) {
+  if (measurement.count !== 1 || measurement.rect === null) {
+    return null;
+  }
+
+  const geometry = Object.fromEntries(
+    [...requirement.fields].map((field) => [field, measurement.rect![field]]),
+  );
+
+  return JSON.stringify(
+    requirement.viewport ? { geometry, viewport } : { geometry },
+  );
+}
+
+function updateStability(state: StabilityState, signature: string | null) {
+  if (signature === null) {
+    state.signature = null;
+    state.stableFrames = 0;
+  } else if (signature === state.signature) {
+    state.stableFrames += 1;
+  } else {
+    state.signature = signature;
+    state.stableFrames = 0;
+  }
+}
+
+async function animationFrame(page: Page) {
+  await page.evaluate(
+    () =>
+      new Promise<void>((resolve) => {
+        requestAnimationFrame(() => resolve());
+      }),
+  );
+}
+
+async function collectionMeasurements(
+  locator: Locator,
+): Promise<CollectionMemberMeasurement[]> {
+  const handles = await locator.elementHandles();
+
+  try {
+    return await Promise.all(
+      handles.map((handle) =>
+        handle.evaluate((node) => {
+          const scope = globalThis as typeof globalThis & {
+            __bylawLayoutReadinessIdentities?: WeakMap<object, number>;
+            __bylawLayoutReadinessNextIdentity?: number;
+          };
+          const identities =
+            scope.__bylawLayoutReadinessIdentities ??
+            (scope.__bylawLayoutReadinessIdentities = new WeakMap());
+          let identity = identities.get(node);
+
+          if (identity === undefined) {
+            identity = scope.__bylawLayoutReadinessNextIdentity ?? 0;
+            scope.__bylawLayoutReadinessNextIdentity = identity + 1;
+            identities.set(node, identity);
+          }
+
+          const bounds = (node as Element).getBoundingClientRect();
+
+          return {
+            identity,
+            rect: {
+              x: bounds.x,
+              y: bounds.y,
+              width: bounds.width,
+              height: bounds.height,
+            },
+          };
+        }),
+      ),
+    );
+  } finally {
+    await Promise.all(handles.map((handle) => handle.dispose()));
+  }
+}
+
+/**
+ * Waits until targets referenced by layout rules resolve and retain the
+ * rule-relevant geometry for consecutive animation frames.
+ */
+export async function waitForLayoutTargets(
+  adapter: InternalAdapter,
+  rules: readonly LayoutRule[],
+  options: LayoutReadinessOptions,
+): Promise<void> {
+  const metadata = adapterMetadata.get(adapter);
+
+  if (metadata === undefined) {
+    throw new TypeError(
+      "waitForLayoutTargets expects an adapter created by playwright",
+    );
+  }
+
+  if (!Array.isArray(rules)) {
+    throw new TypeError("waitForLayoutTargets rules must be an array");
+  }
+
+  assertReadinessOptions(options);
+
+  const { requirements, collections } = referencedTargets(rules);
+  const targetStates = new Map(
+    [...requirements].map(([testId]) => [
+      testId,
+      { signature: null, stableFrames: 0 } satisfies StabilityState,
+    ]),
+  );
+  const collectionStates = new Map<
+    string,
+    {
+      membership: string | null;
+      members: Map<number, StabilityState & { label: string }>;
+      history: Map<
+        number,
+        { label: string; observation: LayoutReadinessObservation }
+      >;
+      nextLabel: number;
+    }
+  >();
+  const lastObserved: Record<string, LayoutReadinessObservation> = {};
+  const startedAt = performance.now();
+
+  for (const [collection] of collections) {
+    collectionStates.set(collection, {
+      membership: null,
+      members: new Map(),
+      history: new Map(),
+      nextLabel: 0,
+    });
+  }
+
+  while (true) {
+    await animationFrame(metadata.page);
+
+    const testIds = [...requirements.keys()];
+    const snapshot = (await adapter.measure(testIds)) as RawMeasurementSnapshot;
+
+    for (const measurement of snapshot.elements) {
+      const requirement = requirements.get(measurement.testId)!;
+      const state = targetStates.get(measurement.testId)!;
+
+      updateStability(
+        state,
+        measurementSignature(measurement, requirement, snapshot.viewport),
+      );
+      lastObserved[measurement.testId] = {
+        matchCount: measurement.count,
+        ...(measurement.rect === null
+          ? {}
+          : { geometry: { ...measurement.rect } }),
+      };
+    }
+
+    for (const [collection, fields] of collections) {
+      const locator = metadata.targets[collection];
+
+      if (locator === undefined) {
+        throw new TypeError(
+          `collection target "${collection}" must be a registered Playwright locator`,
+        );
+      }
+
+      const measurements = await collectionMeasurements(locator);
+      const state = collectionStates.get(collection)!;
+      const membership = measurements
+        .map((measurement) => measurement.identity)
+        .sort((left, right) => left - right)
+        .join(",");
+      const membershipChanged =
+        state.membership !== null && membership !== state.membership;
+      const currentIdentities = new Set(
+        measurements.map((measurement) => measurement.identity),
+      );
+
+      if (measurements.length === 0) {
+        lastObserved[collection] = { matchCount: 0 };
+      } else {
+        delete lastObserved[collection];
+      }
+
+      for (const [identity, member] of state.members) {
+        if (!currentIdentities.has(identity)) {
+          state.history.set(identity, {
+            label: member.label,
+            observation: { matchCount: 0 },
+          });
+          state.members.delete(identity);
+        }
+      }
+
+      for (const measurement of measurements) {
+        let member = state.members.get(measurement.identity);
+
+        if (member === undefined) {
+          member = {
+            label: `${collection}[${state.nextLabel}]`,
+            signature: null,
+            stableFrames: 0,
+          };
+          state.nextLabel += 1;
+          state.members.set(measurement.identity, member);
+        }
+
+        const geometry = Object.fromEntries(
+          [...fields].map((field) => [field, measurement.rect[field]]),
+        );
+
+        if (membershipChanged) {
+          member.signature = null;
+          member.stableFrames = 0;
+        }
+
+        updateStability(member, JSON.stringify(geometry));
+        const observation = {
+          matchCount: 1,
+          geometry: { ...measurement.rect },
+        };
+        lastObserved[member.label] = observation;
+        state.history.set(measurement.identity, {
+          label: member.label,
+          observation,
+        });
+      }
+
+      state.membership = membership;
+    }
+
+    const targetsReady = [...targetStates.values()].every(
+      (state) => state.stableFrames >= options.stableFrames,
+    );
+    const collectionsReady = [...collectionStates.values()].every(
+      (state) =>
+        state.members.size > 0 &&
+        [...state.members.values()].every(
+          (member) => member.stableFrames >= options.stableFrames,
+        ),
+    );
+
+    if (targetsReady && collectionsReady) {
+      return;
+    }
+
+    if (performance.now() - startedAt >= options.timeoutMs) {
+      const unresolvedTargets = [...targetStates]
+        .filter(([, state]) => state.signature === null)
+        .map(([testId]) => testId);
+      const unstableTargets = [...targetStates]
+        .filter(
+          ([, state]) =>
+            state.signature !== null &&
+            state.stableFrames < options.stableFrames,
+        )
+        .map(([testId]) => testId);
+
+      for (const [collection, state] of collectionStates) {
+        if (state.members.size === 0) {
+          unresolvedTargets.push(collection);
+        }
+
+        for (const { label, observation } of state.history.values()) {
+          lastObserved[label] = observation;
+
+          if (observation.matchCount === 0) {
+            unresolvedTargets.push(label);
+          }
+        }
+
+        for (const member of state.members.values()) {
+          if (member.stableFrames < options.stableFrames) {
+            unstableTargets.push(member.label);
+          }
+        }
+      }
+
+      throw new LayoutReadinessTimeoutError(
+        unresolvedTargets,
+        unstableTargets,
+        lastObserved,
+      );
+    }
+  }
 }
