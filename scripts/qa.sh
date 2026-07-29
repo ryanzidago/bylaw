@@ -12,6 +12,9 @@ packages=(
 
 echo "qa running ..."
 
+scripts/test-reject-main
+scripts/test-remove-finished-pr-worktrees
+
 run_stage() {
   local stage="$1"
   shift

@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+push_updates="$(cat)"
+
+scripts/reject-main
+
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main | refs/heads/master)
+      echo "Direct pushes to '$remote_ref' are disabled." >&2
+      echo "Push a feature branch and open a pull request instead." >&2
+      exit 1
+      ;;
+  esac
+done <<<"$push_updates"

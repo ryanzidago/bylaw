@@ -1,0 +1,238 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+fixture_root="$(mktemp -d)"
+trap 'rm -rf "$fixture_root"' EXIT HUP INT TERM
+
+mkdir "$fixture_root/bin"
+
+cat >"$fixture_root/bin/git" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${1:-}" == "symbolic-ref" ]]; then
+  printf '%s\n' "${CURRENT_BRANCH:-main}"
+  exit 0
+fi
+
+exit 1
+EOF
+
+cat >"$fixture_root/bin/wt" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${WT_UNAVAILABLE:-0}" == "1" ]]; then
+  exit 1
+fi
+
+for argument in "$@"; do
+  case "$argument" in
+    list)
+      cat "$WT_FIXTURE"
+      exit 0
+      ;;
+    remove)
+      printf '%s\n' "$*" >>"$REMOVE_LOG"
+      exit 0
+      ;;
+  esac
+done
+
+exit 1
+EOF
+
+cat >"$fixture_root/bin/gh" <<'EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+
+printf '%s\n' called >>"$GH_LOG"
+
+if [[ "${GH_UNAVAILABLE:-0}" == "1" ]]; then
+  exit 1
+fi
+
+cat "$PR_FIXTURE"
+EOF
+
+chmod +x "$fixture_root/bin/git" "$fixture_root/bin/wt" "$fixture_root/bin/gh"
+
+cat >"$fixture_root/worktrees.json" <<'EOF'
+[
+  {
+    "kind": "worktree",
+    "is_main": true,
+    "branch": "main",
+    "path": "/repo"
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "merged-clean",
+    "path": "/repo/merged-clean",
+    "working_tree": {
+      "staged": false,
+      "modified": false,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "merged-dirty",
+    "path": "/repo/merged-dirty",
+    "working_tree": {
+      "staged": false,
+      "modified": true,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "closed-clean",
+    "path": "/repo/closed-clean",
+    "working_tree": {
+      "staged": false,
+      "modified": false,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "open-pr",
+    "path": "/repo/open-pr",
+    "working_tree": {
+      "staged": false,
+      "modified": false,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "reopened-pr",
+    "path": "/repo/reopened-pr",
+    "working_tree": {
+      "staged": false,
+      "modified": false,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  },
+  {
+    "kind": "worktree",
+    "is_main": false,
+    "branch": "no-pr",
+    "path": "/repo/no-pr",
+    "working_tree": {
+      "staged": false,
+      "modified": false,
+      "untracked": false,
+      "renamed": false,
+      "deleted": false
+    }
+  }
+]
+EOF
+
+cat >"$fixture_root/prs.json" <<'EOF'
+[
+  {"headRefName": "merged-clean", "state": "MERGED"},
+  {"headRefName": "merged-dirty", "state": "MERGED"},
+  {"headRefName": "closed-clean", "state": "CLOSED"},
+  {"headRefName": "open-pr", "state": "OPEN"},
+  {"headRefName": "reopened-pr", "state": "CLOSED"},
+  {"headRefName": "reopened-pr", "state": "OPEN"}
+]
+EOF
+
+: >"$fixture_root/removed"
+: >"$fixture_root/gh-calls"
+
+PATH="$fixture_root/bin:$PATH" \
+  WT_FIXTURE="$fixture_root/worktrees.json" \
+  PR_FIXTURE="$fixture_root/prs.json" \
+  REMOVE_LOG="$fixture_root/removed" \
+  GH_LOG="$fixture_root/gh-calls" \
+  "$repository_root/scripts/remove-finished-pr-worktrees"
+
+if [[ "$(wc -l <"$fixture_root/removed" | tr -d ' ')" != "2" ]]; then
+  echo "expected exactly two finished PR worktrees to be removed" >&2
+  cat "$fixture_root/removed" >&2
+  exit 1
+fi
+
+grep -Fq -- "--foreground --reap /repo/merged-clean" "$fixture_root/removed"
+grep -Fq -- "--foreground --reap --no-delete-branch /repo/closed-clean" "$fixture_root/removed"
+
+if grep -Eq "merged-dirty|open-pr|reopened-pr|no-pr" "$fixture_root/removed"; then
+  echo "dirty, open, reopened, and unassociated worktrees must be preserved" >&2
+  exit 1
+fi
+
+if [[ "$(wc -l <"$fixture_root/gh-calls" | tr -d ' ')" != "1" ]]; then
+  echo "pull request state should be fetched exactly once" >&2
+  exit 1
+fi
+
+: >"$fixture_root/removed"
+: >"$fixture_root/gh-calls"
+
+PATH="$fixture_root/bin:$PATH" \
+  WT_FIXTURE="$fixture_root/worktrees.json" \
+  PR_FIXTURE="$fixture_root/prs.json" \
+  REMOVE_LOG="$fixture_root/removed" \
+  GH_LOG="$fixture_root/gh-calls" \
+  GH_UNAVAILABLE=1 \
+  "$repository_root/scripts/remove-finished-pr-worktrees"
+
+if [[ -s "$fixture_root/removed" ]]; then
+  echo "GitHub failure must preserve every worktree" >&2
+  exit 1
+fi
+
+: >"$fixture_root/removed"
+: >"$fixture_root/gh-calls"
+
+PATH="$fixture_root/bin:$PATH" \
+  WT_FIXTURE="$fixture_root/worktrees.json" \
+  PR_FIXTURE="$fixture_root/prs.json" \
+  REMOVE_LOG="$fixture_root/removed" \
+  GH_LOG="$fixture_root/gh-calls" \
+  WT_UNAVAILABLE=1 \
+  "$repository_root/scripts/remove-finished-pr-worktrees"
+
+if [[ -s "$fixture_root/removed" ]]; then
+  echo "Worktrunk failure must preserve every worktree" >&2
+  exit 1
+fi
+
+: >"$fixture_root/removed"
+: >"$fixture_root/gh-calls"
+
+PATH="$fixture_root/bin:$PATH" \
+  WT_FIXTURE="$fixture_root/worktrees.json" \
+  PR_FIXTURE="$fixture_root/prs.json" \
+  REMOVE_LOG="$fixture_root/removed" \
+  GH_LOG="$fixture_root/gh-calls" \
+  CURRENT_BRANCH=feature \
+  "$repository_root/scripts/remove-finished-pr-worktrees"
+
+if [[ -s "$fixture_root/removed" || -s "$fixture_root/gh-calls" ]]; then
+  echo "cleanup must only run from the primary branch" >&2
+  exit 1
+fi
+
+echo "Finished PR worktree cleanup tests passed."
