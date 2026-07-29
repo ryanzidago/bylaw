@@ -3,15 +3,20 @@
     "lib": ["ESNext", "DOM"],
     "module": "Preserve",
     "moduleResolution": "bundler",
+    "erasableSyntaxOnly": true,
     "exactOptionalPropertyTypes": true,
+    "isolatedModules": true,
     "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
     "noUncheckedIndexedAccess": true,
     "paths": {
       "bylaw-ui": ["./src/index.ts"],
       "bylaw-ui/playwright": ["./src/playwright.ts"]
     },
     "strict": true,
-    "types": ["bun"]
+    "types": ["bun"],
+    "verbatimModuleSyntax": true
   },
   "include": ["src", "test"]
 }
