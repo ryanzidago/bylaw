@@ -31,8 +31,11 @@ function object(
 }
 
 function pixels(value: number): string {
-  const normalized = Number.parseFloat(value.toPrecision(15));
-  return `${Object.is(normalized, -0) ? 0 : normalized}px`;
+  return `${Object.is(value, -0) ? 0 : value}px`;
+}
+
+function calculatedPixels(value: number): string {
+  return pixels(Number.parseFloat(value.toPrecision(15)));
 }
 
 function pixelLine(
@@ -48,7 +51,7 @@ function excessLine(
   tolerance: number,
 ): string | undefined {
   return value !== undefined && value > tolerance
-    ? `${label}: ${pixels(value - tolerance)}`
+    ? `${label}: ${calculatedPixels(value - tolerance)}`
     : undefined;
 }
 
@@ -75,10 +78,10 @@ function rangeViolation(
 ): string | undefined {
   if (value === undefined || allowed === undefined) return undefined;
   if (allowed.minPx !== undefined && value < allowed.minPx) {
-    return `${label} below minimum by: ${pixels(allowed.minPx - value)}`;
+    return `${label} below minimum by: ${calculatedPixels(allowed.minPx - value)}`;
   }
   if (allowed.maxPx !== undefined && value > allowed.maxPx) {
-    return `${label} above maximum by: ${pixels(value - allowed.maxPx)}`;
+    return `${label} above maximum by: ${calculatedPixels(value - allowed.maxPx)}`;
   }
   return undefined;
 }
