@@ -1,14 +1,18 @@
 import type {
   Alignment,
   AlignRule,
+  HeightRule,
+  InViewportRule,
   LayoutRule,
   NotOverlapRule,
   OrderingOptions,
   OrderingRule,
   OverlapOptions,
   OverlapRule,
+  PixelRange,
   ToleranceOptions,
   ToleranceRule,
+  WidthRule,
 } from "./types.js";
 import { validateRule } from "./internal/validation.js";
 
@@ -188,4 +192,30 @@ export function sameSize(
   options?: ToleranceOptions,
 ): ToleranceRule {
   return toleranceRule("sameSize", subject, reference, options);
+}
+
+function unaryRangeRule(
+  kind: "width" | "height",
+  target: string,
+  range: PixelRange,
+): WidthRule | HeightRule {
+  return checked({ kind, target, range: { ...range } });
+}
+
+export function width(
+  target: string,
+  range: PixelRange,
+): WidthRule {
+  return unaryRangeRule("width", target, range) as WidthRule;
+}
+
+export function height(
+  target: string,
+  range: PixelRange,
+): HeightRule {
+  return unaryRangeRule("height", target, range) as HeightRule;
+}
+
+export function inViewport(target: string): InViewportRule {
+  return checked({ kind: "inViewport", target });
 }
