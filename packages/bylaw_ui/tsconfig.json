@@ -3,7 +3,9 @@
     "lib": ["ESNext", "DOM"],
     "module": "Preserve",
     "moduleResolution": "bundler",
+    "exactOptionalPropertyTypes": true,
     "noEmit": true,
+    "noUncheckedIndexedAccess": true,
     "paths": {
       "bylaw-ui": ["./src/index.ts"],
       "bylaw-ui/playwright": ["./src/playwright.ts"]
