@@ -7,6 +7,7 @@ import type {
   UnaryElementFinding,
   UnaryGeometryRule,
 } from "./types.js";
+import { isAdapter, type Adapter } from "./adapter.js";
 import {
   isInternalAdapter,
   type InternalAdapter,
@@ -17,15 +18,16 @@ import {
   evaluateUnaryGeometry,
 } from "./internal/geometry.js";
 import { validateSnapshot } from "./internal/snapshot.js";
+import { validatePublicSnapshot } from "./internal/public-snapshot.js";
 import { validateRule } from "./internal/validation.js";
 
 export type CheckLayoutInput = {
-  adapter: InternalAdapter;
+  adapter: Adapter | InternalAdapter;
   rules: LayoutRule[];
 };
 
 function assertInput(value: unknown): asserts value is {
-  adapter: InternalAdapter;
+  adapter: Adapter | InternalAdapter;
   rules: unknown[];
 } {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -44,7 +46,7 @@ function assertInput(value: unknown): asserts value is {
     throw new TypeError("checkLayout requires an adapter");
   }
 
-  if (!isInternalAdapter(value.adapter)) {
+  if (!isAdapter(value.adapter) && !isInternalAdapter(value.adapter)) {
     throw new TypeError("checkLayout received an unsupported adapter");
   }
 }
@@ -240,7 +242,10 @@ export async function checkLayout(input: unknown): Promise<LayoutReport> {
       ),
     ),
   ];
-  const snapshot = validateSnapshot(await input.adapter.measure(testIds), testIds);
+  const measured = await input.adapter.measure(testIds);
+  const snapshot = isAdapter(input.adapter)
+    ? validatePublicSnapshot(measured, testIds)
+    : validateSnapshot(measured, testIds);
   const byTestId = new Map(
     snapshot.elements.map((measurement) => [measurement.testId, measurement]),
   );

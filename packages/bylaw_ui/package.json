@@ -29,7 +29,7 @@
   },
   "scripts": {
     "build": "bun run clean && bun build ./src/index.ts ./src/playwright.ts --outdir ./dist --target node --format esm && tsc -p tsconfig.build.json",
-    "check": "bun run typecheck && bun run build && bun test",
+    "check": "bun run build && bun run typecheck && bun test",
     "clean": "rm -rf ./dist",
     "prepack": "bun run check",
     "test": "bun test",
