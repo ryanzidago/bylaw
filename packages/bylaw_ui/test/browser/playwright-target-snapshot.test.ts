@@ -1,5 +1,70 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
+import type { Locator } from "playwright-core";
 
-test("resolves registered targets from the current page state without waiting", () => {});
+import { checkLayout, sameSize } from "bylaw-ui";
+import { playwright } from "bylaw-ui/playwright";
+import {
+  browserHarness,
+  expectElementFinding,
+  expectPassed,
+} from "./logical-target-support";
 
-test("measures registered and fallback targets from one coherent page snapshot", () => {});
+const withPage = browserHarness();
+
+test("resolves registered targets from the current page state without waiting", () =>
+  withPage(
+    '<div class="reference" style="width:20px;height:20px"></div>',
+    async (page) => {
+      await page.evaluate(() => {
+        setTimeout(() => {
+          const target = document.createElement("div");
+          target.className = "late";
+          target.style.cssText = "width:20px;height:20px";
+          document.body.append(target);
+        }, 250);
+      });
+      const startedAt = performance.now();
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            late: page.locator(".late"),
+            reference: page.locator(".reference"),
+          },
+        }),
+        rules: [sameSize("late", "reference")],
+      });
+      expectElementFinding(report, {
+        category: "element-resolution",
+        code: "missing-element",
+        operand: "subject",
+        testId: "late",
+        actual: { matchCount: 0 },
+      });
+      expect(performance.now() - startedAt).toBeLessThan(200);
+    },
+  ));
+
+test("measures registered and fallback targets from one coherent page snapshot", () =>
+  withPage(
+    '<div class="registered" style="width:10px;height:10px"></div><div data-testid="fallback" style="width:10px;height:10px"></div>',
+    async (page) => {
+      const locator = page.locator(".registered");
+      const changingLocator = {
+        elementHandles: async () => {
+          const handles = await locator.elementHandles();
+          await page.evaluate(() => {
+            document.body.innerHTML =
+              '<div class="registered" style="width:20px;height:20px"></div><div data-testid="fallback" style="width:20px;height:20px"></div>';
+          });
+          return handles;
+        },
+      } as Locator;
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: { registered: changingLocator },
+        }),
+        rules: [sameSize("registered", "fallback")],
+      });
+      expectPassed(report);
+    },
+  ));

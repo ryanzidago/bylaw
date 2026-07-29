@@ -1,17 +1,148 @@
-import { test } from "bun:test";
+import { expect, test } from "bun:test";
 
-test("resolves a rule subject from a registered Playwright locator", () => {});
+import { align, checkLayout, inside, sameSize, sameWidth } from "bylaw-ui";
+import { playwright } from "bylaw-ui/playwright";
+import { browserHarness, expectPassed } from "./logical-target-support";
 
-test("resolves a rule reference from a registered Playwright locator", () => {});
+const withPage = browserHarness();
 
-test("resolves multiple logical names from registered Playwright locators", () => {});
+test("resolves a rule subject from a registered Playwright locator", () =>
+  withPage(
+    '<div class="actual" style="width:20px;height:20px"></div><div data-testid="reference" style="width:20px;height:20px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: { subject: page.locator(".actual") },
+        }),
+        rules: [sameSize("subject", "reference")],
+      });
+      expectPassed(report);
+    },
+  ));
 
-test("reuses one registered target across multiple rules", () => {});
+test("resolves a rule reference from a registered Playwright locator", () =>
+  withPage(
+    '<div data-testid="subject" style="width:20px;height:20px"></div><div class="actual" style="width:20px;height:20px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: { reference: page.locator(".actual") },
+        }),
+        rules: [sameSize("subject", "reference")],
+      });
+      expectPassed(report);
+    },
+  ));
 
-test("supports semantic role locators without data-testid attributes", () => {});
+test("resolves multiple logical names from registered Playwright locators", () =>
+  withPage(
+    '<div class="one" style="width:20px;height:20px"></div><div class="two" style="width:20px;height:20px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            first: page.locator(".one"),
+            second: page.locator(".two"),
+          },
+        }),
+        rules: [sameSize("first", "second")],
+      });
+      expectPassed(report);
+    },
+  ));
 
-test("supports composed Playwright locators", () => {});
+test("reuses one registered target across multiple rules", () =>
+  withPage(
+    '<div class="shared" style="position:absolute;width:20px;height:20px"></div><div class="peer" style="position:absolute;width:20px;height:20px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            shared: page.locator(".shared"),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [
+          sameSize("shared", "peer"),
+          sameWidth("shared", "peer"),
+          align("shared", "peer", "top"),
+        ],
+      });
+      expectPassed(report, 3);
+    },
+  ));
 
-test("does not require logical target names to match DOM attributes", () => {});
+test("supports semantic role locators without data-testid attributes", () =>
+  withPage(
+    '<button style="width:100px;height:30px">Save changes</button><div class="peer" style="width:100px;height:30px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            action: page.getByRole("button", { name: "Save changes" }),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [sameSize("action", "peer")],
+      });
+      expectPassed(report);
+    },
+  ));
 
-test("does not mutate the DOM while resolving registered targets", () => {});
+test("supports composed Playwright locators", () =>
+  withPage(
+    '<section aria-label="Account"><button style="width:80px;height:24px">Edit</button></section><div class="peer" style="width:80px;height:24px"></div>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            edit: page
+              .getByRole("region", { name: "Account" })
+              .getByRole("button", { name: "Edit" }),
+            peer: page.locator(".peer"),
+          },
+        }),
+        rules: [sameSize("edit", "peer")],
+      });
+      expectPassed(report);
+    },
+  ));
+
+test("does not require logical target names to match DOM attributes", () =>
+  withPage(
+    '<main id="production-shell" style="width:200px;height:100px"><span class="item" style="display:block;width:40px;height:20px"></span></main>',
+    async (page) => {
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            "logical container": page.locator("#production-shell"),
+            "logical child": page.locator(".item"),
+          },
+        }),
+        rules: [inside("logical child", "logical container")],
+      });
+      expectPassed(report);
+      expect(await page.locator("[data-testid]").count()).toBe(0);
+    },
+  ));
+
+test("does not mutate the DOM while resolving registered targets", () =>
+  withPage(
+    '<div id="root"><div class="subject" style="width:20px;height:20px"></div><div class="reference" style="width:20px;height:20px"></div></div>',
+    async (page) => {
+      const before = await page.locator("#root").evaluate((element) => element.outerHTML);
+      const report = await checkLayout({
+        adapter: playwright(page, {
+          targets: {
+            subject: page.locator(".subject"),
+            reference: page.locator(".reference"),
+          },
+        }),
+        rules: [sameSize("subject", "reference")],
+      });
+      expectPassed(report);
+      expect(
+        await page.locator("#root").evaluate((element) => element.outerHTML),
+      ).toBe(before);
+    },
+  ));
