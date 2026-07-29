@@ -42,9 +42,9 @@ export type MeasurementSnapshot = {
 };
 
 export type AdapterImplementation = {
-  measure(
+  measure: (
     targets: readonly string[],
-  ): MeasurementSnapshot | Promise<MeasurementSnapshot>;
+  ) => MeasurementSnapshot | Promise<MeasurementSnapshot>;
 };
 
 declare const adapterTypeBrand: unique symbol;
