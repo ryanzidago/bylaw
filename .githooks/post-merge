@@ -2,3 +2,4 @@
 set -euo pipefail
 
 scripts/qa.sh
+scripts/remove-finished-pr-worktrees
