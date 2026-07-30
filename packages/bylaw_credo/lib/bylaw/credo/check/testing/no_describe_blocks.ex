@@ -267,19 +267,30 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
   defp collect_scope_expression(_expression, scope), do: scope
 
-  defp resolves_to_ex_unit_case?([module], aliases) do
-    aliases
-    |> Map.get(module)
+  defp resolves_to_ex_unit_case?(module_parts, aliases) do
+    module_parts
+    |> expand_alias(aliases, MapSet.new())
     |> ex_unit_case_parts?()
   end
 
-  defp resolves_to_ex_unit_case?([:ExUnit, :Case], aliases) do
-    not Map.has_key?(aliases, :ExUnit)
+  defp expand_alias([:"Elixir" | _parts] = module_parts, _aliases, _seen),
+    do: module_parts
+
+  defp expand_alias([alias_name | suffix] = module_parts, aliases, seen) do
+    case Map.fetch(aliases, alias_name) do
+      {:ok, prefix} ->
+        if MapSet.member?(seen, alias_name) do
+          module_parts
+        else
+          expand_alias(prefix ++ suffix, aliases, MapSet.put(seen, alias_name))
+        end
+
+      :error ->
+        module_parts
+    end
   end
 
-  defp resolves_to_ex_unit_case?([:"Elixir", :ExUnit, :Case], _aliases), do: true
-
-  defp resolves_to_ex_unit_case?(_module_parts, _aliases), do: false
+  defp expand_alias(module_parts, _aliases, _seen), do: module_parts
 
   defp ex_unit_case_parts?([:ExUnit, :Case]), do: true
   defp ex_unit_case_parts?([:"Elixir", :ExUnit, :Case]), do: true

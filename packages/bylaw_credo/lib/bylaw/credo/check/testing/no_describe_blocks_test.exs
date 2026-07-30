@@ -318,6 +318,28 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   end
 
   @doc """
+  Issue: Aliasing the `ExUnit` namespace lets `ExUnit.Case.describe/2` bypass the check.
+  Why it matters: Namespace aliases are ordinary Elixir syntax and must not permit prohibited test grouping.
+  """
+  test "reports ExUnit describe blocks invoked through a namespace alias" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      alias ExUnit, as: Testing
+
+      Testing.Case.describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
   Issue: `ExUnit.Case.describe/2` is reported even when `ExUnit` is an alias for an unrelated module.
   Why it matters: Alias expansion applies to the first segment of a multi-segment name, so ignoring it creates false positives.
   """
