@@ -106,12 +106,22 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     Enum.any?(excluded_paths, &String.contains?(filename, &1))
   end
 
+  defp traverse({:quote, meta, args}, issues, _issue_meta) do
+    {{:quote, meta, rename_quoted_describes(args)}, issues}
+  end
+
+  defp traverse({definition, meta, [head | body]}, issues, _issue_meta)
+       when definition in [:def, :defp, :defmacro, :defmacrop] do
+    {{definition, meta, [rename_describe_definition(head) | body]}, issues}
+  end
+
   defp traverse({:describe, meta, [_name, [do: _body]]} = ast, issues, issue_meta) do
     {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
   end
 
   defp traverse(
-         {{:., _dot_meta, [_module, :describe]}, meta, [_name, [do: _body]]} = ast,
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, [:ExUnit, :Case]}, :describe]}, meta,
+          [_name, [do: _body]]} = ast,
          issues,
          issue_meta
        ) do
@@ -119,6 +129,29 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   end
 
   defp traverse(ast, issues, _issue_meta), do: {ast, issues}
+
+  defp rename_describe_definition({:describe, meta, args}) do
+    {:__bylaw_describe_definition__, meta, args}
+  end
+
+  defp rename_describe_definition({:when, meta, [head | guards]}) do
+    {:when, meta, [rename_describe_definition(head) | guards]}
+  end
+
+  defp rename_describe_definition(head), do: head
+
+  defp rename_quoted_describes(ast) do
+    Macro.prewalk(ast, fn
+      {:describe, meta, args} ->
+        {:__bylaw_quoted_describe__, meta, args}
+
+      {{:., dot_meta, [module, :describe]}, meta, args} ->
+        {{:., dot_meta, [module, :__bylaw_quoted_describe__]}, meta, args}
+
+      node ->
+        node
+    end)
+  end
 
   defp issue_for(issue_meta, line_no) do
     format_issue(
