@@ -354,4 +354,45 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
     |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
     |> assert_issue()
   end
+
+  @doc """
+  Issue: A `describe/2` block imported through an alias of `ExUnit.Case` is not reported.
+  Why it matters: Aliasing before importing is ordinary Elixir syntax and must not bypass the prohibited grouping.
+  """
+  test "reports describe blocks imported through an ExUnit Case alias" do
+    """
+    defmodule ExampleTest do
+      alias ExUnit.Case, as: TestCase
+      import TestCase, only: [describe: 2]
+
+      describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
+  Issue: Calls to a locally delegated `describe/2` function are reported as ExUnit describe blocks.
+  Why it matters: `defdelegate` is an ordinary way to expose test helpers and should not create false-positive Credo failures.
+  """
+  test "does not report calls to a locally delegated describe function" do
+    """
+    defmodule ExampleTest do
+      defdelegate describe(name, options), to: Formatter
+
+      def example do
+        describe "result", do: :ok
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
 end

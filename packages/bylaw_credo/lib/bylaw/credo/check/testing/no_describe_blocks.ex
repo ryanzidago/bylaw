@@ -192,7 +192,7 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     source_file
     |> Credo.SourceFile.ast()
     |> remove_quoted_code()
-    |> collect_imported_describe_lines(false)
+    |> collect_imported_describe_lines(false, %{})
   end
 
   defp remove_quoted_code(ast) do
@@ -277,6 +277,8 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     not Map.has_key?(aliases, :ExUnit)
   end
 
+  defp resolves_to_ex_unit_case?([:"Elixir", :ExUnit, :Case], _aliases), do: true
+
   defp resolves_to_ex_unit_case?(_module_parts, _aliases), do: false
 
   defp ex_unit_case_parts?([:ExUnit, :Case]), do: true
@@ -327,90 +329,102 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     MapSet.union(local_lines, nested_lines)
   end
 
-  defp collect_imported_describe_lines(body, inherited_non_ex_unit_import?) do
+  defp collect_imported_describe_lines(body, inherited_non_ex_unit_import?, inherited_aliases) do
     body
     |> top_level_expressions()
     |> Enum.reduce(
-      {inherited_non_ex_unit_import?, MapSet.new()},
+      {inherited_non_ex_unit_import?, inherited_aliases, MapSet.new()},
       &collect_import_scope_expression/2
     )
-    |> elem(1)
+    |> elem(2)
+  end
+
+  defp collect_import_scope_expression(
+         {:alias, _meta, _args} = alias_ast,
+         {imported?, aliases, lines}
+       ) do
+    {imported?, update_aliases(aliases, alias_ast), lines}
   end
 
   defp collect_import_scope_expression(
          {:import, _meta, _args} = import_ast,
-         {imported?, lines}
+         {imported?, aliases, lines}
        ) do
-    case describe_import_origin(import_ast) do
-      :non_ex_unit -> {true, lines}
-      :ex_unit -> {false, lines}
-      :unrelated -> {imported?, lines}
+    case describe_import_origin(import_ast, aliases) do
+      :non_ex_unit -> {true, aliases, lines}
+      :ex_unit -> {false, aliases, lines}
+      :unrelated -> {imported?, aliases, lines}
     end
   end
 
   defp collect_import_scope_expression(
          {:defmodule, _meta, [_module, options]},
-         {imported?, lines}
+         {imported?, aliases, lines}
        )
        when is_list(options) do
     nested_lines =
       options
       |> Keyword.get(:do)
-      |> collect_imported_describe_lines(imported?)
+      |> collect_imported_describe_lines(imported?, aliases)
 
-    {imported?, MapSet.union(lines, nested_lines)}
+    {imported?, aliases, MapSet.union(lines, nested_lines)}
   end
 
   defp collect_import_scope_expression(
          {:__block__, _meta, expressions},
-         {imported?, lines}
+         {imported?, aliases, lines}
        ) do
-    Enum.reduce(expressions, {imported?, lines}, &collect_import_scope_expression/2)
+    Enum.reduce(expressions, {imported?, aliases, lines}, &collect_import_scope_expression/2)
   end
 
   defp collect_import_scope_expression(
          {:describe, meta, [_name, [do: _body]]},
-         {true, lines}
+         {true, aliases, lines}
        ) do
-    {true, MapSet.put(lines, meta[:line])}
+    {true, aliases, MapSet.put(lines, meta[:line])}
   end
 
-  defp collect_import_scope_expression({_name, _meta, arguments}, {imported?, lines})
+  defp collect_import_scope_expression(
+         {_name, _meta, arguments},
+         {imported?, aliases, lines}
+       )
        when is_list(arguments) do
-    collect_nested_import_lines(arguments, imported?, lines)
+    collect_nested_import_lines(arguments, imported?, aliases, lines)
   end
 
-  defp collect_import_scope_expression(expression, {imported?, lines})
+  defp collect_import_scope_expression(expression, {imported?, aliases, lines})
        when is_list(expression) do
-    collect_nested_import_lines(expression, imported?, lines)
+    collect_nested_import_lines(expression, imported?, aliases, lines)
   end
 
-  defp collect_import_scope_expression({_key, value}, {imported?, lines}) do
-    {_nested_imported?, nested_lines} =
-      collect_import_scope_expression(value, {imported?, MapSet.new()})
+  defp collect_import_scope_expression({_key, value}, {imported?, aliases, lines}) do
+    {_nested_imported?, _nested_aliases, nested_lines} =
+      collect_import_scope_expression(value, {imported?, aliases, MapSet.new()})
 
-    {imported?, MapSet.union(lines, nested_lines)}
+    {imported?, aliases, MapSet.union(lines, nested_lines)}
   end
 
   defp collect_import_scope_expression(_expression, scope), do: scope
 
-  defp collect_nested_import_lines(expressions, imported?, lines) do
-    Enum.reduce(expressions, {imported?, lines}, fn expression, {imported?, lines} ->
-      {_nested_imported?, nested_lines} =
-        collect_import_scope_expression(expression, {imported?, MapSet.new()})
+  defp collect_nested_import_lines(expressions, imported?, aliases, lines) do
+    Enum.reduce(expressions, {imported?, aliases, lines}, fn expression,
+                                                             {imported?, aliases, lines} ->
+      {_nested_imported?, _nested_aliases, nested_lines} =
+        collect_import_scope_expression(expression, {imported?, aliases, MapSet.new()})
 
-      {imported?, MapSet.union(lines, nested_lines)}
+      {imported?, aliases, MapSet.union(lines, nested_lines)}
     end)
   end
 
   defp describe_import_origin(
-         {:import, _meta, [{:__aliases__, _alias_meta, module_parts}, options]}
+         {:import, _meta, [{:__aliases__, _alias_meta, module_parts}, options]},
+         aliases
        )
        when is_list(options) do
     if options
        |> Keyword.get(:only, [])
        |> Enum.any?(&match?({:describe, 2}, &1)) do
-      if ex_unit_case_parts?(module_parts) do
+      if resolves_to_ex_unit_case?(module_parts, aliases) do
         :ex_unit
       else
         :non_ex_unit
@@ -420,18 +434,25 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     end
   end
 
-  defp describe_import_origin({:import, _meta, [{:__aliases__, _alias_meta, module_parts}]}) do
-    if ex_unit_case_parts?(module_parts) do
+  defp describe_import_origin(
+         {:import, _meta, [{:__aliases__, _alias_meta, module_parts}]},
+         aliases
+       ) do
+    if resolves_to_ex_unit_case?(module_parts, aliases) do
       :ex_unit
     else
       :non_ex_unit
     end
   end
 
-  defp describe_import_origin(_import_ast), do: :unrelated
+  defp describe_import_origin(_import_ast, _aliases), do: :unrelated
 
   defp defines_describe_two?({definition, _meta, [head | _body]})
        when definition in [:def, :defp, :defmacro, :defmacrop] do
+    describe_two_head?(head)
+  end
+
+  defp defines_describe_two?({:defdelegate, _meta, [head, _options]}) do
     describe_two_head?(head)
   end
 
