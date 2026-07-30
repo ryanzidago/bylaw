@@ -92,7 +92,18 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
     if test_file?(source_file.filename) and not excluded?(source_file.filename, excluded_paths) do
       issue_meta = IssueMeta.for(source_file, params)
-      Credo.Code.prewalk(source_file, &traverse(&1, &2, issue_meta))
+
+      ignored_describe_lines =
+        source_file
+        |> local_describe_lines()
+        |> MapSet.union(imported_non_ex_unit_describe_lines(source_file))
+
+      context = %{
+        aliased_describe_lines: aliased_describe_lines(source_file),
+        ignored_describe_lines: ignored_describe_lines
+      }
+
+      Credo.Code.prewalk(source_file, &traverse(&1, &2, issue_meta, context))
     else
       []
     end
@@ -106,29 +117,276 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     Enum.any?(excluded_paths, &String.contains?(filename, &1))
   end
 
-  defp traverse({:quote, meta, args}, issues, _issue_meta) do
+  defp traverse({:quote, meta, args}, issues, _issue_meta, _aliases) do
     {{:quote, meta, rename_quoted_describes(args)}, issues}
   end
 
-  defp traverse({definition, meta, [head | body]}, issues, _issue_meta)
+  defp traverse({definition, meta, [head | body]}, issues, _issue_meta, _aliases)
        when definition in [:def, :defp, :defmacro, :defmacrop] do
     {{definition, meta, [rename_describe_definition(head) | body]}, issues}
   end
 
-  defp traverse({:describe, meta, [_name, [do: _body]]} = ast, issues, issue_meta) do
-    {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
+  defp traverse({:describe, meta, [_name, [do: _body]]} = ast, issues, issue_meta, context) do
+    if MapSet.member?(context.ignored_describe_lines, meta[:line]) do
+      {ast, issues}
+    else
+      {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
+    end
   end
 
   defp traverse(
          {{:., _dot_meta, [{:__aliases__, _alias_meta, [:ExUnit, :Case]}, :describe]}, meta,
           [_name, [do: _body]]} = ast,
          issues,
-         issue_meta
+         issue_meta,
+         _aliases
        ) do
     {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
   end
 
-  defp traverse(ast, issues, _issue_meta), do: {ast, issues}
+  defp traverse(
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, [_module]}, :describe]}, meta,
+          [_name, [do: _body]]} = ast,
+         issues,
+         issue_meta,
+         context
+       ) do
+    if MapSet.member?(context.aliased_describe_lines, meta[:line]) do
+      {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
+    else
+      {ast, issues}
+    end
+  end
+
+  defp traverse(ast, issues, _issue_meta, _aliases), do: {ast, issues}
+
+  defp aliased_describe_lines(source_file) do
+    source_file
+    |> Credo.SourceFile.ast()
+    |> remove_quoted_code()
+    |> collect_scope_describe_lines(MapSet.new())
+  end
+
+  defp local_describe_lines(source_file) do
+    source_file
+    |> Credo.SourceFile.ast()
+    |> remove_quoted_code()
+    |> collect_local_describe_lines()
+  end
+
+  defp imported_non_ex_unit_describe_lines(source_file) do
+    source_file
+    |> Credo.SourceFile.ast()
+    |> remove_quoted_code()
+    |> collect_imported_describe_lines(false)
+  end
+
+  defp remove_quoted_code(ast) do
+    Macro.prewalk(ast, fn
+      {:quote, _meta, _args} -> nil
+      node -> node
+    end)
+  end
+
+  defp collect_scope_describe_lines(body, inherited_aliases) do
+    body
+    |> top_level_expressions()
+    |> Enum.reduce({inherited_aliases, MapSet.new()}, fn
+      {:alias, _meta, _args} = alias_ast, {aliases, lines} ->
+        {update_aliases(aliases, alias_ast), lines}
+
+      {:defmodule, _meta, [_module, options]}, {aliases, lines} when is_list(options) ->
+        nested_lines =
+          options
+          |> Keyword.get(:do)
+          |> collect_scope_describe_lines(aliases)
+
+        {aliases, MapSet.union(lines, nested_lines)}
+
+      expression, {aliases, lines} ->
+        expression_lines = collect_qualified_describe_lines(expression, aliases)
+        {aliases, MapSet.union(lines, expression_lines)}
+    end)
+    |> elem(1)
+  end
+
+  defp top_level_expressions({:__block__, _meta, expressions}), do: expressions
+  defp top_level_expressions(expression), do: [expression]
+
+  defp collect_local_describe_lines(body) do
+    defines_describe_two? =
+      body
+      |> top_level_expressions()
+      |> Enum.any?(&defines_describe_two?/1)
+
+    local_lines =
+      if defines_describe_two? do
+        body
+        |> remove_nested_modules()
+        |> collect_unqualified_describe_lines()
+      else
+        MapSet.new()
+      end
+
+    {_body, nested_lines} =
+      Macro.prewalk(body, MapSet.new(), fn
+        {:defmodule, _meta, [_module, options]}, lines when is_list(options) ->
+          nested_lines =
+            options
+            |> Keyword.get(:do)
+            |> collect_local_describe_lines()
+
+          {nil, MapSet.union(lines, nested_lines)}
+
+        ast, lines ->
+          {ast, lines}
+      end)
+
+    MapSet.union(local_lines, nested_lines)
+  end
+
+  defp collect_imported_describe_lines(body, inherited_non_ex_unit_import?) do
+    body
+    |> top_level_expressions()
+    |> Enum.reduce({inherited_non_ex_unit_import?, MapSet.new()}, fn
+      {:import, _meta, _args} = import_ast, {imported?, lines} ->
+        case describe_import_origin(import_ast) do
+          :non_ex_unit -> {true, lines}
+          :ex_unit -> {false, lines}
+          :unrelated -> {imported?, lines}
+        end
+
+      {:defmodule, _meta, [_module, options]}, {imported?, lines} when is_list(options) ->
+        nested_lines =
+          options
+          |> Keyword.get(:do)
+          |> collect_imported_describe_lines(imported?)
+
+        {imported?, MapSet.union(lines, nested_lines)}
+
+      expression, {true, lines} ->
+        {true, MapSet.union(lines, collect_unqualified_describe_lines(expression))}
+
+      _expression, {false, lines} ->
+        {false, lines}
+    end)
+    |> elem(1)
+  end
+
+  defp describe_import_origin(
+         {:import, _meta, [{:__aliases__, _alias_meta, module_parts}, options]}
+       )
+       when is_list(options) do
+    if options
+       |> Keyword.get(:only, [])
+       |> Enum.any?(&match?({:describe, 2}, &1)) do
+      if module_parts == [:ExUnit, :Case] do
+        :ex_unit
+      else
+        :non_ex_unit
+      end
+    else
+      :unrelated
+    end
+  end
+
+  defp describe_import_origin(_import_ast), do: :unrelated
+
+  defp defines_describe_two?({definition, _meta, [head | _body]})
+       when definition in [:def, :defp, :defmacro, :defmacrop] do
+    describe_two_head?(head)
+  end
+
+  defp defines_describe_two?(_ast), do: false
+
+  defp describe_two_head?({:describe, _meta, arguments}) when length(arguments) == 2, do: true
+  defp describe_two_head?({:when, _meta, [head | _guards]}), do: describe_two_head?(head)
+  defp describe_two_head?(_head), do: false
+
+  defp remove_nested_modules(ast) do
+    Macro.prewalk(ast, fn
+      {:defmodule, _meta, _args} -> nil
+      node -> node
+    end)
+  end
+
+  defp collect_unqualified_describe_lines(ast) do
+    {_ast, lines} =
+      Macro.prewalk(ast, MapSet.new(), fn
+        {:describe, meta, [_name, [do: _body]]} = node, lines ->
+          {node, MapSet.put(lines, meta[:line])}
+
+        node, lines ->
+          {node, lines}
+      end)
+
+    lines
+  end
+
+  defp update_aliases(
+         aliases,
+         {:alias, _meta, [{:__aliases__, _alias_meta, parts}, options]}
+       )
+       when is_list(options) do
+    alias_name =
+      case Keyword.get(options, :as) do
+        {:__aliases__, _as_meta, [name]} -> name
+        _other -> List.last(parts)
+      end
+
+    put_or_delete_alias(aliases, alias_name, parts)
+  end
+
+  defp update_aliases(aliases, {:alias, _meta, [{:__aliases__, _alias_meta, parts}]}) do
+    put_or_delete_alias(aliases, List.last(parts), parts)
+  end
+
+  defp update_aliases(
+         aliases,
+         {:alias, _meta,
+          [
+            {{:., _dot_meta, [{:__aliases__, _alias_meta, prefix}, :{}]}, _call_meta,
+             grouped_aliases}
+          ]}
+       ) do
+    Enum.reduce(grouped_aliases, aliases, fn
+      {:__aliases__, _grouped_meta, suffix}, aliases ->
+        parts = prefix ++ suffix
+        put_or_delete_alias(aliases, List.last(parts), parts)
+
+      _other, aliases ->
+        aliases
+    end)
+  end
+
+  defp update_aliases(aliases, _alias_ast), do: aliases
+
+  defp put_or_delete_alias(aliases, alias_name, [:ExUnit, :Case]) do
+    MapSet.put(aliases, alias_name)
+  end
+
+  defp put_or_delete_alias(aliases, alias_name, _parts) do
+    MapSet.delete(aliases, alias_name)
+  end
+
+  defp collect_qualified_describe_lines(ast, aliases) do
+    {_ast, lines} =
+      Macro.prewalk(ast, MapSet.new(), fn
+        {{:., _dot_meta, [{:__aliases__, _alias_meta, [module]}, :describe]}, meta,
+         [_name, [do: _body]]} = node,
+        lines ->
+          if MapSet.member?(aliases, module) do
+            {node, MapSet.put(lines, meta[:line])}
+          else
+            {node, lines}
+          end
+
+        node, lines ->
+          {node, lines}
+      end)
+
+    lines
+  end
 
   defp rename_describe_definition({:describe, meta, args}) do
     {:__bylaw_describe_definition__, meta, args}

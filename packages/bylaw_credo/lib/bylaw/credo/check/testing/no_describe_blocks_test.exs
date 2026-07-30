@@ -93,4 +93,124 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
     |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
     |> refute_issues()
   end
+
+  @doc """
+  Issue: ExUnit describe blocks invoked through an alias are not reported.
+  Why it matters: Test authors can use ordinary Elixir aliases to bypass the check while retaining the prohibited test grouping.
+  """
+  test "reports ExUnit describe blocks invoked through an alias" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      alias ExUnit.Case, as: TestCase
+
+      TestCase.describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
+  Issue: ExUnit describe blocks invoked through a grouped alias are not reported.
+  Why it matters: Grouped aliases are standard Elixir syntax and must not provide another way to bypass the check.
+  """
+  test "reports ExUnit describe blocks invoked through a grouped alias" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      alias ExUnit.{Assertions, Case}
+
+      Case.describe "creation" do
+        test "creates a record" do
+          Assertions.assert(true)
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
+  Issue: An ExUnit alias in a nested module makes an unrelated qualified function in its parent look like a describe block.
+  Why it matters: Alias scope must be respected or legitimate helpers produce false-positive Credo failures.
+  """
+  test "does not leak ExUnit aliases out of nested modules" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      defmodule Nested do
+        alias ExUnit.Case, as: Formatter
+      end
+
+      Formatter.describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
+  Issue: An ExUnit alias declaration is applied to qualified calls that appear before the declaration.
+  Why it matters: Elixir aliases only affect subsequent code, so looking ahead creates false positives for unrelated modules.
+  """
+  test "does not apply ExUnit aliases before their declaration" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      Formatter.describe "result", do: :ok
+
+      alias ExUnit.Case, as: Formatter
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
+  Issue: Calls to a locally defined `describe/2` function are reported as ExUnit describe blocks.
+  Why it matters: Test support modules can legitimately use that function name and should not receive false-positive failures.
+  """
+  test "does not report calls to a locally defined describe function" do
+    """
+    defmodule ExampleTest do
+      def describe(_name, do: body), do: body
+
+      def example do
+        describe "result", do: :ok
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
+  Issue: Calls to an explicitly imported non-ExUnit `describe/2` are reported as ExUnit describe blocks.
+  Why it matters: The import identifies the call's origin, so ignoring that evidence creates avoidable false-positive failures.
+  """
+  test "does not report explicitly imported non-ExUnit describe functions" do
+    """
+    defmodule ExampleTest do
+      import Formatter, only: [describe: 2]
+
+      describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
 end
