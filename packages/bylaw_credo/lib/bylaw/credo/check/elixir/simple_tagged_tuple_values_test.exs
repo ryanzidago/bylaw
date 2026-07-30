@@ -29,6 +29,9 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   test "reports the commit accumulator map inside an ok tuple nested beneath a cont tuple" do
   end
 
+  test "reports a function call several tagged tuple levels beneath the outer return tuple" do
+  end
+
   test "reports a struct constructed inside an ok tuple" do
   end
 
