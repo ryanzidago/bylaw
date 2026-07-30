@@ -434,13 +434,9 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
        when is_list(options) do
     cond do
       Keyword.has_key?(options, :only) ->
-        if options
-           |> Keyword.fetch!(:only)
-           |> Enum.any?(&match?({:describe, 2}, &1)) do
-          import_origin(module_parts, aliases)
-        else
-          :unrelated
-        end
+        options
+        |> Keyword.fetch!(:only)
+        |> describe_only_import_origin(module_parts, aliases)
 
       options
       |> Keyword.get(:except, [])
@@ -460,6 +456,19 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   end
 
   defp describe_import_origin(_import_ast, _aliases), do: :unrelated
+
+  defp describe_only_import_origin(imports, module_parts, aliases) when is_list(imports) do
+    if Enum.any?(imports, &match?({:describe, 2}, &1)) do
+      import_origin(module_parts, aliases)
+    else
+      :unrelated
+    end
+  end
+
+  defp describe_only_import_origin(import_kind, module_parts, aliases)
+       when import_kind in [:functions, :macros] do
+    import_origin(module_parts, aliases)
+  end
 
   defp import_origin(module_parts, aliases) do
     if resolves_to_ex_unit_case?(module_parts, aliases) do

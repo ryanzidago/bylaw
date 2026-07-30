@@ -253,6 +253,25 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   end
 
   @doc """
+  Issue: Imports using Elixir's `only: :macros` form crash the check because it
+  assumes every `:only` value is a keyword list.
+  Why it matters: An ordinary import option should not make Credo crash instead
+  of reporting lint results for the test file.
+  """
+  test "handles imports restricted to macros" do
+    """
+    defmodule ExampleTest do
+      import Formatter, only: :macros
+
+      describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
   Issue: An outer ExUnit alias is still applied after a nested block shadows it with an unrelated module.
   Why it matters: Alias shadowing is lexical, so ignoring the nested declaration creates false-positive Credo failures.
   """
