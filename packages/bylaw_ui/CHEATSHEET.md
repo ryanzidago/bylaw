@@ -11,15 +11,19 @@ shapes.
 ## Minimal Playwright example
 
 ```ts
+// Keep browser-independent contracts separate from the Playwright integration.
 import { assertLayout, checkLayout, inside, leftOf, width } from "bylaw-ui";
 import { playwright, waitForLayoutTargets } from "bylaw-ui/playwright";
 
+// Describe the intended geometry with stable logical names so the contracts
+// remain readable when selectors change.
 const rules = [
   width("sidebar", { minPx: 260, maxPx: 280 }),
   leftOf("sidebar", "content", { gap: { minPx: 8 } }),
   inside("save-button", "toolbar"),
 ];
 
+// Map logical names to semantic locators without changing production markup.
 const adapter = playwright(page, {
   targets: {
     sidebar: page.getByRole("navigation"),
@@ -29,11 +33,14 @@ const adapter = playwright(page, {
   },
 });
 
+// Wait explicitly for measured geometry to settle so animation or rendering
+// does not produce a transient snapshot.
 await waitForLayoutTargets(adapter, rules, {
   timeoutMs: 1_000,
   stableFrames: 2,
 });
 
+// Measure once, evaluate every rule, and fail the surrounding test if needed.
 assertLayout(await checkLayout({ adapter, rules }));
 ```
 
@@ -76,6 +83,8 @@ Declare collection intent once, then pass the resulting target to collection
 rules:
 
 ```ts
+// Mark this logical target as a collection because collection rules evaluate
+// every matched card instead of requiring exactly one match.
 const cards = collection("card");
 ```
 
@@ -94,20 +103,24 @@ zero-based. `equalWidths` uses the first member as the reference, and
 
 ```ts
 type PixelRange = {
+  // Set either inclusive bound or both to express the allowed measurement.
   minPx?: number;
   maxPx?: number;
 };
 
 type ToleranceOptions = {
+  // Allow small rendering differences without weakening the core contract.
   tolerancePx?: number;
 };
 
 type OrderingOptions = {
+  // Tolerance permits slight boundary crossing; gap constrains valid spacing.
   tolerancePx?: number;
   gap?: PixelRange;
 };
 
 type OverlapOptions = {
+  // Constrain overlap depth independently on each axis when depth matters.
   horizontal?: PixelRange;
   vertical?: PixelRange;
 };
@@ -120,12 +133,14 @@ rectangles.
 ## Evaluation and assertion
 
 ```ts
+// Keep the structured report when another tool or agent needs every finding.
 const report = await checkLayout({ adapter, rules });
 
 if (!report.passed) {
   console.error(report.findings);
 }
 
+// Convert the same report into a test failure at the test-runner boundary.
 assertLayout(report);
 ```
 
@@ -154,6 +169,8 @@ Exceptions are reserved for boundary failures:
 ## Playwright targets
 
 ```ts
+// Register semantic locators so contracts use stable product concepts instead
+// of coupling target names to CSS selectors or DOM structure.
 const adapter = playwright(page, {
   targets: {
     toolbar: page.getByRole("toolbar"),
@@ -178,17 +195,21 @@ import {
 } from "bylaw-ui/playwright";
 
 try {
+  // Stabilize only the geometry referenced by these rules before measuring it.
   await waitForLayoutTargets(adapter, rules, {
     timeoutMs: 1_000,
     stableFrames: 2,
   });
 } catch (error) {
   if (error instanceof LayoutReadinessTimeoutError) {
+    // Preserve timeout diagnostics so an agent can distinguish missing targets
+    // from targets that exist but continue moving.
     console.error(error.unresolvedTargets);
     console.error(error.unstableTargets);
     console.error(error.lastObserved);
   }
 
+  // Readiness is a platform failure, so let the surrounding test handle it.
   throw error;
 }
 ```
