@@ -1,5 +1,6 @@
 defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   use Credo.Test.Case
+  use ExUnitProperties
 
   test "allows a variable as an ok tuple value" do
   end
@@ -41,5 +42,11 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   end
 
   test "reports a complex value in any position of a reply tuple" do
+  end
+
+  property "allows tagged tuples when every generated value is a scalar literal or variable" do
+  end
+
+  property "reports tagged tuples when any generated value is a complex expression" do
   end
 end
