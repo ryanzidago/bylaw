@@ -1,5 +1,6 @@
 defmodule Bylaw.Credo.Check.Elixir.PreferBlockIfTest do
   use Credo.Test.Case
+  use ExUnitProperties
 
   alias Bylaw.Credo.Check.Elixir.PreferBlockIf
 
@@ -51,5 +52,39 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIfTest do
     |> to_source_file()
     |> run_check(PreferBlockIf)
     |> refute_issues()
+  end
+
+  property "reports keyword-form if expressions across arbitrary literal values" do
+    check all(
+            condition <- integer(),
+            do_value <- integer(),
+            else_value <- integer()
+          ) do
+      """
+      if #{condition}, do: #{do_value}, else: #{else_value}
+      """
+      |> to_source_file()
+      |> run_check(PreferBlockIf)
+      |> assert_issues(1)
+    end
+  end
+
+  property "allows block-form if expressions across arbitrary literal values" do
+    check all(
+            condition <- integer(),
+            do_value <- integer(),
+            else_value <- integer()
+          ) do
+      """
+      if #{condition} do
+        #{do_value}
+      else
+        #{else_value}
+      end
+      """
+      |> to_source_file()
+      |> run_check(PreferBlockIf)
+      |> refute_issues()
+    end
   end
 end
