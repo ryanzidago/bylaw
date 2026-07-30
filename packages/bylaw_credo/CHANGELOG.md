@@ -4,6 +4,8 @@
 
 - Add `Bylaw.Credo.Check.Elixir.PreferBlockIf` to require block syntax for
   local and qualified Kernel `if` expressions.
+- Add `Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues` to require complex
+  tagged-tuple values to be bound to variables.
 
 ## 0.2.0 - 2026-07-27
 
