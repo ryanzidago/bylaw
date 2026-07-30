@@ -13,6 +13,7 @@
   "files": [
     "dist",
     "LICENSE",
+    "CHEATSHEET.md",
     "README.md"
   ],
   "main": "./dist/index.js",

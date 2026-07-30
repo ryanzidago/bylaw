@@ -34,6 +34,11 @@ test("the package declares its supported playwright-core peer dependency", () =>
 });
 
 test("publishing metadata uses an explicit file allowlist", () => {
-  expect(packageJson.files).toEqual(["dist", "LICENSE", "README.md"]);
+  expect(packageJson.files).toEqual([
+    "dist",
+    "LICENSE",
+    "CHEATSHEET.md",
+    "README.md",
+  ]);
   expect(packageJson).not.toHaveProperty("private");
 });
