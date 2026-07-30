@@ -432,16 +432,23 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
          aliases
        )
        when is_list(options) do
-    if options
-       |> Keyword.get(:only, [])
-       |> Enum.any?(&match?({:describe, 2}, &1)) do
-      if resolves_to_ex_unit_case?(module_parts, aliases) do
-        :ex_unit
-      else
-        :non_ex_unit
-      end
-    else
-      :unrelated
+    cond do
+      Keyword.has_key?(options, :only) ->
+        if options
+           |> Keyword.fetch!(:only)
+           |> Enum.any?(&match?({:describe, 2}, &1)) do
+          import_origin(module_parts, aliases)
+        else
+          :unrelated
+        end
+
+      options
+      |> Keyword.get(:except, [])
+      |> Enum.any?(&match?({:describe, 2}, &1)) ->
+        :unrelated
+
+      true ->
+        import_origin(module_parts, aliases)
     end
   end
 
@@ -449,14 +456,18 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
          {:import, _meta, [{:__aliases__, _alias_meta, module_parts}]},
          aliases
        ) do
+    import_origin(module_parts, aliases)
+  end
+
+  defp describe_import_origin(_import_ast, _aliases), do: :unrelated
+
+  defp import_origin(module_parts, aliases) do
     if resolves_to_ex_unit_case?(module_parts, aliases) do
       :ex_unit
     else
       :non_ex_unit
     end
   end
-
-  defp describe_import_origin(_import_ast, _aliases), do: :unrelated
 
   defp defines_describe_two?({definition, _meta, [head | _body]})
        when definition in [:def, :defp, :defmacro, :defmacrop] do

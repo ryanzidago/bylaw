@@ -234,6 +234,25 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   end
 
   @doc """
+  Issue: A whole-module non-ExUnit import with an unrelated `except` option is
+  treated differently from the same import without options.
+  Why it matters: Excluding another function does not change the origin of
+  `describe/2`, so this creates a false-positive Credo failure.
+  """
+  test "does not report describe functions from non-ExUnit imports with unrelated exclusions" do
+    """
+    defmodule ExampleTest do
+      import Formatter, except: [format: 1]
+
+      describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
   Issue: An outer ExUnit alias is still applied after a nested block shadows it with an unrelated module.
   Why it matters: Alias shadowing is lexical, so ignoring the nested declaration creates false-positive Credo failures.
   """
