@@ -36,6 +36,7 @@ defmodule BylawHtml.MixProject do
       {:floki, "~> 0.38"},
       {:jason, "~> 1.4"},
       {:lazy_html, "~> 0.1.11"},
+      {:stream_data, "~> 1.0", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
