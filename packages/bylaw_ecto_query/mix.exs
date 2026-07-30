@@ -34,6 +34,7 @@ defmodule BylawEctoQuery.MixProject do
       {:bylaw_credo, "== 0.1.0", only: [:dev, :test], runtime: false},
       {:ecto, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
+      {:stream_data, "~> 1.4", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
