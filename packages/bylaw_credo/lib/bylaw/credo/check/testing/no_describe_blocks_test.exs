@@ -213,4 +213,83 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
     |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
     |> refute_issues()
   end
+
+  @doc """
+  Issue: An outer ExUnit alias is still applied after a nested block shadows it with an unrelated module.
+  Why it matters: Alias shadowing is lexical, so ignoring the nested declaration creates false-positive Credo failures.
+  """
+  test "respects alias shadowing inside nested blocks" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      alias ExUnit.Case, as: Formatter
+
+      if enabled?() do
+        alias Application.Formatter, as: Formatter
+        Formatter.describe "result", do: :ok
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
+  Issue: A non-ExUnit import inside a nested block is ignored when resolving an unqualified `describe/2` call.
+  Why it matters: Imports are lexical inside control-flow blocks, so ignoring them creates false-positive Credo failures.
+  """
+  test "respects non-ExUnit describe imports inside nested blocks" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      if enabled?() do
+        import Formatter, only: [describe: 2]
+        describe "result", do: :ok
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
+  Issue: A fully qualified `Elixir.ExUnit.Case.describe/2` block is not reported.
+  Why it matters: Root qualification is ordinary Elixir syntax and must not provide a bypass for the prohibited grouping.
+  """
+  test "reports fully qualified ExUnit describe blocks" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      Elixir.ExUnit.Case.describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
+  Issue: `ExUnit.Case.describe/2` is reported even when `ExUnit` is an alias for an unrelated module.
+  Why it matters: Alias expansion applies to the first segment of a multi-segment name, so ignoring it creates false positives.
+  """
+  test "respects aliases that shadow the ExUnit namespace" do
+    """
+    defmodule ExampleTest do
+      alias Application, as: ExUnit
+
+      ExUnit.Case.describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
 end

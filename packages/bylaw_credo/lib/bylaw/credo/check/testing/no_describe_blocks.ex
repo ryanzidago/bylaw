@@ -135,8 +135,8 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   end
 
   defp traverse(
-         {{:., _dot_meta, [{:__aliases__, _alias_meta, [:ExUnit, :Case]}, :describe]}, meta,
-          [_name, [do: _body]]} = ast,
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, [:"Elixir", :ExUnit, :Case]}, :describe]},
+          meta, [_name, [do: _body]]} = ast,
          issues,
          issue_meta,
          _aliases
@@ -158,13 +158,27 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     end
   end
 
+  defp traverse(
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, [_module, _nested_module]}, :describe]},
+          meta, [_name, [do: _body]]} = ast,
+         issues,
+         issue_meta,
+         context
+       ) do
+    if MapSet.member?(context.aliased_describe_lines, meta[:line]) do
+      {ast, [issue_for(issue_meta, meta[:line] || 0) | issues]}
+    else
+      {ast, issues}
+    end
+  end
+
   defp traverse(ast, issues, _issue_meta, _aliases), do: {ast, issues}
 
   defp aliased_describe_lines(source_file) do
     source_file
     |> Credo.SourceFile.ast()
     |> remove_quoted_code()
-    |> collect_scope_describe_lines(MapSet.new())
+    |> collect_scope_describe_lines(%{})
   end
 
   defp local_describe_lines(source_file) do
@@ -191,23 +205,85 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   defp collect_scope_describe_lines(body, inherited_aliases) do
     body
     |> top_level_expressions()
-    |> Enum.reduce({inherited_aliases, MapSet.new()}, fn
-      {:alias, _meta, _args} = alias_ast, {aliases, lines} ->
-        {update_aliases(aliases, alias_ast), lines}
-
-      {:defmodule, _meta, [_module, options]}, {aliases, lines} when is_list(options) ->
-        nested_lines =
-          options
-          |> Keyword.get(:do)
-          |> collect_scope_describe_lines(aliases)
-
-        {aliases, MapSet.union(lines, nested_lines)}
-
-      expression, {aliases, lines} ->
-        expression_lines = collect_qualified_describe_lines(expression, aliases)
-        {aliases, MapSet.union(lines, expression_lines)}
-    end)
+    |> Enum.reduce({inherited_aliases, MapSet.new()}, &collect_scope_expression/2)
     |> elem(1)
+  end
+
+  defp collect_scope_expression(
+         {:alias, _meta, _args} = alias_ast,
+         {aliases, lines}
+       ) do
+    {update_aliases(aliases, alias_ast), lines}
+  end
+
+  defp collect_scope_expression(
+         {:defmodule, _meta, [_module, options]},
+         {aliases, lines}
+       )
+       when is_list(options) do
+    nested_lines =
+      options
+      |> Keyword.get(:do)
+      |> collect_scope_describe_lines(aliases)
+
+    {aliases, MapSet.union(lines, nested_lines)}
+  end
+
+  defp collect_scope_expression(
+         {:__block__, _meta, expressions},
+         {aliases, lines}
+       ) do
+    Enum.reduce(expressions, {aliases, lines}, &collect_scope_expression/2)
+  end
+
+  defp collect_scope_expression(
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, module_parts}, :describe]}, meta,
+          arguments},
+         {aliases, lines}
+       ) do
+    lines =
+      if resolves_to_ex_unit_case?(module_parts, aliases) do
+        MapSet.put(lines, meta[:line])
+      else
+        lines
+      end
+
+    collect_nested_scope_lines(arguments, aliases, lines)
+  end
+
+  defp collect_scope_expression({_name, _meta, arguments}, {aliases, lines})
+       when is_list(arguments) do
+    collect_nested_scope_lines(arguments, aliases, lines)
+  end
+
+  defp collect_scope_expression(expression, {aliases, lines}) when is_list(expression) do
+    collect_nested_scope_lines(expression, aliases, lines)
+  end
+
+  defp collect_scope_expression({_key, value}, {aliases, lines}) do
+    {_nested_aliases, nested_lines} = collect_scope_expression(value, {aliases, MapSet.new()})
+    {aliases, MapSet.union(lines, nested_lines)}
+  end
+
+  defp collect_scope_expression(_expression, scope), do: scope
+
+  defp resolves_to_ex_unit_case?([module], aliases) do
+    Map.get(aliases, module) == [:ExUnit, :Case]
+  end
+
+  defp resolves_to_ex_unit_case?([:ExUnit, :Case], aliases) do
+    not Map.has_key?(aliases, :ExUnit)
+  end
+
+  defp resolves_to_ex_unit_case?(_module_parts, _aliases), do: false
+
+  defp collect_nested_scope_lines(expressions, aliases, lines) do
+    Enum.reduce(expressions, {aliases, lines}, fn expression, {aliases, lines} ->
+      {_nested_aliases, nested_lines} =
+        collect_scope_expression(expression, {aliases, MapSet.new()})
+
+      {aliases, MapSet.union(lines, nested_lines)}
+    end)
   end
 
   defp top_level_expressions({:__block__, _meta, expressions}), do: expressions
@@ -248,29 +324,77 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   defp collect_imported_describe_lines(body, inherited_non_ex_unit_import?) do
     body
     |> top_level_expressions()
-    |> Enum.reduce({inherited_non_ex_unit_import?, MapSet.new()}, fn
-      {:import, _meta, _args} = import_ast, {imported?, lines} ->
-        case describe_import_origin(import_ast) do
-          :non_ex_unit -> {true, lines}
-          :ex_unit -> {false, lines}
-          :unrelated -> {imported?, lines}
-        end
-
-      {:defmodule, _meta, [_module, options]}, {imported?, lines} when is_list(options) ->
-        nested_lines =
-          options
-          |> Keyword.get(:do)
-          |> collect_imported_describe_lines(imported?)
-
-        {imported?, MapSet.union(lines, nested_lines)}
-
-      expression, {true, lines} ->
-        {true, MapSet.union(lines, collect_unqualified_describe_lines(expression))}
-
-      _expression, {false, lines} ->
-        {false, lines}
-    end)
+    |> Enum.reduce(
+      {inherited_non_ex_unit_import?, MapSet.new()},
+      &collect_import_scope_expression/2
+    )
     |> elem(1)
+  end
+
+  defp collect_import_scope_expression(
+         {:import, _meta, _args} = import_ast,
+         {imported?, lines}
+       ) do
+    case describe_import_origin(import_ast) do
+      :non_ex_unit -> {true, lines}
+      :ex_unit -> {false, lines}
+      :unrelated -> {imported?, lines}
+    end
+  end
+
+  defp collect_import_scope_expression(
+         {:defmodule, _meta, [_module, options]},
+         {imported?, lines}
+       )
+       when is_list(options) do
+    nested_lines =
+      options
+      |> Keyword.get(:do)
+      |> collect_imported_describe_lines(imported?)
+
+    {imported?, MapSet.union(lines, nested_lines)}
+  end
+
+  defp collect_import_scope_expression(
+         {:__block__, _meta, expressions},
+         {imported?, lines}
+       ) do
+    Enum.reduce(expressions, {imported?, lines}, &collect_import_scope_expression/2)
+  end
+
+  defp collect_import_scope_expression(
+         {:describe, meta, [_name, [do: _body]]},
+         {true, lines}
+       ) do
+    {true, MapSet.put(lines, meta[:line])}
+  end
+
+  defp collect_import_scope_expression({_name, _meta, arguments}, {imported?, lines})
+       when is_list(arguments) do
+    collect_nested_import_lines(arguments, imported?, lines)
+  end
+
+  defp collect_import_scope_expression(expression, {imported?, lines})
+       when is_list(expression) do
+    collect_nested_import_lines(expression, imported?, lines)
+  end
+
+  defp collect_import_scope_expression({_key, value}, {imported?, lines}) do
+    {_nested_imported?, nested_lines} =
+      collect_import_scope_expression(value, {imported?, MapSet.new()})
+
+    {imported?, MapSet.union(lines, nested_lines)}
+  end
+
+  defp collect_import_scope_expression(_expression, scope), do: scope
+
+  defp collect_nested_import_lines(expressions, imported?, lines) do
+    Enum.reduce(expressions, {imported?, lines}, fn expression, {imported?, lines} ->
+      {_nested_imported?, nested_lines} =
+        collect_import_scope_expression(expression, {imported?, MapSet.new()})
+
+      {imported?, MapSet.union(lines, nested_lines)}
+    end)
   end
 
   defp describe_import_origin(
@@ -361,32 +485,7 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
   defp update_aliases(aliases, _alias_ast), do: aliases
 
-  defp put_or_delete_alias(aliases, alias_name, [:ExUnit, :Case]) do
-    MapSet.put(aliases, alias_name)
-  end
-
-  defp put_or_delete_alias(aliases, alias_name, _parts) do
-    MapSet.delete(aliases, alias_name)
-  end
-
-  defp collect_qualified_describe_lines(ast, aliases) do
-    {_ast, lines} =
-      Macro.prewalk(ast, MapSet.new(), fn
-        {{:., _dot_meta, [{:__aliases__, _alias_meta, [module]}, :describe]}, meta,
-         [_name, [do: _body]]} = node,
-        lines ->
-          if MapSet.member?(aliases, module) do
-            {node, MapSet.put(lines, meta[:line])}
-          else
-            {node, lines}
-          end
-
-        node, lines ->
-          {node, lines}
-      end)
-
-    lines
-  end
+  defp put_or_delete_alias(aliases, alias_name, parts), do: Map.put(aliases, alias_name, parts)
 
   defp rename_describe_definition({:describe, meta, args}) do
     {:__bylaw_describe_definition__, meta, args}
