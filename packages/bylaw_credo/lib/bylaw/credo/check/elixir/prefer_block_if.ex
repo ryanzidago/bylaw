@@ -60,13 +60,25 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIf do
   end
 
   defp walk({:if, meta, _arguments} = ast, ctx) do
+    check_syntax(ast, meta, ctx)
+  end
+
+  defp walk(
+         {{:., _dot_meta, [{:__aliases__, _alias_meta, kernel}, :if]}, meta, _arguments} = ast,
+         ctx
+       )
+       when kernel in [[:Kernel], [Elixir, :Kernel]] do
+    check_syntax(ast, meta, ctx)
+  end
+
+  defp walk(ast, ctx), do: {ast, ctx}
+
+  defp check_syntax(ast, meta, ctx) do
     case Keyword.has_key?(meta, :do) do
       true -> {ast, ctx}
       false -> {ast, put_issue(ctx, issue_for(ctx, meta))}
     end
   end
-
-  defp walk(ast, ctx), do: {ast, ctx}
 
   defp issue_for(ctx, meta) do
     format_issue(

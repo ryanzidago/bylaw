@@ -37,6 +37,25 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIfTest do
     end)
   end
 
+  @doc """
+  Issue: Qualified `Kernel.if` calls bypass the keyword-form syntax check.
+  Why it matters: Callers can retain the undesired `do:` and `else:` form simply by qualifying
+  the same Kernel macro.
+  """
+  test "reports qualified Kernel.if expressions with do and else keywords" do
+    """
+    defmodule Example do
+      def validate(value), do: Kernel.if(value, do: :ok, else: :error)
+    end
+    """
+    |> to_source_file()
+    |> run_check(PreferBlockIf)
+    |> assert_issue(fn issue ->
+      assert issue.line_no == 2
+      assert issue.trigger == "if"
+    end)
+  end
+
   test "allows block-form if expressions" do
     """
     defmodule Example do
