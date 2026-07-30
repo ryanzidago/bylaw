@@ -8,11 +8,16 @@ defmodule Bylaw.Db.Adapters.Postgres.ResultPropertyTest do
     check all(
             columns <-
               uniq_list_of(string(:alphanumeric, min_length: 1, max_length: 20), max_length: 8),
-            values <- fixed_list(Enum.map(columns, fn _column -> term() end))
+            rows <-
+              list_of(
+                fixed_list(Enum.map(columns, fn _column -> term() end)),
+                max_length: 8
+              )
           ) do
-      result = %{columns: columns, rows: [values]}
+      result = %{columns: columns, rows: rows}
 
-      assert Result.rows(result) == [Map.new(Enum.zip(columns, values))]
+      assert Result.rows(result) ==
+               Enum.map(rows, &Map.new(Enum.zip(columns, &1)))
     end
   end
 end
