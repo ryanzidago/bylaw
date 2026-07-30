@@ -11,10 +11,22 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   test "allows variables in every value position of a reply tuple" do
   end
 
+  test "allows a tagged tuple containing another tagged tuple whose leaf value is a variable" do
+  end
+
+  test "allows recursively nested tagged tuples whose leaf values are scalar literals" do
+  end
+
   test "reports a map constructed inside an ok tuple" do
   end
 
   test "reports the comparison summary map constructed inside an ok tuple" do
+  end
+
+  test "reports a map constructed inside an ok tuple nested beneath a cont tuple" do
+  end
+
+  test "reports the commit accumulator map inside an ok tuple nested beneath a cont tuple" do
   end
 
   test "reports a struct constructed inside an ok tuple" do
@@ -23,7 +35,7 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   test "reports a list constructed inside an ok tuple" do
   end
 
-  test "reports a nested tuple constructed inside an ok tuple" do
+  test "reports an untagged tuple nested inside a tagged tuple" do
   end
 
   test "reports field access inside an ok tuple" do
@@ -44,9 +56,9 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
   test "reports a complex value in any position of a reply tuple" do
   end
 
-  property "allows tagged tuples when every generated value is a scalar literal or variable" do
+  property "allows recursively nested tagged tuples when every generated leaf is a scalar literal or variable" do
   end
 
-  property "reports tagged tuples when any generated value is a complex expression" do
+  property "reports recursively nested tagged tuples when any generated leaf is a complex expression" do
   end
 end
