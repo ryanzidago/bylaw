@@ -28,6 +28,9 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   test "does not report identifiers containing describe" do
   end
 
+  test "does not report describe text in comments or strings" do
+  end
+
   test "respects excluded paths" do
   end
 end
