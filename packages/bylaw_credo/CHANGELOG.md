@@ -6,6 +6,8 @@
   local and qualified Kernel `if` expressions.
 - Add `Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues` to require complex
   tagged-tuple values to be bound to variables.
+- Add `Bylaw.Credo.Check.Testing.NoDescribeBlocks` to require descriptive
+  standalone tests and focused test files instead of `describe` blocks.
 
 ## 0.2.0 - 2026-07-27
 
