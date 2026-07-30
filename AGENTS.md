@@ -75,6 +75,16 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
   and split a growing suite into multiple focused test files, including
   multiple test files for the same module or feature when appropriate.
 - Add or update tests for behavior changes and regressions.
+- Consider property-based testing with StreamData when behavior expresses broad
+  invariants across many inputs, such as ordering, preservation, normalization,
+  round trips, equivalence, idempotence, or parser behavior.
+- Prefer properties with an independent oracle or metamorphic relationship.
+  Do not reproduce the implementation in the assertion.
+- Keep deterministic example tests for important boundary cases and readable
+  regressions. Property tests complement rather than replace acceptance and
+  integration tests.
+- Add StreamData only to packages containing useful properties, as a test-only
+  dependency.
 
 Configure Worktrunk once per machine so new worktrees stay inside this repo:
 
