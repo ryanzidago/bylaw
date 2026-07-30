@@ -420,6 +420,14 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     end
   end
 
+  defp describe_import_origin({:import, _meta, [{:__aliases__, _alias_meta, module_parts}]}) do
+    if ex_unit_case_parts?(module_parts) do
+      :ex_unit
+    else
+      :non_ex_unit
+    end
+  end
+
   defp describe_import_origin(_import_ast), do: :unrelated
 
   defp defines_describe_two?({definition, _meta, [head | _body]})

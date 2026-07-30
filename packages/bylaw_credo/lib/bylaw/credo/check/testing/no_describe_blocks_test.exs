@@ -215,6 +215,25 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   end
 
   @doc """
+  Issue: Calls following a whole-module import from a non-ExUnit module are
+  reported as ExUnit describe blocks.
+  Why it matters: Plain imports are ordinary Elixir syntax, so requiring an
+  `only` option solely to avoid a false-positive Credo failure is misleading.
+  """
+  test "does not report describe functions from a whole-module non-ExUnit import" do
+    """
+    defmodule ExampleTest do
+      import Formatter
+
+      describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
+
+  @doc """
   Issue: An outer ExUnit alias is still applied after a nested block shadows it with an unrelated module.
   Why it matters: Alias shadowing is lexical, so ignoring the nested declaration creates false-positive Credo failures.
   """
