@@ -7,6 +7,9 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   test "reports every describe block in a test file" do
   end
 
+  test "reports issues at the describe call" do
+  end
+
   test "reports nested describe blocks" do
   end
 
