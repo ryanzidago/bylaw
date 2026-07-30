@@ -277,6 +277,28 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   end
 
   @doc """
+  Issue: An alias declared from the root-qualified `Elixir.ExUnit.Case` module is not recognized as ExUnit.
+  Why it matters: Root qualification is ordinary Elixir syntax and must not let an aliased describe block bypass the check.
+  """
+  test "reports ExUnit describe blocks invoked through a root-qualified alias" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      alias Elixir.ExUnit.Case, as: TestCase
+
+      TestCase.describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  @doc """
   Issue: `ExUnit.Case.describe/2` is reported even when `ExUnit` is an alias for an unrelated module.
   Why it matters: Alias expansion applies to the first segment of a multi-segment name, so ignoring it creates false positives.
   """

@@ -268,7 +268,9 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   defp collect_scope_expression(_expression, scope), do: scope
 
   defp resolves_to_ex_unit_case?([module], aliases) do
-    Map.get(aliases, module) == [:ExUnit, :Case]
+    aliases
+    |> Map.get(module)
+    |> ex_unit_case_parts?()
   end
 
   defp resolves_to_ex_unit_case?([:ExUnit, :Case], aliases) do
@@ -276,6 +278,10 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
   end
 
   defp resolves_to_ex_unit_case?(_module_parts, _aliases), do: false
+
+  defp ex_unit_case_parts?([:ExUnit, :Case]), do: true
+  defp ex_unit_case_parts?([:"Elixir", :ExUnit, :Case]), do: true
+  defp ex_unit_case_parts?(_parts), do: false
 
   defp collect_nested_scope_lines(expressions, aliases, lines) do
     Enum.reduce(expressions, {aliases, lines}, fn expression, {aliases, lines} ->
