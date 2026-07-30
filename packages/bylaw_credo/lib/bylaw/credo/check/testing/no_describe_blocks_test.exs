@@ -10,10 +10,16 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
   test "reports nested describe blocks" do
   end
 
+  test "reports qualified describe blocks" do
+  end
+
   test "recommends descriptive standalone test names and multiple focused test files" do
   end
 
   test "does not report describe calls outside test files" do
+  end
+
+  test "does not report identifiers or functions named describe" do
   end
 
   test "does not report identifiers containing describe" do
