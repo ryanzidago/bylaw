@@ -119,6 +119,10 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
        when is_atom(value) or is_integer(value) or is_float(value) or is_binary(value),
        do: true
 
+  defp simple_value?({:-, meta, [value]})
+       when is_list(meta) and (is_integer(value) or is_float(value)),
+       do: true
+
   defp simple_value?({name, meta, context})
        when is_atom(name) and is_list(meta) and (is_atom(context) or is_nil(context)),
        do: true

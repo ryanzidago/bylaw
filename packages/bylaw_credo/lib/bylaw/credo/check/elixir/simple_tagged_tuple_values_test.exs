@@ -29,6 +29,25 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> refute_issues()
   end
 
+  @doc """
+  Issue: Negative integers and floats are scalar literals, but the check treats
+  their unary-minus AST representation as a complex operator expression.
+
+  Why it matters: Valid tagged tuples containing negative numeric results are
+  incorrectly reported and force callers to introduce unnecessary variables.
+  """
+  test "allows negative numeric literals as tagged tuple values" do
+    """
+    defmodule Example do
+      def integer, do: {:ok, -42}
+      def float, do: {:ok, -3.14}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> refute_issues()
+  end
+
   test "allows variables in every value position of a reply tuple" do
     """
     defmodule Example do
@@ -236,7 +255,9 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
             leaf <- member_of(["value", ":ready", "true", "nil", "42", "3.14", ~s("ready")])
           ) do
       expression =
-        Enum.reduce(List.duplicate(:tag, depth), leaf, fn :tag, nested ->
+        :tag
+        |> List.duplicate(depth)
+        |> Enum.reduce(leaf, fn :tag, nested ->
           "{:ok, #{nested}}"
         end)
 
@@ -274,7 +295,9 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
         end
 
       expression =
-        Enum.reduce(List.duplicate(:tag, depth), reply, fn :tag, nested ->
+        :tag
+        |> List.duplicate(depth)
+        |> Enum.reduce(reply, fn :tag, nested ->
           "{:ok, #{nested}}"
         end)
 
