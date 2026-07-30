@@ -333,4 +333,25 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
     |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
     |> refute_issues()
   end
+
+  @doc """
+  Issue: A `describe/2` block explicitly imported from root-qualified `Elixir.ExUnit.Case` is not reported.
+  Why it matters: Root qualification is ordinary Elixir syntax and must not let an imported describe block bypass the check.
+  """
+  test "reports describe blocks imported from root-qualified ExUnit Case" do
+    """
+    defmodule ExampleTest do
+      import Elixir.ExUnit.Case, only: [describe: 2]
+
+      describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
 end

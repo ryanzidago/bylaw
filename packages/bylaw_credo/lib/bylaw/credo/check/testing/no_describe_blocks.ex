@@ -410,7 +410,7 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     if options
        |> Keyword.get(:only, [])
        |> Enum.any?(&match?({:describe, 2}, &1)) do
-      if module_parts == [:ExUnit, :Case] do
+      if ex_unit_case_parts?(module_parts) do
         :ex_unit
       else
         :non_ex_unit
