@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add `Bylaw.Credo.Check.Elixir.PreferBlockIf` to require block syntax for
+  local and qualified Kernel `if` expressions.
+
 ## 0.2.0 - 2026-07-27
 
 - Add `Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries` to enforce configured

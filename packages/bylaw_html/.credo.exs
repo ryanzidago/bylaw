@@ -17,6 +17,7 @@
            ]},
           {Bylaw.Credo.Check.Elixir.NoThen, []},
           {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+          {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
           {Bylaw.Credo.Check.Elixir.PreferEnumCount, []},
           {Bylaw.Credo.Check.Elixir.PreferEnumUniqBy, []},
           {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []}

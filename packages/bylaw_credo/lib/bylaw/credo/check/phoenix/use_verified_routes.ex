@@ -280,7 +280,13 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
        when operator in [:==, :!=, :===, :!==] do
     if route_expr_matches_router?(left, router_paths) or
          route_expr_matches_router?(right, router_paths) do
-      route_expr = if route_expr_matches_router?(left, router_paths), do: left, else: right
+      route_expr =
+        if route_expr_matches_router?(left, router_paths) do
+          left
+        else
+          right
+        end
+
       {ast, [issue_for(issue_meta, route_expr, meta[:line] || 0) | issues]}
     else
       {ast, issues}
@@ -351,7 +357,11 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
         _other -> nil
       end)
 
-    if route_expr_matches_router?(route_expr, router_paths), do: route_expr, else: nil
+    if route_expr_matches_router?(route_expr, router_paths) do
+      route_expr
+    else
+      nil
+    end
   end
 
   defp location_header_route_expr(args, router_paths) do
@@ -460,9 +470,11 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
     |> strip_query_and_fragment()
     |> split_segments()
     |> Enum.map(fn segment ->
-      if String.contains?(segment, @dynamic_marker),
-        do: dynamic_markerized_segment(segment),
-        else: segment
+      if String.contains?(segment, @dynamic_marker) do
+        dynamic_markerized_segment(segment)
+      else
+        segment
+      end
     end)
   end
 

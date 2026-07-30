@@ -119,7 +119,9 @@ defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
   defp function_args(_other), do: []
 
   defp extract_do_body(body) when is_list(body) do
-    if Keyword.keyword?(body), do: Keyword.get(body, :do)
+    if Keyword.keyword?(body) do
+      Keyword.get(body, :do)
+    end
   end
 
   defp extract_do_body(_body), do: nil

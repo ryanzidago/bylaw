@@ -236,7 +236,12 @@ defmodule Bylaw.Credo.Heex do
 
     meta = [
       line: template.line + meta.line - 1,
-      column: if(meta.line == 1, do: template.column + meta.column - 1, else: meta.column)
+      column:
+        if meta.line == 1 do
+          template.column + meta.column - 1
+        else
+          meta.column
+        end
     ]
 
     tokenizer_tokenize(text, meta, tokens, cont, state)
