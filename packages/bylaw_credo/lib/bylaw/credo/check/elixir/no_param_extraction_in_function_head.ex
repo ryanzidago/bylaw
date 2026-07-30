@@ -307,7 +307,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   defp binding_name_for_node({name, _meta, context}) when is_atom(name) and is_atom(context) do
     name_string = Atom.to_string(name)
 
-    if String.starts_with?(name_string, "_"), do: nil, else: name_string
+    if String.starts_with?(name_string, "_") do
+      nil
+    else
+      name_string
+    end
   end
 
   defp binding_name_for_node(_node), do: nil
@@ -330,7 +334,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
   defp dispatch_only_pattern({name, _meta, context}, guard_vars)
        when is_atom(name) and is_atom(context) do
-    if preserve_binding?(name, guard_vars), do: Macro.var(name, nil), else: Macro.var(:_, nil)
+    if preserve_binding?(name, guard_vars) do
+      Macro.var(name, nil)
+    else
+      Macro.var(:_, nil)
+    end
   end
 
   defp dispatch_only_pattern({:^, _pin_meta, _pin_args} = pin, _guard_vars), do: pin
@@ -409,11 +417,19 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   end
 
   defp single_atom_field({:%, _meta, [_struct, {:%{}, _map_meta, [{field_name, value}]}]}) do
-    if simple_field_value?(value), do: {:ok, field_name}, else: :error
+    if simple_field_value?(value) do
+      {:ok, field_name}
+    else
+      :error
+    end
   end
 
   defp single_atom_field({:%{}, _meta, [{field_name, value}]}) when is_atom(field_name) do
-    if simple_field_value?(value), do: {:ok, field_name}, else: :error
+    if simple_field_value?(value) do
+      {:ok, field_name}
+    else
+      :error
+    end
   end
 
   defp single_atom_field(_pattern), do: :error

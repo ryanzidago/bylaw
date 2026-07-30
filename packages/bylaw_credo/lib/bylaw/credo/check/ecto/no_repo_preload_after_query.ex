@@ -172,7 +172,9 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   end
 
   defp extract_do_body(body) when is_list(body) do
-    if Keyword.keyword?(body), do: Keyword.get(body, :do)
+    if Keyword.keyword?(body) do
+      Keyword.get(body, :do)
+    end
   end
 
   defp extract_do_body(_other), do: nil
@@ -248,7 +250,9 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   end
 
   defp repo_preload_trigger({{:., _dot_meta, [repo, :preload]}, meta, _arguments}) do
-    if repo_module?(repo), do: {meta, "Repo.preload"}
+    if repo_module?(repo) do
+      {meta, "Repo.preload"}
+    end
   end
 
   defp repo_preload_trigger(_stage), do: nil

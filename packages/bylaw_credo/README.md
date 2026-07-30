@@ -27,6 +27,7 @@ check you want by listing its fully qualified module in the `checks:` list:
       checks: [
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
