@@ -31,6 +31,10 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
+        {Bylaw.Credo.Check.HEEx.PreferReusableComponents,
+         rules: [
+           [prefer: [modules: [MyAppWeb.UI.Buttons]], when: [[html_tag: "button"]]]
+         ]},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
         {Bylaw.Credo.Check.HEEx.PreferLinkForNavigation, []},
         {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []},
