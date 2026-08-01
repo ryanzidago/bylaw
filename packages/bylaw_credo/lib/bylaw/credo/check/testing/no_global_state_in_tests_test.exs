@@ -3,6 +3,26 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTestsTest do
 
   alias Bylaw.Credo.Check.Testing.NoGlobalStateInTests
 
+  test "recommends environment-specific configuration" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case, async: true
+
+      test "does something" do
+        Application.put_env(:my_app, :key, :value)
+        assert true
+      end
+    end
+    """
+    |> to_source_file("lib/example_test.exs")
+    |> run_check(NoGlobalStateInTests)
+    |> assert_issue(fn issue ->
+      assert issue.message ==
+               "Avoid `Application.put_env` in tests - it mutates/reads global state and causes race conditions. " <>
+                 "Move test configuration to config/test.exs and exercise it through normal application code."
+    end)
+  end
+
   describe "Application" do
     test "reports Application.put_env" do
       """
