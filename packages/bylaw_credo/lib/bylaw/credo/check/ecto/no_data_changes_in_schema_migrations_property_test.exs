@@ -1,8 +1,8 @@
-defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsPropertyTest do
+defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsPropertyTest do
   use Credo.Test.Case
   use ExUnitProperties
 
-  alias Bylaw.Credo.Check.Ecto.NoDataChangesInMigrations
+  alias Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations
 
   property "literal SQL mutations are detected regardless of casing and leading whitespace" do
     check all(
@@ -14,7 +14,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsPropertyTest do
       sql
       |> execute_source()
       |> to_source_file(migration_filename())
-      |> run_check(NoDataChangesInMigrations)
+      |> run_check(NoDataChangesInSchemaMigrations)
       |> assert_issue(%{trigger: String.upcase(statement)})
     end
   end
@@ -29,7 +29,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsPropertyTest do
       sql
       |> execute_source()
       |> to_source_file(migration_filename())
-      |> run_check(NoDataChangesInMigrations)
+      |> run_check(NoDataChangesInSchemaMigrations)
       |> refute_issues()
     end
   end
@@ -65,7 +65,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsPropertyTest do
 
       source
       |> to_source_file(migration_filename())
-      |> run_check(NoDataChangesInMigrations)
+      |> run_check(NoDataChangesInSchemaMigrations)
       |> assert_issue(%{trigger: "#{repo}.#{operation}"})
     end
   end

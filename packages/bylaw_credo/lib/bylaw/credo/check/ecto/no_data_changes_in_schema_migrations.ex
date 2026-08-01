@@ -1,4 +1,4 @@
-defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrations do
+defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations do
   @moduledoc """
   Keep Ecto migrations focused on database schema changes.
 
@@ -48,7 +48,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrations do
       %{
         name: "default",
         checks: [
-          {Bylaw.Credo.Check.Ecto.NoDataChangesInMigrations, []}
+          {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []}
         ]
       }
     ]

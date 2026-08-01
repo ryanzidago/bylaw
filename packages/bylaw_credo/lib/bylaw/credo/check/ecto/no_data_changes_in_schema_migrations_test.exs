@@ -1,7 +1,7 @@
-defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
+defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsTest do
   use Credo.Test.Case
 
-  alias Bylaw.Credo.Check.Ecto.NoDataChangesInMigrations
+  alias Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations
 
   test "reports direct Repo row mutations in migration files" do
     """
@@ -24,7 +24,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file(migration_filename())
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> assert_issues(11)
     |> assert_issues_match([
       %{line_no: 5, trigger: "Repo.insert"},
@@ -55,7 +55,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file(migration_filename())
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> assert_issues(4)
     |> assert_issues_match([
       %{line_no: 5, trigger: "INSERT"},
@@ -80,7 +80,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file("apps/my_app/priv/repo/migrations/20260801120000_backfill_org_ids.exs")
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> assert_issue(%{
       line_no: 9,
       trigger: "MyApp.Repo.update_all",
@@ -106,7 +106,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file(migration_filename())
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> refute_issues()
   end
 
@@ -123,7 +123,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file(migration_filename())
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> refute_issues()
   end
 
@@ -137,7 +137,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInMigrationsTest do
     end
     """
     |> to_source_file("lib/example/accounts.ex")
-    |> run_check(NoDataChangesInMigrations)
+    |> run_check(NoDataChangesInSchemaMigrations)
     |> refute_issues()
   end
 
