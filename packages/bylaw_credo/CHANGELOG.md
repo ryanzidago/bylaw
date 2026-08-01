@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations` to keep Ecto
+  schema migrations focused on DDL and direct row mutations in reviewed,
+  resumable data-migration scripts or release tasks.
 - Add `Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml` to discourage
   brittle test comparisons against serialized HTML attribute order.
 - Update `Bylaw.Credo.Check.Testing.NoGlobalStateInTests` to recommend stable
