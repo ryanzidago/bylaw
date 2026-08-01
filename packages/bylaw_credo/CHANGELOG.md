@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml` to discourage
+  brittle test comparisons against serialized HTML attribute order.
 - Update `Bylaw.Credo.Check.Testing.NoGlobalStateInTests` to recommend stable
   environment-specific configuration.
 - Add `Bylaw.Credo.Check.Elixir.PreferBlockIf` to require block syntax for

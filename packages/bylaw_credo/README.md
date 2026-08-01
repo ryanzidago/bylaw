@@ -43,7 +43,8 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.RequireLinkText, []},
         {Bylaw.Credo.Check.HEEx.RequireTargetBlankRel, []},
         {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []},
-        {Bylaw.Credo.Check.Testing.NoDescribeBlocks, []}
+        {Bylaw.Credo.Check.Testing.NoDescribeBlocks, []},
+        {Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml, []}
       ]
     }
   ]
