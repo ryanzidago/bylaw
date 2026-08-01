@@ -14,9 +14,15 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
 
   Prefer:
 
-        test "uses config" do
-          assert Feature.enabled?(%{feature_enabled?: true})
-        end
+      # config/test.exs
+      import Config
+
+      config :my_app, :feature_enabled?, true
+
+      # test/my_app/feature_test.exs
+      test "uses config" do
+        assert Feature.enabled?()
+      end
 
   ## Notes
 
@@ -24,9 +30,9 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
   that read or mutate that state can race with each other when the suite
   runs concurrently, especially when a test forgets to restore a value.
 
-  Prefer passing dependencies or configuration explicitly. If a test needs
-  a substitute implementation, use a behaviour-backed module or mock that
-  is scoped to the test process.
+  Prefer defining stable configuration once in the environment-specific config
+  file, such as `config/test.exs`, instead of changing it from a test. This keeps
+  the normal application configuration path as the source of truth.
 
   Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
 
@@ -136,7 +142,8 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
     format_issue(
       issue_meta,
       message:
-        "Avoid `#{trigger}` in tests - it mutates/reads global state and causes race conditions. Use dependency injection instead.",
+        "Avoid `#{trigger}` in tests - it mutates/reads global state and causes race conditions. " <>
+          "Move test configuration to config/test.exs and exercise it through normal application code.",
       trigger: trigger,
       line_no: line_no
     )
