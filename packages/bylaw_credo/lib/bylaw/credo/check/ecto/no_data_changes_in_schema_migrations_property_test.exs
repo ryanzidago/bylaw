@@ -4,12 +4,12 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsPropertyTest do
 
   alias Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations
 
-  property "literal SQL mutations are detected regardless of casing and leading whitespace" do
+  property "literal SQL mutations are detected regardless of casing and leading trivia" do
     check all(
             statement <- randomly_cased_member_of(["INSERT", "UPDATE", "DELETE", "MERGE"]),
-            whitespace <- leading_whitespace()
+            trivia <- leading_sql_trivia()
           ) do
-      sql = whitespace <> statement <> " generated_statement"
+      sql = trivia <> statement <> " generated_statement"
 
       sql
       |> execute_source()
@@ -19,18 +19,41 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsPropertyTest do
     end
   end
 
-  property "literal schema DDL remains accepted regardless of casing and leading whitespace" do
+  property "literal schema DDL remains accepted regardless of casing and leading trivia" do
     check all(
             statement <- randomly_cased_member_of(["CREATE", "ALTER", "DROP"]),
-            whitespace <- leading_whitespace()
+            trivia <- leading_sql_trivia()
           ) do
-      sql = whitespace <> statement <> " generated_statement"
+      sql = trivia <> statement <> " generated_statement"
 
       sql
       |> execute_source()
       |> to_source_file(migration_filename())
       |> run_check(NoDataChangesInSchemaMigrations)
       |> refute_issues()
+    end
+  end
+
+  property "every literal SQL argument to execute/2 is classified independently" do
+    check all(
+            up_statement <- randomly_cased_member_of(["INSERT", "UPDATE", "DELETE", "MERGE"]),
+            down_statement <-
+              randomly_cased_member_of(["INSERT", "UPDATE", "DELETE", "MERGE"])
+          ) do
+      source =
+        "defmodule Migration do\n  def change, do: execute(#{inspect(up_statement)}, #{inspect(down_statement)})\nend"
+
+      issues =
+        source
+        |> to_source_file(migration_filename())
+        |> run_check(NoDataChangesInSchemaMigrations)
+
+      assert Enum.count(issues) == 2
+
+      triggers = Enum.map(issues, & &1.trigger)
+
+      assert Enum.sort(triggers) ==
+               Enum.sort([String.upcase(up_statement), String.upcase(down_statement)])
     end
   end
 
@@ -86,8 +109,9 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsPropertyTest do
     |> bind(&random_case/1)
   end
 
-  defp leading_whitespace do
-    map(list_of(member_of([" ", "\t", "\n", "\r"]), max_length: 12), &Enum.join/1)
+  defp leading_sql_trivia do
+    trivia = [" ", "\t", "\n", "\r", "-- generated comment\n", "/* generated comment */"]
+    map(list_of(member_of(trivia), max_length: 12), &Enum.join/1)
   end
 
   defp module_segment do

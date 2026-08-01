@@ -26,9 +26,10 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations do
 
   This check is a best-effort automated guideline, not an airtight boundary.
   It reports direct calls to common `Repo` mutation functions and literal SQL
-  passed to `execute/1,2` when it begins with `INSERT`, `UPDATE`, `DELETE`, or
-  `MERGE`. It intentionally does not guess about helper functions, dynamic SQL,
-  or application-specific `Repo` wrappers.
+  passed to any argument of `execute/1,2` when its first statement, after
+  leading whitespace and comments, begins with `INSERT`, `UPDATE`, `DELETE`,
+  or `MERGE`. It intentionally does not guess about helper functions, dynamic
+  SQL, or application-specific `Repo` wrappers.
 
   If a data change genuinely belongs in a schema migration, disable the check
   locally with Credo and document why the exception is safe.
@@ -107,18 +108,33 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations do
     end
   end
 
-  defp traverse({:execute, meta, [sql | _rest]} = ast, issues, issue_meta)
-       when is_binary(sql) do
-    case data_mutation_statement(sql) do
-      nil -> {ast, issues}
-      statement -> {ast, [issue_for(issue_meta, meta, statement) | issues]}
-    end
+  defp traverse({:execute, meta, arguments} = ast, issues, issue_meta) do
+    issues =
+      Enum.reduce(arguments, issues, fn
+        sql, issues when is_binary(sql) ->
+          case data_mutation_statement(sql) do
+            nil -> issues
+            statement -> [issue_for(issue_meta, meta, statement) | issues]
+          end
+
+        _dynamic_argument, issues ->
+          issues
+      end)
+
+    {ast, issues}
   end
 
   defp traverse(ast, issues, _issue_meta), do: {ast, issues}
 
   defp data_mutation_statement(sql) do
-    case Regex.run(~r/^\s*(INSERT|UPDATE|DELETE|MERGE)\b/i, sql, capture: :all_but_first) do
+    statement_sql =
+      Regex.replace(
+        ~r/\A(?:\s+|--[^\r\n]*(?:\r\n|\n|\r|\z)|\/\*.*?\*\/)* /sx,
+        sql,
+        ""
+      )
+
+    case Regex.run(~r/\A(INSERT|UPDATE|DELETE|MERGE)\b/i, statement_sql, capture: :all_but_first) do
       [statement] -> String.upcase(statement)
       nil -> nil
     end

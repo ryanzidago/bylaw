@@ -65,6 +65,51 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrationsTest do
     ])
   end
 
+  test "reports data-changing rollback SQL passed to execute/2" do
+    """
+    defmodule Example.Repo.Migrations.CreateAccounts do
+      use Ecto.Migration
+
+      def change do
+        execute(
+          "CREATE TABLE archived_accounts (id bigint)",
+          "DELETE FROM archived_accounts"
+        )
+      end
+    end
+    """
+    |> to_source_file(migration_filename())
+    |> run_check(NoDataChangesInSchemaMigrations)
+    |> assert_issue(%{line_no: 5, trigger: "DELETE"})
+  end
+
+  test "reports literal SQL mutations preceded by comments" do
+    ~S'''
+    defmodule Example.Repo.Migrations.CleanAccounts do
+      use Ecto.Migration
+
+      def up do
+        execute("""
+        -- Remove expired rows before adding the constraint.
+        DELETE FROM accounts WHERE expired_at IS NOT NULL
+        """)
+
+        execute("""
+        /* Normalize remaining rows. */
+        UPDATE accounts SET active = TRUE
+        """)
+      end
+    end
+    '''
+    |> to_source_file(migration_filename())
+    |> run_check(NoDataChangesInSchemaMigrations)
+    |> assert_issues(2)
+    |> assert_issues_match([
+      %{line_no: 5, trigger: "DELETE"},
+      %{line_no: 10, trigger: "UPDATE"}
+    ])
+  end
+
   test "reports a realistic batched backfill embedded in a migration" do
     """
     defmodule MyApp.Repo.Migrations.BackfillMissingOrganisationIds do
