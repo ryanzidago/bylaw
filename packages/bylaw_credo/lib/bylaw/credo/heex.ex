@@ -265,21 +265,35 @@ defmodule Bylaw.Credo.Heex do
   defp tokenize_eex_node(
          {type, opt, expr, %{column: column, line: line}},
          {tokens, cont},
-         _template,
+         template,
          _source
        )
        when type in @eex_expr do
-    meta = %{opt: opt, line: line, column: column}
+    expression = List.to_string(expr)
+    expression_offset = 1 + Enum.count(opt) + leading_spaces(expression)
 
-    expr =
-      expr
-      |> List.to_string()
-      |> String.trim()
+    absolute_column =
+      if line == 1 do
+        template.column + column - 1 + expression_offset
+      else
+        column + expression_offset
+      end
+
+    meta = %{opt: opt, line: template.line + line - 1, column: absolute_column}
+
+    expr = String.trim(expression)
 
     {[{:eex, type, expr, meta} | tokens], cont}
   end
 
   defp tokenize_eex_node(_node, acc, _template, _source), do: acc
+
+  defp leading_spaces(expression) do
+    expression
+    |> String.graphemes()
+    |> Enum.take_while(&(&1 in [" ", "\t"]))
+    |> Enum.count()
+  end
 
   defp normalize_token({type, name, attrs, meta})
        when type in [:tag, :local_component, :remote_component, :slot] do

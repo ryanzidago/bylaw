@@ -32,6 +32,20 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrsTest do
     |> assert_issue(%{line_no: 2, trigger: "@title"})
   end
 
+  test "reports a legacy HEEx assign at its source location" do
+    """
+    defmodule Example do
+      defp card(assigns) do
+        ~H\"\"\"
+        <p><%= @title %></p>
+        \"\"\"
+      end
+    end
+    """
+    |> run_check()
+    |> assert_issue(%{line_no: 4, column: 12, trigger: "@title"})
+  end
+
   test "reports each undeclared assign once at its first use" do
     """
     defmodule Example do
@@ -76,18 +90,18 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrsTest do
   test "requires render_slot assigns to use slot declarations" do
     """
     defmodule Example do
-      attr :inner_block, :any
+      attr :header, :any
 
       def card(assigns) do
-        ~H\"{render_slot(@inner_block)}\"
+        ~H\"{render_slot(@header)}\"
       end
     end
     """
     |> run_check()
     |> assert_issue(%{
-      trigger: "@inner_block",
+      trigger: "@header",
       message:
-        "Function component `card/1` renders `@inner_block` without a `slot :inner_block` declaration."
+        "Function component `card/1` renders `@header` without a `slot :header` declaration."
     })
   end
 
