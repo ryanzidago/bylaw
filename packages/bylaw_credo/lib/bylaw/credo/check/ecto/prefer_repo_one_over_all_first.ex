@@ -11,6 +11,14 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
       |> Repo.all()
       |> List.first()
 
+      query
+      |> Repo.all()
+      |> Enum.at(0)
+
+      query
+      |> Repo.all()
+      |> hd()
+
   When the query is expected to return zero or one row, prefer:
 
       Repo.one(query)
@@ -28,8 +36,11 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   ## Notes
 
   This check uses static AST analysis. It reports direct `Repo.all` and
-  `List.first` combinations, including piped forms, but cannot infer whether
-  the caller expects uniqueness or an ordered first row.
+  first-element selection with `List.first/1`, `Enum.at/2` with the literal
+  index `0`, or `hd/1`, including piped forms. It cannot infer whether the
+  caller expects uniqueness or an ordered first row. Other `Enum.at/2` indices
+  are outside this check's scope because they express different offset and
+  ordering semantics.
 
   ## Options
 
@@ -61,10 +72,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
       check: @moduledoc
     ]
 
-  @message "Prefer `Repo.one/1` or `Repo.one!/1` when the query expects at most one row. " <>
-             "For an ordered first row, use `Ecto.Query.first/1` followed by `Repo.one/1`. " <>
-             "Use `Repo.get/2` or `Repo.get!/2` for primary-key lookups."
-
   @doc false
   @impl Credo.Check
   def run(source_file, params \\ []) do
@@ -78,21 +85,61 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
            ast,
          ctx
        ) do
-    {ast, maybe_put_issue(ctx, meta, value)}
+    {ast, maybe_put_issue(ctx, meta, "List.first", value, false)}
   end
 
   defp walk(
          {{:., meta, [{:__aliases__, _aliases_meta, [:List]}, :first]}, _call_meta, [value]} = ast,
          ctx
        ) do
-    {ast, maybe_put_issue(ctx, meta, value)}
+    {ast, maybe_put_issue(ctx, meta, "List.first", value, false)}
+  end
+
+  defp walk(
+         {:|>, _pipe_meta,
+          [value, {{:., meta, [{:__aliases__, _aliases_meta, [:Enum]}, :at]}, _call_meta, [0]}]} =
+           ast,
+         ctx
+       ) do
+    {ast, maybe_put_issue(ctx, meta, "Enum.at", value, false)}
+  end
+
+  defp walk(
+         {{:., meta, [{:__aliases__, _aliases_meta, [:Enum]}, :at]}, _call_meta, [value, 0]} = ast,
+         ctx
+       ) do
+    {ast, maybe_put_issue(ctx, meta, "Enum.at", value, false)}
+  end
+
+  defp walk({:|>, _pipe_meta, [value, {:hd, meta, []}]} = ast, ctx) do
+    {ast, maybe_put_issue(ctx, meta, "hd", value, true)}
+  end
+
+  defp walk({:hd, meta, [value]} = ast, ctx) do
+    {ast, maybe_put_issue(ctx, meta, "hd", value, true)}
+  end
+
+  defp walk(
+         {:|>, _pipe_meta,
+          [value, {{:., meta, [{:__aliases__, _aliases_meta, [:Kernel]}, :hd]}, _call_meta, []}]} =
+           ast,
+         ctx
+       ) do
+    {ast, maybe_put_issue(ctx, meta, "Kernel.hd", value, true)}
+  end
+
+  defp walk(
+         {{:., meta, [{:__aliases__, _aliases_meta, [:Kernel]}, :hd]}, _call_meta, [value]} = ast,
+         ctx
+       ) do
+    {ast, maybe_put_issue(ctx, meta, "Kernel.hd", value, true)}
   end
 
   defp walk(ast, ctx), do: {ast, ctx}
 
-  defp maybe_put_issue(ctx, meta, value) do
+  defp maybe_put_issue(ctx, meta, trigger, value, raises_on_empty?) do
     if repo_all_expression?(value) do
-      put_issue(ctx, issue_for(ctx, meta))
+      put_issue(ctx, issue_for(ctx, meta, trigger, raises_on_empty?))
     else
       ctx
     end
@@ -114,11 +161,21 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   defp repo_module?({:__aliases__, _meta, aliases}), do: List.last(aliases) == :Repo
   defp repo_module?(_other), do: false
 
-  defp issue_for(ctx, meta) do
+  defp issue_for(ctx, meta, trigger, raises_on_empty?) do
+    repo_read =
+      if raises_on_empty? do
+        "`Repo.one!/1`"
+      else
+        "`Repo.one/1` or `Repo.one!/1`"
+      end
+
     format_issue(
       ctx,
-      message: @message,
-      trigger: "List.first",
+      message:
+        "Prefer #{repo_read} when the query expects at most one row. " <>
+          "For an ordered first row, use `Ecto.Query.first/1` followed by #{repo_read}. " <>
+          "Use `Repo.get/2` or `Repo.get!/2` for primary-key lookups.",
+      trigger: trigger,
       line_no: meta[:line]
     )
   end

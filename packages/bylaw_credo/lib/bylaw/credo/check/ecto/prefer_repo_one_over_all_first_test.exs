@@ -29,6 +29,56 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirstTest do
     ])
   end
 
+  test "reports Repo.all results passed to Enum.at with index zero" do
+    """
+    defmodule Example do
+      alias MyApp.Repo
+
+      def first(query) do
+        one = query |> Repo.all() |> Enum.at(0)
+        two = Repo.all(query) |> Enum.at(0)
+        three = Enum.at(Repo.all(query), 0)
+
+        {one, two, three}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(PreferRepoOneOverAllFirst)
+    |> assert_issues(3)
+    |> assert_issues_match([
+      %{line_no: 5, trigger: "Enum.at", message: ~r/Repo\.one/},
+      %{line_no: 6, trigger: "Enum.at", message: ~r/Repo\.one/},
+      %{line_no: 7, trigger: "Enum.at", message: ~r/Repo\.one/}
+    ])
+  end
+
+  test "reports Repo.all results passed to hd" do
+    """
+    defmodule Example do
+      alias MyApp.Repo
+
+      def first(query) do
+        one = query |> Repo.all() |> hd()
+        two = Repo.all(query) |> Kernel.hd()
+        three = hd(Repo.all(query))
+        four = Kernel.hd(Repo.all(query))
+
+        {one, two, three, four}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(PreferRepoOneOverAllFirst)
+    |> assert_issues(4)
+    |> assert_issues_match([
+      %{line_no: 5, trigger: "hd", message: ~r/Repo\.one!/},
+      %{line_no: 6, trigger: "Kernel.hd", message: ~r/Repo\.one!/},
+      %{line_no: 7, trigger: "hd", message: ~r/Repo\.one!/},
+      %{line_no: 8, trigger: "Kernel.hd", message: ~r/Repo\.one!/}
+    ])
+  end
+
   test "reports realistic ordered queries that load all rows before taking the first" do
     """
     defmodule Accounts do
@@ -69,8 +119,12 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirstTest do
         five = List.first(values)
         six = OtherStore.all(query) |> List.first()
         seven = Repo.all(query)
+        eight = Repo.all(query) |> Enum.at(1)
+        nine = Repo.all(query) |> Enum.at(-1)
+        ten = Enum.at(Repo.all(query), index)
+        eleven = hd(values)
 
-        {one, two, three, four, five, six, seven}
+        {one, two, three, four, five, six, seven, eight, nine, ten, eleven}
       end
     end
     """
