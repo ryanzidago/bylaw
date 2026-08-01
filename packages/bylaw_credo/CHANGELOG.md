@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` to avoid
+  application and dependency calls that create compile-time dependencies from
+  module attributes while allowing literals and standard-library calls.
 - Add `Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs` to
   require explicit `attr` and `slot` contracts for HEEx function components
   while excluding LiveView `render/1` page assigns.
