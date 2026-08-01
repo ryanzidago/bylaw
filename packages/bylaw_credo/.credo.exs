@@ -153,6 +153,7 @@ end
           {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []},
           {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
           {Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount, []},
+          {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
           {Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap, []},
           {Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead, false},
           {Bylaw.Credo.Check.Elixir.NamedSpecParams, false},
