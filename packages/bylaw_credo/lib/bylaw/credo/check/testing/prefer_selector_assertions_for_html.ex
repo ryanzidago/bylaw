@@ -67,7 +67,6 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
     ]
 
   @comparison_operators [:==, :===, :!=, :!==, :=~]
-  @opening_tag ~r/<[A-Za-z][^>]*>/s
   @selector_attribute ~r/(?:^|\s)(?:phx-[\w:-]+|data-[\w:-]+|aria-[\w:-]+|id|class)\s*=/i
 
   @doc false
@@ -117,9 +116,9 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
   defp brittle_html_comparison?(_ast), do: false
 
   defp brittle_html_literal?(value) when is_binary(value) do
-    @opening_tag
-    |> Regex.scan(value)
-    |> Enum.any?(fn [tag] ->
+    value
+    |> opening_tags_without_quoted_values()
+    |> Enum.any?(fn tag ->
       @selector_attribute
       |> Regex.scan(tag)
       |> Enum.count()
@@ -139,4 +138,48 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
   end
 
   defp brittle_html_literal?(_ast), do: false
+
+  defp opening_tags_without_quoted_values(html) do
+    collect_opening_tags(html, [])
+  end
+
+  defp collect_opening_tags(<<>>, tags), do: Enum.reverse(tags)
+
+  defp collect_opening_tags(<<"<", first, rest::binary>>, tags)
+       when first in ?A..?Z or first in ?a..?z do
+    case consume_opening_tag(rest, <<"<", first>>, nil) do
+      {:ok, tag, remaining_html} -> collect_opening_tags(remaining_html, [tag | tags])
+      :error -> Enum.reverse(tags)
+    end
+  end
+
+  defp collect_opening_tags(<<_character, rest::binary>>, tags) do
+    collect_opening_tags(rest, tags)
+  end
+
+  defp consume_opening_tag(<<>>, _tag, _quote), do: :error
+
+  defp consume_opening_tag(<<character, rest::binary>>, tag, quote)
+       when character == quote do
+    consume_opening_tag(rest, tag, nil)
+  end
+
+  defp consume_opening_tag(<<character, rest::binary>>, tag, nil)
+       when character in [?", ?'] do
+    empty_quoted_value = <<character, character>>
+    consume_opening_tag(rest, tag <> empty_quoted_value, character)
+  end
+
+  defp consume_opening_tag(<<">", rest::binary>>, tag, nil) do
+    {:ok, tag <> ">", rest}
+  end
+
+  defp consume_opening_tag(<<_character, rest::binary>>, tag, quote)
+       when quote in [?", ?'] do
+    consume_opening_tag(rest, tag, quote)
+  end
+
+  defp consume_opening_tag(<<character, rest::binary>>, tag, nil) do
+    consume_opening_tag(rest, tag <> <<character>>, nil)
+  end
 end

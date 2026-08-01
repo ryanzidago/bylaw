@@ -55,6 +55,72 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtmlTest do
     |> assert_issue(%{line_no: 5})
   end
 
+  @doc """
+  Issue: A greater-than sign inside a double-quoted attribute value causes tag
+  scanning to stop before later selector attributes.
+
+  Why it matters: Valid HTML assertions can evade the check and remain coupled
+  to unstable serialized attribute order.
+  """
+  test "reports selector attributes after a greater-than sign in a double-quoted value" do
+    ~S'''
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      test "renders the control" do
+        assert html =~ ~s(<button title="1 > 0" id="save" phx-click="save">Save</button>)
+      end
+    end
+    '''
+    |> to_source_file("test/example_test.exs")
+    |> run_check(PreferSelectorAssertionsForHtml)
+    |> assert_issue(%{line_no: 5, trigger: "assert"})
+  end
+
+  @doc """
+  Issue: A greater-than sign inside a single-quoted attribute value causes tag
+  scanning to stop before later selector attributes.
+
+  Why it matters: The check should recognize selector-relevant attributes in
+  valid HTML regardless of which HTML quote style surrounds another value.
+  """
+  test "reports selector attributes after a greater-than sign in a single-quoted value" do
+    ~S'''
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      test "renders the control" do
+        assert html =~ ~s(<button title='1 > 0' id="save" phx-click="save">Save</button>)
+      end
+    end
+    '''
+    |> to_source_file("test/example_test.exs")
+    |> run_check(PreferSelectorAssertionsForHtml)
+    |> assert_issue(%{line_no: 5, trigger: "assert"})
+  end
+
+  @doc """
+  Issue: Quote-aware tag scanning could count selector-looking text inside an
+  attribute value as real attributes.
+
+  Why it matters: HTML with only one selector attribute should not produce a
+  false-positive Credo failure because another value contains HTML-like text.
+  """
+  test "does not count selector-looking text inside a quoted attribute value" do
+    ~S'''
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      test "renders the control" do
+        assert html =~ ~s(<button title='id="decoy" > class="decoy"' phx-click="save">Save</button>)
+      end
+    end
+    '''
+    |> to_source_file("test/example_test.exs")
+    |> run_check(PreferSelectorAssertionsForHtml)
+    |> refute_issues()
+  end
+
   test "reports each brittle HTML assertion at its assertion call" do
     """
     defmodule ExampleTest do
