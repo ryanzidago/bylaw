@@ -245,6 +245,7 @@ end
           {Bylaw.Credo.Check.Ecto.NoAndInWhere, false},
           {Bylaw.Credo.Check.Elixir.NoEndOfDayTime, [excluded_paths: ["test/", "_test.exs"]]},
           {Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple, []},
+          {Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs, []},
           {Bylaw.Credo.Check.Elixir.NoResultTupleArgument,
            [excluded_paths: [~r{^lib/bylaw/credo/check/}]]},
           {Bylaw.Credo.Check.Phoenix.NoRepoInController, []},

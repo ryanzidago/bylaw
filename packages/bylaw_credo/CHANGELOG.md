@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs` to
+  require explicit `attr` and `slot` contracts for HEEx function components
+  while excluding LiveView `render/1` page assigns.
 - Add `Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations` to keep Ecto
   schema migrations focused on DDL and direct row mutations in reviewed,
   resumable data-migration scripts or release tasks.

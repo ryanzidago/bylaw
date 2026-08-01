@@ -122,6 +122,22 @@ defmodule Bylaw.Credo.Heex do
     end
   end
 
+  # Extracts a HEEx template from a sigil AST node.
+  @doc false
+  @spec template(Macro.t()) :: Template.t() | nil
+  def template({:sigil_H, meta, [{:<<>>, text_meta, parts}, _modifiers]}) do
+    source = IO.iodata_to_binary(parts)
+    indentation = text_meta[:indentation] || 0
+
+    %Template{
+      source: source,
+      line: sigil_line(meta),
+      column: sigil_column(meta, source, indentation)
+    }
+  end
+
+  def template(_ast), do: nil
+
   # Tokenizes a HEEx template into normalized tags.
   @doc false
   @spec tags(Template.t() | String.t()) :: list(Tag.t())
@@ -178,15 +194,10 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defp collect_sigil_template(
-         {:sigil_H, meta, [{:<<>>, text_meta, parts}, _modifiers]} = ast,
+         {:sigil_H, _meta, [{:<<>>, _text_meta, _parts}, _modifiers]} = ast,
          templates
        ) do
-    source = IO.iodata_to_binary(parts)
-    indentation = text_meta[:indentation] || 0
-    line = sigil_line(meta)
-    column = sigil_column(meta, source, indentation)
-
-    {ast, [%Template{source: source, line: line, column: column} | templates]}
+    {ast, [template(ast) | templates]}
   end
 
   defp collect_sigil_template(ast, templates), do: {ast, templates}
@@ -254,21 +265,35 @@ defmodule Bylaw.Credo.Heex do
   defp tokenize_eex_node(
          {type, opt, expr, %{column: column, line: line}},
          {tokens, cont},
-         _template,
+         template,
          _source
        )
        when type in @eex_expr do
-    meta = %{opt: opt, line: line, column: column}
+    expression = List.to_string(expr)
+    expression_offset = 1 + Enum.count(opt) + leading_spaces(expression)
 
-    expr =
-      expr
-      |> List.to_string()
-      |> String.trim()
+    absolute_column =
+      if line == 1 do
+        template.column + column - 1 + expression_offset
+      else
+        column + expression_offset
+      end
+
+    meta = %{opt: opt, line: template.line + line - 1, column: absolute_column}
+
+    expr = String.trim(expression)
 
     {[{:eex, type, expr, meta} | tokens], cont}
   end
 
   defp tokenize_eex_node(_node, acc, _template, _source), do: acc
+
+  defp leading_spaces(expression) do
+    expression
+    |> String.graphemes()
+    |> Enum.take_while(&(&1 in [" ", "\t"]))
+    |> Enum.count()
+  end
 
   defp normalize_token({type, name, attrs, meta})
        when type in [:tag, :local_component, :remote_component, :slot] do
