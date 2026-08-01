@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations` to keep Ecto
+  schema migrations focused on DDL and direct row mutations in reviewed,
+  resumable data-migration scripts or release tasks.
 - Update `Bylaw.Credo.Check.Testing.NoGlobalStateInTests` to recommend stable
   environment-specific configuration.
 - Add `Bylaw.Credo.Check.Elixir.PreferBlockIf` to require block syntax for
