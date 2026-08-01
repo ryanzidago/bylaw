@@ -16,8 +16,10 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
   ## Notes
 
   HTML attribute order has no semantic meaning, and serializers may emit the
-  same attributes in a different order. Selector-based assertions express the
-  intended DOM contract without coupling tests to serialization details.
+  same attributes in a different order. Comparing serialized HTML can therefore
+  produce flaky tests even when the DOM is unchanged. Selector-based assertions
+  express the intended DOM contract without coupling tests to serialization
+  details.
 
   The check reports direct `assert` and `refute` comparisons using `==`, `===`,
   `!=`, `!==`, or `=~` when a string operand contains an opening HTML tag with
