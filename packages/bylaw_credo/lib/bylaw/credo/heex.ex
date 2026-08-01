@@ -122,6 +122,22 @@ defmodule Bylaw.Credo.Heex do
     end
   end
 
+  # Extracts a HEEx template from a sigil AST node.
+  @doc false
+  @spec template(Macro.t()) :: Template.t() | nil
+  def template({:sigil_H, meta, [{:<<>>, text_meta, parts}, _modifiers]}) do
+    source = IO.iodata_to_binary(parts)
+    indentation = text_meta[:indentation] || 0
+
+    %Template{
+      source: source,
+      line: sigil_line(meta),
+      column: sigil_column(meta, source, indentation)
+    }
+  end
+
+  def template(_ast), do: nil
+
   # Tokenizes a HEEx template into normalized tags.
   @doc false
   @spec tags(Template.t() | String.t()) :: list(Tag.t())
@@ -178,15 +194,10 @@ defmodule Bylaw.Credo.Heex do
   end
 
   defp collect_sigil_template(
-         {:sigil_H, meta, [{:<<>>, text_meta, parts}, _modifiers]} = ast,
+         {:sigil_H, _meta, [{:<<>>, _text_meta, _parts}, _modifiers]} = ast,
          templates
        ) do
-    source = IO.iodata_to_binary(parts)
-    indentation = text_meta[:indentation] || 0
-    line = sigil_line(meta)
-    column = sigil_column(meta, source, indentation)
-
-    {ast, [%Template{source: source, line: line, column: column} | templates]}
+    {ast, [template(ast) | templates]}
   end
 
   defp collect_sigil_template(ast, templates), do: {ast, templates}
