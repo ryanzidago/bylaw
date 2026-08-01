@@ -34,7 +34,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesTest do
     })
   end
 
-  test "reports application function captures stored in module attributes" do
+  @doc """
+  Issue: External function captures are reported with arity zero instead of their declared arity.
+  Why it matters: The diagnostic points users to a function that may not exist and obscures the dependency being reported.
+  """
+  test "reports the declared arity for application function captures" do
     """
     defmodule Example do
       @some_function &MyApp.SomeModule.some_function/1
@@ -44,8 +48,68 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesTest do
     |> run_check(NoRemoteCallsInModuleAttributes)
     |> assert_issue(%{
       line_no: 2,
-      trigger: "MyApp.SomeModule.some_function"
+      trigger: "MyApp.SomeModule.some_function",
+      message: ~r/MyApp\.SomeModule\.some_function\/1/
     })
+  end
+
+  @doc """
+  Issue: Nested module aliases rooted at `__MODULE__` crash while the check converts alias segments to strings.
+  Why it matters: One valid module attribute can terminate the entire Credo run instead of returning a useful issue.
+  """
+  test "reports calls through nested modules rooted at __MODULE__ without crashing" do
+    """
+    defmodule Example do
+      defmodule Nested do
+        def values, do: []
+      end
+
+      @some_values __MODULE__.Nested.values()
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoRemoteCallsInModuleAttributes)
+    |> assert_issue(%{
+      line_no: 6,
+      trigger: "__MODULE__.Nested.values"
+    })
+  end
+
+  @doc """
+  Issue: An application alias whose short name matches a standard-library module is treated as standard library.
+  Why it matters: Application compile-time dependencies can pass silently based only on the alias chosen by the caller.
+  """
+  test "reports application aliases that shadow standard-library module names" do
+    """
+    defmodule Example do
+      alias MyApp.Enum
+
+      @some_values Enum.values()
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoRemoteCallsInModuleAttributes)
+    |> assert_issue(%{
+      line_no: 4,
+      trigger: "Enum.values"
+    })
+  end
+
+  @doc """
+  Issue: A standard-library module renamed with `alias ... as:` is treated as an application module.
+  Why it matters: Harmless standard-library calls produce false positives even though the default configuration permits them.
+  """
+  test "accepts renamed standard-library aliases by default" do
+    """
+    defmodule Example do
+      alias Calendar.ISO, as: DateSystem
+
+      @days DateSystem.days_in_era(1)
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoRemoteCallsInModuleAttributes)
+    |> refute_issues()
   end
 
   test "accepts literal values in custom module attributes" do
@@ -102,12 +166,14 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesTest do
     |> refute_issues()
   end
 
+  @doc """
+  Issue: The AST walker descends into valid quoted values and treats remote-call syntax as executed code.
+  Why it matters: Macro and DSL modules receive false positives for calls that are stored as data and never run while defining the attribute.
+  """
   test "ignores remote call syntax stored in quoted AST" do
     """
     defmodule Example do
-      @quoted quote do
-        MyApp.SomeModule.some_function()
-      end
+      @quoted quote(do: MyApp.SomeModule.some_function())
     end
     """
     |> to_source_file()

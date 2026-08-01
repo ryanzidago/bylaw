@@ -87,6 +87,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
     ]
 
   @standard_library_applications [:elixir, :kernel, :stdlib]
+  @definition_ops [:def, :defp, :defmacro, :defmacrop]
   @typespec_attributes [:callback, :macrocallback, :opaque, :spec, :type, :typep]
 
   @doc false
@@ -95,34 +96,76 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
     ctx = Context.build(source_file, params, __MODULE__)
 
     state = %{
+      alias_scopes: [%{}],
       ctx: ctx,
       allowed_module_keys: allowed_module_keys(params)
     }
 
-    Credo.Code.prewalk(source_file, &walk/2, state).ctx.issues
+    source_file
+    |> Credo.SourceFile.ast()
+    |> Macro.traverse(state, &prewalk/2, &postwalk/2)
+    |> elem(1)
+    |> Map.fetch!(:ctx)
+    |> Map.fetch!(:issues)
   end
 
-  defp walk({:@, _meta, [{attribute, _attribute_meta, [value]}]} = ast, state)
+  defp prewalk({:quote, _meta, _arguments}, state), do: {nil, state}
+
+  defp prewalk({definition, _meta, _arguments}, state) when definition in @definition_ops,
+    do: {nil, state}
+
+  defp prewalk({:defmodule, _meta, _arguments} = ast, state) do
+    {ast, push_alias_scope(state)}
+  end
+
+  defp prewalk({:alias, _meta, _arguments} = ast, state) do
+    aliases = update_aliases(current_aliases(state), ast)
+    {ast, put_current_aliases(state, aliases)}
+  end
+
+  defp prewalk({:@, _meta, [{attribute, _attribute_meta, [value]}]} = ast, state)
        when attribute not in @typespec_attributes do
     ctx =
       value
-      |> disallowed_calls(state.allowed_module_keys)
+      |> disallowed_calls(state.allowed_module_keys, current_aliases(state))
       |> Enum.reduce(state.ctx, &put_call_issue(&1, attribute, &2))
 
     {ast, %{state | ctx: ctx}}
   end
 
-  defp walk(ast, state), do: {ast, state}
+  defp prewalk(ast, state), do: {ast, state}
 
-  defp disallowed_calls(value, allowed_module_keys) do
+  defp postwalk({:defmodule, _meta, _arguments} = ast, state) do
+    {ast, pop_alias_scope(state)}
+  end
+
+  defp postwalk(ast, state), do: {ast, state}
+
+  defp disallowed_calls(value, allowed_module_keys, aliases) do
     {_value, calls} =
-      Macro.prewalk(value, [], &collect_call(&1, &2, allowed_module_keys))
+      Macro.prewalk(value, [], &collect_call(&1, &2, allowed_module_keys, aliases))
 
     Enum.reverse(calls)
   end
 
-  defp collect_call(ast, calls, allowed_module_keys) do
-    case remote_call(ast) do
+  defp collect_call({:quote, _meta, _arguments}, calls, _allowed_module_keys, _aliases),
+    do: {nil, calls}
+
+  defp collect_call(
+         {:&, _capture_meta, [{:/, _arity_meta, [call_ast, arity]}]},
+         calls,
+         allowed_module_keys,
+         aliases
+       )
+       when is_integer(arity) do
+    case remote_call(call_ast, aliases, arity) do
+      {:ok, call} -> collect_remote_call(nil, call, calls, allowed_module_keys)
+      :error -> {call_ast, calls}
+    end
+  end
+
+  defp collect_call(ast, calls, allowed_module_keys, aliases) do
+    case remote_call(ast, aliases) do
       {:ok, call} -> collect_remote_call(ast, call, calls, allowed_module_keys)
       :error -> {ast, calls}
     end
@@ -136,12 +179,18 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
     end
   end
 
-  defp remote_call({{:., dot_meta, [module_ast, function]}, _meta, arguments})
+  defp remote_call(ast, aliases, arity_override \\ nil)
+
+  defp remote_call(
+         {{:., dot_meta, [module_ast, function]}, _meta, arguments},
+         aliases,
+         arity_override
+       )
        when is_atom(function) and is_list(arguments) do
-    case static_module(module_ast) do
+    case static_module(module_ast, aliases) do
       {:ok, {module_key, module_name}} ->
         call = %{
-          arity: Enum.count(arguments),
+          arity: arity_override || Enum.count(arguments),
           function: function,
           meta: [
             line: dot_meta[:line],
@@ -158,26 +207,76 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
     end
   end
 
-  defp remote_call(_ast), do: :error
+  defp remote_call(_ast, _aliases, _arity_override), do: :error
 
-  defp static_module({:__aliases__, _meta, modules}) when is_list(modules) do
-    module_name = Enum.map_join(modules, ".", &Atom.to_string/1)
+  defp static_module({:__aliases__, _meta, modules}, aliases) when is_list(modules) do
+    expanded_modules = expand_alias(modules, aliases, MapSet.new())
 
-    module_key_name =
-      case modules do
-        [:"Elixir" | nested_modules] -> Enum.map_join(nested_modules, ".", &Atom.to_string/1)
-        _modules -> module_name
-      end
-
-    {:ok, {{:elixir, module_key_name}, module_name}}
+    with {:ok, module_name} <- module_parts_name(modules),
+         {:ok, module_key_name} <- module_key_name(expanded_modules) do
+      {:ok, {{:elixir, module_key_name}, module_name}}
+    else
+      :error -> :error
+    end
   end
 
-  defp static_module(module) when is_atom(module) do
+  defp static_module(module, _aliases) when is_atom(module) do
     {module_key, module_name} = module_identity(module)
     {:ok, {module_key, module_name}}
   end
 
-  defp static_module(_module_ast), do: :error
+  defp static_module(_module_ast, _aliases), do: :error
+
+  defp module_key_name([:"Elixir" | nested_modules]), do: module_parts_name(nested_modules)
+  defp module_key_name(modules), do: module_parts_name(modules)
+
+  defp module_parts_name([]), do: :error
+
+  defp module_parts_name(modules) do
+    names =
+      Enum.reduce_while(modules, [], fn module, names ->
+        case module_part_name(module) do
+          {:ok, name} -> {:cont, [name | names]}
+          :error -> {:halt, :error}
+        end
+      end)
+
+    case names do
+      :error ->
+        :error
+
+      names ->
+        module_name =
+          names
+          |> Enum.reverse()
+          |> Enum.join(".")
+
+        {:ok, module_name}
+    end
+  end
+
+  defp module_part_name({:__MODULE__, _meta, nil}), do: {:ok, "__MODULE__"}
+  defp module_part_name(module) when is_atom(module), do: {:ok, Atom.to_string(module)}
+  defp module_part_name(_module), do: :error
+
+  defp expand_alias([:"Elixir" | _modules] = modules, _aliases, _seen), do: modules
+
+  defp expand_alias([alias_name | suffix] = modules, aliases, seen)
+       when is_atom(alias_name) do
+    case Map.fetch(aliases, alias_name) do
+      {:ok, prefix} ->
+        if MapSet.member?(seen, alias_name) do
+          modules
+        else
+          expand_alias(prefix ++ suffix, aliases, MapSet.put(seen, alias_name))
+        end
+
+      :error ->
+        modules
+    end
+  end
+
+  defp expand_alias(modules, _aliases, _seen), do: modules
 
   defp put_call_issue(call, attribute, ctx) do
     trigger = "#{call.module_name}.#{call.function}"
@@ -210,6 +309,58 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
     |> MapSet.new()
     |> MapSet.put({:erlang, "erlang"})
   end
+
+  defp push_alias_scope(%{alias_scopes: [aliases | _rest] = alias_scopes} = state) do
+    %{state | alias_scopes: [aliases | alias_scopes]}
+  end
+
+  defp pop_alias_scope(%{alias_scopes: [_aliases, outer_aliases | rest]} = state) do
+    %{state | alias_scopes: [outer_aliases | rest]}
+  end
+
+  defp current_aliases(%{alias_scopes: [aliases | _rest]}), do: aliases
+
+  defp put_current_aliases(%{alias_scopes: [_aliases | rest]} = state, aliases) do
+    %{state | alias_scopes: [aliases | rest]}
+  end
+
+  defp update_aliases(
+         aliases,
+         {:alias, _meta, [{:__aliases__, _alias_meta, parts}, options]}
+       )
+       when is_list(options) do
+    alias_name =
+      case Keyword.get(options, :as) do
+        {:__aliases__, _as_meta, [name]} -> name
+        _other -> List.last(parts)
+      end
+
+    Map.put(aliases, alias_name, parts)
+  end
+
+  defp update_aliases(aliases, {:alias, _meta, [{:__aliases__, _alias_meta, parts}]}) do
+    Map.put(aliases, List.last(parts), parts)
+  end
+
+  defp update_aliases(
+         aliases,
+         {:alias, _meta,
+          [
+            {{:., _dot_meta, [{:__aliases__, _alias_meta, prefix}, :{}]}, _call_meta,
+             grouped_aliases}
+          ]}
+       ) do
+    Enum.reduce(grouped_aliases, aliases, fn
+      {:__aliases__, _grouped_meta, suffix}, aliases ->
+        parts = prefix ++ suffix
+        Map.put(aliases, List.last(parts), parts)
+
+      _other, aliases ->
+        aliases
+    end)
+  end
+
+  defp update_aliases(aliases, _alias_ast), do: aliases
 
   defp module_identity(module) do
     case Atom.to_string(module) do
