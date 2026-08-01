@@ -209,6 +209,10 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
 
   defp remote_call(_ast, _aliases, _arity_override), do: :error
 
+  defp static_module({:__MODULE__, _meta, nil}, _aliases) do
+    {:ok, {{:elixir, "__MODULE__"}, "__MODULE__"}}
+  end
+
   defp static_module({:__aliases__, _meta, modules}, aliases) when is_list(modules) do
     expanded_modules = expand_alias(modules, aliases, MapSet.new())
 

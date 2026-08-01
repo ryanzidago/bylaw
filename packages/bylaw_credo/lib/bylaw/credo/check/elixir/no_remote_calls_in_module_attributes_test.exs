@@ -76,6 +76,24 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesTest do
   end
 
   @doc """
+  Issue: Direct calls through `__MODULE__` are ignored because the module AST is not an alias or atom.
+  Why it matters: Incremental compilation can evaluate a previously loaded version of the module and embed a stale value without a Credo warning.
+  """
+  test "reports direct calls through __MODULE__" do
+    """
+    defmodule Example do
+      @some_values __MODULE__.some_function()
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoRemoteCallsInModuleAttributes)
+    |> assert_issue(%{
+      line_no: 2,
+      trigger: "__MODULE__.some_function"
+    })
+  end
+
+  @doc """
   Issue: An application alias whose short name matches a standard-library module is treated as standard library.
   Why it matters: Application compile-time dependencies can pass silently based only on the alias chosen by the caller.
   """
