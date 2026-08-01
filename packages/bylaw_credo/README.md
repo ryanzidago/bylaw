@@ -26,6 +26,7 @@ check you want by listing its fully qualified module in the `checks:` list:
       ],
       checks: [
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
+        {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
@@ -56,6 +57,11 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
+
+`Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` reports calls into
+application and dependency modules from module attributes because those calls
+execute during compilation and embed their results in the consumer. Literal
+values and Elixir or OTP standard-library calls are accepted by default.
 
 `Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations` reports direct Repo
 row mutations and literal `INSERT`, `UPDATE`, `DELETE`, or `MERGE` SQL in Ecto

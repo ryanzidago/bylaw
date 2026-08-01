@@ -101,6 +101,7 @@ end
           {Credo.Check.Design.SkipTestWithoutComment, []},
           {Bylaw.Credo.Check.Elixir.NoRaise, false},
           {Bylaw.Credo.Check.Elixir.NoPassthroughWrapper, false},
+          {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
           {Bylaw.Credo.Check.Phoenix.ContextFunctionNaming, false},
           {Bylaw.Credo.Check.Ecto.UseMyAppSchema, false},
           {Bylaw.Credo.Check.Ecto.OwnContextForSchema, [schema_modules: [Bylaw.Schema]]},
