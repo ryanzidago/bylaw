@@ -16,28 +16,20 @@ and asset contracts belong to the target product model described below, but
 those rule families are not released APIs yet.
 
 For a compact overview of every released API capability, see the
-[API cheatsheet](CHEATSHEET.md).
+[API cheatsheet](CHEATSHEET.md). See the [changelog](CHANGELOG.md) for the
+versioned release history.
 
 ## Install
 
-`bylaw-ui` is not published to npm yet. To try it from a Bylaw checkout, build
-the package and install that local directory into the application you want to
-check:
+Install `bylaw-ui` and Playwright as development dependencies:
 
 ```sh
-git clone https://github.com/ryanzidago/bylaw.git
-cd bylaw/packages/bylaw_ui
-bun install --frozen-lockfile
-bun run build
-
-cd /path/to/your-application
-bun add --dev /path/to/bylaw/packages/bylaw_ui @playwright/test
+bun add --dev bylaw-ui @playwright/test
 ```
 
-Building before the local install ensures the application receives the compiled
-entrypoints. The package also runs its QA suite when it is packed for
-publication. When it is published, the application install becomes
-`bun add --dev bylaw-ui @playwright/test`.
+The package root stays browser-independent. The separate Playwright entrypoint
+uses `playwright-core` as a peer dependency; `@playwright/test` supplies a
+compatible Playwright installation for test projects.
 
 Chromium is the verified V1 browser target. Install the browser build matching
 the application's Playwright version:
@@ -658,12 +650,13 @@ A collection target uses `matches`, including an empty collection when it has
 no members. Results must correlate one-to-one with the targets requested by
 Bylaw.
 
-Collection results are part of the public measurement compatibility boundary,
-but the current package does not export collection evaluation rules. Do not
-expect a current rule to evaluate every member: one member resolves as a
-singular target, an empty collection is missing, and multiple members are
-ambiguous. Follow [#177](https://github.com/ryanzidago/bylaw/issues/177) for the
-planned collection-rule API.
+Collection results are part of the public measurement compatibility boundary.
+Released collection rules evaluate every member returned in `matches` after a
+caller declares collection intent with `collection(target)`. The supported
+rules cover containment, equal widths, vertical ordering, and pairwise
+non-overlap. An empty collection produces an element-resolution finding;
+hidden or zero-size members make the collection unavailable for geometry
+evaluation.
 
 Malformed snapshots throw `MeasurementValidationError` before any rule is
 evaluated and never become layout findings or partial reports. Errors thrown or
@@ -673,6 +666,13 @@ The adapter or underlying platform owns target discovery and any waiting needed
 before measurement. The public adapter is not responsible for relationship inference
 or aesthetic evaluation; Bylaw evaluates only the explicit geometric rules supplied
 by the caller.
+
+## Versioning
+
+`bylaw-ui` follows semantic versioning. While the package is in the `0.x`
+series, minor releases may refine public APIs as real consumers prove the
+abstractions; breaking changes and migration guidance are recorded in the
+[changelog](CHANGELOG.md). Patch releases remain focused on compatible fixes.
 
 ## License
 

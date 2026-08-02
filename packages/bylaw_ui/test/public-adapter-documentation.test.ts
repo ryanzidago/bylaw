@@ -44,6 +44,14 @@ test("the README documents missing ambiguous and collection target results", () 
   expect(section).toMatch(/collection/i);
 });
 
+test("the README documents released collection evaluation through public adapters", () => {
+  const section = customAdapterSection();
+  expect(section).toMatch(/collection rules[\s\S]*every member/i);
+  expect(section).not.toMatch(
+    /does not export collection evaluation rules|planned collection-rule API/i,
+  );
+});
+
 test("the README documents how adapter measurement failures propagate", () => {
   expect(customAdapterSection()).toMatch(
     /(?:throws|rejections|failures)[\s\S]*(?:propagate|preserved)/i,

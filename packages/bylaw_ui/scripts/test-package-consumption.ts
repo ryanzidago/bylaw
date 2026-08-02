@@ -52,6 +52,7 @@ try {
     "package/dist/playwright.js",
     "package/dist/playwright.d.ts",
     "package/README.md",
+    "package/CHANGELOG.md",
     "package/LICENSE",
   ]) {
     assert(entries.includes(required), `packed package is missing ${required}`);

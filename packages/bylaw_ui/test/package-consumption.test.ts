@@ -37,8 +37,53 @@ test("publishing metadata uses an explicit file allowlist", () => {
   expect(packageJson.files).toEqual([
     "dist",
     "LICENSE",
+    "CHANGELOG.md",
     "CHEATSHEET.md",
     "README.md",
   ]);
   expect(packageJson).not.toHaveProperty("private");
+});
+
+test("the published package includes its changelog", async () => {
+  expect(packageJson.files).toContain("CHANGELOG.md");
+
+  const changelog = Bun.file(new URL("../CHANGELOG.md", import.meta.url));
+  expect(await changelog.exists()).toBe(true);
+  expect(await changelog.text()).toMatch(/^# Changelog\n\n## 0\.1\.0\b/);
+});
+
+test("publishing metadata links consumers to package support", () => {
+  expect(packageJson).toMatchObject({
+    homepage:
+      "https://github.com/ryanzidago/bylaw/tree/main/packages/bylaw_ui#readme",
+    bugs: {
+      url: "https://github.com/ryanzidago/bylaw/issues",
+    },
+    keywords: expect.arrayContaining([
+      "layout-testing",
+      "playwright",
+      "ui-testing",
+    ]),
+  });
+});
+
+test("the README documents Bun registry installation", async () => {
+  const readme = await Bun.file(
+    new URL("../README.md", import.meta.url),
+  ).text();
+
+  expect(readme).toContain("bun add --dev bylaw-ui @playwright/test");
+  expect(readme).not.toMatch(/not published to npm yet/i);
+});
+
+test("release instructions require package and consumer verification", async () => {
+  const instructions = await Bun.file(
+    new URL("../RELEASING.md", import.meta.url),
+  ).text();
+
+  expect(instructions).toContain("bun run qa");
+  expect(instructions).toContain("bun run test:package");
+  expect(instructions).toContain("bun publish --dry-run");
+  expect(instructions).toContain("bun publish --access public");
+  expect(instructions).toMatch(/install[\s\S]*registry/i);
 });
