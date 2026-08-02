@@ -648,9 +648,33 @@ test("reports unresolved and unstable members of the same collection independent
       const collectionRule = equalWidths(collection("members"));
 
       await page.evaluate(() => {
+        const stable = document.querySelector<HTMLElement>(
+          '[data-member="stable"]',
+        )!;
         const unstable = document.querySelector<HTMLElement>(
           '[data-member="unstable"]',
         )!;
+        const members = [stable, unstable];
+        const measured = new Set<HTMLElement>();
+        let removalScheduled = false;
+
+        for (const member of members) {
+          const getBoundingClientRect =
+            member.getBoundingClientRect.bind(member);
+
+          member.getBoundingClientRect = () => {
+            const bounds = getBoundingClientRect();
+            measured.add(member);
+
+            if (!removalScheduled && measured.size === members.length) {
+              // Preserve the initial member identities before testing removal.
+              removalScheduled = true;
+              requestAnimationFrame(() => stable.remove());
+            }
+
+            return bounds;
+          };
+        }
 
         const resize = () => {
           unstable.style.width = `${Number.parseFloat(unstable.style.width) + 1}px`;
@@ -658,17 +682,13 @@ test("reports unresolved and unstable members of the same collection independent
         };
 
         requestAnimationFrame(resize);
-        setTimeout(
-          () => document.querySelector('[data-member="stable"]')?.remove(),
-          50,
-        );
       });
 
       try {
         await waitForLayoutTargets(
           page,
           [collectionRule],
-          { timeoutMs: 100, stableFrames: 3 },
+          { timeoutMs: 1_000, stableFrames: 3 },
           { members: page.locator(".member") },
         );
         throw new Error("expected readiness to time out");
