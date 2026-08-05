@@ -33,6 +33,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
         {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
+        {Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
         {Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement, []},
         {Bylaw.Credo.Check.HEEx.PreferLinkForNavigation, []},
@@ -57,6 +58,11 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
+
+`Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` reports literal-key
+`Map.get(assigns, key)` and `assigns[key]` access in HEEx templates. Initialize
+assigns before rendering and access them directly with `@key` so missing values
+and defaults are handled at the rendering boundary.
 
 `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` reports calls into
 application and dependency modules from module attributes because those calls
