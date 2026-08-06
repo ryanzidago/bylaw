@@ -4,6 +4,18 @@ defmodule Bylaw.Ecto.Query.BranchesPropertyTest do
 
   alias Bylaw.Ecto.Query.Branches
 
+  property "merging branches produces every left and right pairing" do
+    check all(
+            left_branches <- list_of(integer(), max_length: 8),
+            right_branches <- list_of(integer(), max_length: 8)
+          ) do
+      merged = Branches.merge(left_branches, right_branches, &{&1, &2})
+
+      assert merged == for(left <- left_branches, right <- right_branches, do: {left, right})
+      assert Enum.count(merged) == Enum.count(left_branches) * Enum.count(right_branches)
+    end
+  end
+
   property "merge produces the cartesian product in left-major order" do
     check all(
             left <- list_of(list_of(integer(), max_length: 4), max_length: 4),

@@ -57,6 +57,7 @@ defmodule BylawPostgres.MixProject do
       {:ecto_sql, "~> 3.13"},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:postgrex, "~> 0.22.0"},
+      {:stream_data, "~> 1.0", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
