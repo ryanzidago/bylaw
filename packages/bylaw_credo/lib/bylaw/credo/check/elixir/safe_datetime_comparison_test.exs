@@ -82,6 +82,62 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
+  test "does not report comparisons in a keyword query using a schema source" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(period_start, period_end) do
+        from(event in Event,
+          where: event.starts_at <= ^period_end and event.ends_at >= ^period_start
+        )
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report comparisons in a keyword query using a bare table name" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(cutoff_at) do
+        from("events",
+          where: event.starts_at < ^cutoff_at,
+          select: event.ends_at >= ^cutoff_at
+        )
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report comparisons in a composed pipe-based Ecto query" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(period_start, period_end) do
+        from(event in Event, as: :event)
+        |> join(:inner, [event: event], attendee in Attendee,
+          on: attendee.event_id == event.id
+        )
+        |> where([event: event], event.starts_at <= ^period_end)
+        |> where([event: event], is_nil(event.ends_at) or event.ends_at >= ^period_start)
+        |> select([event: event], %{starts_at: event.starts_at})
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
   test "does not report ordinary comparisons" do
     """
     defmodule Example do
