@@ -86,27 +86,35 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
     suffixes = Params.get(params, :datetime_suffixes, __MODULE__)
-    ecto_where_lines = collect_ecto_where_lines(source_file)
+    ecto_query_lines = collect_ecto_query_lines(source_file)
 
     Credo.Code.prewalk(
       source_file,
-      &traverse(&1, &2, issue_meta, suffixes, ecto_where_lines)
+      &traverse(&1, &2, issue_meta, suffixes, ecto_query_lines)
     )
   end
 
-  defp collect_ecto_where_lines(source_file) do
-    Credo.Code.prewalk(source_file, &collect_where_lines/2, MapSet.new())
+  defp collect_ecto_query_lines(source_file) do
+    Credo.Code.prewalk(source_file, &collect_query_lines/2, MapSet.new())
   end
 
-  defp collect_where_lines({:|>, _meta, [_left, {:where, _where_meta, _where_args}]} = ast, acc) do
+  defp collect_query_lines({:from, _meta, _args} = ast, acc) do
     {ast, MapSet.union(acc, extract_lines_from_ast(ast))}
   end
 
-  defp collect_where_lines({:where, _meta, _args} = ast, acc) do
+  defp collect_query_lines({:|>, _meta, [_left, {:where, _where_meta, _where_args}]} = ast, acc) do
     {ast, MapSet.union(acc, extract_lines_from_ast(ast))}
   end
 
-  defp collect_where_lines(ast, acc), do: {ast, acc}
+  defp collect_query_lines({:where, _meta, _args} = ast, acc) do
+    {ast, MapSet.union(acc, extract_lines_from_ast(ast))}
+  end
+
+  defp collect_query_lines({:where, _predicate} = ast, acc) do
+    {ast, MapSet.union(acc, extract_lines_from_ast(ast))}
+  end
+
+  defp collect_query_lines(ast, acc), do: {ast, acc}
 
   defp extract_lines_from_ast(ast) do
     ast
@@ -123,12 +131,12 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
     |> elem(1)
   end
 
-  defp traverse({op, meta, [left, right]} = ast, issues, issue_meta, suffixes, ecto_where_lines)
+  defp traverse({op, meta, [left, right]} = ast, issues, issue_meta, suffixes, ecto_query_lines)
        when op in @comparison_operators do
     line_no = meta[:line] || 0
 
     cond do
-      MapSet.member?(ecto_where_lines, line_no) ->
+      MapSet.member?(ecto_query_lines, line_no) ->
         {ast, issues}
 
       should_report_comparison?(left, right, suffixes) ->
@@ -139,7 +147,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
     end
   end
 
-  defp traverse(ast, issues, _issue_meta, _suffixes, _ecto_where_lines), do: {ast, issues}
+  defp traverse(ast, issues, _issue_meta, _suffixes, _ecto_query_lines), do: {ast, issues}
 
   defp should_report_comparison?(left, right, suffixes) do
     (looks_like_datetime?(left, suffixes) and not non_datetime_literal?(right)) or

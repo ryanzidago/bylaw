@@ -28,6 +28,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.Elixir.SafeDateTimeComparison, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
@@ -59,6 +60,11 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
+
+`Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` reports direct comparisons of
+values that look like dates or times and ignores comparisons inside Ecto query
+expressions, where Ecto translates them into database predicates. Use the
+relevant date/time module's comparison functions for ordinary Elixir values.
 
 `Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` reports literal-key
 `Map.get(assigns, key)` and `assigns[key]` access in HEEx templates. Initialize

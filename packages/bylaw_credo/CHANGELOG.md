@@ -2,6 +2,8 @@
 
 ## 0.3.0 - 2026-08-06
 
+- Update `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` to ignore direct
+  date/time comparisons anywhere inside Ecto query expressions.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` to discourage
   raw pixel spacing values in static HEEx and HTML class and style attributes.
 - Add `Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` to discourage indirect
