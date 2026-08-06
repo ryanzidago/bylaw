@@ -131,7 +131,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
       MapSet.member?(ecto_where_lines, line_no) ->
         {ast, issues}
 
-      looks_like_datetime?(left, suffixes) or looks_like_datetime?(right, suffixes) ->
+      should_report_comparison?(left, right, suffixes) ->
         {ast, [issue_for(issue_meta, line_no, op) | issues]}
 
       true ->
@@ -140,6 +140,17 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
   end
 
   defp traverse(ast, issues, _issue_meta, _suffixes, _ecto_where_lines), do: {ast, issues}
+
+  defp should_report_comparison?(left, right, suffixes) do
+    (looks_like_datetime?(left, suffixes) and not non_datetime_literal?(right)) or
+      (looks_like_datetime?(right, suffixes) and not non_datetime_literal?(left))
+  end
+
+  defp non_datetime_literal?(literal)
+       when is_atom(literal) or is_binary(literal) or is_number(literal),
+       do: true
+
+  defp non_datetime_literal?(_node), do: false
 
   defp looks_like_datetime?({sigil, _meta, _args}, _suffixes)
        when sigil in [:sigil_U, :sigil_D, :sigil_T, :sigil_N],
