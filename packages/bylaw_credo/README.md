@@ -28,6 +28,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
@@ -63,6 +64,10 @@ check-specific `.credo.exs` usage.
 `Map.get(assigns, key)` and `assigns[key]` access in HEEx templates. Initialize
 assigns before rendering and access them directly with `@key` so missing values
 and defaults are handled at the rendering boundary.
+
+`Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` reports raw pixel
+spacing values in static Tailwind classes and CSS margin or padding declarations.
+Use design-system spacing tokens instead.
 
 `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` reports calls into
 application and dependency modules from module attributes because those calls

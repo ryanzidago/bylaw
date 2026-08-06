@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` to discourage
+  raw pixel spacing values in static HEEx and HTML class and style attributes.
 - Add `Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` to discourage indirect
   access to the special HEEx `assigns` variable.
 - Add `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` to avoid
