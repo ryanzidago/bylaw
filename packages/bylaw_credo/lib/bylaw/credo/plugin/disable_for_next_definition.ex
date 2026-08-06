@@ -1,25 +1,27 @@
 defmodule Bylaw.Credo.Plugin.DisableForNextDefinition do
   @moduledoc """
-  Adds structural, function-clause-level suppression to Credo.
+  Suppresses Credo issues throughout the next function clause.
 
-  Enable the plugin in `.credo.exs`, then place a
-  `# credo:disable-for-next-definition` comment before a `def` or `defp`.
-  The plugin resolves the next definition's inclusive source range from Credo's
-  token-annotated AST and hands that range back to Credo's standard
-  config-comment filter.
+  Credo's next-line suppression cannot cover an issue reported several lines
+  into a function, and manual line ranges become stale as the function changes.
+  This plugin resolves the next `def` or `defp` clause's AST range so checks can
+  keep reporting the precise offending line.
+
+  Enable it in `.credo.exs`:
 
       plugins: [
         {Bylaw.Credo.Plugin.DisableForNextDefinition, []}
       ]
+
+  Then name the check before the definition:
 
       # credo:disable-for-next-definition Bylaw.Credo.Check.Elixir.NoRaise
       def run do
         raise "failure"
       end
 
-  Omitting the check name suppresses every check in that definition. Each
-  syntactic clause is a separate definition, so a directive before one clause
-  of a multi-clause function applies only to that clause.
+  Omitting the check name suppresses all checks in that definition. Each clause
+  of a multi-clause function is treated separately.
   """
 
   import Credo.Plugin
