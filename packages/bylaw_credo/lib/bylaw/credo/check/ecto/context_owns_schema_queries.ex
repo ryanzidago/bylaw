@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   Only configured Phoenix context boundary modules may write Ecto queries for
   schemas owned by their namespace.
 
+  Keeping schema queries behind their owning context gives the application one
+  place to enforce authorization, visibility, and loading rules. It also keeps
+  controllers, jobs, and neighboring contexts from coupling themselves to the
+  schema's persistence details.
+
   ## Examples
 
   Configure the context boundary modules that own schemas below their namespace:

@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort do
   @moduledoc """
   Prefer ordering Ecto queries in the database over sorting rows in memory.
 
+  Database-side ordering avoids materializing all matching rows before sorting
+  them in Elixir, reducing application memory and work. It also lets the
+  database combine ordering with filtering, limits, and indexes before rows
+  cross the database boundary.
+
   ## Examples
 
   Avoid:

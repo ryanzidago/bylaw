@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEmptyListChecks do
   @moduledoc """
   Prefer `Enum.empty?/1` and `Enum.any?/1` over comparing collections to `[]`.
 
+  These functions state the question being asked—whether a collection is empty
+  or contains an item—without exposing a particular empty-list representation.
+  The predicate form also reads correctly for any enumerable the function
+  supports.
+
   ## Examples
 
   Avoid:

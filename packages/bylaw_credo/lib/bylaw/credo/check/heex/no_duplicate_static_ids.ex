@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
   @moduledoc """
   Forbids duplicate static `id` attributes in HEEx/HTML templates.
 
+  DOM IDs are document-wide identifiers used by labels, anchors, JavaScript,
+  and tests. Duplicates make those consumers ambiguous and can cause behavior
+  to depend on which matching element is found first.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

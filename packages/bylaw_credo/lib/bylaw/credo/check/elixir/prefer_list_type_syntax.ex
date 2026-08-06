@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
   @moduledoc """
   Prefer `list(type)` over `[type]` in typespecs.
 
+  The constructor form distinguishes a list type from list-literal syntax and
+  makes nested or long types easier to parse consistently. Keep the literal
+  form when the brackets intentionally describe a non-empty list shape.
+
   ## Examples
 
   Avoid:

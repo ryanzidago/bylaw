@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
   Prefer returning tagged results and handling them with `with` expressions
   that include an explicit `else` clause at application boundaries.
 
+  Explicit result values keep expected failures in the function contract,
+  allowing callers to handle them without rescuing or catching control flow.
+  This makes failures composable across boundaries and keeps the successful
+  path honest about the operations that can fail.
+
   ## Examples
 
   Avoid:

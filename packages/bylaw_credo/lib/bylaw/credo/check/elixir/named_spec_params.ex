@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
   @moduledoc """
   Requires named parameters in all `@spec` declarations.
 
+  Names make a function's contract understandable at the call boundary,
+  especially when several arguments share the same type. They also make code
+  review and future refactoring safer because each position has a stated role.
+
   ## Examples
 
   Avoid:

@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs do
   Requires caller-facing assigns in HEEx function components to have `attr` or
   `slot` declarations.
 
+  Declarations make a component's public inputs explicit, enable compile-time
+  validation and useful warnings, and give callers documentation at the point
+  where the component is defined. Without them, misspelled or missing assigns
+  fail later in rendering and the component's contract stays implicit.
+
   ## Examples
 
   Avoid:

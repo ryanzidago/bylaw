@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumUniqBy do
   @moduledoc """
   Prefer `Enum.uniq_by/2` before projecting fields with `Enum.map/2`.
 
+  Deduplicating the original records keeps the identity rule attached to the
+  source data and avoids projecting values that will only be discarded as
+  duplicates. It also makes the intended uniqueness key visible in one place.
+
   ## Examples
 
   Avoid:

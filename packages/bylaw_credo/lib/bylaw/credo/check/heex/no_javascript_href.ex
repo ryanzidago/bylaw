@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
   @moduledoc """
   Forbids static HEEx/HTML link `href` attributes that use `javascript:`.
 
+  A `javascript:` URL mixes navigation with executable code, weakens the
+  semantic link contract, and creates an unsafe path for interpolated data.
+  Use a real link for navigation or a button and event handler for an action.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

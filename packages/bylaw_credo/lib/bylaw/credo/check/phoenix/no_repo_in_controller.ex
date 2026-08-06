@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.Phoenix.NoRepoInController do
   @moduledoc """
   Disallows calling `Repo` directly from controller modules.
 
+  Keeping persistence access in contexts gives controllers a thin web boundary
+  and centralizes authorization, query composition, and domain policy. Direct
+  Repo calls make those rules easy to bypass and duplicate across endpoints.
+
   ## Examples
 
   Controllers should delegate data access to context modules (e.g. `Conversations`,

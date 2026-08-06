@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   @moduledoc """
   Requires static HEEx/HTML links to have an accessible name.
 
+  A link's accessible name communicates its destination to screen-reader users
+  and gives every user a meaningful target to identify. Icon-only links need a
+  text alternative such as `aria-label`.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

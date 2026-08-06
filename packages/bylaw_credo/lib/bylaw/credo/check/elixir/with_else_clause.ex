@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.Elixir.WithElseClause do
   @moduledoc """
   Prefer adding an explicit `else` clause to every `with` expression.
 
+  An explicit `else` clause makes the failure contract visible beside the
+  successful path and gives callers a deliberate place to normalize errors.
+  Without it, a non-matching result leaks out according to `with`'s implicit
+  behavior and is easier to overlook during review.
+
   ## Examples
 
   Avoid:

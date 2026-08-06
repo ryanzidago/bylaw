@@ -4,6 +4,10 @@ defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
   Ecto preload expression. Accept a `preloads:` option, bind it to a local
   `preloads` variable, and pass it to Ecto with `preload(^preloads)`.
 
+  Keeping preloads injectable lets callers compose the query for the data they
+  actually need. Hard-coded preloads force every caller to fetch the same
+  associations, increasing query work and making the helper difficult to reuse.
+
   ## Examples
 
   Avoid:

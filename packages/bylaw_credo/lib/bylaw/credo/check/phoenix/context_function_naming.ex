@@ -3,6 +3,10 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
   Context lookup functions must follow a naming convention that signals their
   return type, consistent with `Ecto.Repo` (e.g. `Repo.get/2`, `Repo.get!/2`):
 
+  Consistent names let callers understand whether they must handle `nil`, an
+  exception, or an `{:ok, value}`/`{:error, reason}` result before opening the
+  implementation. That keeps error handling aligned across context APIs.
+
   ## Examples
 
   - `get_*`   functions return `record | nil`

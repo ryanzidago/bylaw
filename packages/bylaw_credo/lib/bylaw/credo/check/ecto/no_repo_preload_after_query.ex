@@ -4,6 +4,11 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery do
   `Repo.all`. Prefer composing the preload into the Ecto query so the
   preload intent stays visible at the query boundary.
 
+  Query-level preloads keep retrieval and association requirements together,
+  so callers can see the complete database operation and the query can be
+  reviewed or composed as one unit. They also avoid hiding an additional
+  database operation after the Repo read has already returned.
+
   ## Examples
 
   Avoid:

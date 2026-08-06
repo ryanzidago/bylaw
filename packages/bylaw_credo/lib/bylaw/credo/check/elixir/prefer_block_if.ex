@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIf do
   @moduledoc """
   Prefer block syntax for `if` expressions.
 
+  Block syntax keeps both branches visually grouped with the condition, which
+  makes multi-line control flow easier to scan and extend without reformatting
+  a keyword list.
+
   ## Examples
 
   Avoid:

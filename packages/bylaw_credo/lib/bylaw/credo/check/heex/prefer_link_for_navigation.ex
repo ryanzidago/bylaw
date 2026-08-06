@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.HEEx.PreferLinkForNavigation do
   @moduledoc """
   Prefers link semantics over button semantics for durable HEEx/HTML navigation.
 
+  Links represent destinations, so browsers and assistive technologies can
+  expose them as navigation and users can open, copy, or revisit them normally.
+  Buttons should trigger actions; using one for navigation hides that contract
+  and makes progressive enhancement and keyboard behavior less predictable.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

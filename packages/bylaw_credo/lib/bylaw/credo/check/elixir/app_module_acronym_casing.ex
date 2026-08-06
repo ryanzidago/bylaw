@@ -3,6 +3,10 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   App-owned module names should use uppercase acronym words such as `API`,
   `CSV`, `HTTP`, `JSON`, `LLM`, and `UUID`.
 
+  Consistent acronym casing makes module and type names predictable to search,
+  read, and autocomplete. It also avoids treating the same domain term as
+  different words across neighboring modules.
+
   ## Examples
 
   Avoid:
