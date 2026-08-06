@@ -1,5 +1,7 @@
 # Changelog
 
+## 0.3.1 - 2026-08-06
+
 - Add `Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort` to discourage
   sorting `Repo.all` results in memory instead of using `order_by`.
 
