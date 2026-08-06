@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` to discourage indirect
+  access to the special HEEx `assigns` variable.
 - Add `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` to avoid
   application and dependency calls that create compile-time dependencies from
   module attributes while allowing literals and standard-library calls.
