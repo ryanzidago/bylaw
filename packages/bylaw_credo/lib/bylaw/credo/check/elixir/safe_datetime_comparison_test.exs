@@ -45,6 +45,38 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
+  test "reports datetime comparisons in piped Ecto or_where clauses" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(query, cutoff_at) do
+        query
+        |> or_where([r], r.inserted_at > ^cutoff_at)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> assert_issue(%{trigger: ">"})
+  end
+
+  test "reports datetime comparisons in piped Ecto join on clauses" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(query, cutoff_at) do
+        query
+        |> join(:inner, [r], related in Related, on: related.inserted_at > ^cutoff_at)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> assert_issue(%{trigger: ">"})
+  end
+
   test "does not report multiline Ecto where keyword clauses" do
     """
     defmodule Example do
