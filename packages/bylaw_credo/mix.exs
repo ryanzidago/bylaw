@@ -55,7 +55,10 @@ defmodule BylawCredo.MixProject do
       extras: ["README.md"],
       groups_for_modules: [
         "Bylaw.Credo checks": ~r/^(Elixir\.)?Bylaw\.Credo\.Check\./,
-        Plugins: [Bylaw.Credo.Plugin.HEExSources]
+        Plugins: [
+          Bylaw.Credo.Plugin.DisableForNextDefinition,
+          Bylaw.Credo.Plugin.HEExSources
+        ]
       ],
       nest_modules_by_prefix: [Bylaw.Credo.Check]
     ]

@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add `Bylaw.Credo.Plugin.DisableForNextDefinition` for AST-ranged suppression
+  of named or all Credo checks within the next `def` or `defp` clause.
+
 ## 0.3.1 - 2026-08-06
 
 - Add `Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort` to discourage

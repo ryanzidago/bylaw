@@ -22,6 +22,7 @@ check you want by listing its fully qualified module in the `checks:` list:
     %{
       name: "default",
       plugins: [
+        {Bylaw.Credo.Plugin.DisableForNextDefinition, []},
         {Bylaw.Credo.Plugin.HEExSources, []}
       ],
       checks: [
@@ -61,6 +62,70 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, notes, options, and
 check-specific `.credo.exs` usage.
+
+## Function-level suppression
+
+Enable `Bylaw.Credo.Plugin.DisableForNextDefinition` to suppress a check for an
+entire function definition without changing the line where the check reports
+its issue:
+
+```elixir
+%{
+  configs: [
+    %{
+      name: "default",
+      plugins: [
+        {Bylaw.Credo.Plugin.DisableForNextDefinition, []}
+      ]
+    }
+  ]
+}
+```
+
+Name a check to suppress only that check:
+
+```elixir
+# credo:disable-for-next-definition Bylaw.Credo.Check.Elixir.NoRaise
+def run do
+  perform_work()
+
+  if failed?() do
+    raise "failure"
+  end
+end
+```
+
+Omit the check to suppress all Credo issues in the definition:
+
+```elixir
+# credo:disable-for-next-definition
+def generated_code do
+  # ...
+end
+```
+
+The directive associates with the next syntactic `def` or `defp` in source
+order within the same module, protocol, or implementation boundary. Blank
+lines and ordinary comments may appear between the directive and definition.
+A nested module, protocol, or implementation stops the search. The resolved
+range includes the definition line through its matching `end`; one-line
+definitions cover their complete source expression. Nested `case`, `if`, `fn`,
+and similar blocks do not shorten the range.
+
+Each clause in a multi-clause function is a distinct syntactic definition. A
+directive before one clause suppresses only that clause. The first version does
+not target `defmacro`, `defmacrop`, `defguard`, `defdelegate`, or definitions
+inside `quote` blocks.
+
+The plugin is registered for Credo's default Suggest command, List, and Diff.
+It uses Credo's standard config-comment matching and issue filtering, so named
+checks use Credo's exact-module or regex semantics and suppressed issues do not
+affect output, counts, or exit status. If no following definition or exact AST
+range is available, the directive suppresses nothing.
+
+`bylaw_credo` currently depends on Credo `~> 1.7`. This plugin is tested against
+Credo 1.7.19 and assumes the Credo 1.7 plugin pipelines, token-annotated source
+AST, and `Credo.Check.ConfigComment` filtering contract remain available.
 
 `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` reports direct comparisons of
 values that look like dates or times and ignores comparisons inside Ecto query
