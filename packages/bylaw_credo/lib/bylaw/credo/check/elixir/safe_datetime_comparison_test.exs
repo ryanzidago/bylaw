@@ -45,6 +45,43 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
+  test "does not report multiline Ecto where keyword clauses" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(query, period_start, period_end) do
+        from(ba in query,
+          where:
+            ba.start_date <= ^period_end and
+              (is_nil(ba.end_date) or ba.end_date >= ^period_start)
+        )
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report comparisons anywhere inside an Ecto query" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def run(query, cutoff_at) do
+        from(ba in query,
+          order_by: ba.start_date,
+          select: ba.end_date >= ^cutoff_at
+        )
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
   test "does not report ordinary comparisons" do
     """
     defmodule Example do
