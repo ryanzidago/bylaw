@@ -2,6 +2,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
   use Credo.Test.Case
 
   alias Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes
+  alias Credo.Service.SourceFileAST
 
   test "ignores request AST nodes with nil arguments" do
     refute_issues_for_malformed_ast({:get, [line: 1], nil})
@@ -201,14 +202,16 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
 
   defp refute_issues_for_malformed_ast(ast) do
     source_file =
-      """
-      defmodule BylawWeb.ApiTest do
-        use BylawWeb.ConnCase
-      end
-      """
-      |> to_source_file("lib/bylaw_web/api_test.exs")
+      to_source_file(
+        """
+        defmodule BylawWeb.ApiTest do
+          use BylawWeb.ConnCase
+        end
+        """,
+        "lib/bylaw_web/api_test.exs"
+      )
 
-    Credo.Service.SourceFileAST.put(source_file, ast)
+    SourceFileAST.put(source_file, ast)
 
     source_file
     |> run_verified_routes_check()
