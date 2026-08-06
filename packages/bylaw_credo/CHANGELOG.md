@@ -4,7 +4,8 @@
 
 - Add `Bylaw.Credo.Plugin.DisableForNextDefinition` for AST-ranged suppression
   of named or all Credo checks within the next `def` or `defp` clause. Require
-  Credo 1.7.15 or newer for exact definition-range token metadata.
+  Credo 1.7.16 or newer for exact definition-range token metadata and supported
+  Elixir compiler compatibility.
 
 ## 0.3.1 - 2026-08-06
 

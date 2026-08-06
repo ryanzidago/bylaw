@@ -136,10 +136,11 @@ end
   definitions inside `quote` blocks.
 - The plugin runs for Credo's default Suggest command, List, and Diff.
 
-`bylaw_credo` requires Credo `~> 1.7.15`. Credo 1.7.15 is the first release that
-provides the token-annotated source AST needed for exact definition ranges. The
-plugin assumes the Credo 1.7 plugin pipelines and `Credo.Check.ConfigComment`
-filtering contract remain available.
+`bylaw_credo` requires Credo `~> 1.7.16`. Credo 1.7.15 introduced the
+token-annotated source AST needed for exact definition ranges, while 1.7.16 is
+the first compatible release verified with this package's supported Elixir
+versions. The plugin assumes the Credo 1.7 plugin pipelines and
+`Credo.Check.ConfigComment` filtering contract remain available.
 
 `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` reports direct comparisons of
 values that look like dates or times and ignores comparisons inside Ecto query

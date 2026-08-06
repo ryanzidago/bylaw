@@ -366,10 +366,10 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
   end
 
   @doc """
-  Issue: Credo versions before 1.7.15 do not provide the token metadata needed
-  to resolve exact definition ranges.
-  Why it matters: Allowing those versions makes the plugin silently leave
-  directives unresolved.
+  Issue: Credo versions before 1.7.15 lack the required token metadata, while
+  Credo 1.7.15 does not compile this package on supported Elixir versions.
+  Why it matters: Allowing those versions either leaves directives unresolved
+  or prevents the package from compiling.
   """
   test "package requires a Credo version with token metadata" do
     credo_requirement =
@@ -380,8 +380,8 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
         _dependency -> nil
       end)
 
-    assert Version.match?("1.7.15", credo_requirement)
-    refute Version.match?("1.7.14", credo_requirement)
+    assert Version.match?("1.7.16", credo_requirement)
+    refute Version.match?("1.7.15", credo_requirement)
   end
 
   defp function_with_body(body_lines) do
