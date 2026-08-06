@@ -342,7 +342,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
 
   defp traverse(ast, issues, _issue_meta, _router_paths), do: {ast, issues}
 
-  defp request_route_expr(args, router_paths) do
+  defp request_route_expr(args, router_paths) when is_list(args) do
     cond do
       route_expr_matches_router?(Enum.at(args, 0), router_paths) -> Enum.at(args, 0)
       route_expr_matches_router?(Enum.at(args, 1), router_paths) -> Enum.at(args, 1)
@@ -350,7 +350,9 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
     end
   end
 
-  defp keyword_route_expr(args, key, router_paths) do
+  defp request_route_expr(_args, _router_paths), do: nil
+
+  defp keyword_route_expr(args, key, router_paths) when is_list(args) do
     route_expr =
       Enum.find_value(args, fn
         list when is_list(list) -> Keyword.get(list, key)
@@ -364,7 +366,9 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
     end
   end
 
-  defp location_header_route_expr(args, router_paths) do
+  defp keyword_route_expr(_args, _key, _router_paths), do: nil
+
+  defp location_header_route_expr(args, router_paths) when is_list(args) do
     cond do
       Enum.at(args, 0) == "location" and
           route_expr_matches_router?(Enum.at(args, 1), router_paths) ->
@@ -378,6 +382,8 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
         nil
     end
   end
+
+  defp location_header_route_expr(_args, _router_paths), do: nil
 
   defp route_helper_name?(name) when is_atom(name) do
     name_string = Atom.to_string(name)

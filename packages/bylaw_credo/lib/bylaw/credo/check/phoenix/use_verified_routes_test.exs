@@ -3,6 +3,18 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
 
   alias Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes
 
+  test "ignores request AST nodes with nil arguments" do
+    refute_issues_for_malformed_ast({:get, [line: 1], nil})
+  end
+
+  test "ignores navigation AST nodes with nil arguments" do
+    refute_issues_for_malformed_ast({:redirect, [line: 1], nil})
+  end
+
+  test "ignores response header AST nodes with nil arguments" do
+    refute_issues_for_malformed_ast({:put_resp_header, [line: 1], nil})
+  end
+
   test "does not report route strings when web boundary and routes are not configured" do
     """
     defmodule BylawWeb.Api.V1.OpenApiTest do
@@ -185,5 +197,21 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutesTest do
         "/api/v1/tenants/:tenant_id/workspaces/:workspace_id/runs/:run_id"
       ]
     )
+  end
+
+  defp refute_issues_for_malformed_ast(ast) do
+    source_file =
+      """
+      defmodule BylawWeb.ApiTest do
+        use BylawWeb.ConnCase
+      end
+      """
+      |> to_source_file("lib/bylaw_web/api_test.exs")
+
+    Credo.Service.SourceFileAST.put(source_file, ast)
+
+    source_file
+    |> run_verified_routes_check()
+    |> refute_issues()
   end
 end
