@@ -67,11 +67,8 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
   alias Bylaw.Credo.Plugin.DisableForNextDefinitionTest.MarkerCheckExtra
   alias Credo.Check.ConfigComment
   alias Credo.CLI.Filter
-  alias Credo.CLI.Output.Shell
   alias Credo.Execution
   alias Credo.Issue
-  alias Credo.Service.SourceFileAST
-  alias Credo.SourceFile
 
   test "suppresses a named check reported on the definition line" do
     source = """
@@ -81,7 +78,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [DefinitionLineCheck]) == []
+    assert no_issues?(source, [DefinitionLineCheck])
   end
 
   test "suppresses NoRaise many lines into a function body" do
@@ -98,7 +95,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [NoRaise]) == []
+    assert no_issues?(source, [NoRaise])
   end
 
   test "leaves a different check inside the same function visible" do
@@ -132,8 +129,8 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     short_source = function_with_body(["marker()"])
     long_source = function_with_body([":one", ":two", ":three", "marker()", ":four"])
 
-    assert run_issues(short_source, [MarkerCheck]) == []
-    assert run_issues(long_source, [MarkerCheck]) == []
+    assert no_issues?(short_source, [MarkerCheck])
+    assert no_issues?(long_source, [MarkerCheck])
   end
 
   test "suppresses issues in a one-line definition" do
@@ -144,7 +141,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [NoRaise]) == []
+    assert no_issues?(source, [NoRaise])
   end
 
   test "uses the outer definition end when nested blocks are present" do
@@ -162,7 +159,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [MarkerCheck]) == []
+    assert no_issues?(source, [MarkerCheck])
   end
 
   test "a parameterless directive suppresses every check in the definition" do
@@ -176,7 +173,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [MarkerCheck, MarkerCheckExtra]) == []
+    assert no_issues?(source, [MarkerCheck, MarkerCheckExtra])
   end
 
   test "matches exact check modules with Credo config-comment semantics" do
@@ -259,9 +256,9 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     suggest_exec = run_credo(source, [MarkerCheck], "suggest")
     list_exec = run_credo(source, [MarkerCheck], "list")
 
-    assert issues(default_exec) == []
-    assert issues(suggest_exec) == []
-    assert issues(list_exec) == []
+    assert empty_issues?(default_exec)
+    assert empty_issues?(suggest_exec)
+    assert empty_issues?(list_exec)
   end
 
   test "the plugin resolves definition ranges on the Diff command path" do
@@ -279,7 +276,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     source = function_with_body(["marker()"])
     exec = run_credo(source, [MarkerCheck])
 
-    assert issues(exec) == []
+    assert empty_issues?(exec)
     assert Execution.get_exit_status(exec) == 0
   end
 
@@ -323,7 +320,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     end
     """
 
-    assert run_issues(source, [MarkerCheck]) == []
+    assert no_issues?(source, [MarkerCheck])
   end
 
   test "issues without usable filenames or line numbers are not suppressed" do
@@ -341,18 +338,17 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
   end
 
   test "fails closed when an exact AST range is unavailable" do
-    source_file =
-      SourceFile.parse(
+    source_ast =
+      Code.string_to_quoted!(
         """
         defmodule Example do
           # credo:disable-for-next-definition #{inspect(MarkerCheck)}
           def run, do: marker()
         end
         """,
-        "sample.ex"
+        columns: true,
+        token_metadata: true
       )
-
-    source_ast = SourceFile.ast(source_file)
 
     ast =
       Macro.prewalk(source_ast, fn
@@ -363,16 +359,10 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
           node
       end)
 
-    SourceFileAST.put(source_file, ast)
-
     directive = ConfigComment.new("disable-for-next-definition", inspect(MarkerCheck), 2)
+    resolved_comments = ResolveRanges.resolve(ast, [directive])
 
-    exec = Execution.put_source_files(Execution.build(), [source_file])
-
-    exec = %{exec | config_comment_map: %{source_file.filename => [directive]}}
-    resolved_exec = ResolveRanges.call(exec)
-
-    assert resolved_exec.config_comment_map[source_file.filename] == [directive]
+    assert Enum.empty?(resolved_comments)
   end
 
   defp function_with_body(body_lines) do
@@ -409,14 +399,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
 
     args = command_args ++ ["--config-file", config_path, "--format", "oneline"]
 
-    parent = self()
-    ref = make_ref()
-
-    Shell.suppress_output(fn -> send(parent, {ref, Credo.run(args)}) end)
-
-    receive do
-      {^ref, exec} -> exec
-    end
+    Credo.run(args)
   end
 
   defp config(checks, source_path) do
@@ -445,5 +428,17 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     source
     |> run_credo(checks)
     |> issues()
+  end
+
+  defp no_issues?(source, checks) do
+    source
+    |> run_issues(checks)
+    |> Enum.empty?()
+  end
+
+  defp empty_issues?(exec) do
+    exec
+    |> issues()
+    |> Enum.empty?()
   end
 end

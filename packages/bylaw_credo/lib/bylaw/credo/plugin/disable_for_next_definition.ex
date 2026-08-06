@@ -70,7 +70,17 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinition do
     end
 
     defp resolved_comments(%SourceFile{status: :valid} = source_file, comments) do
-      case collect(SourceFile.ast(source_file)) do
+      resolve(SourceFile.ast(source_file), comments)
+    rescue
+      _error -> []
+    end
+
+    defp resolved_comments(_source_file, _comments), do: []
+
+    @doc false
+    @spec resolve(term(), list(map())) :: list(map())
+    def resolve(ast, comments) do
+      case collect(ast) do
         {:ok, %{definitions: definitions, boundaries: boundaries}} ->
           comments
           |> Enum.filter(&(&1.instruction == @instruction))
@@ -79,11 +89,7 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinition do
         :error ->
           []
       end
-    rescue
-      _error -> []
     end
-
-    defp resolved_comments(_source_file, _comments), do: []
 
     defp resolve_comment(comment, definitions, boundaries) do
       parent = containing_boundary(comment.line_no, boundaries)
