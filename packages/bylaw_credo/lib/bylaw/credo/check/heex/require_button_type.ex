@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireButtonType do
   @moduledoc """
   Requires static HEEx/HTML button tags to define a `type` attribute.
 
+  A button inside a form defaults to submitting that form when its intent is
+  not explicit. Declaring `type` prevents menu, cancel, and other action
+  buttons from accidentally triggering submission as the form evolves.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

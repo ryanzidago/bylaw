@@ -3,6 +3,10 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
   Prefer `:naive_datetime` or `:utc_datetime` over `:date` in Ecto schemas and
   migrations when you need precise timestamps.
 
+  A date-only type discards time-of-day and timezone information. Using it for
+  an event or deadline can collapse distinct moments into the same calendar
+  day and make ordering, expiration, and cross-timezone behavior incorrect.
+
   ## Examples
 
   Avoid:

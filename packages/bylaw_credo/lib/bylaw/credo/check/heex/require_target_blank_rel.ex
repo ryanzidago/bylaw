@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   @moduledoc """
   Requires static HEEx/HTML links with `target="_blank"` to define safe `rel`.
 
+  A new tab opened without an appropriate `rel` can retain an opener reference
+  to the originating page. `noopener` prevents the destination from using that
+  reference, while `noreferrer` additionally suppresses the referrer when that
+  privacy tradeoff is desired.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
   Avoid private functions that only forward their arguments to a single call.
   Inline the call instead.
 
+  A wrapper with no policy or transformation adds a name and an extra place to
+  navigate without creating a meaningful boundary. Inlining keeps the call
+  site direct while preserving the option to introduce a wrapper later when
+  it owns real behavior.
+
   ## Examples
 
   Avoid:

@@ -2,6 +2,11 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   @moduledoc """
   Enforces Phoenix verified routes (`~p`) for application routes in the web layer.
 
+  Verified routes validate path structure and route parameters at compile time,
+  so renames and malformed paths fail near their source instead of becoming
+  runtime navigation or test failures. They also keep route construction tied
+  to the router that owns the route.
+
   ## Examples
 
   Configure the Phoenix web boundary and one or more routers that define the

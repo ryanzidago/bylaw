@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.PreferNativeInteractiveElement do
   @moduledoc """
   Prefers native interactive elements over clickable static HEEx/HTML tags.
 
+  Native buttons and links provide keyboard interaction, focus behavior, and
+  accessibility semantics by default. Making a `div` or `span` clickable
+  requires reimplementing those behaviors and is easy to get incomplete.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   Prefer a single-row Repo read over loading every matching row and taking the
   first result in Elixir.
 
+  `Repo.all` retrieves and materializes every match even when the caller needs
+  only one row. `Repo.one` expresses the cardinality expectation at the Repo
+  boundary, avoids unnecessary row transfer, and can surface an unexpected
+  second match instead of silently discarding it.
+
   ## Examples
 
   Avoid:

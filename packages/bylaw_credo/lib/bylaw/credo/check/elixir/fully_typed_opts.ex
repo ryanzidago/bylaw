@@ -3,6 +3,10 @@ defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
   Fully type option lists instead of using `keyword()` or `Keyword.t()` for
   `opts` parameters or `*_opts` type aliases.
 
+  A named option type documents the supported keys and their value types at
+  the API boundary. Generic keyword types allow misspelled, unsupported, or
+  incorrectly typed options to pass through without useful static feedback.
+
   ## Examples
 
   Avoid:

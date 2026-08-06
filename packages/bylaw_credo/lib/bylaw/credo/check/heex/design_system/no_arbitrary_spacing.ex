@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
   @moduledoc """
   Forbids raw pixel spacing values in static HEEx/HTML attributes.
 
+  Design-system spacing tokens keep layouts consistent and give the system one
+  place to adjust scale, breakpoints, or themes. One-off pixel values make
+  visual drift harder to detect and maintain.
+
   Embedded `~H` templates are checked during normal Credo runs over Elixir
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.

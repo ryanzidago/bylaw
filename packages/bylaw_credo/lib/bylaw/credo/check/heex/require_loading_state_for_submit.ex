@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   @moduledoc """
   Requires HEEx submit forms and controls to expose a loading or disabled state.
 
+  Submission can take long enough for users to click again or wonder whether
+  anything happened. A loading or disabled state gives immediate feedback and
+  helps prevent duplicate requests while the server handles the first one.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

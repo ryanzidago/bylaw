@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLabelForInput do
   @moduledoc """
   Requires static HEEx/HTML form controls to have an accessible name.
 
+  A visible or programmatic label tells users what a control represents and
+  lets assistive technology announce that context while the control has focus.
+  Placeholder text alone is not a durable replacement for that relationship.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

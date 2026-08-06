@@ -3,6 +3,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   Reports public functions on selected behaviour implementations when those
   functions are not callbacks of the implemented behaviours.
 
+  Behaviour implementations are easier to substitute and review when their
+  public surface is limited to the contract they implement. Extra public
+  functions create accidental entry points that callers may depend on even
+  though the behaviour does not promise them.
+
   ## Examples
 
   This check is opt-in by behaviour. Configure only the behaviours whose

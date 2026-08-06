@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkHref do
   @moduledoc """
   Requires static HEEx/HTML anchor tags to define an `href` attribute.
 
+  An anchor without a destination is not a usable link and cannot provide the
+  normal browser behaviors users expect, such as keyboard activation, copying,
+  or opening the destination in another context.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

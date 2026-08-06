@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   @moduledoc """
   Discourages Tailwind margin utility classes on static HEEx/HTML elements.
 
+  Layout spacing belongs between components or groups rather than being spread
+  across individual elements. Using container gaps makes relationships easier
+  to see and prevents spacing rules from accumulating as markup changes.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   @moduledoc """
   Requires static HEEx/HTML button tags to have an accessible name.
 
+  An accessible name tells screen-reader users what an otherwise visual button
+  does. Without one, an icon-only control is present in the interface but not
+  meaningfully identifiable or actionable to every user.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir

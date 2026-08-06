@@ -2,6 +2,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireImageAlt do
   @moduledoc """
   Requires static HEEx/HTML image tags to define an `alt` attribute.
 
+  Alternative text gives people who cannot see the image its meaning. An
+  explicit empty value is still useful for decorative images because it tells
+  assistive technology to skip content that carries no information.
+
   ## Examples
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir
