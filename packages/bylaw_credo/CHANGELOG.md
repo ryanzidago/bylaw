@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0 - 2026-08-06
 
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` to discourage
   raw pixel spacing values in static HEEx and HTML class and style attributes.
