@@ -30,7 +30,7 @@ defmodule BylawCredo.MixProject do
 
   defp deps do
     [
-      {:credo, "~> 1.7", runtime: false},
+      {:credo, "~> 1.7.15", runtime: false},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:stream_data, "~> 1.4", only: :test},

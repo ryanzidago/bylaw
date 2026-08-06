@@ -365,6 +365,25 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
     assert Enum.empty?(resolved_comments)
   end
 
+  @doc """
+  Issue: Credo versions before 1.7.15 do not provide the token metadata needed
+  to resolve exact definition ranges.
+  Why it matters: Allowing those versions makes the plugin silently leave
+  directives unresolved.
+  """
+  test "package requires a Credo version with token metadata" do
+    credo_requirement =
+      Mix.Project.config()
+      |> Keyword.fetch!(:deps)
+      |> Enum.find_value(fn
+        {:credo, requirement, _opts} -> requirement
+        _dependency -> nil
+      end)
+
+    assert Version.match?("1.7.15", credo_requirement)
+    refute Version.match?("1.7.14", credo_requirement)
+  end
+
   defp function_with_body(body_lines) do
     body = Enum.map_join(body_lines, "\n", &"    #{&1}")
 
