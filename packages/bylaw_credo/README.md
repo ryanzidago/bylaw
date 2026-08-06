@@ -34,6 +34,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
         {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
+        {Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
@@ -84,6 +85,10 @@ values and Elixir or OTP standard-library calls are accepted by default.
 row mutations and literal `INSERT`, `UPDATE`, `DELETE`, or `MERGE` SQL in Ecto
 schema migrations. It is a best-effort guideline that points operational data
 changes toward reviewed, resumable data-migration scripts or release tasks.
+
+`Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort` reports direct
+`Repo.all` results sorted in memory with `Enum.sort` or `Enum.sort_by`. Add
+`order_by` to the Ecto query instead.
 
 `Bylaw.Credo.Check.HEEx.PreferLinkForNavigation` enforces link semantics for
 durable navigation. It reports explicit LiveView navigation commands wired
