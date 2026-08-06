@@ -57,4 +57,20 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> run_check(SafeDateTimeComparison)
     |> refute_issues()
   end
+
+  test "does not report datetime field checks against non-datetime literals" do
+    """
+    defmodule Example do
+      def run(state) do
+        state.turn_started_at != nil
+        state.turn_first_token_at == nil
+        state.turn_started_at == false
+        state.turn_first_token_at == true
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
 end
