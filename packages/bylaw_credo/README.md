@@ -65,6 +65,10 @@ check-specific `.credo.exs` usage.
 assigns before rendering and access them directly with `@key` so missing values
 and defaults are handled at the rendering boundary.
 
+`Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` reports raw pixel
+spacing values in static Tailwind classes and CSS margin or padding declarations.
+Use design-system spacing tokens instead.
+
 `Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` reports calls into
 application and dependency modules from module attributes because those calls
 execute during compilation and embed their results in the consumer. Literal
