@@ -8,7 +8,7 @@ Downstream applications should typically include this package only in
 development and test:
 
 ```elixir
-{:bylaw_credo, "== 0.2.0", only: [:dev, :test], runtime: false}
+{:bylaw_credo, "== 0.3.0", only: [:dev, :test], runtime: false}
 ```
 
 ## Usage
