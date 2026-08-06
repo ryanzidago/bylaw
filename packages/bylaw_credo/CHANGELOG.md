@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 - 2026-08-06
 
 - Add `Bylaw.Credo.Plugin.DisableForNextDefinition` for AST-ranged suppression
   of named or all Credo checks within the next `def` or `defp` clause. Require
