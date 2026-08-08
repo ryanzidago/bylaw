@@ -82,6 +82,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:web],
     param_defaults: [
       loading_attrs: ["phx-disable-with", "disabled"],
       loading_class_patterns: []

@@ -73,6 +73,7 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:database, :performance],
     explanations: [
       check: @moduledoc
     ]

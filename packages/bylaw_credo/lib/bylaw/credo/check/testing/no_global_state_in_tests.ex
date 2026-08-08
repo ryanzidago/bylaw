@@ -81,6 +81,7 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:testing],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

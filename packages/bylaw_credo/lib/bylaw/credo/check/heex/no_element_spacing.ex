@@ -62,6 +62,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:web, :design_system],
     explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex

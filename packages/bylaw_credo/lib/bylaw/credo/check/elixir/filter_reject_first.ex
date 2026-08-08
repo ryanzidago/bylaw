@@ -54,6 +54,7 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
   use Credo.Check,
     category: :refactor,
     base_priority: :high,
+    tags: [:performance],
     explanations: [
       check: @moduledoc
     ]

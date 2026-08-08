@@ -60,6 +60,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:database],
     explanations: [
       check: @moduledoc
     ]

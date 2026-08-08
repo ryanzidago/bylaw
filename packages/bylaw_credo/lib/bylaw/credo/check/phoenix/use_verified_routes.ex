@@ -119,6 +119,7 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:web],
     param_defaults: [
       web_paths: [],
       endpoint_paths: [],

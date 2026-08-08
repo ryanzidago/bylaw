@@ -75,6 +75,7 @@ defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
   use Credo.Check,
     category: :warning,
     base_priority: :higher,
+    tags: [:database],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

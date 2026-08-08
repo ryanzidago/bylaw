@@ -55,6 +55,7 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoTransaction do
   use Credo.Check,
     category: :warning,
     base_priority: :higher,
+    tags: [:database, :architecture],
     explanations: [
       check: @moduledoc
     ]

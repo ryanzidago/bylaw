@@ -47,6 +47,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEmptyListChecks do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]

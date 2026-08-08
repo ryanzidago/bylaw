@@ -48,6 +48,7 @@ defmodule Bylaw.Credo.Check.Elixir.DocBeforeSpec do
   use Credo.Check,
     base_priority: :normal,
     category: :readability,
+    tags: [:readability],
     explanations: [check: @moduledoc]
 
   @public_definitions [:def, :defguard, :defmacro]

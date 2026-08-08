@@ -53,6 +53,7 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.NoInlineAssignInReturnTuple do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:web],
     explanations: [
       check: @moduledoc
     ]

@@ -48,6 +48,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]

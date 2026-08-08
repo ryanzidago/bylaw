@@ -56,6 +56,7 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:web],
     explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex

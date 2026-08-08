@@ -56,6 +56,7 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:database],
     explanations: [
       check: @moduledoc
     ]

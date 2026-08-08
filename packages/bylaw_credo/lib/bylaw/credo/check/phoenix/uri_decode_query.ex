@@ -49,6 +49,7 @@ defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
   use Credo.Check,
     category: :warning,
     base_priority: :higher,
+    tags: [:web, :security],
     explanations: [
       check: @moduledoc
     ]

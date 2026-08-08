@@ -57,6 +57,7 @@ defmodule Bylaw.Credo.Check.Ecto.ComposablePreloadQueries do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:database, :performance],
     explanations: [
       check: @moduledoc
     ]

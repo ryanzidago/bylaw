@@ -85,6 +85,7 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
   use Credo.Check,
     base_priority: :higher,
     category: :design,
+    tags: [:database, :architecture],
     param_defaults: [schema_modules: [], excluded_modules: []],
     explanations: [
       check: @moduledoc,

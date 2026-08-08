@@ -52,6 +52,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIf do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]
