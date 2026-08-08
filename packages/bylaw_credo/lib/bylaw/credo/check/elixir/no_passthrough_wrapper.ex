@@ -69,7 +69,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
 
   use Credo.Check,
     base_priority: :high,
-    category: :design,
+    category: :refactor,
+    tags: [:architecture],
     param_defaults: [include_public: false],
     explanations: [
       check: @moduledoc,

@@ -53,7 +53,8 @@ defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
 
   use Credo.Check,
     base_priority: :high,
-    category: :readability,
+    category: :refactor,
+    tags: [:database, :performance],
     explanations: [
       check: @moduledoc
     ]

@@ -46,6 +46,7 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability, :performance],
     explanations: [
       check: @moduledoc
     ]

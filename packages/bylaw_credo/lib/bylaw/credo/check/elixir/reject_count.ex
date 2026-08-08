@@ -51,6 +51,7 @@ defmodule Bylaw.Credo.Check.Elixir.RejectCount do
   use Credo.Check,
     category: :refactor,
     base_priority: :high,
+    tags: [:performance],
     explanations: [
       check: @moduledoc
     ]

@@ -58,6 +58,7 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:web, :accessibility],
     explanations: [check: @moduledoc]
 
   alias Bylaw.Credo.Heex

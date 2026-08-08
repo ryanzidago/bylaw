@@ -77,7 +77,8 @@ defmodule Bylaw.Credo.Check.Testing.NoSetupInTests do
 
   use Credo.Check,
     base_priority: :higher,
-    category: :warning,
+    category: :design,
+    tags: [:testing],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

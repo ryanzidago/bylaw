@@ -72,6 +72,7 @@ defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
   use Credo.Check,
     base_priority: :normal,
     category: :readability,
+    tags: [:readability],
     param_defaults: [min_params: 1],
     explanations: [
       check: @moduledoc,

@@ -73,7 +73,8 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
   use Credo.Check,
     base_priority: :higher,
-    category: :warning,
+    category: :readability,
+    tags: [:testing],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

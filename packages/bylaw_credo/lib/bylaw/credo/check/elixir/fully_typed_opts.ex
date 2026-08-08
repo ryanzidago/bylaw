@@ -72,6 +72,7 @@ defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

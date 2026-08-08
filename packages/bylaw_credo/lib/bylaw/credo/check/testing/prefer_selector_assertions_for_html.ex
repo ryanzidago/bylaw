@@ -54,7 +54,8 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
 
   use Credo.Check,
     base_priority: :higher,
-    category: :warning,
+    category: :refactor,
+    tags: [:testing, :web, :accessibility],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

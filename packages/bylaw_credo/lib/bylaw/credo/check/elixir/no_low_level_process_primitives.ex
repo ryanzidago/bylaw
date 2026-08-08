@@ -91,7 +91,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
 
   use Credo.Check,
     base_priority: :high,
-    category: :warning,
+    category: :design,
+    tags: [:architecture],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

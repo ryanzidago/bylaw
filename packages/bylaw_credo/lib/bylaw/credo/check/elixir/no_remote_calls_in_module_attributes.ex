@@ -77,6 +77,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
   use Credo.Check,
     base_priority: :high,
     category: :design,
+    tags: [:architecture],
     param_defaults: [allow_standard_library: true],
     explanations: [
       check: @moduledoc,

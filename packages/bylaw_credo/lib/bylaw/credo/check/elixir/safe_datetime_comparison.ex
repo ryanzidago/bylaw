@@ -69,6 +69,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:correctness],
     param_defaults: [datetime_suffixes: ~w(_datetime _at _date _time)],
     explanations: [
       check: @moduledoc,

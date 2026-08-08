@@ -56,6 +56,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]

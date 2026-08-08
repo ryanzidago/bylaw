@@ -80,6 +80,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   use Credo.Check,
     base_priority: :high,
     category: :design,
+    tags: [:architecture],
     param_defaults: [behaviours: [], allowed: [], excluded_paths: []],
     explanations: [
       check: @moduledoc,

@@ -86,6 +86,7 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
   use Credo.Check,
     base_priority: :higher,
     category: :design,
+    tags: [:database, :architecture],
     explanations: [
       check: @moduledoc
     ]

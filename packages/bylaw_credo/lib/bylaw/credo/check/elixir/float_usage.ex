@@ -68,6 +68,7 @@ defmodule Bylaw.Credo.Check.Elixir.FloatUsage do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:database],
     explanations: [
       check: @moduledoc
     ]

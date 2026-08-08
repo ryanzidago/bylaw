@@ -53,6 +53,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoThen do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]

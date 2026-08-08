@@ -75,6 +75,7 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
   use Credo.Check,
     base_priority: :high,
     category: :design,
+    tags: [:web, :architecture],
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

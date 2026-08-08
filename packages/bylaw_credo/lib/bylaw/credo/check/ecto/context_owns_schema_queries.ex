@@ -85,6 +85,7 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   use Credo.Check,
     base_priority: :higher,
     category: :design,
+    tags: [:database, :architecture],
     param_defaults: [
       contexts: [],
       excluded_modules: [],

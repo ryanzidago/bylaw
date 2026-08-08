@@ -64,6 +64,7 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:database],
     explanations: [
       check: @moduledoc
     ]

@@ -85,6 +85,7 @@ defmodule Bylaw.Credo.Check.Elixir.AppModuleAcronymCasing do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:readability],
     param_defaults: [
       acronyms: ~w(API CSV HTTP JSON LLM UUID),
       app_roots: [],

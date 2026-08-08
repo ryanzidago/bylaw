@@ -99,6 +99,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   use Credo.Check,
     base_priority: :normal,
     category: :readability,
+    tags: [:readability],
     explanations: [check: @moduledoc]
 
   @doc false

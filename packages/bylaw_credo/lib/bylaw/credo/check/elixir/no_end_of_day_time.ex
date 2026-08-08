@@ -68,6 +68,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:correctness],
     param_defaults: [excluded_paths: ["test/"]],
     explanations: [
       check: @moduledoc,

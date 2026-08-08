@@ -52,6 +52,7 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
   use Credo.Check,
     base_priority: :high,
     category: :readability,
+    tags: [:database, :readability],
     explanations: [
       check: @moduledoc
     ]
