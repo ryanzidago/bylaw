@@ -48,7 +48,7 @@ defmodule Bylaw.Credo.Check.Testing.NoTestsInTestDir do
 
   use Credo.Check,
     base_priority: :higher,
-    category: :warning,
+    category: :consistency,
     tags: [:testing],
     explanations: [
       check: @moduledoc

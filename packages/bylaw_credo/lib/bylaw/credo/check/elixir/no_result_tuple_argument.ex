@@ -72,7 +72,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
 
   use Credo.Check,
     base_priority: :high,
-    category: :warning,
+    category: :design,
     param_defaults: [excluded_paths: []],
     explanations: [
       check: @moduledoc,

@@ -29,7 +29,7 @@ defmodule Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess do
 
   use Credo.Check,
     base_priority: :high,
-    category: :warning,
+    category: :readability,
     tags: [:web],
     explanations: [check: @moduledoc]
 

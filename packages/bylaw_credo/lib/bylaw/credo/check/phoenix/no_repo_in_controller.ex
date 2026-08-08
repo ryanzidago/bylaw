@@ -57,7 +57,7 @@ defmodule Bylaw.Credo.Check.Phoenix.NoRepoInController do
 
   use Credo.Check,
     base_priority: :higher,
-    category: :warning,
+    category: :design,
     tags: [:web, :architecture],
     explanations: [check: @moduledoc]
 

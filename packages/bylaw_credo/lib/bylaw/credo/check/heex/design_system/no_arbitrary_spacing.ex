@@ -26,7 +26,7 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
 
   use Credo.Check,
     base_priority: :high,
-    category: :warning,
+    category: :design,
     tags: [:web, :design_system],
     explanations: [
       check: """
