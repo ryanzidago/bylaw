@@ -3,10 +3,6 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
   Prefer composing Ecto queries with pipes instead of using keyword clauses
   directly inside `from/2`.
 
-  Pipelines make each query transformation visible as a composable step. This
-  keeps conditional clauses and reusable query helpers easy to add without
-  turning one `from/2` call into a dense list of mixed concerns.
-
   ## Examples
 
   Avoid:
@@ -23,10 +19,10 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
   `where`, `order_by`, joins, `select`, and similar clauses attached
   directly to `from`.
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  Pipelines make each query transformation visible as a composable step. This
+  keeps conditional clauses and reusable query helpers easy to add without
+  turning one `from/2` call into a dense list of mixed concerns.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

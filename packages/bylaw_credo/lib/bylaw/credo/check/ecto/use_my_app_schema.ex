@@ -2,11 +2,6 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
   @moduledoc """
   `use Ecto.Schema` should not be used directly. Use your app schema module instead.
 
-  A shared schema wrapper keeps persistence conventions in one place. New
-  schemas then receive the same key, foreign-key, timestamp, and other
-  project-wide defaults instead of depending on each module author to repeat
-  them correctly.
-
   ## Examples
 
   For example:
@@ -49,18 +44,19 @@ defmodule Bylaw.Credo.Check.Ecto.UseMyAppSchema do
   end
   ```
 
-  ## Notes
 
   An app schema module, such as `MyApp.Schema`, can provide project-specific
   schema defaults:
   - primary key conventions
   - foreign key conventions
   - timestamp precision and type conventions
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
   Since each application chooses its own schema wrapper module, files ending in
   `/schema.ex` are treated as wrapper modules and are not reported.
 
+  A shared schema wrapper keeps persistence conventions in one place. New
+  schemas then receive the same key, foreign-key, timestamp, and other
+  project-wide defaults instead of depending on each module author to repeat
+  them correctly.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

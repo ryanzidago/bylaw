@@ -2,15 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
   @moduledoc """
   Requires static HEEx/HTML button tags to have an accessible name.
 
-  An accessible name tells screen-reader users what an otherwise visual button
-  does. Without one, an icon-only control is present in the interface but not
-  meaningfully identifiable or actionable to every user.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -24,13 +17,13 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
         <button type="button">{@label}</button>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  An accessible name tells screen-reader users what an otherwise visual button
+  does. Without one, an icon-only control is present in the interface but not
+  meaningfully identifiable or actionable to every user.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -52,6 +45,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

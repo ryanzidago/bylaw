@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.DocBeforeSpec do
   @moduledoc """
   Requires `@doc` to appear before `@spec` for public function definitions.
 
-  Keeping the explanation before the contract follows the way readers usually
-  scan a public API: first what the function means, then the exact types it
-  accepts and returns.
-
   ## Examples
 
   Avoid:
@@ -19,10 +15,10 @@ defmodule Bylaw.Credo.Check.Elixir.DocBeforeSpec do
         @spec handle(result :: term()) :: :ok
         def handle(result), do: :ok
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  Keeping the explanation before the contract follows the way readers usually
+  scan a public API: first what the function means, then the exact types it
+  accepts and returns.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

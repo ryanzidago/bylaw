@@ -17,7 +17,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
           {:error, reason} -> reason
         end
 
-  ## Notes
 
   A helper that accepts tagged result tuples mixes two responsibilities:
   branching on the result shape and doing the work for the successful or error
@@ -25,10 +24,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoResultTupleArgument do
 
   Branch where the tagged result is produced, then call helpers with the value
   or reason they actually operate on.
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
 
   ## Options
 

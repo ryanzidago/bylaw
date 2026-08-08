@@ -4,19 +4,22 @@ defmodule Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations do
 
   ## Examples
 
-  Avoid changing rows from a migration:
+  Avoid:
+
+      Changing rows from a migration:
 
       def up do
         Repo.update_all(Account, set: [status: :active])
         execute("DELETE FROM expired_sessions")
       end
 
-  Prefer a reviewed data-migration script or explicit release task that can
-  batch, throttle, observe, retry, and resume the work safely:
+  Prefer:
+
+      A reviewed data-migration script or explicit release task that can
+      batch, throttle, observe, retry, and resume the work safely:
 
       mix run priv/repo/data_migrations/backfill_account_statuses.exs
 
-  ## Why
 
   Ecto migrations normally run while holding the migration lock and inside a
   DDL transaction. Row mutations and backfills can make that transaction

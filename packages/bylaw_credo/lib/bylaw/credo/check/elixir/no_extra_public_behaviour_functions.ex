@@ -3,12 +3,20 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   Reports public functions on selected behaviour implementations when those
   functions are not callbacks of the implemented behaviours.
 
-  Behaviour implementations are easier to substitute and review when their
-  public surface is limited to the contract they implement. Extra public
-  functions create accidental entry points that callers may depend on even
-  though the behaviour does not promise them.
-
   ## Examples
+
+  Avoid:
+
+  Exposing functions that are not part of the implemented behaviour:
+
+      def run(job), do: perform(job)
+      def debug_state, do: :ok
+
+  Prefer:
+
+  Expose only the behaviour callbacks:
+
+      def run(job), do: perform(job)
 
   This check is opt-in by behaviour. Configure only the behaviours whose
   implementations should expose a minimal public API:
@@ -27,12 +35,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   Credo configuration. Use `:allowed`, for example `[child_spec: 1]`, for
   intentional extra public functions.
 
-  ## Notes
 
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
-
+  Behaviour implementations are easier to substitute and review when their
+  public surface is limited to the contract they implement. Extra public
+  functions create accidental entry points that callers may depend on even
+  though the behaviour does not promise them.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

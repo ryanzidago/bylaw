@@ -2,18 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
   @moduledoc """
   Discourages Tailwind margin utility classes on static HEEx/HTML elements.
 
-  Layout spacing belongs between components or groups rather than being spread
-  across individual elements. Using container gaps makes relationships easier
-  to see and prevents spacing rules from accumulating as markup changes.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
-
-  Dynamic class values, component tags, slot tags, and root attributes are
-  ignored because their final DOM classes cannot be proven statically.
   Avoid:
 
         ~H\"\"\"
@@ -29,13 +19,16 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
         </div>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+  Layout spacing belongs between components or groups rather than being spread
+  across individual elements. Using container gaps makes relationships easier
+  to see and prevents spacing rules from accumulating as markup changes.
 
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  Dynamic class values, component tags, slot tags, and root attributes are
+  ignored because their final DOM classes cannot be proven statically.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -57,6 +50,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoElementSpacing do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

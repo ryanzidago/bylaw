@@ -2,16 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
   @moduledoc """
   Requires static HEEx/HTML links with `target="_blank"` to define safe `rel`.
 
-  A new tab opened without an appropriate `rel` can retain an opener reference
-  to the originating page. `noopener` prevents the destination from using that
-  reference, while `noreferrer` additionally suppresses the referrer when that
-  privacy tradeoff is desired.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -26,13 +18,14 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
         <a href="https://example.com" target={@target} rel={@rel}>Example</a>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  A new tab opened without an appropriate `rel` can retain an opener reference
+  to the originating page. `noopener` prevents the destination from using that
+  reference, while `noreferrer` additionally suppresses the referrer when that
+  privacy tradeoff is desired.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -54,6 +47,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireTargetBlankRel do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

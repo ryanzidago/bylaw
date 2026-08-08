@@ -19,7 +19,6 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoTransaction do
           create_audit_event!(attrs)
         end)
 
-  ## Notes
 
   `Repo.transaction/1,2` is deprecated in Ecto 3.13 in favor of
   `Repo.transact/1,2`. Keeping deprecated calls around makes future Ecto
@@ -27,8 +26,6 @@ defmodule Bylaw.Credo.Check.Ecto.NoRepoTransaction do
 
   `Repo.transact/1,2` communicates the preferred Ecto API directly and
   keeps transaction call sites off the deprecated API.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

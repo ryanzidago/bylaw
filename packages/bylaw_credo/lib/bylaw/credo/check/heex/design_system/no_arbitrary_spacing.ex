@@ -2,6 +2,21 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
   @moduledoc """
   Forbids raw pixel spacing values in static HEEx/HTML attributes.
 
+  ## Examples
+
+  Avoid:
+
+      ~H\"\"\"
+      <div class="m-[18px] p-[22px] gap-[13px]" style="margin: 18px"></div>
+      \"\"\"
+
+  Prefer:
+
+      ~H\"\"\"
+      <div class="m-4 p-6 gap-3" style="margin: var(--space-4)"></div>
+      <div class={@class} style={@style}></div>
+      \"\"\"
+
   Design-system spacing tokens keep layouts consistent and give the system one
   place to adjust scale, breakpoints, or themes. One-off pixel values make
   visual drift harder to detect and maintain.
@@ -10,18 +25,26 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing do
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
-  ## Bad
+  ## Options
 
-      ~H\"\"\"
-      <div class="m-[18px] p-[22px] gap-[13px]" style="margin: 18px"></div>
-      \"\"\"
+  This check has no check-specific options. Configure it with an empty option list.
 
-  ## Good
+  ## Usage
 
-      ~H\"\"\"
-      <div class="m-4 p-6 gap-3" style="margin: var(--space-4)"></div>
-      <div class={@class} style={@style}></div>
-      \"\"\"
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

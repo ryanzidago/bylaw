@@ -2,11 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoThen do
   @moduledoc """
   Prefer explicit control flow over `then/2`.
 
-  `then/2` moves the next operation into an anonymous function, which can hide
-  a simple value transformation or introduce an unnecessary detour in a
-  pipeline. Explicit intermediate values make the control flow and resulting
-  data easier to read and extend.
-
   ## Examples
 
   Avoid:
@@ -24,10 +19,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoThen do
 
         {:ok, value}
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  `then/2` moves the next operation into an anonymous function, which can hide
+  a simple value transformation or introduce an unnecessary detour in a
+  pipeline. Explicit intermediate values make the control flow and resulting
+  data easier to read and extend.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

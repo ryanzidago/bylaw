@@ -2,15 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
   @moduledoc """
   Forbids static HEEx/HTML link `href` attributes that use `javascript:`.
 
-  A `javascript:` URL mixes navigation with executable code, weakens the
-  semantic link contract, and creates an unsafe path for interpolated data.
-  Use a real link for navigation or a button and event handler for an action.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -24,13 +17,13 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
         <button phx-click="delete">Delete</button>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  A `javascript:` URL mixes navigation with executable code, weakens the
+  semantic link contract, and creates an unsafe path for interpolated data.
+  Use a real link for navigation or a button and event handler for an action.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -52,6 +45,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoJavascriptHref do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

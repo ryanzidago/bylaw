@@ -60,7 +60,7 @@ check you want by listing its fully qualified module in the `checks:` list:
 }
 ```
 
-See each check module's documentation for its examples, notes, options, and
+See each check module's documentation for its examples, rationale, options, and
 check-specific `.credo.exs` usage.
 
 ## Function-level suppression
@@ -122,55 +122,3 @@ def generated_code do
   # ...
 end
 ```
-
-### Semantics and limits
-
-- Blank lines and ordinary comments may separate the directive and definition.
-- The range includes the `def` line through its matching `end`; one-line
-  definitions and nested blocks are handled from token metadata.
-- A directive before one clause of a multi-clause function applies only to that
-  syntactic clause.
-- The search does not cross module, protocol, implementation, or nested-module
-  boundaries. Missing or inexact ranges suppress nothing.
-- The first version supports `def` and `defp`, not macros, guards, delegates, or
-  definitions inside `quote` blocks.
-- The plugin runs for Credo's default Suggest command, List, and Diff.
-
-`bylaw_credo` requires Credo `~> 1.7.16`. Credo 1.7.15 introduced the
-token-annotated source AST needed for exact definition ranges, while 1.7.16 is
-the first compatible release verified with this package's supported Elixir
-versions. The plugin assumes the Credo 1.7 plugin pipelines and
-`Credo.Check.ConfigComment` filtering contract remain available.
-
-`Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` reports direct comparisons of
-values that look like dates or times and ignores comparisons inside Ecto query
-expressions, where Ecto translates them into database predicates. Use the
-relevant date/time module's comparison functions for ordinary Elixir values.
-
-`Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess` reports literal-key
-`Map.get(assigns, key)` and `assigns[key]` access in HEEx templates. Initialize
-assigns before rendering and access them directly with `@key` so missing values
-and defaults are handled at the rendering boundary.
-
-`Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing` reports raw pixel
-spacing values in static Tailwind classes and CSS margin or padding declarations.
-Use design-system spacing tokens instead.
-
-`Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes` reports calls into
-application and dependency modules from module attributes because those calls
-execute during compilation and embed their results in the consumer. Literal
-values and Elixir or OTP standard-library calls are accepted by default.
-
-`Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations` reports direct Repo
-row mutations and literal `INSERT`, `UPDATE`, `DELETE`, or `MERGE` SQL in Ecto
-schema migrations. It is a best-effort guideline that points operational data
-changes toward reviewed, resumable data-migration scripts or release tasks.
-
-`Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort` reports direct
-`Repo.all` results sorted in memory with `Enum.sort` or `Enum.sort_by`. Add
-`order_by` to the Ecto query instead.
-
-`Bylaw.Credo.Check.HEEx.PreferLinkForNavigation` enforces link semantics for
-durable navigation. It reports explicit LiveView navigation commands wired
-through `phx-click` on HEEx tags and components, so navigation uses real links
-instead of click handlers on other elements.

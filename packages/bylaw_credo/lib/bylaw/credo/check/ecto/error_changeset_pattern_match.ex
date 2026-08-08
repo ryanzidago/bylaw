@@ -19,7 +19,6 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
           {:error, %Ecto.Changeset{} = changeset} -> changeset
         end
 
-  ## Notes
 
   A bare `{:error, changeset}` pattern only communicates a variable name.
   It does not prove the error value is an Ecto changeset, so readers have
@@ -28,8 +27,6 @@ defmodule Bylaw.Credo.Check.Ecto.ErrorChangesetPatternMatch do
   The struct match documents the expected error shape at the branch that
   handles it, and it prevents unrelated `{:error, reason}` values from
   being treated like changesets.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

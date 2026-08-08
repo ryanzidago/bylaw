@@ -25,9 +25,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferSelectOverRepoAllEnumMap do
         # OK - the full record is referenced
         Repo.all(query) |> Enum.map(&%{id: &1.id, record: &1})
 
-  ## Notes
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

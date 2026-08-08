@@ -3,11 +3,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   Prefer a single-row Repo read over loading every matching row and taking the
   first result in Elixir.
 
-  `Repo.all` retrieves and materializes every match even when the caller needs
-  only one row. `Repo.one` expresses the cardinality expectation at the Repo
-  boundary, avoids unnecessary row transfer, and can surface an unexpected
-  second match instead of silently discarding it.
-
   ## Examples
 
   Avoid:
@@ -24,7 +19,9 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
       |> Repo.all()
       |> hd()
 
-  When the query is expected to return zero or one row, prefer:
+  Prefer:
+
+  When the query is expected to return zero or one row:
 
       Repo.one(query)
 
@@ -38,15 +35,18 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst do
   Use the bang variants when a missing row is exceptional. For primary-key
   lookups, prefer `Repo.get/2` or `Repo.get!/2`.
 
-  ## Notes
 
-  This check uses static AST analysis. It reports direct `Repo.all` and
-  first-element selection with `List.first/1`, `Enum.at/2` with the literal
+  It reports direct `Repo.all` and first-element selection with `List.first/1`,
+  `Enum.at/2` with the literal
   index `0`, or `hd/1`, including piped forms. It cannot infer whether the
   caller expects uniqueness or an ordered first row. Other `Enum.at/2` indices
   are outside this check's scope because they express different offset and
   ordering semantics.
 
+  `Repo.all` retrieves and materializes every match even when the caller needs
+  only one row. `Repo.one` expresses the cardinality expectation at the Repo
+  boundary, avoids unnecessary row transfer, and can surface an unexpected
+  second match instead of silently discarding it.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option

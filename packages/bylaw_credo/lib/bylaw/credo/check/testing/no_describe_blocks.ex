@@ -18,17 +18,10 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
         assert create_user().active?
       end
 
-  ## Notes
 
   Descriptive standalone test names make each test's behavior visible without
   relying on an enclosing block. When a suite grows, split it into multiple
   focused test files instead of grouping unrelated behavior with `describe`.
-
-  Path exclusions are matched against the source filename and are intended for
-  generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and
-  macro-expanded code may fall outside its signal.
 
   ## Options
 

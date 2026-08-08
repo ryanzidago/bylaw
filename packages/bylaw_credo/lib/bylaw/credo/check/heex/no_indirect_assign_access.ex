@@ -2,13 +2,15 @@ defmodule Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess do
   @moduledoc """
   Discourages indirect access to the special HEEx `assigns` variable.
 
+  ## Examples
+
   Avoid:
 
       ~H"<h1>{Map.get(assigns, :title)}</h1>"
 
       ~H"<h1>{assigns[:title]}</h1>"
 
-  Initialize the assign before rendering and access it directly:
+  Prefer:
 
       ~H"<h1>{@title}</h1>"
 
@@ -22,9 +24,26 @@ defmodule Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess do
   files. Standalone `.html.heex` templates require enabling
   `Bylaw.Credo.Plugin.HEExSources`.
 
-  Configure this check with an empty option list:
+  ## Options
 
-      {Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess, []}
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

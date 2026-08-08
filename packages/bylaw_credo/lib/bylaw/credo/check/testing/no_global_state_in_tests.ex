@@ -24,7 +24,6 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
         assert Feature.enabled?()
       end
 
-  ## Notes
 
   Application and system environment are shared process-wide state. Tests
   that read or mutate that state can race with each other when the suite
@@ -33,10 +32,6 @@ defmodule Bylaw.Credo.Check.Testing.NoGlobalStateInTests do
   Prefer defining stable configuration once in the environment-specific config
   file, such as `config/test.exs`, instead of changing it from a test. This keeps
   the normal application configuration path as the source of truth.
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
 
   ## Options
 

@@ -3,11 +3,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
   Avoid private functions that only forward their arguments to a single call.
   Inline the call instead.
 
-  A wrapper with no policy or transformation adds a name and an extra place to
-  navigate without creating a meaningful boundary. Inlining keeps the call
-  site direct while preserving the option to introduce a wrapper later when
-  it owns real behavior.
-
   ## Examples
 
   Avoid:
@@ -23,10 +18,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoPassthroughWrapper do
         # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoPassthroughWrapper
         defp format_datetime(datetime), do: DateTime.to_iso8601(datetime)
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  A wrapper with no policy or transformation adds a name and an extra place to
+  navigate without creating a meaningful boundary. Inlining keeps the call
+  site direct while preserving the option to introduce a wrapper later when
+  it owns real behavior.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

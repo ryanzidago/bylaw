@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
   @moduledoc """
   Prefer `list(type)` over `[type]` in typespecs.
 
-  The constructor form distinguishes a list type from list-literal syntax and
-  makes nested or long types easier to parse consistently. Keep the literal
-  form when the brackets intentionally describe a non-empty list shape.
-
   ## Examples
 
   Avoid:
@@ -19,10 +15,10 @@ defmodule Bylaw.Credo.Check.Elixir.PreferListTypeSyntax do
 
   Keep `[type, ...]` when the intent is a non-empty list.
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  The constructor form distinguishes a list type from list-literal syntax and
+  makes nested or long types easier to parse consistently. Keep the literal
+  form when the brackets intentionally describe a non-empty list shape.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

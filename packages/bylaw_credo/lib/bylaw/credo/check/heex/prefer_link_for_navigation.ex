@@ -2,16 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.PreferLinkForNavigation do
   @moduledoc """
   Prefers link semantics over button semantics for durable HEEx/HTML navigation.
 
-  Links represent destinations, so browsers and assistive technologies can
-  expose them as navigation and users can open, copy, or revisit them normally.
-  Buttons should trigger actions; using one for navigation hides that contract
-  and makes progressive enhancement and keyboard behavior less predictable.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -28,13 +20,6 @@ defmodule Bylaw.Credo.Check.HEEx.PreferLinkForNavigation do
         <.link navigate={~p"/billing"}>Billing</.link>
         \"\"\"
 
-  ## Notes
-
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
 
   This check enforces link semantics for durable navigation so users keep native browser behaviors such as opening a destination in a new tab, copying the URL, and using standard link interactions.
 
@@ -45,6 +30,14 @@ defmodule Bylaw.Credo.Check.HEEx.PreferLinkForNavigation do
   link primitives. The check does not attempt to infer event-name strings or
   dynamic expressions that do not contain one of those explicit navigation
   calls.
+
+  Links represent destinations, so browsers and assistive technologies can
+  expose them as navigation and users can open, copy, or revisit them normally.
+  Buttons should trigger actions; using one for navigation hides that contract
+  and makes progressive enhancement and keyboard behavior less predictable.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -66,6 +59,10 @@ defmodule Bylaw.Credo.Check.HEEx.PreferLinkForNavigation do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

@@ -3,16 +3,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
   Prefer database-side counting over loading rows with `Repo.all` and counting them
   in memory.
 
-  `Repo.all(query)` materializes every matching row as an Elixir struct and transfers
-  all of those rows from the database, even when the caller only needs a number.
-  `Repo.aggregate(query, :count)` asks the database for the count directly, avoiding
-  unnecessary row materialization, network transfer, and application memory usage.
-
-  Use `Repo.aggregate(query, :count)` when the exact number of matching rows is needed.
-  Use `Repo.exists?/1` when the caller only needs to know whether at least one row
-  matches: it expresses that intent directly and lets the database answer an existence
-  query without counting every matching row.
-
   ## Examples
 
   Avoid:
@@ -24,10 +14,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
 
         Repo.aggregate(query, :count)
 
-  Prefer `Repo.exists?/1` or `not Repo.exists?/1` over comparing
-  `Repo.aggregate(query, :count)` to `0` or `1` for existence checks. Counting is
-  unnecessary when the result is only used as a boolean, and the existence query can
-  stop after finding the first matching row.
   Avoid:
 
         Repo.aggregate(query, :count) > 0
@@ -37,10 +23,16 @@ defmodule Bylaw.Credo.Check.Ecto.PreferRepoAggregateCount do
         Repo.exists?(query)
         not Repo.exists?(query)
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+  `Repo.all(query)` materializes every matching row as an Elixir struct and transfers
+  all of those rows from the database, even when the caller only needs a number.
+  `Repo.aggregate(query, :count)` asks the database for the count directly, avoiding
+  unnecessary row materialization, network transfer, and application memory usage.
 
+  Use `Repo.aggregate(query, :count)` when the exact number of matching rows is needed.
+  Use `Repo.exists?/1` when the caller only needs to know whether at least one row
+  matches: it expresses that intent directly and lets the database answer an existence
+  query without counting every matching row.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

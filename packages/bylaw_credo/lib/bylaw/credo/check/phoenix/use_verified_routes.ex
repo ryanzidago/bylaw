@@ -2,11 +2,6 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
   @moduledoc """
   Enforces Phoenix verified routes (`~p`) for application routes in the web layer.
 
-  Verified routes validate path structure and route parameters at compile time,
-  so renames and malformed paths fail near their source instead of becoming
-  runtime navigation or test failures. They also keep route construction tied
-  to the router that owns the route.
-
   ## Examples
 
   Configure the Phoenix web boundary and one or more routers that define the
@@ -47,17 +42,18 @@ defmodule Bylaw.Credo.Check.Phoenix.UseVerifiedRoutes do
         params = %{filters: %{0 => %{field: "name", op: "==", value: "Staging"}}}
         conn |> get(~p"/api/v1/tenants/\#{tenant_id}/workspaces?\#{params}")
 
-  ## Notes
 
   The check only runs in configured web paths and tests using configured ConnCase
   modules. It only flags path strings that normalize to a route exposed by one
   of the configured routers or `:fallback_router_paths`. It ignores OpenAPI URI
   templates like `"/api/v1/tenants/{tenant_id}/..."` and HEEx route attributes
   for now.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
   Configure `:fallback_router_paths` when router modules are unavailable during Credo analysis.
 
+  Verified routes validate path structure and route parameters at compile time,
+  so renames and malformed paths fail near their source instead of becoming
+  runtime navigation or test failures. They also keep route construction tied
+  to the router that owns the route.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

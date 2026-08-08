@@ -3,10 +3,6 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
   Context lookup functions must follow a naming convention that signals their
   return type, consistent with `Ecto.Repo` (e.g. `Repo.get/2`, `Repo.get!/2`):
 
-  Consistent names let callers understand whether they must handle `nil`, an
-  exception, or an `{:ok, value}`/`{:error, reason}` result before opening the
-  implementation. That keeps error handling aligned across context APIs.
-
   ## Examples
 
   - `get_*`   functions return `record | nil`
@@ -26,12 +22,10 @@ defmodule Bylaw.Credo.Check.Phoenix.ContextFunctionNaming do
         @spec get_workspace(binary()) :: Workspace.t() | nil
         def get_workspace(id), do: ...
 
-  ## Notes
 
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
-
+  Consistent names let callers understand whether they must handle `nil`, an
+  exception, or an `{:ok, value}`/`{:error, reason}` result before opening the
+  implementation. That keeps error handling aligned across context APIs.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

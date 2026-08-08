@@ -38,7 +38,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
         Enum.map(jobs, fn %Oban.Job{} = job -> process(job.args) end)
 
-  ## Notes
 
   Function heads have two jobs: naming parameters and selecting which clause
   runs. When they also pull values out of maps and structs, clause selection
@@ -71,8 +70,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
 
         def handle_result({:ok, value}), do: {:ok, value}
         def handle_result({:error, reason}), do: {:error, reason}
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

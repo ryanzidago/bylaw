@@ -19,7 +19,6 @@ defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
         |> where([profile: p], p.active)
         |> select([user: u, profile: p], {u.id, p.display_name})
 
-  ## Notes
 
   Positional bindings make every later query clause depend on the order of
   earlier joins. Adding, removing, or reordering a join can silently change
@@ -27,10 +26,6 @@ defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
 
   Named bindings make each clause say which relationship it is using, so
   query changes are easier to review and less sensitive to join order.
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
 
   ## Options
 
