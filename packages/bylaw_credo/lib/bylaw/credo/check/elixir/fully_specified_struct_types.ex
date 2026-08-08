@@ -3,11 +3,6 @@ defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes do
   Fully specify struct fields in type declarations instead of using
   empty struct literals such as `%__MODULE__{}`.
 
-  Explicit fields make the type communicate which data callers may rely on and
-  let Dialyzer and readers catch incomplete or incompatible struct usage. An
-  empty literal hides that contract behind the implementation's current
-  struct definition.
-
   ## Examples
 
   Avoid:
@@ -19,10 +14,11 @@ defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes do
         @type t :: %__MODULE__{id: integer(), name: String.t()}
         @opaque result :: {:ok, %URI{host: String.t() | nil, path: String.t()}}
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  Explicit fields make the type communicate which data callers may rely on and
+  let Dialyzer and readers catch incomplete or incompatible struct usage. An
+  empty literal hides that contract behind the implementation's current
+  struct definition.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

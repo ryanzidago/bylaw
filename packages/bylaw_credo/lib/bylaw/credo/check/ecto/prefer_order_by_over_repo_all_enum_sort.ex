@@ -2,11 +2,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort do
   @moduledoc """
   Prefer ordering Ecto queries in the database over sorting rows in memory.
 
-  Database-side ordering avoids materializing all matching rows before sorting
-  them in Elixir, reducing application memory and work. It also lets the
-  database combine ordering with filtering, limits, and indexes before rows
-  cross the database boundary.
-
   ## Examples
 
   Avoid:
@@ -19,14 +14,41 @@ defmodule Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort do
       |> Repo.all()
       |> Enum.sort_by(& &1.inserted_at)
 
-  Prefer adding `order_by` to the query before calling `Repo.all`.
+  Prefer:
+
+      query
+      |> order_by([row], asc: row.inserted_at)
+      |> Repo.all()
 
   This check reports only direct `Repo.all` followed by `Enum.sort` or
   `Enum.sort_by`. Sorting after an intermediate transformation may have
   different semantics and is outside this check's scope.
 
-  This check uses static AST analysis and cannot infer the equivalent
-  `order_by` expression, so it does not provide an automatic rewrite.
+  Database-side ordering avoids materializing all matching rows before sorting
+  them in Elixir, reducing application memory and work. It also lets the
+  database combine ordering with filtering, limits, and indexes before rows
+  cross the database boundary.
+
+  ## Options
+
+  This check has no check-specific options. Configure it with an empty option list.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

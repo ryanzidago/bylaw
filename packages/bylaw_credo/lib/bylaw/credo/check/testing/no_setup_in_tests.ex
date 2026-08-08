@@ -21,19 +21,17 @@ defmodule Bylaw.Credo.Check.Testing.NoSetupInTests do
           assert user.active?
         end
 
-  ## Notes
 
-  Shared setup hides the inputs a test needs and encourages unrelated tests
-  to depend on the same fixture shape. `setup_all` also creates shared data
-  that can make ordering and isolation problems harder to see.
+  Self-contained tests keep the facts that explain an expected result next to
+  the assertion. Shared setup moves those facts into an implicit API tied to
+  the test module, so readers and reviewers must reconstruct the scenario from
+  multiple locations. It also makes tests harder to move, and shared fixture
+  state can accumulate stale or accidental dependencies.
 
-  Keep each test's data close to the assertion. `setup :verify_on_exit!` is
-  allowed because it supports mock verification rather than shared fixture
-  construction.
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
+  Some repetition is worthwhile when it makes each scenario and its important
+  differences visible. Explicit domain helpers are still useful when the test
+  calls them to request the state it needs. `setup :verify_on_exit!` is allowed
+  because it supports mock verification rather than shared fixture construction.
 
   ## Options
 

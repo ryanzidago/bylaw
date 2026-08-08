@@ -3,11 +3,6 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   Only configured Phoenix context boundary modules may write Ecto queries for
   schemas owned by their namespace.
 
-  Keeping schema queries behind their owning context gives the application one
-  place to enforce authorization, visibility, and loading rules. It also keeps
-  controllers, jobs, and neighboring contexts from coupling themselves to the
-  schema's persistence details.
-
   ## Examples
 
   Configure the context boundary modules that own schemas below their namespace:
@@ -23,7 +18,9 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
    ]}
   ```
 
-  Avoid outside `MyApp.Conversations`:
+  Avoid:
+
+  Outside `MyApp.Conversations`:
 
         from(c in Conversation, where: c.id == ^id)
         Conversation |> where([c], c.visible)
@@ -38,7 +35,6 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   writing Ecto query or direct Repo CRUD logic for a schema owned by another
   configured context namespace.
 
-  ## Notes
 
   A schema module is owned by the longest configured context prefix when the
   schema starts with that context plus one or more extra module segments.
@@ -49,9 +45,10 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   exact configured context module may write queries for schemas under that
   namespace.
 
-  This check uses static AST analysis, so it favors clear source-level patterns
-  over runtime behavior.
-
+  Keeping schema queries behind their owning context gives the application one
+  place to enforce authorization, visibility, and loading rules. It also keeps
+  controllers, jobs, and neighboring contexts from coupling themselves to the
+  schema's persistence details.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:
@@ -80,6 +77,23 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
   - `:excluded_paths` - Paths containing any configured string are skipped.
   - `:repo_modules` - Repo modules to inspect. When empty, any module whose last segment is `Repo` is treated as a Repo.
   - `:allow_owner_descendants` - When `true`, modules nested under the owner context may also write queries. Defaults to `false`.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

@@ -2,15 +2,8 @@ defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
   @moduledoc """
   Prefer explicit pattern matches in `with` else clauses over catch-all variables.
 
-  A catch-all branch can silently accept an unexpected result shape and blur
-  which failures the caller intentionally handles. Explicit patterns document
-  the error contract and leave unrecognized failures visible for deliberate
-  handling.
-
   ## Examples
 
-  Each `else` branch should match a specific pattern so that success and failure
-  paths are clearly separated.
   Avoid:
 
         with {:ok, user} <- fetch_user(id) do
@@ -27,10 +20,14 @@ defmodule Bylaw.Credo.Check.Elixir.NoCatchAllInWithElse do
           {:error, error} -> {:error, error}
         end
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
+  A catch-all branch can silently accept an unexpected result shape and blur
+  which failures the caller intentionally handles. Explicit patterns document
+  the error contract and leave unrecognized failures visible for deliberate
+  handling.
 
+  Each `else` branch should match a specific pattern so that success and failure
+  paths are clearly separated.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

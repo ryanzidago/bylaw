@@ -28,14 +28,11 @@ defmodule Bylaw.Credo.Check.Ecto.OwnContextForSchema do
           use MyApp.Schema
         end
 
-  ## Notes
 
   Keeping one schema per context ensures that context modules stay small
   and focused. When a schema is nested under another schema's context
   (e.g. `MyApp.Runs.ToolCall`), the context tends to accumulate
   unrelated responsibilities.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

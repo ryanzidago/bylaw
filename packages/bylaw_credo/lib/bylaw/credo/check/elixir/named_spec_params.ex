@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
   @moduledoc """
   Requires named parameters in all `@spec` declarations.
 
-  Names make a function's contract understandable at the call boundary,
-  especially when several arguments share the same type. They also make code
-  review and future refactoring safer because each position has a stated role.
-
   ## Examples
 
   Avoid:
@@ -25,10 +21,10 @@ defmodule Bylaw.Credo.Check.Elixir.NamedSpecParams do
                 tool_results :: list(map())
               ) :: :ok
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  Names make a function's contract understandable at the call boundary,
+  especially when several arguments share the same type. They also make code
+  review and future refactoring safer because each position has a stated role.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

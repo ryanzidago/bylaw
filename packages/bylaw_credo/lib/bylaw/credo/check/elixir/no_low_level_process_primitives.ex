@@ -16,7 +16,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
         MyApp.Registry.lookup(key)
         Cache.fetch(key)
 
-  ## Notes
 
   Stateful and process-based primitives are **exceptions, not
   defaults**. They exist for very specific use cases and should only
@@ -44,10 +43,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives do
 
         # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives
         Process.put(:key, value)
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
 
   ## Options
 

@@ -3,10 +3,6 @@ defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
   Fully type option lists instead of using `keyword()` or `Keyword.t()` for
   `opts` parameters or `*_opts` type aliases.
 
-  A named option type documents the supported keys and their value types at
-  the API boundary. Generic keyword types allow misspelled, unsupported, or
-  incorrectly typed options to pass through without useful static feedback.
-
   ## Examples
 
   Avoid:
@@ -23,12 +19,10 @@ defmodule Bylaw.Credo.Check.Elixir.FullyTypedOpts do
 
         @spec search(query :: String.t(), opts :: search_opts()) :: result()
 
-  ## Notes
 
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
-
+  A named option type documents the supported keys and their value types at
+  the API boundary. Generic keyword types allow misspelled, unsupported, or
+  incorrectly typed options to pass through without useful static feedback.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

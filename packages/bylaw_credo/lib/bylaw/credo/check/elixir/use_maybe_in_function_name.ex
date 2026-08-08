@@ -14,9 +14,6 @@ defmodule Bylaw.Credo.Check.Elixir.UseMaybeInFunctionName do
   A leading `maybe_` keeps the conditional intent visible without coupling
   the naming convention to a specific suffix like `_if_needed`.
 
-  ## Notes
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

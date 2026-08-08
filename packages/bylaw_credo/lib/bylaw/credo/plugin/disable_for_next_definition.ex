@@ -22,6 +22,26 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinition do
 
   Omitting the check name suppresses all checks in that definition. Each clause
   of a multi-clause function is treated separately.
+
+  ## Semantics and limits
+
+  Blank lines and ordinary comments may separate the directive and definition.
+  The suppression range includes the `def` line through its matching `end`;
+  one-line definitions and nested blocks are handled from token metadata.
+
+  A directive before one clause of a multi-clause function applies only to that
+  syntactic clause. The search does not cross module, protocol, implementation,
+  or nested-module boundaries. Missing or inexact ranges suppress nothing.
+
+  The plugin supports `def` and `defp`, not macros, guards, delegates, or
+  definitions inside `quote` blocks. It runs for Credo's default Suggest,
+  List, and Diff commands.
+
+  `bylaw_credo` requires Credo `~> 1.7.16`. Credo 1.7.15 introduced the
+  token-annotated source AST needed for exact definition ranges, while 1.7.16
+  is the first compatible release verified with this package's supported
+  Elixir versions. The plugin assumes the Credo 1.7 plugin pipelines and
+  `Credo.Check.ConfigComment` filtering contract remain available.
   """
 
   import Credo.Plugin

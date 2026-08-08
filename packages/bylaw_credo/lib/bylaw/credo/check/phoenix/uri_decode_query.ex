@@ -13,7 +13,6 @@ defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
 
         Plug.Conn.Query.decode("ids[]=1&ids[]=2")
 
-  ## Notes
 
   `URI.decode_query/1` does not decode Plug-style array and nested
   parameters the same way Phoenix controllers and LiveViews receive them.
@@ -21,8 +20,6 @@ defmodule Bylaw.Credo.Check.Phoenix.URIDecodeQuery do
 
   `Plug.Conn.Query.decode/1` follows Plug's query parser semantics, so the
   decoded data matches the rest of the Phoenix request stack.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

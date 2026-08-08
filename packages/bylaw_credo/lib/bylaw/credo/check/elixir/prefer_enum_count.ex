@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
   @moduledoc """
   Prefer `Enum.count/1` over `length/1`.
 
-  `length/1` describes the operation for lists, while `Enum.count/1` states
-  that the code is counting an enumerable. The latter makes the expected input
-  and intent clear and avoids implying list-specific behavior at the call site.
-
   ## Examples
 
   Avoid:
@@ -17,10 +13,10 @@ defmodule Bylaw.Credo.Check.Elixir.PreferEnumCount do
         Enum.count(items)
         items |> Enum.count()
 
-  ## Notes
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  `length/1` describes the operation for lists, while `Enum.count/1` states
+  that the code is counting an enumerable. The latter makes the expected input
+  and intent clear and avoids implying list-specific behavior at the call site.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

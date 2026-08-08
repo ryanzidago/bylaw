@@ -2,15 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   @moduledoc """
   Requires HEEx submit forms and controls to expose a loading or disabled state.
 
-  Submission can take long enough for users to click again or wonder whether
-  anything happened. A loading or disabled state gives immediate feedback and
-  helps prevent duplicate requests while the server handles the first one.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -29,13 +22,13 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
   Custom loading conventions can be configured with `:loading_attrs` or
   `:loading_class_patterns`.
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  Submission can take long enough for users to click again or wonder whether
+  anything happened. A loading or disabled state gives immediate feedback and
+  helps prevent duplicate requests while the server handles the first one.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -77,6 +70,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLoadingStateForSubmit do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

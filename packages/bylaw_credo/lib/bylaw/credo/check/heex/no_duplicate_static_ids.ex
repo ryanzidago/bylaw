@@ -2,18 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
   @moduledoc """
   Forbids duplicate static `id` attributes in HEEx/HTML templates.
 
-  DOM IDs are document-wide identifiers used by labels, anchors, JavaScript,
-  and tests. Duplicates make those consumers ambiguous and can cause behavior
-  to depend on which matching element is found first.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
-
-  Dynamic `id` values and root attributes are ignored because their final DOM
-  IDs cannot be proven statically.
   Avoid:
 
         ~H\"\"\"
@@ -30,13 +20,16 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
         </section>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
+  DOM IDs are document-wide identifiers used by labels, anchors, JavaScript,
+  and tests. Duplicates make those consumers ambiguous and can cause behavior
+  to depend on which matching element is found first.
 
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  Dynamic `id` values and root attributes are ignored because their final DOM
+  IDs cannot be proven statically.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -58,6 +51,10 @@ defmodule Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

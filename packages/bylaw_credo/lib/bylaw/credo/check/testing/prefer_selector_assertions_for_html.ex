@@ -13,7 +13,6 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
 
       assert has_element?(view, "#save[phx-click=save]")
 
-  ## Notes
 
   HTML attribute order has no semantic meaning, and serializers may emit the
   same attributes in a different order. Comparing serialized HTML can therefore
@@ -24,12 +23,6 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
   The check reports direct `assert` and `refute` comparisons using `==`, `===`,
   `!=`, `!==`, or `=~` when a string operand contains an opening HTML tag with
   at least two `phx-*`, `data-*`, `aria-*`, `id`, or `class` attributes.
-
-  Path exclusions are matched against the source filename and are intended for
-  snapshots or tests where exact serialization is deliberately the contract.
-
-  The check uses static AST analysis, so dynamically constructed strings and
-  macro-expanded assertions may fall outside its signal.
 
   ## Options
 
@@ -50,6 +43,23 @@ defmodule Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml do
   ```
 
   - `:excluded_paths` - Paths containing any configured string are skipped.
+
+  ## Usage
+
+  Add this check to Credo's `checks:` list in `.credo.exs`:
+
+  ```elixir
+  %{
+    configs: [
+      %{
+        name: "default",
+        checks: [
+          {Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml, []}
+        ]
+      }
+    ]
+  }
+  ```
   """
 
   use Credo.Check,

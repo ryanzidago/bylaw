@@ -3,11 +3,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
   Prefer returning tagged results and handling them with `with` expressions
   that include an explicit `else` clause at application boundaries.
 
-  Explicit result values keep expected failures in the function contract,
-  allowing callers to handle them without rescuing or catching control flow.
-  This makes failures composable across boundaries and keeps the successful
-  path honest about the operations that can fail.
-
   ## Examples
 
   Avoid:
@@ -24,12 +19,11 @@ defmodule Bylaw.Credo.Check.Elixir.NoRaise do
           {:error, reason} -> {:error, reason}
         end
 
-  ## Notes
 
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
-
+  Explicit result values keep expected failures in the function contract,
+  allowing callers to handle them without rescuing or catching control flow.
+  This makes failures composable across boundaries and keeps the successful
+  path honest about the operations that can fail.
   ## Options
 
   Configure options in `.credo.exs` with the check tuple:

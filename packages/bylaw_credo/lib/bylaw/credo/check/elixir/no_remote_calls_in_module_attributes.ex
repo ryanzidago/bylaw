@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
   @moduledoc """
   Avoid calls into application and dependency modules from module attributes.
 
-  Module attributes are evaluated at compile time. Calling another module from
-  an attribute creates a compile-time dependency and embeds the returned value
-  in the compiled consumer.
-
   ## Examples
 
   Avoid:
@@ -33,7 +29,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
       # credo:disable-for-next-line Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes
       @some_values MyApp.SomeModule.some_function()
 
-  ## Notes
 
   Typespec attributes are ignored because calls such as `String.t()` describe
   types and do not execute the named function.
@@ -41,9 +36,12 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes do
   External function captures stored in attributes are reported because the
   compiler tracks them as compile-time dependencies too.
 
-  This check uses static AST analysis. It recognizes statically named Elixir
-  and Erlang modules, including nested calls inside an attribute value.
+  It recognizes statically named Elixir and Erlang modules, including nested
+  calls inside an attribute value.
 
+  Module attributes are evaluated at compile time. Calling another module from
+  an attribute creates a compile-time dependency and embeds the returned value
+  in the compiled consumer.
   ## Options
 
   - `:allow_standard_library` - When true, accept calls into modules shipped by

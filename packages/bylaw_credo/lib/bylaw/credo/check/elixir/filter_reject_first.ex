@@ -18,7 +18,6 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
         Enum.find(users, & &1.active?)
         Enum.find(users, &(not &1.archived?))
 
-  ## Notes
 
   `Enum.filter/2` and `Enum.reject/2` traverse the whole enumerable and
   allocate an intermediate list before `List.first/1` discards everything
@@ -26,8 +25,6 @@ defmodule Bylaw.Credo.Check.Elixir.FilterRejectFirst do
 
   `Enum.find/2` stops as soon as it finds a matching item and states the
   intent directly.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 

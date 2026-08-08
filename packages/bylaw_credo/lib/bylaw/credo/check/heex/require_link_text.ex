@@ -2,15 +2,8 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
   @moduledoc """
   Requires static HEEx/HTML links to have an accessible name.
 
-  A link's accessible name communicates its destination to screen-reader users
-  and gives every user a meaningful target to identify. Icon-only links need a
-  text alternative such as `aria-label`.
-
   ## Examples
 
-  Embedded `~H` templates are checked during normal Credo runs over Elixir
-  files. Standalone `.html.heex` templates require enabling
-  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
   Avoid:
 
         ~H\"\"\"
@@ -25,13 +18,13 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
         <a href={@href}>{@label}</a>
         \"\"\"
 
-  ## Notes
 
-  Embedded `~H` templates in `.ex` and `.exs` files are checked by Credo's normal source traversal. Standalone `.html.heex` templates are checked when `Bylaw.Credo.Plugin.HEExSources` is enabled in `.credo.exs`.
-
-  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
-
-  This check uses static HEEx token analysis, so it reports only patterns visible in the template source.
+  A link's accessible name communicates its destination to screen-reader users
+  and gives every user a meaningful target to identify. Icon-only links need a
+  text alternative such as `aria-label`.
+  Embedded `~H` templates are checked during normal Credo runs over Elixir
+  files. Standalone `.html.heex` templates require enabling
+  `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
   ## Options
 
@@ -53,6 +46,10 @@ defmodule Bylaw.Credo.Check.HEEx.RequireLinkText do
     ]
   }
   ```
+
+  ## Notes
+
+  This check uses Phoenix LiveView's undocumented HEEx tokenizer when it is available. Add `phoenix_live_view` to applications that enable this check.
   """
 
   use Credo.Check,

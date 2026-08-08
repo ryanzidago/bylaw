@@ -2,10 +2,6 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIf do
   @moduledoc """
   Prefer block syntax for `if` expressions.
 
-  Block syntax keeps both branches visually grouped with the condition, which
-  makes multi-line control flow easier to scan and extend without reformatting
-  a keyword list.
-
   ## Examples
 
   Avoid:
@@ -22,11 +18,13 @@ defmodule Bylaw.Credo.Check.Elixir.PreferBlockIf do
         {:error, :invalid}
       end
 
-  ## Notes
 
   This check uses parser metadata to distinguish keyword-form `if` expressions from block-form
   expressions.
 
+  Block syntax keeps both branches visually grouped with the condition, which
+  makes multi-line control flow easier to scan and extend without reformatting
+  a keyword list.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

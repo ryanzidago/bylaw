@@ -21,7 +21,6 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
       acc = %{acc | committed: [entry | acc.committed]}
       {:cont, {:ok, acc}}
 
-  ## Notes
 
   Scalar literals and variables are simple values. Tagged tuples may be nested
   recursively when all of their leaf values are scalar literals or variables.

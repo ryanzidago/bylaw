@@ -12,7 +12,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
 
         occurred_at >= day_start and occurred_at < next_day_start
 
-  ## Notes
 
   An inclusive `23:59:59` bound misses values with fractional seconds, such
   as `23:59:59.500000`. That creates edge-case bugs for timestamp and time
@@ -20,10 +19,6 @@ defmodule Bylaw.Credo.Check.Elixir.NoEndOfDayTime do
 
   Use the next day's midnight as an exclusive upper bound. Half-open ranges
   include every representable time in the day without guessing precision.
-
-  Path exclusions are matched against the source filename and are intended for generated files or temporary migration areas.
-
-  The check uses static AST analysis, so dynamic code generation and macro-expanded code may fall outside its signal.
 
   ## Options
 

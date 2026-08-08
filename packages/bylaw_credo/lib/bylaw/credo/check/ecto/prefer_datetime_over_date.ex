@@ -3,10 +3,6 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
   Prefer `:naive_datetime` or `:utc_datetime` over `:date` in Ecto schemas and
   migrations when you need precise timestamps.
 
-  A date-only type discards time-of-day and timezone information. Using it for
-  an event or deadline can collapse distinct moments into the same calendar
-  day and make ordering, expiration, and cross-timezone behavior incorrect.
-
   ## Examples
 
   Avoid:
@@ -31,14 +27,14 @@ defmodule Bylaw.Credo.Check.Ecto.PreferDateTimeOverDate do
           timestamps(type: :utc_datetime)
         end
 
-  ## Notes
 
   Use `:naive_datetime`, `:utc_datetime`, or `timestamps/1` unless the field is
   intentionally a calendar-only value. If a true date-only field is required,
   disable the check locally with Credo.
 
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
-
+  A date-only type discards time-of-day and timezone information. Using it for
+  an event or deadline can collapse distinct moments into the same calendar
+  day and make ordering, expiration, and cross-timezone behavior incorrect.
   ## Options
 
   This check has no check-specific options. Configure it with an empty option list.

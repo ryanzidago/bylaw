@@ -15,7 +15,6 @@ defmodule Bylaw.Credo.Check.Elixir.RejectCount do
 
         Enum.count(users, &(&1.status != :inactive))
 
-  ## Notes
 
   `Enum.reject/2` builds an intermediate list just so `Enum.count/1` can
   count it. The callback is also written in the negative, which makes the
@@ -23,8 +22,6 @@ defmodule Bylaw.Credo.Check.Elixir.RejectCount do
 
   `Enum.count/2` performs the count in one pass without allocating the
   rejected list, and the predicate describes the values being counted.
-
-  This check uses static AST analysis, so it favors clear source-level patterns over runtime behavior.
 
   ## Options
 
