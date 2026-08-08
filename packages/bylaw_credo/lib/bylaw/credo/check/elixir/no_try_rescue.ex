@@ -56,6 +56,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoTryRescue do
   use Credo.Check,
     base_priority: :higher,
     category: :warning,
+    tags: [:architecture],
     explanations: [
       check: @moduledoc
     ]

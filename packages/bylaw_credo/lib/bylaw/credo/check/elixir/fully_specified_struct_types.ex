@@ -48,6 +48,7 @@ defmodule Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes do
   use Credo.Check,
     base_priority: :high,
     category: :warning,
+    tags: [:readability],
     explanations: [
       check: @moduledoc
     ]
