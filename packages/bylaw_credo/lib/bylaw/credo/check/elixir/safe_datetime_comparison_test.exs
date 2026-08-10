@@ -3,7 +3,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
 
   alias Bylaw.Credo.Check.Elixir.SafeDateTimeComparison
 
-  test "reports datetime field comparisons" do
+  test "reports comparisons against explicit datetime sigils" do
     """
     defmodule Example do
       def run(entry) do
@@ -16,7 +16,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> assert_issue(%{trigger: "=="})
   end
 
-  test "reports date variable comparisons" do
+  test "does not report comparisons between datetime-looking variables" do
     """
     defmodule Example do
       def run(start_date, end_date) do
@@ -26,7 +26,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     """
     |> to_source_file()
     |> run_check(SafeDateTimeComparison)
-    |> assert_issue(%{trigger: "<="})
+    |> refute_issues()
   end
 
   test "does not report Ecto where clauses" do
@@ -45,7 +45,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
-  test "reports datetime comparisons in piped Ecto or_where clauses" do
+  test "does not report datetime-looking fields in piped Ecto or_where clauses" do
     """
     defmodule Example do
       import Ecto.Query
@@ -58,10 +58,10 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     """
     |> to_source_file()
     |> run_check(SafeDateTimeComparison)
-    |> assert_issue(%{trigger: ">"})
+    |> refute_issues()
   end
 
-  test "reports datetime comparisons in piped Ecto join on clauses" do
+  test "does not report datetime-looking fields in piped Ecto join on clauses" do
     """
     defmodule Example do
       import Ecto.Query
@@ -74,7 +74,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     """
     |> to_source_file()
     |> run_check(SafeDateTimeComparison)
-    |> assert_issue(%{trigger: ">"})
+    |> refute_issues()
   end
 
   test "does not report multiline Ecto where keyword clauses" do
