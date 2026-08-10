@@ -196,6 +196,59 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
+  test "does not report non-datetime values returned by time-like functions compared with variables" do
+    """
+    defmodule Example do
+      def run(expected) do
+        Clock.read_time() == expected
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report non-datetime values returned by date-like functions" do
+    """
+    defmodule Example do
+      def run do
+        Calendar.fetch_date() == {:ok, 42}
+        Parser.parse_datetime() == {:error, :invalid}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report non-datetime values returned by at-like functions" do
+    """
+    defmodule Example do
+      def run(expected) do
+        Repo.get_at() == expected
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
+  test "does not report zero-arity field-like function results that are not datetimes" do
+    """
+    defmodule Example do
+      def run(expected) do
+        record.inserted_at() == expected
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
   test "does not report datetime field checks against non-datetime literals" do
     """
     defmodule Example do
