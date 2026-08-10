@@ -183,6 +183,19 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
     |> refute_issues()
   end
 
+  test "does not report non-datetime values returned by time-like functions" do
+    """
+    defmodule Example do
+      def run do
+        Clock.read_time() == {:ok, 42}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(SafeDateTimeComparison)
+    |> refute_issues()
+  end
+
   test "does not report datetime field checks against non-datetime literals" do
     """
     defmodule Example do
