@@ -20,7 +20,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparisonTest do
       |> to_source_file()
       |> run_check(SafeDateTimeComparison)
 
-    assert length(issues) == 4
+    assert Enum.count(issues) == 4
   end
 
   test "does not report comparisons between non-datetime literals" do

@@ -6,8 +6,8 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
 
   Avoid:
 
-        entry.inserted_at > cutoff_at
-        start_date <= end_date
+        ~U[2026-01-26 10:00:00Z] > cutoff_at
+        start_date <= ~D[2026-01-26]
 
   Prefer:
 
@@ -25,25 +25,8 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
 
   ## Options
 
-  Configure options in `.credo.exs` with the check tuple:
-
-  ```elixir
-  %{
-    configs: [
-      %{
-        name: "default",
-        checks: [
-          {Bylaw.Credo.Check.Elixir.SafeDateTimeComparison,
-           [
-             datetime_suffixes: ~w(_datetime _at _date _time)
-           ]}
-        ]
-      }
-    ]
-  }
-  ```
-
-  - `:datetime_suffixes` - Variable and field suffixes that make a value look like a date or time. Defaults to `_datetime`, `_at`, `_date`, and `_time`.
+  This check has no configurable options. It reports only comparisons involving
+  explicit date/time sigils.
 
   ## Usage
 
@@ -67,28 +50,18 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
     base_priority: :higher,
     category: :warning,
     tags: [:correctness],
-    param_defaults: [datetime_suffixes: ~w(_datetime _at _date _time)],
-    explanations: [
-      check: @moduledoc,
-      params: [
-        datetime_suffixes: """
-        Variable and field suffixes that make a value look like a date or time.
-        Defaults to `_datetime`, `_at`, `_date`, and `_time`.
-        """
-      ]
-    ]
+    explanations: [check: @moduledoc]
 
   @comparison_operators [:==, :!=, :<, :>, :<=, :>=]
   @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
-    suffixes = Params.get(params, :datetime_suffixes, __MODULE__)
     ecto_query_lines = collect_ecto_query_lines(source_file)
 
     Credo.Code.prewalk(
       source_file,
-      &traverse(&1, &2, issue_meta, suffixes, ecto_query_lines)
+      &traverse(&1, &2, issue_meta, ecto_query_lines)
     )
   end
 
@@ -129,7 +102,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
     |> elem(1)
   end
 
-  defp traverse({op, meta, [left, right]} = ast, issues, issue_meta, suffixes, ecto_query_lines)
+  defp traverse({op, meta, [left, right]} = ast, issues, issue_meta, ecto_query_lines)
        when op in @comparison_operators do
     line_no = meta[:line] || 0
 
@@ -137,7 +110,7 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
       MapSet.member?(ecto_query_lines, line_no) ->
         {ast, issues}
 
-      should_report_comparison?(left, right, suffixes) ->
+      should_report_comparison?(left, right) ->
         {ast, [issue_for(issue_meta, line_no, op) | issues]}
 
       true ->
@@ -145,47 +118,17 @@ defmodule Bylaw.Credo.Check.Elixir.SafeDateTimeComparison do
     end
   end
 
-  defp traverse(ast, issues, _issue_meta, _suffixes, _ecto_query_lines), do: {ast, issues}
+  defp traverse(ast, issues, _issue_meta, _ecto_query_lines), do: {ast, issues}
 
-  defp should_report_comparison?(left, right, suffixes) do
-    (looks_like_datetime?(left, suffixes) and not non_datetime_literal?(right)) or
-      (looks_like_datetime?(right, suffixes) and not non_datetime_literal?(left))
+  defp should_report_comparison?(left, right) do
+    datetime_literal?(left) or datetime_literal?(right)
   end
 
-  defp non_datetime_literal?(literal)
-       when is_atom(literal) or is_binary(literal) or is_number(literal),
-       do: true
-
-  defp non_datetime_literal?(_node), do: false
-
-  defp looks_like_datetime?({sigil, _meta, _args}, _suffixes)
+  defp datetime_literal?({sigil, _meta, _args})
        when sigil in [:sigil_U, :sigil_D, :sigil_T, :sigil_N],
        do: true
 
-  defp looks_like_datetime?({name, _meta, context}, suffixes)
-       when is_atom(name) and is_atom(context) do
-    has_datetime_suffix?(name, suffixes)
-  end
-
-  defp looks_like_datetime?({{:., _dot_meta, [_module, field_name]}, _meta, _args}, suffixes)
-       when is_atom(field_name) do
-    has_datetime_suffix?(field_name, suffixes)
-  end
-
-  defp looks_like_datetime?(
-         {{:., _dot_meta, [Access, :get]}, _meta, [_target, field_name]},
-         suffixes
-       )
-       when is_atom(field_name) do
-    has_datetime_suffix?(field_name, suffixes)
-  end
-
-  defp looks_like_datetime?(_node, _suffixes), do: false
-
-  defp has_datetime_suffix?(name, suffixes) do
-    name_string = Atom.to_string(name)
-    Enum.any?(suffixes, fn suffix -> String.ends_with?(name_string, suffix) end)
-  end
+  defp datetime_literal?(_node), do: false
 
   defp issue_for(issue_meta, line_no, trigger) do
     format_issue(
