@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Narrow `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison` to comparisons
+  involving explicit date/time sigils and remove the `:datetime_suffixes`
+  option to avoid false positives from name-based type inference.
+
 ## 0.4.0 - 2026-08-06
 
 - Add `Bylaw.Credo.Plugin.DisableForNextDefinition` for AST-ranged suppression
