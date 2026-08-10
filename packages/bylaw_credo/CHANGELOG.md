@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Remove `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison`; Elixir compiler
+  warnings cover statically known date/time struct comparisons, while the
+  check could not reliably infer types for fields and variables.
+
 ## 0.4.0 - 2026-08-06
 
 - Add `Bylaw.Credo.Plugin.DisableForNextDefinition` for AST-ranged suppression
