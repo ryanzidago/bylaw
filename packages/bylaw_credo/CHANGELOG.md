@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add
+  `Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandlingInMount`
+  to require explicit connected and disconnected lifecycle delegation in
+  LiveView `mount/3` clauses.
 - Remove `Bylaw.Credo.Check.Elixir.SafeDateTimeComparison`; Elixir compiler
   warnings cover statically known date/time struct comparisons, while the
   check could not reliably infer types for fields and variables.
