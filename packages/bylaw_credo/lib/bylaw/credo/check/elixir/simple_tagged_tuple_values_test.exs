@@ -182,6 +182,27 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok, []}"})
   end
 
+  @doc """
+  Issue: A multiline two-element tagged tuple has no AST location metadata, and
+  its formatted trigger does not appear verbatim on any source line.
+
+  Why it matters: Valid Elixir formatting must produce an actionable Credo
+  issue instead of crashing while Credo derives the issue column.
+  """
+  test "reports a multiline empty list tuple with its source location" do
+    """
+    defmodule Example do
+      def result do
+        {:ok,
+         []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok,"})
+  end
+
   test "reports an untagged tuple nested inside a tagged tuple" do
     """
     defmodule Example do

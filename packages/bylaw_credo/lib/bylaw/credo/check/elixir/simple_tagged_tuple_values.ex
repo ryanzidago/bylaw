@@ -143,12 +143,12 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
 
   defp issue_for(issue_meta, ast) do
     trigger = Macro.to_string(ast)
-    {line_no, column} = source_location(ast, issue_meta, trigger)
+    {line_no, column, issue_trigger} = source_location(ast, issue_meta, trigger)
 
     format_issue(
       issue_meta,
       message: "Bind complex expressions to variables before placing them in a tagged tuple.",
-      trigger: trigger,
+      trigger: issue_trigger,
       line_no: line_no,
       column: column
     )
@@ -156,21 +156,63 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
 
   defp source_location(ast, issue_meta, trigger) do
     case line_no(ast) do
-      0 -> find_source_location(issue_meta, trigger)
-      line_no -> {line_no, nil}
+      0 -> find_source_location(ast, issue_meta, trigger)
+      line_no -> {line_no, nil, trigger}
     end
   end
 
-  defp find_source_location(issue_meta, trigger) do
-    issue_meta
-    |> IssueMeta.source_file()
-    |> Credo.SourceFile.lines()
-    |> Enum.find_value({0, nil}, fn {line_no, line} ->
-      case :binary.match(line, trigger) do
-        {column, _length} -> {line_no, column + 1}
-        :nomatch -> nil
+  defp find_source_location(ast, issue_meta, trigger) do
+    source =
+      issue_meta
+      |> IssueMeta.source_file()
+      |> Credo.SourceFile.source()
+
+    escaped_trigger = Regex.escape(trigger)
+    trigger_pattern = Regex.compile!(escaped_trigger)
+    patterns = [trigger_pattern, tagged_tuple_pattern(ast)]
+
+    patterns
+    |> Enum.reject(&is_nil/1)
+    |> Enum.find_value({1, 1, trigger}, fn pattern ->
+      case Regex.run(pattern, source, return: :index) do
+        [{offset, length} | _captures] ->
+          {line_no, column} = location_at(source, offset)
+          matched_source = binary_part(source, offset, length)
+          {line_no, column, line_trigger(matched_source)}
+
+        nil ->
+          nil
       end
     end)
+  end
+
+  defp tagged_tuple_pattern({tag, _value}) when is_atom(tag) do
+    Regex.compile!("\\{\\s*" <> Regex.escape(inspect(tag)) <> "\\s*,")
+  end
+
+  defp tagged_tuple_pattern(_ast), do: nil
+
+  defp line_trigger(matched_source) do
+    matched_source
+    |> String.split("\n")
+    |> List.first()
+    |> String.trim_trailing()
+  end
+
+  defp location_at(source, offset) do
+    lines_before_location =
+      source
+      |> binary_part(0, offset)
+      |> String.split("\n")
+
+    line_no = Enum.count(lines_before_location)
+
+    column =
+      lines_before_location
+      |> List.last()
+      |> byte_size()
+
+    {line_no, column + 1}
   end
 
   defp line_no({_tag, {_name, meta, _arguments}}) when is_list(meta), do: meta[:line] || 0
