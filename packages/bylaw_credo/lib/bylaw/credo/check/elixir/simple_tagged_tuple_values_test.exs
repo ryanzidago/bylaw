@@ -169,6 +169,19 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> assert_issues(1)
   end
 
+  test "reports an empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result do
+        {:ok, []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok, []}"})
+  end
+
   test "reports an untagged tuple nested inside a tagged tuple" do
     """
     defmodule Example do

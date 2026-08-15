@@ -142,12 +142,35 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
   defp tagged_tuple_values(_value), do: :error
 
   defp issue_for(issue_meta, ast) do
+    trigger = Macro.to_string(ast)
+    {line_no, column} = source_location(ast, issue_meta, trigger)
+
     format_issue(
       issue_meta,
       message: "Bind complex expressions to variables before placing them in a tagged tuple.",
-      trigger: Macro.to_string(ast),
-      line_no: line_no(ast)
+      trigger: trigger,
+      line_no: line_no,
+      column: column
     )
+  end
+
+  defp source_location(ast, issue_meta, trigger) do
+    case line_no(ast) do
+      0 -> find_source_location(issue_meta, trigger)
+      line_no -> {line_no, nil}
+    end
+  end
+
+  defp find_source_location(issue_meta, trigger) do
+    issue_meta
+    |> IssueMeta.source_file()
+    |> Credo.SourceFile.lines()
+    |> Enum.find_value({0, nil}, fn {line_no, line} ->
+      case :binary.match(line, trigger) do
+        {column, _length} -> {line_no, column + 1}
+        :nomatch -> nil
+      end
+    end)
   end
 
   defp line_no({_tag, {_name, meta, _arguments}}) when is_list(meta), do: meta[:line] || 0
