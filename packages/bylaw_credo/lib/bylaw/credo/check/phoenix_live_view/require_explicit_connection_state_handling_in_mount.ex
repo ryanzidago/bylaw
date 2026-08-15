@@ -65,6 +65,11 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandli
 
   ## Notes
 
+  Phoenix is exploring [adoptable LiveViews](https://github.com/phoenixframework/phoenix_live_view/issues/4317),
+  which would preserve the initial LiveView process and eliminate duplicate
+  mount work without application changes. If that lifecycle ships, this check
+  should be reassessed.
+
   Intentional exceptions can use definition-level suppression through
   `Bylaw.Credo.Plugin.DisableForNextDefinition`.
   """
@@ -77,7 +82,7 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandli
       check: @moduledoc
     ]
 
-  @message "LiveView invokes mount/3 separately for the disconnected render and connected socket. Make mount/3 directly branch on connected?(socket), delegating to mount_connected/3 and mount_disconnected/3, so each operation runs in the intended state."
+  @message "Under LiveView's current lifecycle, mount/3 runs separately for the disconnected render and connected socket. Make mount/3 directly branch on connected?(socket), delegating to mount_connected/3 and mount_disconnected/3, so each operation runs in the intended state."
 
   @doc false
   @impl Credo.Check

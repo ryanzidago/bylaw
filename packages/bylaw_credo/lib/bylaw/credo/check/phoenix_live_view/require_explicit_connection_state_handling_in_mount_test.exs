@@ -3,7 +3,7 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandli
 
   alias Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandlingInMount
 
-  @message "LiveView invokes mount/3 separately for the disconnected render and connected socket. Make mount/3 directly branch on connected?(socket), delegating to mount_connected/3 and mount_disconnected/3, so each operation runs in the intended state."
+  @message "Under LiveView's current lifecycle, mount/3 runs separately for the disconnected render and connected socket. Make mount/3 directly branch on connected?(socket), delegating to mount_connected/3 and mount_disconnected/3, so each operation runs in the intended state."
 
   test "reports a mount whose connected?/1 argument is a literal" do
     canonical_mount("connected?(nil)")
