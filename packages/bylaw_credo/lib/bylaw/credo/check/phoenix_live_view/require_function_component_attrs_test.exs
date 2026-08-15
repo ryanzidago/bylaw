@@ -170,6 +170,18 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrsTest do
     |> refute_issues()
   end
 
+  test "ignores non-component functions with default arguments" do
+    ~S"""
+    defmodule Example do
+      def label(value \\ nil)
+      def label(nil), do: "None"
+      def label(value), do: value
+    end
+    """
+    |> run_check()
+    |> refute_issues()
+  end
+
   test "associates declarations with only the next function" do
     """
     defmodule Example do
