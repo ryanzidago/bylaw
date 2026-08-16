@@ -169,6 +169,123 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> assert_issues(1)
   end
 
+  test "reports an empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result, do: {:ok, []}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 2, column: 19, trigger: "{:ok, []}"})
+  end
+
+  test "reports a multiline empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result do
+        {:ok,
+         []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok,"})
+  end
+
+  test "reports a compact empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result, do: {:ok,[]}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 2, column: 19, trigger: "{:ok,[]}"})
+  end
+
+  test "reports a metadata-free tuple containing an intervening comment at its source location" do
+    """
+    defmodule Example do
+      def result do
+        {:ok,
+         # An intervening comment prevents a whitespace-only source match.
+         []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok,"})
+  end
+
+  @doc """
+  Issue: Identical metadata-free tagged tuples are all assigned the location
+  and scope of the first matching tuple in the source file.
+
+  Why it matters: Developers receive duplicate diagnostics for the first
+  function and no correctly located diagnostic for later violations.
+  """
+  test "reports each repeated metadata-free tuple at its own source location" do
+    """
+    defmodule Example do
+      def first, do: {:ok, []}
+      def second, do: {:ok, []}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issues_match([
+      %{line_no: 2, column: 18, scope: "Example.first", trigger: "{:ok, []}"},
+      %{line_no: 3, column: 19, scope: "Example.second", trigger: "{:ok, []}"}
+    ])
+  end
+
+  test "reports repeated metadata-free tuples within one function at their own locations" do
+    """
+    defmodule Example do
+      def result(condition) do
+        if condition do
+          {:ok, []}
+        else
+          {:ok, []}
+        end
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issues_match([
+      %{line_no: 4, column: 7, scope: "Example.result", trigger: "{:ok, []}"},
+      %{line_no: 6, column: 7, scope: "Example.result", trigger: "{:ok, []}"}
+    ])
+  end
+
+  @doc """
+  Issue: Source-location fallback can match tagged-tuple text in a comment
+  before matching the AST node that produced the issue.
+
+  Why it matters: The diagnostic points at non-executable text and attributes
+  the violation to the wrong scope, obscuring the code that must be changed.
+  """
+  test "ignores matching tagged-tuple text in comments when locating an issue" do
+    """
+    defmodule Example do
+      # Example: {:ok, []}
+      def result, do: {:ok, []}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{
+      line_no: 3,
+      column: 19,
+      scope: "Example.result",
+      trigger: "{:ok, []}"
+    })
+  end
+
   test "reports an untagged tuple nested inside a tagged tuple" do
     """
     defmodule Example do

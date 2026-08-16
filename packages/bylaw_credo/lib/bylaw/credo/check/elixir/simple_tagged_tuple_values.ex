@@ -66,7 +66,7 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
     issue_meta = IssueMeta.for(source_file, params)
 
     source_file
-    |> Credo.SourceFile.ast()
+    |> ast_with_literal_locations()
     |> collect_issues(issue_meta)
   end
 
@@ -91,8 +91,8 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
 
   defp collect_child_issues(values, issues, issue_meta) when is_list(values) do
     if Keyword.keyword?(values) do
-      Enum.reduce(values, issues, fn {_key, value}, acc ->
-        collect_issues(value, acc, issue_meta)
+      Enum.reduce(values, issues, fn {_key, value}, issues ->
+        collect_issues(value, issues, issue_meta)
       end)
     else
       Enum.reduce(values, issues, &collect_issues(&1, &2, issue_meta))
@@ -142,16 +142,80 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
   defp tagged_tuple_values(_value), do: :error
 
   defp issue_for(issue_meta, ast) do
+    {line_no, column, trigger} = source_location(ast, issue_meta)
+
     format_issue(
       issue_meta,
       message: "Bind complex expressions to variables before placing them in a tagged tuple.",
-      trigger: Macro.to_string(ast),
-      line_no: line_no(ast)
+      trigger: trigger,
+      line_no: line_no,
+      column: column
     )
   end
 
+  defp source_location({:{}, meta, _values} = ast, issue_meta) when is_list(meta) do
+    literal_source_location(issue_meta, ast, meta)
+  end
+
+  defp source_location(ast, _issue_meta), do: {line_no(ast), nil, Macro.to_string(ast)}
+
+  defp literal_source_location(issue_meta, ast, meta) do
+    source_file = IssueMeta.source_file(issue_meta)
+    line = meta[:line]
+    column = meta[:column]
+    trigger = source_trigger(source_file, meta, Macro.to_string(ast))
+
+    {line, column, trigger}
+  end
+
+  defp source_trigger(source_file, meta, fallback) do
+    line = meta[:line]
+    column = meta[:column]
+
+    if line && column do
+      source_trigger(source_file, line, column, meta[:closing])
+    else
+      fallback
+    end
+  end
+
+  defp source_trigger(source_file, line, column, closing) do
+    source_line =
+      source_file
+      |> Credo.SourceFile.lines()
+      |> Enum.at(line - 1)
+      |> elem(1)
+
+    source_from_column = String.slice(source_line, (column - 1)..-1//1)
+
+    case closing do
+      [line: ^line, column: closing_column] ->
+        String.slice(source_from_column, 0, closing_column - column + 1)
+
+      _other ->
+        String.trim_trailing(source_from_column)
+    end
+  end
+
+  defp ast_with_literal_locations(source_file) do
+    source = Credo.SourceFile.source(source_file)
+
+    Code.string_to_quoted(source,
+      line: 1,
+      columns: true,
+      file: source_file.filename,
+      emit_warnings: false,
+      token_metadata: true,
+      literal_encoder: &encode_tagged_tuple_location/2
+    )
+  end
+
+  defp encode_tagged_tuple_location({tag, value}, meta) when is_atom(tag),
+    do: {:ok, {:{}, meta, [tag, value]}}
+
+  defp encode_tagged_tuple_location(literal, _meta), do: {:ok, literal}
+
   defp line_no({_tag, {_name, meta, _arguments}}) when is_list(meta), do: meta[:line] || 0
-  defp line_no({:{}, meta, _values}) when is_list(meta), do: meta[:line] || 0
 
   defp line_no(ast) do
     {_ast, line_no} =

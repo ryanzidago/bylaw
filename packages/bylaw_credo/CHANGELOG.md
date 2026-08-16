@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Fix `Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues` to report accurate
+  line, column, scope, and trigger information for tagged-tuple violations.
 - Add
   `Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandlingInMount`
   to require explicit connected and disconnected lifecycle delegation in
