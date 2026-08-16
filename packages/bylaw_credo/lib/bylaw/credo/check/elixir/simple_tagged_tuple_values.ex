@@ -142,13 +142,59 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
   defp tagged_tuple_values(_value), do: :error
 
   defp issue_for(issue_meta, ast) do
+    {line_no, column, trigger} = source_location(ast, issue_meta, Macro.to_string(ast))
+
     format_issue(
       issue_meta,
       message: "Bind complex expressions to variables before placing them in a tagged tuple.",
-      trigger: Macro.to_string(ast),
-      line_no: line_no(ast)
+      trigger: trigger,
+      line_no: line_no,
+      column: column
     )
   end
+
+  defp source_location(ast, issue_meta, trigger) do
+    case line_no(ast) do
+      0 -> find_source_location(issue_meta, trigger)
+      line_no -> {line_no, nil, trigger}
+    end
+  end
+
+  defp find_source_location(issue_meta, trigger) do
+    source_file = IssueMeta.source_file(issue_meta)
+    source = Credo.SourceFile.source(source_file)
+
+    trigger
+    |> source_pattern()
+    |> Regex.run(source, return: :index)
+    |> location_from_match(source, trigger)
+  end
+
+  defp source_pattern(trigger) do
+    trigger
+    |> String.split(~r/\s+/, trim: true)
+    |> Enum.map_join("\\s*", &Regex.escape/1)
+    |> Regex.compile!()
+  end
+
+  defp location_from_match([{offset, length}], source, _trigger) do
+    source_before_match = binary_part(source, 0, offset)
+    lines_before_match = String.split(source_before_match, "\n")
+
+    column =
+      lines_before_match
+      |> List.last()
+      |> String.length()
+      |> Kernel.+(1)
+
+    source_match = binary_part(source, offset, length)
+    source_lines = String.split(source_match, "\n")
+    source_trigger = List.first(source_lines)
+
+    {Enum.count(lines_before_match), column, source_trigger}
+  end
+
+  defp location_from_match(nil, _source, trigger), do: {nil, nil, trigger}
 
   defp line_no({_tag, {_name, meta, _arguments}}) when is_list(meta), do: meta[:line] || 0
   defp line_no({:{}, meta, _values}) when is_list(meta), do: meta[:line] || 0

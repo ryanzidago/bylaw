@@ -169,6 +169,57 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> assert_issues(1)
   end
 
+  test "reports an empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result, do: {:ok, []}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 2, column: 19, trigger: "{:ok, []}"})
+  end
+
+  test "reports a multiline empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result do
+        {:ok,
+         []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 3, column: 5, trigger: "{:ok,"})
+  end
+
+  test "reports a compact empty list inside an ok tuple with its source location" do
+    """
+    defmodule Example do
+      def result, do: {:ok,[]}
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: 2, column: 19, trigger: "{:ok,[]}"})
+  end
+
+  test "reports a metadata-free tuple without crashing when its source cannot be located" do
+    """
+    defmodule Example do
+      def result do
+        {:ok,
+         # An intervening comment prevents a whitespace-only source match.
+         []}
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> assert_issue(%{line_no: nil, column: nil, trigger: "{:ok, []}"})
+  end
+
   test "reports an untagged tuple nested inside a tagged tuple" do
     """
     defmodule Example do
