@@ -60,73 +60,58 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
       check: @moduledoc
     ]
 
-  @literal_location_marker :bylaw_literal_location
-
   @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
     issue_meta = IssueMeta.for(source_file, params)
-    literal_locations = literal_locations(source_file)
 
     source_file
-    |> Credo.SourceFile.ast()
-    |> collect_issues(issue_meta, literal_locations)
+    |> ast_with_literal_locations()
+    |> collect_issues(issue_meta)
   end
 
-  defp collect_issues({:ok, ast}, issue_meta, literal_locations),
-    do: elem(collect_issues(ast, [], issue_meta, literal_locations), 0)
+  defp collect_issues({:ok, ast}, issue_meta), do: collect_issues(ast, [], issue_meta)
+  defp collect_issues(ast, issue_meta) when is_tuple(ast), do: collect_issues(ast, [], issue_meta)
+  defp collect_issues(_error, _issue_meta), do: []
 
-  defp collect_issues(ast, issue_meta, literal_locations) when is_tuple(ast),
-    do: elem(collect_issues(ast, [], issue_meta, literal_locations), 0)
-
-  defp collect_issues(_error, _issue_meta, _literal_locations), do: []
-
-  defp collect_issues(ast, issues, issue_meta, literal_locations) do
+  defp collect_issues(ast, issues, issue_meta) do
     case tagged_tuple_values(ast) do
       {:ok, values} ->
-        {source_location, literal_locations} =
-          take_literal_location(ast, literal_locations)
-
-        {maybe_add_issue(ast, values, issues, issue_meta, source_location), literal_locations}
+        maybe_add_issue(ast, values, issues, issue_meta)
 
       :error ->
-        collect_child_issues(ast, issues, issue_meta, literal_locations)
+        collect_child_issues(ast, issues, issue_meta)
     end
   end
 
-  defp collect_child_issues({_form, meta, arguments}, issues, issue_meta, literal_locations)
+  defp collect_child_issues({_form, meta, arguments}, issues, issue_meta)
        when is_list(meta) and is_list(arguments) do
-    collect_issues(arguments, issues, issue_meta, literal_locations)
+    collect_issues(arguments, issues, issue_meta)
   end
 
-  defp collect_child_issues(values, issues, issue_meta, literal_locations) when is_list(values) do
+  defp collect_child_issues(values, issues, issue_meta) when is_list(values) do
     if Keyword.keyword?(values) do
-      Enum.reduce(values, {issues, literal_locations}, fn {_key, value},
-                                                          {issues, literal_locations} ->
-        collect_issues(value, issues, issue_meta, literal_locations)
+      Enum.reduce(values, issues, fn {_key, value}, issues ->
+        collect_issues(value, issues, issue_meta)
       end)
     else
-      Enum.reduce(values, {issues, literal_locations}, fn value, {issues, literal_locations} ->
-        collect_issues(value, issues, issue_meta, literal_locations)
-      end)
+      Enum.reduce(values, issues, &collect_issues(&1, &2, issue_meta))
     end
   end
 
-  defp collect_child_issues(value, issues, issue_meta, literal_locations)
-       when is_tuple(value) do
+  defp collect_child_issues(value, issues, issue_meta) when is_tuple(value) do
     value
     |> Tuple.to_list()
-    |> collect_issues(issues, issue_meta, literal_locations)
+    |> collect_issues(issues, issue_meta)
   end
 
-  defp collect_child_issues(_value, issues, _issue_meta, literal_locations),
-    do: {issues, literal_locations}
+  defp collect_child_issues(_value, issues, _issue_meta), do: issues
 
-  defp maybe_add_issue(ast, values, issues, issue_meta, source_location) do
+  defp maybe_add_issue(ast, values, issues, issue_meta) do
     if Enum.all?(values, &simple_value?/1) do
       issues
     else
-      [issue_for(issue_meta, ast, source_location) | issues]
+      [issue_for(issue_meta, ast) | issues]
     end
   end
 
@@ -156,8 +141,8 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
 
   defp tagged_tuple_values(_value), do: :error
 
-  defp issue_for(issue_meta, ast, source_location) do
-    {line_no, column, trigger} = source_location(ast, issue_meta, source_location)
+  defp issue_for(issue_meta, ast) do
+    {line_no, column, trigger} = source_location(ast, issue_meta)
 
     format_issue(
       issue_meta,
@@ -168,24 +153,33 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
     )
   end
 
-  defp source_location(ast, issue_meta, literal_location) do
-    case line_no(ast) do
-      0 -> literal_source_location(issue_meta, ast, literal_location)
-      line_no -> {line_no, nil, Macro.to_string(ast)}
-    end
+  defp source_location({:{}, meta, _values} = ast, issue_meta) when is_list(meta) do
+    literal_source_location(issue_meta, ast, meta)
   end
 
-  defp literal_source_location(issue_meta, _ast, %{line: line, column: column} = location) do
+  defp source_location(ast, _issue_meta), do: {line_no(ast), nil, Macro.to_string(ast)}
+
+  defp literal_source_location(issue_meta, ast, meta) do
     source_file = IssueMeta.source_file(issue_meta)
-    trigger = source_trigger(source_file, location)
+    line = meta[:line]
+    column = meta[:column]
+    trigger = source_trigger(source_file, meta, Macro.to_string(ast))
 
     {line, column, trigger}
   end
 
-  defp literal_source_location(_issue_meta, ast, nil),
-    do: {nil, nil, Macro.to_string(ast)}
+  defp source_trigger(source_file, meta, fallback) do
+    line = meta[:line]
+    column = meta[:column]
 
-  defp source_trigger(source_file, %{line: line, column: column, closing: closing}) do
+    if line && column do
+      source_trigger(source_file, line, column, meta[:closing])
+    else
+      fallback
+    end
+  end
+
+  defp source_trigger(source_file, line, column, closing) do
     source_line =
       source_file
       |> Credo.SourceFile.lines()
@@ -203,114 +197,25 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
     end
   end
 
-  defp take_literal_location(ast, literal_locations) do
-    if line_no(ast) == 0 do
-      pop_literal_location(literal_locations, ast)
-    else
-      {nil, literal_locations}
-    end
-  end
-
-  defp pop_literal_location(literal_locations, ast) do
-    case Map.get(literal_locations, ast, []) do
-      [location | remaining] ->
-        {location, Map.put(literal_locations, ast, remaining)}
-
-      [] ->
-        {nil, literal_locations}
-    end
-  end
-
-  defp literal_locations(source_file) do
+  defp ast_with_literal_locations(source_file) do
     source = Credo.SourceFile.source(source_file)
 
-    case Code.string_to_quoted(source, literal_parser_options(source_file)) do
-      {:ok, ast} ->
-        ast
-        |> collect_literal_locations([])
-        |> Enum.group_by(&elem(&1, 0), &elem(&1, 1))
-        |> Map.new(fn {literal, locations} ->
-          {literal, Enum.sort_by(locations, &{&1.line, &1.column})}
-        end)
-
-      _error ->
-        %{}
-    end
-  end
-
-  defp literal_parser_options(source_file) do
-    [
+    Code.string_to_quoted(source,
       line: 1,
       columns: true,
       file: source_file.filename,
       emit_warnings: false,
       token_metadata: true,
-      literal_encoder: &encode_literal_location/2
-    ]
+      literal_encoder: &encode_tagged_tuple_location/2
+    )
   end
 
-  defp encode_literal_location(literal, meta) do
-    {:ok, {:__block__, Keyword.put(meta, @literal_location_marker, true), [literal]}}
-  end
+  defp encode_tagged_tuple_location({tag, value}, meta) when is_atom(tag),
+    do: {:ok, {:{}, meta, [tag, value]}}
 
-  defp collect_literal_locations(
-         {:__block__, meta, [literal]},
-         locations
-       )
-       when is_list(meta) do
-    locations =
-      if meta[@literal_location_marker] do
-        decoded_literal = decode_literal_locations(literal)
-
-        case tagged_tuple_values(decoded_literal) do
-          {:ok, _values} ->
-            location = %{line: meta[:line], column: meta[:column], closing: meta[:closing]}
-            [{decoded_literal, location} | locations]
-
-          :error ->
-            locations
-        end
-      else
-        locations
-      end
-
-    collect_literal_locations(literal, locations)
-  end
-
-  defp collect_literal_locations(value, locations) when is_tuple(value) do
-    value
-    |> Tuple.to_list()
-    |> collect_literal_locations(locations)
-  end
-
-  defp collect_literal_locations(values, locations) when is_list(values) do
-    Enum.reduce(values, locations, &collect_literal_locations/2)
-  end
-
-  defp collect_literal_locations(_value, locations), do: locations
-
-  defp decode_literal_locations({:__block__, meta, [literal]}) when is_list(meta) do
-    if meta[@literal_location_marker] do
-      decode_literal_locations(literal)
-    else
-      {:__block__, meta, [decode_literal_locations(literal)]}
-    end
-  end
-
-  defp decode_literal_locations(value) when is_tuple(value) do
-    value
-    |> Tuple.to_list()
-    |> Enum.map(&decode_literal_locations/1)
-    |> List.to_tuple()
-  end
-
-  defp decode_literal_locations(values) when is_list(values),
-    do: Enum.map(values, &decode_literal_locations/1)
-
-  defp decode_literal_locations(value), do: value
+  defp encode_tagged_tuple_location(literal, _meta), do: {:ok, literal}
 
   defp line_no({_tag, {_name, meta, _arguments}}) when is_list(meta), do: meta[:line] || 0
-  defp line_no({:{}, meta, _values}) when is_list(meta), do: meta[:line] || 0
 
   defp line_no(ast) do
     {_ast, line_no} =
