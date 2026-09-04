@@ -35,3 +35,6 @@ bylaw*.tar
 
 # Local validation artifacts.
 .artefacts/
+
+# Local Beads audit output.
+.beads/interactions.jsonl
