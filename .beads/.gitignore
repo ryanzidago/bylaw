@@ -1,0 +1,50 @@
+# Dolt database (managed by Dolt, not git)
+dolt/
+embeddeddolt/
+proxieddb/
+shared-server/
+
+# Runtime files
+bd.sock
+bd.sock.startlock
+sync-state.json
+last-touched
+.exclusive-lock
+daemon.*
+push-state.json
+*.lock
+.beads-credential-key
+credentials
+server.json
+.local_version
+proxied_server_client_info.json
+redirect
+.sync.lock
+export-state/
+export-state.json
+last_pull
+ephemeral.sqlite3
+ephemeral.sqlite3-journal
+ephemeral.sqlite3-wal
+ephemeral.sqlite3-shm
+dolt-server.pid
+dolt-server.log
+dolt-server.lock
+dolt-server.port
+dolt-server.activity
+dolt-pprof/
+*.corrupt.backup/
+backup/
+.env
+
+# Hooks are generated locally from the repository's tracked .githooks scripts.
+hooks/
+
+# Legacy files from pre-Dolt versions
+*.db
+*.db?*
+*.db-journal
+*.db-wal
+*.db-shm
+db.sqlite
+bd.db

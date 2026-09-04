@@ -3,6 +3,12 @@ bun = "1.3.14"
 gh = "2.96.0"
 jq = "1.8.2"
 worktrunk = "0.69.2"
+"aqua:gastownhall/beads" = "1.2.2"
+
+[env]
+BEADS_DIR = "{{ exec(command='git rev-parse --path-format=absolute --git-common-dir') | dirname }}/.beads"
+BD_DISABLE_METRICS = "1"
+DOLT_DISABLE_EVENT_FLUSH = "1"
 
 [tasks.qa]
 description = "Run the repository quality checks"

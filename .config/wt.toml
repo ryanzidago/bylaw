@@ -1,7 +1,7 @@
 pre-switch = "if git -C {{ primary_worktree_path }} rev-parse --verify '@{upstream}' >/dev/null 2>&1; then git -C {{ primary_worktree_path }} fetch --quiet && git -C {{ primary_worktree_path }} merge --ff-only '@{upstream}'; fi"
 
 [pre-start]
-hooks = "git config core.hooksPath .githooks"
+hooks = "scripts/install-hooks"
 
 [post-start]
 copy_ignored = "wt step copy-ignored"
@@ -11,7 +11,7 @@ qa = "scripts/qa.sh"
 
 [aliases]
 qa = "scripts/qa.sh"
-hooks = "git config core.hooksPath .githooks"
+hooks = "scripts/install-hooks"
 diff = "wt step diff"
 prune = "wt step prune"
 stack = "wt switch --create --base=@ {{ args }}"
