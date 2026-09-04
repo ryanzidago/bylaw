@@ -115,7 +115,10 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
     if Enum.all?(values, &simple_value?/1) do
       issues
     else
-      [issue_for(issue_meta, ast) | issues]
+      case issue_for(issue_meta, ast) do
+        nil -> issues
+        issue -> [issue | issues]
+      end
     end
   end
 
@@ -146,15 +149,19 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
   defp tagged_tuple_values(_value), do: :error
 
   defp issue_for(issue_meta, ast) do
-    {line_no, column, trigger} = source_location(ast, issue_meta)
+    case source_location(ast, issue_meta) do
+      {line_no, column, trigger} when is_integer(line_no) and line_no > 0 ->
+        format_issue(
+          issue_meta,
+          message: "Bind complex expressions to variables before placing them in a tagged tuple.",
+          trigger: trigger,
+          line_no: line_no,
+          column: column
+        )
 
-    format_issue(
-      issue_meta,
-      message: "Bind complex expressions to variables before placing them in a tagged tuple.",
-      trigger: trigger,
-      line_no: line_no,
-      column: column
-    )
+      _unknown_location ->
+        nil
+    end
   end
 
   defp source_location({:{}, meta, _values} = ast, issue_meta) when is_list(meta) do

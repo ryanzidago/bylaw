@@ -44,6 +44,20 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> refute_issues()
   end
 
+  test "does not treat keyword pairs as tagged tuple literals" do
+    """
+    defmodule Example do
+      defmodule Error do
+        @enforce_keys [:message, :recommendation]
+        defstruct [:message, :recommendation, inline_links: []]
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> refute_issues()
+  end
+
   @doc """
   Issue: Negative integers and floats are scalar literals, but the check treats
   their unary-minus AST representation as a complex operator expression.
