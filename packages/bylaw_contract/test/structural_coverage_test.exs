@@ -205,6 +205,14 @@ defmodule Bylaw.Contract.StructuralCoverageTest do
     assert second_coverage.arity_calls[{Bylaw.Contract.StructuralExample, :classify, 1}] == 1
   end
 
+  test "structural classifiers reuse source module atoms for generated function names" do
+    structural_coverage =
+      Bylaw.Contract.StructuralCoverage.load([Bylaw.Contract.StructuralExample])
+
+    assert [%{classifier_function: Bylaw.Contract.StructuralExample}] =
+             structural_coverage.classifiers
+  end
+
   defp clauses_for(coverage, function, arity) do
     Enum.filter(coverage.clauses, &(&1.function == function and &1.arity == arity))
   end
