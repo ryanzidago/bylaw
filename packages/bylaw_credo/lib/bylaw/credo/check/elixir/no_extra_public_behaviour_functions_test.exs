@@ -304,4 +304,26 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest do
       trigger: "with_default/1"
     })
   end
+
+  test "does not crash on module-relative aliases while checking configured behaviour aliases" do
+    """
+    defmodule Example do
+      alias Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctionsTest.PrimaryBehaviour
+      alias __MODULE__.Endpoint
+
+      @behaviour PrimaryBehaviour
+
+      @impl PrimaryBehaviour
+      def run(value), do: value
+
+      def helper(value), do: value
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoExtraPublicBehaviourFunctions, behaviours: [@primary_behaviour])
+    |> assert_issue(%{
+      line_no: 10,
+      trigger: "helper/1"
+    })
+  end
 end
