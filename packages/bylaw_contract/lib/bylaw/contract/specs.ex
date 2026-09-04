@@ -49,7 +49,11 @@ defmodule Bylaw.Contract.Specs do
   defp load_module(module) do
     with {:module, ^module} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module) do
-      {input_classes, boundaries, return_alternatives, warnings} = extract_specs(module, specs)
+      source_file = module.module_info(:compile) |> Keyword.get(:source) |> normalize_file()
+
+      {input_classes, boundaries, return_alternatives, warnings} =
+        extract_specs(module, specs, source_file)
+
       {:ok, input_classes, boundaries, return_alternatives, warnings}
     else
       {:error, reason} ->
@@ -60,7 +64,7 @@ defmodule Bylaw.Contract.Specs do
     end
   end
 
-  defp extract_specs(module, specs) do
+  defp extract_specs(module, specs, source_file) do
     Enum.reduce(specs, {[], [], [], []}, fn {{function, arity}, clauses}, acc ->
       clauses
       |> Enum.with_index(1)
@@ -68,11 +72,13 @@ defmodule Bylaw.Contract.Specs do
                              {input_classes, boundaries, return_alternatives, warnings} ->
         case spec_signature(clause) do
           {:ok, arguments, return} ->
+            spec = spec_context(function, clause, source_file)
+
             {found_classes, found_boundaries} =
-              extract_arguments(module, function, arity, clause_number, arguments)
+              extract_arguments(module, function, arity, clause_number, arguments, spec)
 
             found_returns =
-              extract_return(module, function, arity, clause_number, return)
+              extract_return(module, function, arity, clause_number, return, spec)
 
             {
               found_classes ++ input_classes,
@@ -116,7 +122,7 @@ defmodule Bylaw.Contract.Specs do
     end)
   end
 
-  defp extract_arguments(module, function, arity, clause, arguments) do
+  defp extract_arguments(module, function, arity, clause, arguments, spec) do
     arguments
     |> Enum.with_index(1)
     |> Enum.reduce({[], []}, fn {argument_type, argument_number}, {classes, boundaries} ->
@@ -140,7 +146,10 @@ defmodule Bylaw.Contract.Specs do
             clause: clause,
             argument: argument_number,
             position: position,
-            supported?: TypeMatcher.supported?(class.match_type)
+            supported?: TypeMatcher.supported?(class.match_type),
+            spec_file: spec.file,
+            spec_line: spec.line,
+            spec_source: spec.source
           })
         end)
 
@@ -158,7 +167,10 @@ defmodule Bylaw.Contract.Specs do
             clause: clause,
             argument: argument_number,
             position: position,
-            supported?: true
+            supported?: true,
+            spec_file: spec.file,
+            spec_line: spec.line,
+            spec_source: spec.source
           })
         end)
 
@@ -166,7 +178,7 @@ defmodule Bylaw.Contract.Specs do
     end)
   end
 
-  defp extract_return(module, function, arity, clause, return_type) do
+  defp extract_return(module, function, arity, clause, return_type, spec) do
     members = flatten_union(return_type, module, %{})
 
     if Enum.count(members) > 1 do
@@ -182,7 +194,10 @@ defmodule Bylaw.Contract.Specs do
           position: position,
           label: format_type(display_type),
           match_type: match_type,
-          supported?: TypeMatcher.supported?(match_type)
+          supported?: TypeMatcher.supported?(match_type),
+          spec_file: spec.file,
+          spec_line: spec.line,
+          spec_source: spec.source
         }
       end)
     else
@@ -519,4 +534,18 @@ defmodule Bylaw.Contract.Specs do
   rescue
     _ -> inspect(type)
   end
+
+  defp spec_context(function, clause, source_file) do
+    %{
+      file: source_file,
+      line: spec_line(clause),
+      source: "@spec " <> Macro.to_string(Code.Typespec.spec_to_quoted(function, clause))
+    }
+  end
+
+  defp spec_line({_, annotation, _, _}), do: :erl_anno.line(annotation)
+
+  defp normalize_file(file) when is_binary(file), do: file
+  defp normalize_file(file) when is_list(file), do: List.to_string(file)
+  defp normalize_file(_), do: nil
 end

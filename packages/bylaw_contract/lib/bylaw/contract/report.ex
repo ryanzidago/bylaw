@@ -63,192 +63,117 @@ defmodule Bylaw.Contract.Report do
 
   @spec print(coverage :: map(), device :: IO.device()) :: :ok
   def print(coverage, device) do
-    input_groups =
-      coverage.input_classes
-      |> Enum.group_by(&input_group_key/1)
-      |> Enum.sort_by(fn {key, _} -> key end)
-
-    return_groups =
-      coverage.return_alternatives
-      |> Enum.group_by(&return_group_key/1)
-      |> Enum.sort_by(fn {key, _} -> key end)
-
-    IO.puts(device, "\nBylaw.Contract typespec-derived coverage")
-
-    if Enum.empty?(input_groups) and Enum.empty?(return_groups) do
-      IO.puts(device, "No input types or top-level return unions found.")
-    else
-      Enum.each(input_groups, &print_input_group(&1, coverage, device))
-      Enum.each(return_groups, &print_return_group(&1, coverage, device))
-      print_summary(coverage, device)
-    end
+    print_typespec_gaps(coverage, device)
 
     print_structural_coverage(coverage, device)
-
-    Enum.each(coverage.warnings, &IO.puts(device, "warning: #{&1}"))
     :ok
   end
 
-  defp print_input_group(
-         {{module, function, arity, clause, argument} = key, classes},
-         coverage,
-         device
-       ) do
-    supported = Enum.filter(classes, & &1.supported?)
-    observed_count = Enum.count(supported, &observed?(&1, coverage))
-    call_count = Map.get(coverage.calls, {module, function, arity}, 0)
+  defp print_typespec_gaps(coverage, device) do
+    gaps =
+      coverage
+      |> typespec_targets()
+      |> Enum.filter(fn {_, target} -> assessable?(target, coverage) end)
+      |> Enum.reject(fn {_, target} -> observed?(target, coverage) end)
 
-    clause_suffix =
-      if multiple_clauses?(coverage.input_classes, module, function, arity) do
-        " clause #{clause}"
-      else
-        ""
-      end
+    if Enum.any?(gaps) do
+      IO.puts(device, "\nBylaw.Contract typespec gaps")
 
-    IO.puts(
-      device,
-      "\n#{inspect(module)}.#{function}/#{arity}#{clause_suffix}, argument #{argument}"
-    )
-
-    IO.puts(
-      device,
-      "  Input classes: #{observed_count}/#{Enum.count(supported)} supported observed across " <>
-        "#{call_count} calls"
-    )
-
-    Enum.each(classes, &print_target(&1, coverage, device, "call"))
-
-    boundaries = Enum.filter(coverage.boundaries, &(input_group_key(&1) == key))
-
-    if Enum.any?(boundaries) do
-      boundary_hits = Enum.count(boundaries, &observed?(&1, coverage))
-      IO.puts(device, "  Boundary values: #{boundary_hits}/#{Enum.count(boundaries)} observed")
-      Enum.each(boundaries, &print_target(&1, coverage, device, "call"))
+      gaps
+      |> Enum.group_by(fn {_, target} ->
+        {target.module, target.function, target.arity}
+      end)
+      |> Enum.sort_by(fn {mfa, _} -> mfa end)
+      |> Enum.each(&print_typespec_group(&1, device))
     end
   end
 
-  defp print_return_group({{module, function, arity, clause}, alternatives}, coverage, device) do
-    supported = Enum.filter(alternatives, & &1.supported?)
-    observed_count = Enum.count(supported, &observed?(&1, coverage))
-    return_count = Map.get(coverage.return_events, {module, function, arity}, 0)
-
-    clause_suffix =
-      if multiple_clauses?(coverage.return_alternatives, module, function, arity) do
-        " clause #{clause}"
-      else
-        ""
-      end
-
-    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}#{clause_suffix}, return")
-
-    IO.puts(
-      device,
-      "  Return alternatives: #{observed_count}/#{Enum.count(supported)} supported observed across " <>
-        "#{return_count} returns"
-    )
-
-    Enum.each(alternatives, &print_target(&1, coverage, device, "return"))
+  defp typespec_targets(coverage) do
+    Enum.map(coverage.input_classes, &{:input, &1}) ++
+      Enum.map(coverage.boundaries, &{:boundary, &1}) ++
+      Enum.map(coverage.return_alternatives, &{:return, &1})
   end
 
-  defp print_summary(coverage, device) do
-    summary = summary(coverage)
+  defp print_typespec_group({{module, function, arity}, targets}, device) do
+    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
 
-    input_percentage = percentage(summary.observed_input_classes, summary.supported_input_classes)
-
-    return_percentage =
-      percentage(summary.observed_return_alternatives, summary.supported_return_alternatives)
-
-    input_unsupported = unsupported_suffix(summary.unsupported_input_classes)
-    return_unsupported = unsupported_suffix(summary.unsupported_return_alternatives)
-
-    boundary_suffix =
-      if summary.boundaries > 0 do
-        "; #{summary.observed_boundaries}/#{summary.boundaries} boundaries observed"
-      else
-        ""
-      end
-
-    IO.puts(
-      device,
-      "\nInput summary: #{summary.observed_input_classes}/#{summary.supported_input_classes} " <>
-        "supported input classes observed " <>
-        "(#{:erlang.float_to_binary(input_percentage, decimals: 1)}%)#{input_unsupported}" <>
-        boundary_suffix
-    )
-
-    IO.puts(
-      device,
-      "Return summary: #{summary.observed_return_alternatives}/" <>
-        "#{summary.supported_return_alternatives} supported return alternatives observed " <>
-        "(#{:erlang.float_to_binary(return_percentage, decimals: 1)}%)#{return_unsupported}"
-    )
+    Enum.each(targets, fn {kind, target} ->
+      IO.puts(
+        device,
+        "    ✗ #{typespec_source_location(target)}\n" <>
+          "      #{target_diagnostic(kind, target)}:\n\n" <>
+          indent_spec_source(target.spec_source) <>
+          "\n\n" <>
+          "      #{target_label(kind, target)}\n"
+      )
+    end)
   end
 
-  defp print_target(target, coverage, device, observation) do
-    hits = Map.get(coverage.hits, target.id, 0)
+  defp assessable?(target, coverage) do
+    target.supported? and not MapSet.member?(coverage.unknown, target.id)
+  end
 
-    marker =
-      cond do
-        hits > 0 -> "HIT "
-        not target.supported? or MapSet.member?(coverage.unknown, target.id) -> "????"
-        true -> "MISS"
-      end
+  defp target_diagnostic(kind, target) do
+    "#{diagnostic_category(kind, target)} - " <>
+      "no test exercises this #{target_description(kind, target)}"
+  end
 
-    suffix =
-      if hits > 0 do
-        " (#{hits} #{observation}#{plural(hits)})"
-      else
-        ""
-      end
+  defp diagnostic_category(:input, %{partition: :union_member}),
+    do: "Missed input alternative"
 
-    IO.puts(device, "    #{marker}  #{target.label}#{suffix}")
+  defp diagnostic_category(:input, _), do: "Missed input class"
+  defp diagnostic_category(:boundary, _), do: "Missed boundary"
+  defp diagnostic_category(:return, _), do: "Missed return alternative"
+
+  defp target_description(:input, %{partition: :union_member}),
+    do: "declared input alternative"
+
+  defp target_description(:input, _), do: "typespec-derived input class"
+  defp target_description(:boundary, _), do: "declared boundary value"
+  defp target_description(:return, _), do: "declared return alternative"
+
+  defp target_label(:input, target), do: "argument #{target.argument}: #{target.label}"
+
+  defp target_label(:boundary, target),
+    do: "argument #{target.argument} boundary: #{target.label}"
+
+  defp target_label(:return, target), do: "return: #{target.label}"
+
+  defp typespec_source_location(%{spec_file: file, spec_line: line}) when is_binary(file) do
+    "#{display_file(file)}:#{line}"
+  end
+
+  defp typespec_source_location(%{spec_line: line}), do: "line #{line}"
+
+  defp indent_spec_source(source) do
+    source
+    |> format_spec_source()
+    |> String.split("\n")
+    |> Enum.map_join("\n", &"      #{&1}")
+  end
+
+  defp format_spec_source(source) do
+    source
+    |> Code.format_string!(line_length: 72)
+    |> IO.iodata_to_binary()
+    |> String.trim_trailing()
+  rescue
+    _ -> source
   end
 
   defp observed?(target, coverage), do: Map.get(coverage.hits, target.id, 0) > 0
 
-  defp input_group_key(target) do
-    {target.module, target.function, target.arity, target.clause, target.argument}
-  end
-
-  defp return_group_key(target) do
-    {target.module, target.function, target.arity, target.clause}
-  end
-
   defp print_structural_coverage(coverage, device) do
     clauses = Map.get(coverage, :clauses, [])
     unobserved_clauses = Enum.reject(clauses, &clause_observed?(&1, coverage))
-    arities = Map.get(coverage, :arities, [])
-    unsupported = unsupported_modules(coverage)
 
-    IO.puts(device, "\nBylaw.Contract structural clause gaps")
+    if Enum.any?(unobserved_clauses) do
+      IO.puts(device, "\nBylaw.Contract structural clause gaps")
 
-    cond do
-      Enum.empty?(clauses) ->
-        IO.puts(device, "No supported user-authored def/defp clauses found.")
-
-      Enum.empty?(unobserved_clauses) ->
-        IO.puts(
-          device,
-          "All #{Enum.count(clauses)} authored clauses were exercised by this test run."
-        )
-
-      true ->
-        unobserved_clauses
-        |> Enum.group_by(&{&1.module, &1.function, &1.arity})
-        |> Enum.sort_by(fn {mfa, _} -> mfa end)
-        |> Enum.each(&print_clause_group(&1, device))
-
-        print_structural_summary(unobserved_clauses, clauses, device)
-    end
-
-    print_arities(arities, coverage, device)
-
-    if Enum.any?(unsupported) do
-      IO.puts(
-        device,
-        "\nUnsupported structural modules: " <>
-          Enum.map_join(unsupported, ", ", &inspect(&1.module))
-      )
+      unobserved_clauses
+      |> Enum.group_by(&{&1.module, &1.function, &1.arity})
+      |> Enum.sort_by(fn {mfa, _} -> mfa end)
+      |> Enum.each(&print_clause_group(&1, device))
     end
   end
 
@@ -259,45 +184,10 @@ defmodule Bylaw.Contract.Report do
       IO.puts(
         device,
         "    ✗ #{source_location(clause)}\n" <>
-          "      no test exercises this clause:\n\n" <>
+          "      Missed function clause - no test exercises this clause:\n\n" <>
           indent_clause_source(clause.source) <> "\n"
       )
     end)
-  end
-
-  defp print_structural_summary(unobserved_clauses, clauses, device) do
-    IO.puts(
-      device,
-      "Structural summary: #{Enum.count(unobserved_clauses)} of #{Enum.count(clauses)} authored clauses " <>
-        "were not exercised by this test run"
-    )
-  end
-
-  defp print_arities([], _, _), do: :ok
-
-  defp print_arities(arities, coverage, device) do
-    unobserved_arities =
-      Enum.filter(arities, &(Map.get(coverage.arity_calls, &1.id, 0) == 0))
-
-    if Enum.any?(unobserved_arities) do
-      IO.puts(device, "\nUnobserved callable arities")
-
-      Enum.each(unobserved_arities, fn arity ->
-        kind =
-          if arity.default_wrapper? do
-            "default wrapper"
-          else
-            "authored"
-          end
-
-        visibility = Atom.to_string(arity.visibility)
-
-        IO.puts(
-          device,
-          "    #{inspect(arity.module)}.#{arity.function}/#{arity.arity} — #{kind}, #{visibility}"
-        )
-      end)
-    end
   end
 
   defp clause_observed?(clause, coverage) do
@@ -341,31 +231,9 @@ defmodule Bylaw.Contract.Report do
     _ -> source
   end
 
-  defp unsupported_modules(coverage) do
-    coverage
-    |> Map.get(:structural_modules, [])
-    |> Enum.filter(&(&1.status == :unsupported))
-  end
-
   defp count_observed(clauses, outcomes, field) do
     Enum.count(clauses, fn clause ->
       Map.get(Map.get(outcomes, clause.id, %{}), field, 0) > 0
     end)
   end
-
-  defp multiple_clauses?(targets, module, function, arity) do
-    targets
-    |> Enum.filter(&(&1.module == module and &1.function == function and &1.arity == arity))
-    |> Enum.uniq_by(& &1.clause)
-    |> Enum.count() > 1
-  end
-
-  defp percentage(_, 0), do: 0.0
-  defp percentage(observed, supported), do: observed * 100.0 / supported
-
-  defp unsupported_suffix(0), do: ""
-  defp unsupported_suffix(count), do: "; #{count} unsupported"
-
-  defp plural(1), do: ""
-  defp plural(_), do: "s"
 end

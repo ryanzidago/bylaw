@@ -72,7 +72,7 @@ defmodule Bylaw.Contract.Tracer do
                arities: structural.arities,
                arity_calls: %{},
                structural_modules: structural.modules,
-               warnings: loaded.warnings ++ structural.warnings
+               warnings: loaded.warnings
              }}
 
           {:error, reason} ->

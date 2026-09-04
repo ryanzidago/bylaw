@@ -34,7 +34,7 @@ defmodule Bylaw.Contract.SpecObservationTest do
     assert Enum.empty?(loaded.warnings)
   end
 
-  test "tracks input classes independently and renders unknown members explicitly" do
+  test "tracks input classes independently and preserves unknown members programmatically" do
     calls = [{:admin, 1}, {{:guest, 7}, 2}]
 
     coverage = observe(calls)
@@ -93,19 +93,18 @@ defmodule Bylaw.Contract.SpecObservationTest do
              warnings: 0
            }
 
-    assert report(coverage) =~ """
-           Bylaw.Contract.TestFixtures.SpecTarget.observe/2, argument 1
-             Input classes: 2/3 supported observed across 2 calls
-               HIT   :admin (1 call)
-               MISS  :member
-               HIT   {:guest, non_neg_integer()} (1 call)
-           """
+    output = report(coverage)
 
-    assert report(coverage) =~ """
-               HIT   pos_integer() (2 calls)
-               HIT   number() (2 calls)
-               ????  Bylaw.Contract.TestFixtures.RemoteTypes.token()
-           """
+    assert output =~
+             "no test exercises this declared input alternative:\n\n" <>
+               "      @spec observe"
+
+    assert output =~ "argument 1: :member"
+    assert output =~ "argument 2: :web"
+
+    refute output =~ "Bylaw.Contract cannot assess"
+    refute output =~ "argument 2: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+    refute output =~ "HIT"
   end
 
   test "derives deterministic classes for standard input types" do
@@ -163,15 +162,14 @@ defmodule Bylaw.Contract.SpecObservationTest do
     assert Bylaw.Contract.print_report(coverage, device) == :ok
     {_, report} = StringIO.contents(device)
 
-    assert report =~ "Input classes: 2/2 supported observed across 3 calls"
-    assert report =~ "Boundary values: 2/4 observed"
-    assert report =~ "HIT   17 (2 calls)"
-    assert report =~ "HIT   18 (1 call)"
-    assert report =~ "MISS  0"
-    assert report =~ "MISS  120"
+    assert report =~ "no test exercises this declared boundary value"
+    assert report =~ "argument 1 boundary: 0"
+    assert report =~ "argument 1 boundary: 120"
+    refute report =~ "argument 1 boundary: 17"
+    refute report =~ "argument 1 boundary: 18"
   end
 
-  test "keeps unsupported input shapes unknown" do
+  test "keeps unsupported input shapes unknown and out of the normal report" do
     loaded = Bylaw.Contract.Specs.load([Partitions])
     opaque_class = Enum.find(loaded.input_classes, &(&1.function == :opaque_shape))
 
@@ -193,8 +191,10 @@ defmodule Bylaw.Contract.SpecObservationTest do
     Bylaw.Contract.print_report(coverage, device)
     {_, report} = StringIO.contents(device)
 
-    assert report =~ "????  token()"
-    refute report =~ "MISS  token()"
+    assert report == ""
+    refute report =~ "Bylaw.Contract cannot assess"
+    refute report =~ "argument 1: token()"
+    refute report =~ "no test exercises this typespec-derived input class"
   end
 
   test "observes standard partitions and keeps their counts independent" do
