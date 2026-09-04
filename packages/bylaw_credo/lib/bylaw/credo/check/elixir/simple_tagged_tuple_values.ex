@@ -63,11 +63,15 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues do
   @doc false
   @impl Credo.Check
   def run(%Credo.SourceFile{} = source_file, params \\ []) do
-    issue_meta = IssueMeta.for(source_file, params)
+    if String.ends_with?(source_file.filename, ".heex") do
+      []
+    else
+      issue_meta = IssueMeta.for(source_file, params)
 
-    source_file
-    |> ast_with_literal_locations()
-    |> collect_issues(issue_meta)
+      source_file
+      |> ast_with_literal_locations()
+      |> collect_issues(issue_meta)
+    end
   end
 
   defp collect_issues({:ok, ast}, issue_meta), do: collect_issues(ast, [], issue_meta)

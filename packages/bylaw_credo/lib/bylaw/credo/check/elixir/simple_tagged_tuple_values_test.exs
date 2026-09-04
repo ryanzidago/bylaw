@@ -29,6 +29,21 @@ defmodule Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValuesTest do
     |> refute_issues()
   end
 
+  test "ignores standalone HEEx source files" do
+    """
+    <.settings_tiles>
+      <.tile docs="sso">
+        <:title>
+          <a id="sso-config">Single Sign-On</a>
+        </:title>
+      </.tile>
+    </.settings_tiles>
+    """
+    |> Credo.SourceFile.parse("lib/example.html.heex")
+    |> run_check(Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues)
+    |> refute_issues()
+  end
+
   @doc """
   Issue: Negative integers and floats are scalar literals, but the check treats
   their unary-minus AST representation as a complex operator expression.
