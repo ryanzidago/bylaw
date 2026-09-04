@@ -3,6 +3,19 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueriesTest do
 
   alias Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries
 
+  test "a variable named from is not treated as an Ecto query" do
+    """
+    defmodule MyApp.Branches do
+      def compare_dates(from, to) do
+        Date.diff(to, from)
+      end
+    end
+    """
+    |> to_source_file("lib/my_app/branches.ex")
+    |> run_context_check()
+    |> refute_issues()
+  end
+
   test "owner context may query its schema" do
     """
     defmodule MyApp.Conversations do

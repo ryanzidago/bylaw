@@ -265,7 +265,8 @@ defmodule Bylaw.Credo.Check.Ecto.ContextOwnsSchemaQueries do
          current_module,
          issue_meta,
          config
-       ) do
+       )
+       when is_list(args) do
     {node,
      maybe_add_queryable_issue(
        issues,
