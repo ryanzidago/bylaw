@@ -174,6 +174,18 @@ defmodule Bylaw.Contract.StructuralCoverageTest do
     assert reason =~ "debug information"
 
     assert Bylaw.Contract.summary(coverage).structural_unsupported == 1
+
+    refute Enum.any?(
+             coverage.warnings,
+             &String.starts_with?(&1, "structural coverage unsupported")
+           )
+
+    {:ok, output} = StringIO.open("")
+    assert :ok = Bylaw.Contract.print_report(coverage, output)
+    {_, report} = StringIO.contents(output)
+
+    refute report =~ "Unsupported structural modules"
+    refute report =~ "structural coverage unsupported"
   end
 
   test "temporary classifiers remain isolated across concurrent trace sessions" do

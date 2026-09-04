@@ -25,12 +25,7 @@ defmodule Bylaw.Contract.ReturnAlternativeObservationTest do
     assert summary.missed_return_alternatives == 0
     assert summary.unsupported_return_alternatives == 0
 
-    assert report(coverage) =~ """
-           Bylaw.Contract.TestFixtures.Registration.register/1, return
-             Return alternatives: 2/2 supported observed across 3 returns
-               HIT   {:ok, Bylaw.Contract.TestFixtures.User.t()} (1 return)
-               HIT   {:error, :underage} (2 returns)
-           """
+    refute report(coverage) =~ "no test exercises this declared return alternative"
   end
 
   test "reports an unobserved supported return alternative as missed" do
@@ -43,7 +38,7 @@ defmodule Bylaw.Contract.ReturnAlternativeObservationTest do
     assert Bylaw.Contract.summary(coverage).missed_return_alternatives == 1
   end
 
-  test "reports unsupported return alternatives as unknown" do
+  test "keeps unsupported return alternatives unknown and out of the normal report" do
     {:ok, tracer} = Bylaw.Contract.start([UnsupportedReturn])
     assert UnsupportedReturn.token(false) == "opaque token"
     coverage = Bylaw.Contract.stop(tracer)
@@ -54,7 +49,11 @@ defmodule Bylaw.Contract.ReturnAlternativeObservationTest do
     assert hit_count(coverage, opaque) == 0
     assert MapSet.member?(coverage.unknown, opaque.id)
     assert Bylaw.Contract.summary(coverage).unsupported_return_alternatives == 1
-    assert report(coverage) =~ "????  Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+
+    output = report(coverage)
+
+    refute output =~ "Bylaw.Contract cannot assess"
+    refute output =~ "return: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
   end
 
   test "isolates return events between sequential trace sessions" do

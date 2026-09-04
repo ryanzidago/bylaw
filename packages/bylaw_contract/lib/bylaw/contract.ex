@@ -20,7 +20,7 @@ defmodule Bylaw.Contract do
   @spec stop(tracer :: pid()) :: map()
   def stop(tracer), do: Tracer.stop(tracer)
 
-  @doc "Prints a human-readable coverage report."
+  @doc "Prints a human-readable report of actionable coverage gaps."
   @spec print_report(coverage :: map(), device :: IO.device()) :: :ok
   def print_report(coverage, device \\ :stdio), do: Report.print(coverage, device)
 

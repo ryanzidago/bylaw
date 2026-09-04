@@ -40,16 +40,29 @@ it on Erlang/OTP 29 with Elixir 1.20.
 mix test
 ```
 
-The included test intentionally skips `:member`, so the report ends with a
-miss:
+The default report shows only actionable gaps. If a test skips `:member`, the
+report points back to the spec that declared it:
 
 ```text
-Bylaw.Contract.Example.greeting/2, argument 1
-  Input classes: 2/3 supported observed across 2 calls
-    HIT   :admin (1 call)
-    MISS  :member
-    HIT   {:guest, non_neg_integer()} (1 call)
+Bylaw.Contract typespec gaps
+
+MyApp.Greetings.greeting/1
+    ✗ lib/my_app/greetings.ex:8
+      Missed input alternative - no test exercises this declared input alternative:
+
+      @spec greeting(audience()) :: String.t()
+
+      argument 1: :member
 ```
+
+Successful and unassessable targets remain available in the returned coverage
+data and `Bylaw.Contract.summary/1`; they do not add noise to the default human
+report. Loader warnings remain in `coverage.warnings`, and aggregate counters
+remain available through `Bylaw.Contract.summary/1` and the summary formatter
+mode; neither is printed by the default human report.
+
+Sections without actionable gaps are omitted. When no typespec or structural
+gaps exist, Bylaw.Contract prints nothing.
 
 For a return union such as:
 
@@ -57,27 +70,39 @@ For a return union such as:
 @spec register(non_neg_integer()) :: {:ok, User.t()} | {:error, :underage}
 ```
 
-normal return values are reported independently from arguments:
+return alternatives are reported independently from arguments. If tests return
+only `{:error, :underage}`, the report includes:
 
 ```text
-MyApp.Accounts.register/1, return
-  Return alternatives: 2/2 supported observed across 3 returns
-    HIT   {:ok, User.t()} (1 return)
-    HIT   {:error, :underage} (2 returns)
+MyApp.Accounts.register/1
+    ✗ lib/my_app/accounts.ex:14
+      Missed return alternative - no test exercises this declared return alternative:
+
+      @spec register(non_neg_integer()) ::
+              {:ok, User.t()} | {:error, :underage}
+
+      return: {:ok, User.t()}
 ```
 
 Finite integer ranges also produce exact boundary targets. Given
-`@spec register(0..17 | 18..120) :: term()`, calls with `17` and `18` produce:
+`@spec register(0..17 | 18..120) :: term()`, calls with `17` and `18` cover both
+range classes but leave two boundary gaps:
 
 ```text
-  Input classes: 2/2 supported observed across 2 calls
-    HIT   0..17 (1 call)
-    HIT   18..120 (1 call)
-  Boundary values: 2/4 observed
-    MISS  0
-    HIT   17 (1 call)
-    HIT   18 (1 call)
-    MISS  120
+MyApp.Accounts.register/1
+    ✗ lib/my_app/accounts.ex:14
+      Missed boundary - no test exercises this declared boundary value:
+
+      @spec register(0..17 | 18..120) :: term()
+
+      argument 1 boundary: 0
+
+    ✗ lib/my_app/accounts.ex:14
+      Missed boundary - no test exercises this declared boundary value:
+
+      @spec register(0..17 | 18..120) :: term()
+
+      argument 1 boundary: 120
 ```
 
 Input classes and exact boundary values are independent signals. Observing both
@@ -128,11 +153,11 @@ range endpoints are reported separately.
 
 Types without a standard subdivision remain one declared-type class when their
 shape can be matched safely. Recursive aliases, opaque representations, and
-unsupported spec forms remain explicit as `????` instead of being reported as
-false misses. Thresholds that exist only in guards are not inferred. Top-level
-return unions are observed as a separate signal. Bounded specs (`when`) are
-supported when their constraints can be substituted into both argument and
-return types.
+unsupported spec forms remain marked as unassessable in the coverage data
+rather than becoming false misses; they are omitted from the default human
+report. Thresholds that exist only in guards are not inferred. Top-level return
+unions are observed as a separate signal. Bounded specs (`when`) are supported
+when their constraints can be substituted into both argument and return types.
 
 Union members may overlap. A value that matches more than one member (for
 example, `integer() | number()`) records a hit for every matching member.
@@ -157,7 +182,7 @@ Bylaw.Contract structural clause gaps
 
 MyApp.Accounts.classify/1
     ✗ lib/my_app/accounts.ex:18
-      no test exercises this clause:
+      Missed function clause - no test exercises this clause:
 
       def classify(
             %{account: %{status: status}},
@@ -166,17 +191,19 @@ MyApp.Accounts.classify/1
           when status in [:active, :trial] and is_list(options)
 ```
 
-The coverage result retains the raw head, guard, selection, and call counts for
-programmatic analysis; they are intentionally omitted from the default human
-report.
+The coverage result retains the raw head, guard, selection, callable-arity, and
+call counts for programmatic analysis; they are intentionally omitted from the
+default human report.
 
 The classifiers are compiled from the module's BEAM abstract clauses with the
 original bodies replaced by markers. They therefore preserve compiled pattern,
 guard, and ordering semantics without running an original body during
-classification. Compiler-generated default wrappers are listed under callable
+classification. Compiler-generated default wrappers are retained under callable
 arities but do not count as authored clauses. A module whose debug information
-or abstract code is absent or unusable is explicitly reported as unsupported,
-not as a set of missed clauses.
+or abstract code is absent or unusable is retained as unsupported in the
+coverage data and aggregate summary, not reported as a set of missed clauses.
+Unobserved callable arities and unsupported structural modules do not appear in
+the default human report.
 
 The tracer uses isolated Erlang trace sessions and `return_trace` match
 specifications, and therefore requires a recent OTP release with the `:trace`

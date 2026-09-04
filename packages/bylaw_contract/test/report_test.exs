@@ -76,7 +76,7 @@ defmodule Bylaw.Contract.ReportTest do
            }
   end
 
-  test "prints only source-aware structural clause and callable-arity misses" do
+  test "prints only source-aware structural clause misses" do
     {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.StructuralExample])
     Bylaw.Contract.StructuralExample.classify(-1)
     coverage = Bylaw.Contract.stop(tracer)
@@ -89,7 +89,7 @@ defmodule Bylaw.Contract.ReportTest do
 
     assert report =~
              "✗ lib/bylaw/contract/structural_example.ex:7\n" <>
-               "      no test exercises this clause:\n\n" <>
+               "      Missed function clause - no test exercises this clause:\n\n" <>
                "      def classify(value) when is_integer(value) and value > 0"
 
     refute report =~ "lib/bylaw/contract/structural_example.ex:8\n"
@@ -99,11 +99,9 @@ defmodule Bylaw.Contract.ReportTest do
     refute report =~ "selected"
     refute report =~ "clause 3"
 
-    assert report =~
-             "Structural summary: 13 of 14 authored clauses were not exercised by this test run"
-
-    assert report =~ "Unobserved callable arities"
-    assert report =~ "Bylaw.Contract.StructuralExample.optional/1 — default wrapper"
+    refute report =~ "Structural summary:"
+    refute report =~ "Unobserved callable arities"
+    refute report =~ "Bylaw.Contract.StructuralExample.optional/1 — default wrapper"
   end
 
   test "wraps a long missing clause beneath its diagnostic" do
@@ -143,7 +141,7 @@ defmodule Bylaw.Contract.ReportTest do
 
     assert report =~
              "✗ lib/my_app.ex:12\n" <>
-               "      no test exercises this clause:\n\n" <>
+               "      Missed function clause - no test exercises this clause:\n\n" <>
                "      def classify(\n"
 
     assert report =~ "            options\n"
