@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "bylaw",
+  "project_id": "50df2773-baf7-4d4b-a311-6503666d323c"
+}

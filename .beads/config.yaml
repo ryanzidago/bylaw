@@ -1,0 +1,14 @@
+# Repository-wide Beads defaults.
+issue-prefix: "bylaw"
+sync.remote: "git+ssh://git@github.com/ryanzidago/bylaw.git"
+
+metrics:
+  disabled: true
+  endpoint: https://gastownhall-eventsapi.com/mp/collect
+  notice_shown: true
+
+# Keep issue routing inside this repository for every role.
+routing:
+  contributor: "."
+  default: "."
+  maintainer: "."

@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+git config core.hooksPath .githooks
+
+if command -v bd >/dev/null 2>&1 && bd where >/dev/null 2>&1; then
+  bd hooks install --beads
+fi
