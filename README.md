@@ -7,6 +7,9 @@ Bylaw is organized as independent packages under `packages/`:
 
 Packages most applications start with:
 
+- [`packages/bylaw_contract`](packages/bylaw_contract/README.md) observes which
+  supported alternatives declared in Elixir specs and function clauses appear
+  during a test run.
 - [`packages/bylaw_html`](packages/bylaw_html/README.md) validates rendered
   HTML strings with explicit checks.
 - [`packages/bylaw_ecto_query`](packages/bylaw_ecto_query/README.md) validates
@@ -30,6 +33,7 @@ Add the package you need to your dependencies:
 ```elixir
 def deps do
   [
+    {:bylaw_contract, "~> 0.1.0", only: :test},
     {:bylaw_html, "~> 0.1.0-alpha.2", only: :test},
     {:bylaw_ecto_query, "~> 0.3.0"},
     {:bylaw_postgres, "~> 0.3.0"},
