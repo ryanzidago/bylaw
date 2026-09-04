@@ -89,16 +89,246 @@ defmodule Bylaw.Contract.MigrationAcceptanceTest do
            ] == 1
   end
 
-  test "distinguishes unsupported alternatives from supported unobserved alternatives" do
+  test "distinguishes unassessable alternatives from supported misses in coverage data" do
     {:ok, tracer} = Bylaw.Contract.start([SpecTarget, UnsupportedReturn])
     SpecTarget.observe(:admin, 1)
     UnsupportedReturn.token(true)
     coverage = Bylaw.Contract.stop(tracer)
+
+    opaque_return =
+      Enum.find(
+        coverage.return_alternatives,
+        &(&1.label == "Bylaw.Contract.TestFixtures.RemoteTypes.token()")
+      )
+
     report = report(coverage)
 
-    assert report =~ "MISS  :member"
-    assert report =~ "????  Bylaw.Contract.TestFixtures.RemoteTypes.token()"
-    refute report =~ "MISS  Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+    assert report =~
+             "no test exercises this declared input alternative:\n\n" <>
+               "      @spec observe"
+
+    assert report =~ "argument 1: :member"
+    refute opaque_return.supported?
+    assert MapSet.member?(coverage.unknown, opaque_return.id)
+    refute report =~ "      return: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+  end
+
+  test "reports missed input alternatives from their typespec source without successful targets" do
+    {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.Example])
+    Bylaw.Contract.Example.greeting(:admin, :short)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert output =~ "Bylaw.Contract typespec gaps"
+
+    assert output =~
+             "✗ lib/bylaw/contract/example.ex:7\n" <>
+               "      Missed input alternative - " <>
+               "no test exercises this declared input alternative:\n\n" <>
+               "      @spec greeting(audience :: audience(), style :: style()) :: String.t()\n\n" <>
+               "      argument 1: :member"
+
+    refute output =~ "HIT"
+    refute output =~ "argument 1: :admin"
+  end
+
+  test "reports missed range boundaries from their typespec source" do
+    {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.Example.Registration])
+    Bylaw.Contract.Example.Registration.register(17)
+    Bylaw.Contract.Example.Registration.register(18)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert output =~
+             "✗ lib/bylaw/contract/example.ex:27\n" <>
+               "      Missed boundary - no test exercises this declared boundary value:\n\n" <>
+               "      @spec register(age :: registration_age()) :: :denied | :allowed\n\n" <>
+               "      argument 1 boundary: 0"
+
+    refute output =~ "argument 1 boundary: 17"
+  end
+
+  test "reports missed return alternatives from their typespec source" do
+    {:ok, tracer} = Bylaw.Contract.start([Registration])
+    Registration.register(15)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert output =~
+             "✗ test/support/spec_fixtures.ex:33\n" <>
+               "      Missed return alternative - " <>
+               "no test exercises this declared return alternative:\n\n" <>
+               "      @spec register(age :: non_neg_integer()) ::\n" <>
+               "              {:ok, Bylaw.Contract.TestFixtures.User.t()}\n" <>
+               "              | {:error, :underage}\n\n" <>
+               "      return: {:ok, Bylaw.Contract.TestFixtures.User.t()}"
+
+    refute output =~ "return: {:error, :underage}"
+  end
+
+  test "does not misreport unassessable typespec targets as misses" do
+    {:ok, tracer} = Bylaw.Contract.start([UnsupportedReturn])
+    UnsupportedReturn.token(true)
+    coverage = Bylaw.Contract.stop(tracer)
+
+    opaque_return =
+      Enum.find(
+        coverage.return_alternatives,
+        &(&1.label == "Bylaw.Contract.TestFixtures.RemoteTypes.token()")
+      )
+
+    output = report(coverage)
+
+    refute opaque_return.supported?
+    assert Bylaw.Contract.summary(coverage).unsupported_return_alternatives == 1
+    refute output =~ "Unassessable"
+    refute output =~ "      return: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+  end
+
+  test "omits unassessable typespec targets from the normal report while preserving assessment data" do
+    {:ok, tracer} = Bylaw.Contract.start([Partitions, SpecTarget, UnsupportedReturn])
+    Partitions.opaque_shape(1)
+    SpecTarget.observe(:admin, 1)
+    UnsupportedReturn.token(true)
+    coverage = Bylaw.Contract.stop(tracer)
+    summary = Bylaw.Contract.summary(coverage)
+    output = report(coverage)
+
+    assert summary.unsupported_input_classes > 0
+    assert summary.unsupported_return_alternatives > 0
+    assert Enum.any?(coverage.input_classes, &(not &1.supported?))
+    assert Enum.any?(coverage.return_alternatives, &(not &1.supported?))
+
+    refute output =~ "Unassessable"
+    refute output =~ "Bylaw.Contract cannot assess"
+
+    refute output =~
+             "      argument 2: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+
+    refute output =~
+             "      return: Bylaw.Contract.TestFixtures.RemoteTypes.token()"
+  end
+
+  test "omits unobserved callable arities from the normal report" do
+    {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.StructuralExample])
+    Bylaw.Contract.StructuralExample.classify(-1)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert Bylaw.Contract.summary(coverage).callable_arities > 0
+    assert Map.get(coverage.arity_calls, {Bylaw.Contract.StructuralExample, :optional, 1}, 0) == 0
+    refute output =~ "Unobserved callable arities"
+    refute output =~ "Bylaw.Contract.StructuralExample.optional/1 — default wrapper"
+  end
+
+  test "omits unsupported structural diagnostics from the normal report" do
+    {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.Example])
+    Bylaw.Contract.Example.greeting(:admin, :short)
+    coverage = Bylaw.Contract.stop(tracer)
+
+    coverage = %{
+      coverage
+      | structural_modules: [
+          %{module: MyApp.Uninspectable, status: :unsupported, reason: "debug information absent"}
+        ]
+    }
+
+    output = report(coverage)
+
+    assert Bylaw.Contract.summary(coverage).structural_unsupported == 1
+    refute output =~ "Unsupported structural modules"
+    refute output =~ "MyApp.Uninspectable"
+  end
+
+  test "omits typespec loader warnings from the normal report" do
+    {:ok, tracer} = Bylaw.Contract.start([Bylaw.Contract.Example])
+    Bylaw.Contract.Example.greeting(:admin, :short)
+    coverage = Bylaw.Contract.stop(tracer)
+
+    coverage = %{
+      coverage
+      | warnings: [
+          "MyApp.MissingSpecs has no persisted typespecs",
+          "could not load MyApp.MissingModule: :nofile",
+          "ignored unsupported spec form MyApp.Unsupported.run/1 clause 1"
+        ]
+    }
+
+    output = report(coverage)
+
+    assert Bylaw.Contract.summary(coverage).warnings == 3
+    refute output =~ "warning: MyApp.MissingSpecs has no persisted typespecs"
+    refute output =~ "warning: could not load MyApp.MissingModule"
+    refute output =~ "warning: ignored unsupported spec form MyApp.Unsupported.run/1 clause 1"
+  end
+
+  test "omits aggregate summaries from the normal report" do
+    {:ok, tracer} = Bylaw.Contract.start([SpecTarget, UnsupportedReturn])
+    SpecTarget.observe(:admin, 1)
+    UnsupportedReturn.token(true)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+    summary = Bylaw.Contract.summary(coverage)
+
+    assert summary.missed_input_classes > 0
+    assert summary.unsupported_return_alternatives > 0
+    assert summary.clauses_selected < summary.clauses
+    refute output =~ "Typespec summary:"
+    refute output =~ "Typespec assessment:"
+    refute output =~ "Structural summary:"
+  end
+
+  test "prints no normal report when there are no actionable gaps" do
+    {:ok, tracer} = Bylaw.Contract.start([UnsupportedReturn])
+    UnsupportedReturn.token(true)
+    UnsupportedReturn.token(false)
+    coverage = Bylaw.Contract.stop(tracer)
+
+    assert report(coverage) == ""
+  end
+
+  test "omits a report section when that section has no actionable gaps" do
+    {:ok, tracer} = Bylaw.Contract.start([SpecTarget])
+    SpecTarget.observe(:admin, 1)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert output =~ "Bylaw.Contract typespec gaps"
+    assert output =~ "Missed input alternative"
+    refute output =~ "Bylaw.Contract structural clause gaps"
+  end
+
+  test "prefixes every normal diagnostic explanation with its category" do
+    modules = [
+      Bylaw.Contract.Example.Registration,
+      Partitions,
+      Registration,
+      SpecTarget,
+      UnsupportedReturn
+    ]
+
+    {:ok, tracer} = Bylaw.Contract.start(modules)
+    Bylaw.Contract.Example.Registration.register(17)
+    Bylaw.Contract.Example.Registration.register(18)
+    Partitions.integer_shape(-1)
+    Registration.register(15)
+    SpecTarget.observe(:admin, 1)
+    UnsupportedReturn.token(true)
+    coverage = Bylaw.Contract.stop(tracer)
+    output = report(coverage)
+
+    assert output =~
+             "Missed input alternative - no test exercises this declared input alternative:"
+
+    assert output =~ "Missed input class - no test exercises this typespec-derived input class:"
+    assert output =~ "Missed boundary - no test exercises this declared boundary value:"
+
+    assert output =~
+             "Missed return alternative - no test exercises this declared return alternative:"
+
+    assert output =~ "Missed function clause - no test exercises this clause:"
+    refute output =~ "Unassessable"
+    refute output =~ "Bylaw.Contract cannot assess"
   end
 
   defp hit_count(coverage, target), do: Map.get(coverage.hits, target.id, 0)
