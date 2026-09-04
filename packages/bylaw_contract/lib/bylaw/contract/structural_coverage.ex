@@ -379,11 +379,10 @@ defmodule Bylaw.Contract.StructuralCoverage do
       classifiers_by_mfa
       |> Enum.group_by(fn %{mfa: {module, _, _}} -> module end)
       |> Enum.sort_by(fn {module, _} -> module end)
-      |> Enum.with_index(1)
-      |> Enum.map(fn {{module, mfa_classifiers}, index} ->
+      |> Enum.map(fn {module, mfa_classifiers} ->
         %{
           module: module,
-          classifier_function: classifier_function(index),
+          classifier_function: module,
           mfa_classifiers: mfa_classifiers
         }
       end)
@@ -479,10 +478,6 @@ defmodule Bylaw.Contract.StructuralCoverage do
     Enum.reduce(Enum.reverse(elements), {nil, 0}, fn element, tail ->
       {:cons, 0, element, tail}
     end)
-  end
-
-  defp classifier_function(index) do
-    String.to_atom("$bylaw_contract_classifier_#{index}")
   end
 
   defp compile_forms(forms, shadow_module) do
