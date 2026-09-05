@@ -158,6 +158,17 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrsTest do
     |> refute_issues()
   end
 
+  test "ignores bodyless declarations while checking implemented component clauses" do
+    """
+    defmodule Example do
+      def card(assigns)
+      def card(assigns), do: ~H"<p>{@title}</p>"
+    end
+    """
+    |> run_check()
+    |> assert_issue(%{line_no: 3, trigger: "@title"})
+  end
+
   test "ignores functions that are not arity-one HEEx components" do
     """
     defmodule Example do

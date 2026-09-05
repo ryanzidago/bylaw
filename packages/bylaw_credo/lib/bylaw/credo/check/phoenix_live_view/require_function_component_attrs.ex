@@ -182,6 +182,8 @@ defmodule Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs do
     |> terminal_templates(MapSet.new())
   end
 
+  defp templates_for_definition(_definition), do: []
+
   defp terminal_templates({:sigil_H, _meta, _arguments} = sigil, internal_assigns) do
     case Heex.template(sigil) do
       %Heex.Template{} = template -> [{template, internal_assigns}]
