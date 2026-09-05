@@ -2,81 +2,40 @@ defmodule Bylaw.Contract.Tracer do
   @moduledoc false
   use GenServer
 
-  alias Bylaw.Contract.Specs
-  alias Bylaw.Contract.StructuralCoverage
-  alias Bylaw.Contract.TypeMatcher
+  alias Bylaw.Contract.Check
+  alias Bylaw.Contract.TraceWorker
 
-  @session_name :bylaw_contract_typespec_coverage
-  @return_trace_match_spec [{:_, [], [{:return_trace}]}]
-
-  @spec start_link(modules :: list(module())) :: GenServer.on_start()
-  def start_link(modules), do: GenServer.start_link(__MODULE__, modules)
+  @spec start_link(
+          modules :: list(module()),
+          checks :: list({module(), Check.opts()})
+        ) :: GenServer.on_start()
+  def start_link(modules, checks), do: GenServer.start_link(__MODULE__, {modules, checks})
 
   @spec stop(tracer :: GenServer.server()) :: map()
   def stop(tracer), do: GenServer.call(tracer, :stop, :infinity)
 
+  @spec start_observation_window(tracer :: GenServer.server()) :: :ok
+  def start_observation_window(tracer), do: GenServer.cast(tracer, :start_observation_window)
+
+  @spec ex_unit_test_started(tracer :: GenServer.server(), label :: term()) :: :ok
+  def ex_unit_test_started(tracer, label),
+    do: GenServer.cast(tracer, {:ex_unit_test_started, label})
+
+  @spec ex_unit_test_finished(tracer :: GenServer.server(), label :: term()) :: :ok
+  def ex_unit_test_finished(tracer, label),
+    do: GenServer.cast(tracer, {:ex_unit_test_finished, label})
+
   @impl GenServer
-  def init(modules) do
-    loaded = Specs.load(modules)
-    structural = StructuralCoverage.load(modules)
-    input_targets_by_mfa = Enum.group_by(loaded.input_classes ++ loaded.boundaries, &mfa/1)
-    return_alternatives_by_mfa = Enum.group_by(loaded.return_alternatives, &mfa/1)
-    clauses_by_mfa = Enum.group_by(structural.clauses, &mfa/1)
+  def init({modules, check_specs}) do
+    Enum.each(modules, &Code.ensure_loaded/1)
 
-    classifiers_by_mfa =
-      Map.new(
-        for classifier <- structural.classifiers,
-            mfa_classifier <- classifier.mfa_classifiers do
-          {_, function, arity} = mfa_classifier.mfa
-
-          {mfa_classifier.mfa,
-           %{
-             classifier_function: classifier.classifier_function,
-             source_function: function,
-             source_arity: arity
-           }}
-        end
-      )
-
-    structural_mfas = MapSet.new(structural.arities, &mfa/1)
-
-    mfas =
-      Enum.uniq(
-        Map.keys(input_targets_by_mfa) ++
-          Map.keys(return_alternatives_by_mfa) ++ MapSet.to_list(structural_mfas)
-      )
-
-    case start_trace_session(mfas, return_alternatives_by_mfa) do
-      {:ok, session} ->
-        case StructuralCoverage.start_shadow(structural.classifiers) do
-          {:ok, shadow} ->
-            {:ok,
-             %{
-               session: session,
-               shadow: shadow,
-               input_classes: loaded.input_classes,
-               boundaries: loaded.boundaries,
-               return_alternatives: loaded.return_alternatives,
-               input_targets_by_mfa: input_targets_by_mfa,
-               return_alternatives_by_mfa: return_alternatives_by_mfa,
-               hits: %{},
-               calls: %{},
-               return_events: %{},
-               unknown: MapSet.new(),
-               clauses: structural.clauses,
-               clauses_by_mfa: clauses_by_mfa,
-               classifiers_by_mfa: classifiers_by_mfa,
-               structural_mfas: structural_mfas,
-               clause_outcomes: %{},
-               unmatched_clause_calls: %{},
-               arities: structural.arities,
-               arity_calls: %{},
-               structural_modules: structural.modules,
-               warnings: loaded.warnings
-             }}
+    case init_checks(modules, check_specs) do
+      {:ok, runtimes} ->
+        case start_workers(runtimes) do
+          {:ok, workers} ->
+            {:ok, %{workers: workers}}
 
           {:error, reason} ->
-            destroy_session(session)
             {:stop, reason}
         end
 
@@ -86,230 +45,162 @@ defmodule Bylaw.Contract.Tracer do
   end
 
   @impl GenServer
-  def handle_info({:trace, _, :call, {module, function, arguments}}, state)
-      when is_list(arguments) do
-    mfa = {module, function, Enum.count(arguments)}
-    targets = Map.get(state.input_targets_by_mfa, mfa, [])
-    clauses = Map.get(state.clauses_by_mfa, mfa, [])
-
-    {hits, unknown} =
-      Enum.reduce(targets, {state.hits, state.unknown}, fn target, {hits, unknown} ->
-        value = Enum.at(arguments, target.argument - 1)
-
-        case TypeMatcher.match(value, target.match_type) do
-          :match -> {Map.update(hits, target.id, 1, &(&1 + 1)), unknown}
-          :unknown -> {hits, MapSet.put(unknown, target.id)}
-          :no_match -> {hits, unknown}
-        end
-      end)
-
-    calls =
-      if Enum.empty?(targets) do
-        state.calls
-      else
-        Map.update(state.calls, mfa, 1, &(&1 + 1))
-      end
-
-    arity_calls =
-      if MapSet.member?(state.structural_mfas, mfa) do
-        Map.update(state.arity_calls, mfa, 1, &(&1 + 1))
-      else
-        state.arity_calls
-      end
-
-    {clause_outcomes, unmatched_clause_calls} =
-      classify_clauses(state, clauses, module, function, arguments, mfa)
-
-    {:noreply,
-     %{
-       state
-       | hits: hits,
-         unknown: unknown,
-         calls: calls,
-         clause_outcomes: clause_outcomes,
-         unmatched_clause_calls: unmatched_clause_calls,
-         arity_calls: arity_calls
-     }}
-  end
-
-  def handle_info({:trace, _, :return_from, mfa, value}, state) do
-    alternatives = Map.get(state.return_alternatives_by_mfa, mfa, [])
-
-    {hits, unknown} = match_alternatives(alternatives, value, state.hits, state.unknown)
-
-    {:noreply,
-     %{
-       state
-       | hits: hits,
-         unknown: unknown,
-         return_events: Map.update(state.return_events, mfa, 1, &(&1 + 1))
-     }}
-  end
-
-  def handle_info(_, state), do: {:noreply, state}
-
-  @impl GenServer
   def handle_call(:stop, _, state) do
-    state = stop_tracing_and_drain(state)
-    StructuralCoverage.stop_shadow(state.shadow)
-
     coverage =
-      Map.take(state, [
-        :input_classes,
-        :boundaries,
-        :return_alternatives,
-        :hits,
-        :calls,
-        :return_events,
-        :unknown,
-        :clauses,
-        :clause_outcomes,
-        :unmatched_clause_calls,
-        :arities,
-        :arity_calls,
-        :structural_modules,
-        :warnings
-      ])
+      Enum.reduce(state.workers, empty_coverage(), fn worker, coverage ->
+        {check, check_coverage} = TraceWorker.stop(worker)
 
-    {:stop, :normal, coverage, %{state | session: nil, shadow: nil}}
+        coverage
+        |> put_in([:checks, check], check_coverage)
+        |> merge_coverage(check_coverage)
+      end)
+
+    {:stop, :normal, coverage, %{state | workers: []}}
   end
 
   @impl GenServer
-  def terminate(_, %{session: nil, shadow: shadow}) do
-    StructuralCoverage.stop_shadow(shadow)
+  def handle_cast(:start_observation_window, state) do
+    Enum.each(state.workers, &TraceWorker.start_observation_window/1)
+    {:noreply, state}
+  end
+
+  def handle_cast({:ex_unit_test_started, label}, state) do
+    Enum.each(state.workers, &TraceWorker.ex_unit_test_started(&1, label))
+    {:noreply, state}
+  end
+
+  def handle_cast({:ex_unit_test_finished, label}, state) do
+    Enum.each(state.workers, &TraceWorker.ex_unit_test_finished(&1, label))
+    {:noreply, state}
+  end
+
+  @impl GenServer
+  def terminate(_, state) do
+    Enum.each(state.workers, &stop_worker/1)
     :ok
   end
 
-  def terminate(_, %{session: session, shadow: shadow}) do
-    destroy_session(session)
-    StructuralCoverage.stop_shadow(shadow)
-    :ok
-  end
+  defp init_checks(modules, check_specs) do
+    Enum.reduce_while(check_specs, {:ok, [], MapSet.new()}, fn {check, opts},
+                                                               {:ok, runtimes, claims} ->
+      context = %{claims: claims}
 
-  defp start_trace_session(mfas, return_alternatives_by_mfa) do
-    with {:ok, session} <- create_session() do
-      configure_session(session, mfas, return_alternatives_by_mfa)
-    end
-  end
+      case check.init(modules, opts, context) do
+        {:ok, check_state, plan} ->
+          runtime = %{
+            module: check,
+            state: check_state,
+            calls: plan.calls,
+            returns: plan.returns,
+            process_scope: Map.get(plan, :process_scope, :all),
+            trace_scope: Map.get(plan, :trace_scope, :local)
+          }
 
-  defp create_session do
-    {:ok, :trace.session_create(@session_name, self(), [])}
-  rescue
-    error in ArgumentError ->
-      {:error,
-       "could not create a Bylaw.Contract isolated trace session: #{Exception.message(error)}"}
-  end
+          {:cont, {:ok, [runtime | runtimes], MapSet.union(claims, plan.claims)}}
 
-  defp configure_session(session, mfas, return_alternatives_by_mfa) do
-    Enum.each(mfas, fn mfa ->
-      match_spec =
-        if Map.has_key?(return_alternatives_by_mfa, mfa) do
-          @return_trace_match_spec
-        else
-          true
-        end
-
-      :trace.function(session, mfa, match_spec, [:local])
+        {:error, reason} ->
+          terminate_pending_checks(runtimes)
+          {:halt, {:error, reason}}
+      end
     end)
-
-    :trace.process(session, :all, true, [:call])
-    :trace.process(session, :new, true, [:call])
-    {:ok, session}
-  rescue
-    error in ArgumentError ->
-      destroy_session(session)
-
-      {:error,
-       "could not configure the Bylaw.Contract trace session: #{Exception.message(error)}"}
-  end
-
-  defp stop_tracing_and_drain(%{session: session} = state) do
-    :trace.process(session, :all, false, [:call])
-    :trace.process(session, :new, false, [:call])
-    reference = :trace.delivered(session, :all)
-    state = drain_until_delivered(state, reference)
-    destroy_session(session)
-    %{state | session: nil}
-  end
-
-  defp drain_until_delivered(state, reference) do
-    receive do
-      {:trace_delivered, :all, ^reference} ->
-        state
-
-      {:trace, _, :call, {_, _, arguments}} = message when is_list(arguments) ->
-        {:noreply, state} = handle_info(message, state)
-        drain_until_delivered(state, reference)
-
-      {:trace, _, :return_from, {_, _, _}, _} = message ->
-        {:noreply, state} = handle_info(message, state)
-        drain_until_delivered(state, reference)
-
-      _ ->
-        drain_until_delivered(state, reference)
+    |> case do
+      {:ok, runtimes, _claims} -> {:ok, Enum.reverse(runtimes)}
+      error -> error
     end
   end
 
-  defp destroy_session(session) do
-    :trace.session_destroy(session)
+  defp start_workers(runtimes), do: start_workers(runtimes, [])
+
+  defp start_workers([], workers), do: {:ok, Enum.reverse(workers)}
+
+  defp start_workers([runtime | remaining], workers) do
+    case TraceWorker.start_link(runtime) do
+      {:ok, worker} ->
+        start_workers(remaining, [worker | workers])
+
+      {:error, reason} ->
+        Enum.each(workers, &stop_worker/1)
+        terminate_pending_checks(remaining)
+        {:error, reason}
+    end
+  end
+
+  defp stop_worker(worker) do
+    if Process.alive?(worker) do
+      TraceWorker.stop(worker)
+    end
+
+    :ok
   catch
-    :error, :badarg -> :ok
+    :exit, _ -> :ok
   end
 
-  defp mfa(target), do: {target.module, target.function, target.arity}
+  defp terminate_pending_checks(runtimes) do
+    runtimes
+    |> Enum.reverse()
+    |> Enum.each(fn runtime -> runtime.module.terminate(runtime.state) end)
+  end
 
-  defp match_alternatives(alternatives, value, hits, unknown) do
-    Enum.reduce(alternatives, {hits, unknown}, fn alternative, {hits, unknown} ->
-      case TypeMatcher.match(value, alternative.match_type) do
-        :match -> {Map.update(hits, alternative.id, 1, &(&1 + 1)), unknown}
-        :unknown -> {hits, MapSet.put(unknown, alternative.id)}
-        :no_match -> {hits, unknown}
-      end
+  defp empty_coverage do
+    %{
+      input_classes: [],
+      boundaries: [],
+      return_alternatives: [],
+      compiler_return_alternatives: [],
+      compiler_modules: [],
+      compiler_warnings: [],
+      compiler_calls: %{},
+      hits: %{},
+      calls: %{},
+      return_events: %{},
+      unknown: MapSet.new(),
+      clauses: [],
+      clause_outcomes: %{},
+      unmatched_clause_calls: %{},
+      arities: [],
+      arity_calls: %{},
+      structural_modules: [],
+      warnings: [],
+      checks: %{}
+    }
+  end
+
+  defp merge_coverage(coverage, check_coverage) do
+    Enum.reduce(check_coverage, coverage, fn
+      {:unknown, unknown}, merged ->
+        Map.update!(merged, :unknown, &MapSet.union(&1, unknown))
+
+      {key, values}, merged
+      when key in [
+             :input_classes,
+             :boundaries,
+             :return_alternatives,
+             :compiler_return_alternatives,
+             :compiler_modules,
+             :compiler_warnings,
+             :clauses,
+             :arities,
+             :structural_modules,
+             :warnings
+           ] ->
+        Map.update!(merged, key, &(&1 ++ values))
+
+      {key, counters}, merged
+      when key in [
+             :hits,
+             :calls,
+             :compiler_calls,
+             :return_events,
+             :clause_outcomes,
+             :unmatched_clause_calls,
+             :arity_calls
+           ] ->
+        Map.update!(merged, key, fn existing ->
+          Map.merge(existing, counters, fn _, left, right -> max(left, right) end)
+        end)
+
+      {_key, _value}, merged ->
+        merged
     end)
   end
-
-  defp classify_clauses(state, [], _, _, _, _),
-    do: {state.clause_outcomes, state.unmatched_clause_calls}
-
-  defp classify_clauses(state, clauses, _, _, arguments, mfa) do
-    classifier = Map.fetch!(state.classifiers_by_mfa, mfa)
-    classification = StructuralCoverage.classify(state.shadow, classifier, clauses, arguments)
-
-    clause_outcomes =
-      Enum.reduce(classification.outcomes, state.clause_outcomes, fn {id, outcome}, outcomes ->
-        Map.update(outcomes, id, new_outcome_counts(outcome), fn counts ->
-          add_outcome(counts, outcome)
-        end)
-      end)
-
-    unmatched_clause_calls =
-      if classification.selected == :no_clause do
-        Map.update(state.unmatched_clause_calls, mfa, 1, &(&1 + 1))
-      else
-        state.unmatched_clause_calls
-      end
-
-    {clause_outcomes, unmatched_clause_calls}
-  end
-
-  defp new_outcome_counts(outcome) do
-    %{
-      head_matches: boolean_count(outcome.head_matches?),
-      guard_passes: boolean_count(outcome.guard_passes?),
-      guard_rejections: boolean_count(outcome.guard_rejected?),
-      selected: boolean_count(outcome.selected?)
-    }
-  end
-
-  defp add_outcome(counts, outcome) do
-    %{
-      head_matches: counts.head_matches + boolean_count(outcome.head_matches?),
-      guard_passes: counts.guard_passes + boolean_count(outcome.guard_passes?),
-      guard_rejections: counts.guard_rejections + boolean_count(outcome.guard_rejected?),
-      selected: counts.selected + boolean_count(outcome.selected?)
-    }
-  end
-
-  defp boolean_count(true), do: 1
-  defp boolean_count(false), do: 0
 end

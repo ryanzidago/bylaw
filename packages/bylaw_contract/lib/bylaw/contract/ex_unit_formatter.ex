@@ -6,21 +6,62 @@ defmodule Bylaw.Contract.ExUnitFormatter do
   `BYLAW_CONTRACT_APPS` to a comma-separated list of OTP application names when a
   suite exercises more than one application. Set `BYLAW_CONTRACT_REPORT=summary`
   for compact, machine-readable output.
+
+  Select checks through the arbitrary ExUnit option passed to formatters:
+
+      ExUnit.start(
+        bylaw_contract: [
+          checks: [
+            Bylaw.Contract.Check.Typespec,
+            Bylaw.Contract.Check.FunctionClauses,
+            Bylaw.Contract.Check.ElixirCompiler
+          ]
+        ]
+      )
   """
 
   use GenServer
 
+  alias Bylaw.Contract.Tracer
+
   @impl GenServer
-  def init(_) do
+  def init(ex_unit_options) do
     with {:ok, modules} <- application_modules(),
-         {:ok, tracer} <- Bylaw.Contract.start(modules) do
+         {:ok, options} <- observation_options(ex_unit_options),
+         {:ok, tracer} <- Bylaw.Contract.start(modules, options) do
       {:ok, %{tracer: tracer, error: nil}}
     else
-      {:error, reason} -> {:ok, %{tracer: nil, error: reason}}
+      {:error, reason} ->
+        {:ok, %{tracer: nil, error: reason}}
+    end
+  end
+
+  defp observation_options(ex_unit_options) do
+    case Keyword.get(ex_unit_options, :bylaw_contract, []) do
+      options when is_list(options) ->
+        {:ok, options}
+
+      options ->
+        {:error, "expected :bylaw_contract to be a keyword list, got: #{inspect(options)}"}
     end
   end
 
   @impl GenServer
+  def handle_cast({:suite_started, _}, %{tracer: tracer} = state) when is_pid(tracer) do
+    Tracer.start_observation_window(tracer)
+    {:noreply, state}
+  end
+
+  def handle_cast({:test_started, test}, %{tracer: tracer} = state) when is_pid(tracer) do
+    Tracer.ex_unit_test_started(tracer, {test.case, test.name})
+    {:noreply, state}
+  end
+
+  def handle_cast({:test_finished, test}, %{tracer: tracer} = state) when is_pid(tracer) do
+    Tracer.ex_unit_test_finished(tracer, {test.case, test.name})
+    {:noreply, state}
+  end
+
   def handle_cast({:suite_finished, _}, %{tracer: tracer} = state) when is_pid(tracer) do
     coverage = Bylaw.Contract.stop(tracer)
     print_result(coverage)
@@ -116,6 +157,16 @@ defmodule Bylaw.Contract.ExUnitFormatter do
               :observed_return_alternatives,
               :missed_return_alternatives,
               :unsupported_return_alternatives,
+              :compiler_return_groups,
+              :compiler_call_events,
+              :compiler_return_alternatives,
+              :supported_compiler_return_alternatives,
+              :observed_compiler_return_alternatives,
+              :missed_compiler_return_alternatives,
+              :unsupported_compiler_return_alternatives,
+              :compiler_modules,
+              :compiler_unsupported,
+              :compiler_warnings,
               :clauses,
               :clauses_selected,
               :clauses_head_matched,

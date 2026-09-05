@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+- Add opt-in, checker-versioned observation of unambiguous finite return
+  alternatives from Elixir 1.20's private compiler-inference BEAM chunk.
+- Limit compiler-inferred runtime obligations to authored functions using
+  Elixir debug metadata, excluding macro-generated exports without
+  library-specific name filters.
+- Isolate each private compiler-chunk decode behind a fixed per-module timeout
+  so pathological descriptor expansion remains bounded and unassessable.
+- Infer compiler alternatives from executed function clauses only when the
+  compiler's input-to-return rules identify one unique outcome, avoiding
+  runtime tracing and keeping ambiguous outcomes unassessable.
+- Match unambiguous compiler rules through narrowly injected clause counters
+  without enabling VM tracing, inspecting returned values, or starting the
+  `:cover` server; exclude protocol implementation modules and bound
+  instrumentation with a configurable function limit.
+- Make typespec, structural, and Elixir compiler observation independently
+  selectable through an explicit ordered list of contract check modules.
 - Report only actionable gaps in the default human-readable output, omitting
   empty and all-clear sections.
 - Point each typespec-derived diagnostic to its persisted `@spec` source and
