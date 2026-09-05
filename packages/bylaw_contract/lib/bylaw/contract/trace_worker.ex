@@ -5,8 +5,23 @@ defmodule Bylaw.Contract.TraceWorker do
   @return_trace_match_spec [{:_, [], [{:return_trace}]}]
   @return_only_trace_match_spec [{:_, [], [{:return_trace}, {:message, false}]}]
 
-  @spec start_link(runtime :: map()) :: GenServer.on_start()
-  def start_link(runtime), do: GenServer.start_link(__MODULE__, runtime)
+  @doc false
+  @spec start_link(
+          modules :: list(module()),
+          check :: module(),
+          opts :: list(),
+          claims :: MapSet.t()
+        ) :: GenServer.on_start()
+  def start_link(modules, check, opts, claims),
+    do: GenServer.start_link(__MODULE__, {modules, check, opts, claims})
+
+  @doc false
+  @spec claims(worker :: GenServer.server()) :: MapSet.t()
+  def claims(worker), do: GenServer.call(worker, :claims, :infinity)
+
+  @doc false
+  @spec activate(worker :: GenServer.server()) :: :ok | {:error, term()}
+  def activate(worker), do: GenServer.call(worker, :activate, :infinity)
 
   @spec stop(worker :: GenServer.server()) :: {module(), map()}
   def stop(worker), do: GenServer.call(worker, :stop, :infinity)
@@ -23,9 +38,29 @@ defmodule Bylaw.Contract.TraceWorker do
     do: GenServer.cast(worker, {:ex_unit_test_finished, label})
 
   @impl GenServer
-  def init(runtime) do
+  def init({modules, check, opts, claims}) do
+    Process.flag(:trap_exit, true)
     Process.flag(:message_queue_data, :off_heap)
 
+    case check.init(modules, opts, %{claims: claims}) do
+      {:ok, check_state, plan} ->
+        runtime = %{
+          module: check,
+          state: check_state,
+          calls: plan.calls,
+          returns: plan.returns,
+          process_scope: Map.get(plan, :process_scope, :all),
+          trace_scope: Map.get(plan, :trace_scope, :local)
+        }
+
+        {:ok, %{runtime: runtime, session: nil, claims: plan.claims}}
+
+      {:error, reason} ->
+        {:stop, reason}
+    end
+  end
+
+  defp start_runtime(runtime) do
     if Enum.empty?(runtime.calls) and Enum.empty?(runtime.returns) do
       {:ok,
        %{
@@ -56,8 +91,7 @@ defmodule Bylaw.Contract.TraceWorker do
        }}
     else
       {:error, reason} ->
-        runtime.module.terminate(runtime.state)
-        {:stop, reason}
+        {:error, reason}
     end
   end
 
@@ -76,6 +110,9 @@ defmodule Bylaw.Contract.TraceWorker do
     state = %{state | scan_timer: nil}
     {:noreply, state |> trace_labeled_test_processes() |> schedule_test_process_scan()}
   end
+
+  def handle_info({:EXIT, _process, :normal}, state), do: {:noreply, state}
+  def handle_info({:EXIT, _process, reason}, state), do: {:stop, reason, state}
 
   def handle_info(_, state), do: {:noreply, state}
 
@@ -106,6 +143,17 @@ defmodule Bylaw.Contract.TraceWorker do
   def handle_cast(_message, state), do: {:noreply, state}
 
   @impl GenServer
+  def handle_call(:claims, _, state) do
+    {:reply, state.claims, Map.delete(state, :claims)}
+  end
+
+  def handle_call(:activate, _, state) do
+    case start_runtime(state.runtime) do
+      {:ok, activated} -> {:reply, :ok, activated}
+      {:error, reason} -> {:reply, {:error, reason}, state}
+    end
+  end
+
   def handle_call(:stop, _, state) do
     state = stop_trace(state)
     coverage = state.runtime.module.coverage(state.runtime.state)

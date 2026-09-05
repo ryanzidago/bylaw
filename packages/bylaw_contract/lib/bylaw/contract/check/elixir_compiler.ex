@@ -190,6 +190,15 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
     {instrumented, Enum.reverse(warnings)}
   end
 
+  defp instrument_module(module, _rules, _observer_token)
+       when module in [
+              __MODULE__,
+              Bylaw.Contract.Tracer,
+              Bylaw.Contract.TraceWorker,
+              CompilerObserver
+            ],
+       do: {:error, "observer runtime modules cannot be hot-reloaded during observation"}
+
   defp instrument_module(module, rules, observer_token) do
     with {^module, binary, filename} <- :code.get_object_code(module),
          {:ok, {^module, [{:abstract_code, {:raw_abstract_v1, forms}}]}} <-

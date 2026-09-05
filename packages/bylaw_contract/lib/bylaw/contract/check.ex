@@ -33,7 +33,13 @@ defmodule Bylaw.Contract.Check do
           claims: MapSet.t(term())
         }
 
-  @doc "Initializes a check for the modules being observed."
+  @doc """
+  Initializes a check in its owning worker for the modules being observed.
+
+  Checks initialize sequentially in the configured order, receiving earlier
+  claims. Trace observation starts after every check initializes successfully.
+  The worker also invokes observation, coverage, and termination callbacks.
+  """
   @callback init(list(module()), opts(), context()) ::
               {:ok, state :: term(), plan()} | {:error, String.t()}
 

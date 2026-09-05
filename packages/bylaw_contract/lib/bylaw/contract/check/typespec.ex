@@ -19,11 +19,22 @@ defmodule Bylaw.Contract.Check.Typespec do
       end)
 
     loaded = %{loaded | return_alternatives: return_alternatives}
-    input_targets_by_mfa = Enum.group_by(loaded.input_classes ++ loaded.boundaries, &mfa/1)
-    return_alternatives_by_mfa = Enum.group_by(loaded.return_alternatives, &mfa/1)
+
+    input_targets_by_mfa =
+      Enum.group_by(loaded.input_classes ++ loaded.boundaries, &mfa/1, & &1.id)
+
+    return_alternatives_by_mfa = Enum.group_by(loaded.return_alternatives, &mfa/1, & &1.id)
 
     state =
-      Map.merge(loaded, %{
+      Map.merge(Map.drop(loaded, [:input_classes, :boundaries, :return_alternatives]), %{
+        targets:
+          Map.new(
+            loaded.input_classes ++ loaded.boundaries ++ loaded.return_alternatives,
+            &{&1.id, &1}
+          ),
+        input_class_ids: Enum.map(loaded.input_classes, & &1.id),
+        boundary_ids: Enum.map(loaded.boundaries, & &1.id),
+        return_alternative_ids: Enum.map(loaded.return_alternatives, & &1.id),
         input_targets_by_mfa: input_targets_by_mfa,
         return_alternatives_by_mfa: return_alternatives_by_mfa,
         hits: %{},
@@ -53,7 +64,8 @@ defmodule Bylaw.Contract.Check.Typespec do
     targets = Map.get(state.input_targets_by_mfa, mfa, [])
 
     {hits, unknown} =
-      Enum.reduce(targets, {state.hits, state.unknown}, fn target, {hits, unknown} ->
+      Enum.reduce(targets, {state.hits, state.unknown}, fn id, {hits, unknown} ->
+        target = Map.fetch!(state.targets, id)
         value = Enum.at(arguments, target.argument - 1)
 
         case TypeMatcher.match(value, target.match_type) do
@@ -77,7 +89,9 @@ defmodule Bylaw.Contract.Check.Typespec do
     alternatives = Map.get(state.return_alternatives_by_mfa, mfa, [])
 
     {hits, unknown} =
-      Enum.reduce(alternatives, {state.hits, state.unknown}, fn alternative, {hits, unknown} ->
+      Enum.reduce(alternatives, {state.hits, state.unknown}, fn id, {hits, unknown} ->
+        alternative = Map.fetch!(state.targets, id)
+
         case TypeMatcher.match(value, alternative.match_type) do
           :match -> {Map.update(hits, alternative.id, 1, &(&1 + 1)), unknown}
           :unknown -> {hits, MapSet.put(unknown, alternative.id)}
@@ -98,15 +112,18 @@ defmodule Bylaw.Contract.Check.Typespec do
   @impl Bylaw.Contract.Check
   def coverage(state) do
     Map.take(state, [
-      :input_classes,
-      :boundaries,
-      :return_alternatives,
       :hits,
       :calls,
       :return_events,
       :unknown,
       :warnings
     ])
+    |> Map.put(:input_classes, Enum.map(state.input_class_ids, &Map.fetch!(state.targets, &1)))
+    |> Map.put(:boundaries, Enum.map(state.boundary_ids, &Map.fetch!(state.targets, &1)))
+    |> Map.put(
+      :return_alternatives,
+      Enum.map(state.return_alternative_ids, &Map.fetch!(state.targets, &1))
+    )
   end
 
   @impl Bylaw.Contract.Check

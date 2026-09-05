@@ -32,7 +32,7 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
       structural_mfas = MapSet.new(loaded.arities, &mfa/1)
 
       state =
-        Map.merge(loaded, %{
+        Map.merge(Map.delete(loaded, :classifiers), %{
           shadow: shadow,
           clauses_by_mfa: clauses_by_mfa,
           classifiers_by_mfa: classifiers_by_mfa,

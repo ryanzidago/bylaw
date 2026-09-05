@@ -34,6 +34,14 @@ The package requires Erlang/OTP 27 or newer because it uses isolated sessions
 from the recent `:trace` API. The Bylaw development toolchain currently tests
 it on Erlang/OTP 29 with Elixir 1.20.
 
+Checks initialize sequentially in their own workers, with earlier claims
+passed to later checks. Trace sessions activate after initialization succeeds.
+Check state stays in its worker; standard report fields and the per-check
+coverage map are assembled in the caller when observation stops. These reduce
+copying, but returned coverage and trace-event traffic still consume memory.
+The compiler check cannot hot-reload the observer's own runtime modules; those
+alternatives remain unassessable with a programmatic warning.
+
 ## Development
 
 ```sh
