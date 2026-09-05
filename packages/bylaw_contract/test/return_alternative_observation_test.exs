@@ -117,7 +117,7 @@ defmodule Bylaw.Contract.ReturnAlternativeObservationTest do
 
   defp report(coverage) do
     {:ok, device} = StringIO.open("")
-    :ok = Bylaw.Contract.print_report(coverage, device)
+    :ok = Bylaw.Contract.print_report(coverage, device, colors: false)
     {_, output} = StringIO.contents(device)
     output
   end

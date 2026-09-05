@@ -92,7 +92,7 @@ defmodule Bylaw.Contract.ReportTest do
     coverage = Bylaw.Contract.stop(tracer)
 
     {:ok, output} = StringIO.open("")
-    assert :ok = Bylaw.Contract.print_report(coverage, output)
+    assert :ok = Bylaw.Contract.print_report(coverage, output, colors: false)
     {_, report} = StringIO.contents(output)
 
     assert report =~ "Bylaw.Contract structural clause gaps"
@@ -146,7 +146,7 @@ defmodule Bylaw.Contract.ReportTest do
     }
 
     {:ok, output} = StringIO.open("")
-    assert :ok = Bylaw.Contract.print_report(coverage, output)
+    assert :ok = Bylaw.Contract.print_report(coverage, output, colors: false)
     {_, report} = StringIO.contents(output)
 
     assert report =~

@@ -325,7 +325,7 @@ defmodule Bylaw.Contract.TraceBacklogAcceptanceTest do
     {:ok, device} = StringIO.open("")
 
     try do
-      :ok = Contract.print_report(coverage, device)
+      :ok = Contract.print_report(coverage, device, colors: false)
       {_, output} = StringIO.contents(device)
       output
     after

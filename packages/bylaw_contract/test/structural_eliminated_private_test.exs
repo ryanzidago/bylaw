@@ -81,7 +81,7 @@ defmodule Bylaw.Contract.StructuralEliminatedPrivateTest do
       assert Enum.all?(coverage.clauses, &(coverage.clause_outcomes[&1.id].selected == 1))
       assert Enum.all?(coverage.arities, &(&1.function == :keep))
       {:ok, io} = StringIO.open("")
-      Bylaw.Contract.print_report(coverage, io)
+      Bylaw.Contract.print_report(coverage, io, colors: false)
       {_, output} = StringIO.contents(io)
       refute output =~ "unused"
       refute output =~ "Missed"

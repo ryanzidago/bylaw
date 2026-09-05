@@ -91,8 +91,11 @@ defmodule Bylaw.Contract.Report do
     }
   end
 
-  @spec print(coverage :: map(), device :: IO.device()) :: :ok
-  def print(%{status: :incomplete, incomplete: reasons}, device) do
+  @doc false
+  @spec print(coverage :: map(), device :: IO.device(), colors :: boolean()) :: :ok
+  def print(coverage, device, colors \\ IO.ANSI.enabled?())
+
+  def print(%{status: :incomplete, incomplete: reasons}, device, _colors) do
     IO.puts(device, "Bylaw.Contract observation incomplete; coverage gaps were not assessed.")
 
     Enum.each(reasons, fn reason ->
@@ -105,14 +108,14 @@ defmodule Bylaw.Contract.Report do
     :ok
   end
 
-  def print(coverage, device) do
-    print_typespec_gaps(coverage, device)
-    print_compiler_inference_gaps(coverage, device)
-    print_structural_coverage(coverage, device)
+  def print(coverage, device, colors) do
+    print_typespec_gaps(coverage, device, colors)
+    print_compiler_inference_gaps(coverage, device, colors)
+    print_structural_coverage(coverage, device, colors)
     :ok
   end
 
-  defp print_typespec_gaps(coverage, device) do
+  defp print_typespec_gaps(coverage, device, colors) do
     gaps =
       coverage
       |> typespec_targets()
@@ -127,7 +130,7 @@ defmodule Bylaw.Contract.Report do
         {target.module, target.function, target.arity}
       end)
       |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_typespec_group(&1, device))
+      |> Enum.each(&print_typespec_group(&1, device, colors))
     end
   end
 
@@ -137,17 +140,17 @@ defmodule Bylaw.Contract.Report do
       Enum.map(coverage.return_alternatives, &{:return, &1})
   end
 
-  defp print_typespec_group({{module, function, arity}, targets}, device) do
+  defp print_typespec_group({{module, function, arity}, targets}, device, colors) do
     IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
 
     Enum.each(targets, fn {kind, target} ->
       IO.puts(
         device,
-        "    ✗ #{typespec_source_location(target)}\n" <>
-          "      #{target_diagnostic(kind, target)}:\n\n" <>
-          indent_spec_source(target.spec_source) <>
+        "    #{style("✗", :red, colors)} #{style(typespec_source_location(target), :cyan, colors)}\n" <>
+          "      #{target_diagnostic(kind, target, colors)}:\n\n" <>
+          style(indent_spec_source(target.spec_source), :faint, colors) <>
           "\n\n" <>
-          "      #{target_label(kind, target)}\n"
+          "      #{style(target_label(kind, target), :red, colors)}\n"
       )
     end)
   end
@@ -156,8 +159,8 @@ defmodule Bylaw.Contract.Report do
     target.supported? and not MapSet.member?(coverage.unknown, target.id)
   end
 
-  defp target_diagnostic(kind, target) do
-    "#{diagnostic_category(kind, target)} - " <>
+  defp target_diagnostic(kind, target, colors) do
+    "#{style(diagnostic_category(kind, target), :red, colors)} - " <>
       "no test exercises this #{target_description(kind, target)}"
   end
 
@@ -206,7 +209,7 @@ defmodule Bylaw.Contract.Report do
 
   defp observed?(target, coverage), do: Map.get(coverage.hits, target.id, 0) > 0
 
-  defp print_compiler_inference_gaps(coverage, device) do
+  defp print_compiler_inference_gaps(coverage, device, colors) do
     gaps =
       coverage
       |> Map.get(:compiler_return_alternatives, [])
@@ -220,24 +223,24 @@ defmodule Bylaw.Contract.Report do
       gaps
       |> Enum.group_by(&{&1.module, &1.function, &1.arity})
       |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_compiler_inference_group(&1, device))
+      |> Enum.each(&print_compiler_inference_group(&1, device, colors))
     end
   end
 
-  defp print_compiler_inference_group({{module, function, arity}, alternatives}, device) do
+  defp print_compiler_inference_group({{module, function, arity}, alternatives}, device, colors) do
     IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
 
     Enum.each(alternatives, fn alternative ->
       IO.puts(
         device,
-        "    ✗ compiler-inferred return\n" <>
-          "      Missed compiler-inferred return alternative - no test observes:\n\n" <>
-          "      return: #{alternative.label}\n"
+        "    #{style("✗", :red, colors)} compiler-inferred return\n" <>
+          "      #{style("Missed compiler-inferred return alternative", :red, colors)} - no test observes:\n\n" <>
+          "      #{style("return: #{alternative.label}", :red, colors)}\n"
       )
     end)
   end
 
-  defp print_structural_coverage(coverage, device) do
+  defp print_structural_coverage(coverage, device, colors) do
     clauses = Map.get(coverage, :clauses, [])
     unobserved_clauses = Enum.reject(clauses, &clause_observed?(&1, coverage))
 
@@ -247,19 +250,19 @@ defmodule Bylaw.Contract.Report do
       unobserved_clauses
       |> Enum.group_by(&{&1.module, &1.function, &1.arity})
       |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_clause_group(&1, device))
+      |> Enum.each(&print_clause_group(&1, device, colors))
     end
   end
 
-  defp print_clause_group({{module, function, arity}, clauses}, device) do
+  defp print_clause_group({{module, function, arity}, clauses}, device, colors) do
     IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
 
     Enum.each(clauses, fn clause ->
       IO.puts(
         device,
-        "    ✗ #{source_location(clause)}\n" <>
-          "      Missed function clause - no test exercises this clause:\n\n" <>
-          indent_clause_source(clause.source) <> "\n"
+        "    #{style("✗", :red, colors)} #{style(source_location(clause), :cyan, colors)}\n" <>
+          "      #{style("Missed function clause", :red, colors)} - no test exercises this clause:\n\n" <>
+          style(indent_clause_source(clause.source), :red, colors) <> "\n"
       )
     end)
   end
@@ -309,5 +312,11 @@ defmodule Bylaw.Contract.Report do
     Enum.count(clauses, fn clause ->
       Map.get(Map.get(outcomes, clause.id, %{}), field, 0) > 0
     end)
+  end
+
+  defp style(text, color, colors) do
+    [color, text, :reset]
+    |> IO.ANSI.format_fragment(colors)
+    |> IO.iodata_to_binary()
   end
 end
