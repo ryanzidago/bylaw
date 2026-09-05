@@ -102,10 +102,14 @@ defmodule Bylaw.Contract.StructuralCoverage do
     with {:module, ^module} <- Code.ensure_loaded(module),
          {^module, binary, _} <- :code.get_object_code(module),
          {:ok, {^module, chunks}} <-
-           :beam_lib.chunks(binary, [:debug_info, :abstract_code, :compile_info]),
-         {:ok, definitions} <- elixir_definitions(Keyword.fetch!(chunks, :debug_info)),
-         {:ok, forms} <- abstract_forms(Keyword.fetch!(chunks, :abstract_code)),
-         {:ok, loaded} <- extract_module(module, definitions, forms, source_file(chunks)) do
+           :beam_lib.chunks(binary, [:debug_info, :compile_info]),
+         {:ok, definitions, unreachable} <-
+           elixir_definitions(Keyword.fetch!(chunks, :debug_info)),
+         {:ok, {^module, [{:abstract_code, abstract_code}]}} <-
+           :beam_lib.chunks(binary, [:abstract_code]),
+         {:ok, forms} <- abstract_forms(abstract_code),
+         {:ok, loaded} <-
+           extract_module(module, definitions, unreachable, forms, source_file(chunks)) do
       {:ok, loaded}
     else
       {:error, reason} ->
@@ -123,10 +127,11 @@ defmodule Bylaw.Contract.StructuralCoverage do
   end
 
   defp elixir_definitions(
-         {:debug_info_v1, :elixir_erl, {:elixir_v1, %{definitions: definitions}, _}}
+         {:debug_info_v1, :elixir_erl,
+          {:elixir_v1, %{definitions: definitions, unreachable: unreachable}, _}}
        )
-       when is_list(definitions),
-       do: {:ok, definitions}
+       when is_list(definitions) and is_list(unreachable),
+       do: {:ok, definitions, MapSet.new(unreachable)}
 
   defp elixir_definitions(:no_debug_info), do: {:error, "Elixir debug information is absent"}
 
@@ -137,7 +142,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
   defp abstract_forms(:no_abstract_code), do: {:error, "BEAM abstract code is absent"}
   defp abstract_forms(_), do: {:error, "BEAM abstract code is unavailable or unsupported"}
 
-  defp extract_module(module, definitions, forms, source_file) do
+  defp extract_module(module, definitions, unreachable, forms, source_file) do
     functions =
       Enum.reduce(forms, %{}, fn
         {:function, annotation, function, arity, clauses}, acc ->
@@ -156,7 +161,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
            relevant_definitions,
            {:ok, empty_result()},
            fn definition, {:ok, result} ->
-             case extract_definition(module, definition, functions, source_file) do
+             case extract_definition(module, definition, unreachable, functions, source_file) do
                {:ok, loaded} -> {:cont, {:ok, merge_loaded(result, loaded)}}
                {:error, reason} -> {:halt, {:error, reason}}
              end
@@ -178,6 +183,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
   defp extract_definition(
          module,
          {{function, arity}, kind, definition_meta, source_clauses} = definition,
+         unreachable,
          functions,
          source_file
        ) do
@@ -257,7 +263,11 @@ defmodule Bylaw.Contract.StructuralCoverage do
            "(#{Enum.count(abstract_clauses)} compiled, #{Enum.count(source_clauses)} authored)"}
 
       {:error, false} ->
-        {:error, "compiled function #{inspect(module)}.#{function}/#{arity} is absent"}
+        if kind == :defp and MapSet.member?(unreachable, {function, arity}) do
+          {:ok, empty_result()}
+        else
+          {:error, "compiled function #{inspect(module)}.#{function}/#{arity} is absent"}
+        end
     end
   end
 

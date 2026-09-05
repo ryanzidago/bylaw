@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Preserve structural coverage of surviving functions when Elixir eliminates
+  private definitions explicitly marked unreachable in debug metadata. Validate
+  metadata before reconstructing abstract code, and retain diagnostics for
+  missing public functions and incompatible debug information.
+
 - Map normalized compiler input domains to actual source clauses before
   injecting counters, preventing false return hits and misses when inference
   merges or reorders clauses. Keep ambiguous mappings unassessable per function.
