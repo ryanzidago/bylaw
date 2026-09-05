@@ -1,0 +1,30 @@
+[
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "target_result": "{:error, {:unsupported_target, {:return_alternative, Ecto.UUID, :cast, 1, 1, 1}}}",
+    "clause_result": "{:error, :clause_capacity}",
+    "target_count": 5,
+    "authored_clause_count": 3,
+    "spec_warnings": [],
+    "structural_warnings": [],
+    "observation_status": "not_started",
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "target_result": "{:error, {:unsupported_target, {:return_alternative, Livebook.Text.Delta.Operation, :from_compressed, 1, 1, 1}}}",
+    "clause_result": "{:error, :clause_capacity}",
+    "target_count": 6,
+    "authored_clause_count": 3,
+    "spec_warnings": [],
+    "structural_warnings": [],
+    "observation_status": "not_started",
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716"
+  }
+]

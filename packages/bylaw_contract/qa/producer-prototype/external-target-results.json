@@ -1,0 +1,79 @@
+[
+  {
+    "reason": "{:unsupported_target, {:return_alternative, Ecto.UUID, :cast, 1, 1, 1}}",
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "observation_status": "not_started",
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "observation_status": "complete",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "returns": 65536,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          16384,
+          32768,
+          16384,
+          0,
+          0
+        ],
+        "observation_status": "complete",
+        "native_payload_bytes": 3984,
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "returns": 65536,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          16384,
+          32768,
+          16384,
+          0,
+          0
+        ],
+        "observation_status": "complete",
+        "native_payload_bytes": 3984,
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "returns": 65536,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          16384,
+          32768,
+          16384,
+          0,
+          0
+        ],
+        "observation_status": "complete",
+        "native_payload_bytes": 3984,
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "target_count": 6,
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716"
+  }
+]

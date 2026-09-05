@@ -1,0 +1,638 @@
+[
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 25438,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 20429,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 22858,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1",
+    "otp_full": "29.0.3",
+    "stage": "before_reload_guard"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 28836,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 22760,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 27332,
+        "native_payload_bytes": 96,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+    "otp_full": "29.0.3",
+    "stage": "before_reload_guard"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 25055,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 22063,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 20540,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1",
+    "otp_full": "29.0.3",
+    "stage": "reload_guard_enabled"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 23778,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 27642,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 23025,
+        "native_payload_bytes": 112,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+    "otp_full": "29.0.3",
+    "stage": "reload_guard_enabled"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 33868,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 30002,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 34055,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1",
+    "otp_full": "29.0.3",
+    "stage": "reason_flags"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 32768,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 33462,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 29164,
+        "native_payload_bytes": 120,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+    "otp_full": "29.0.3",
+    "stage": "reason_flags"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 24607,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 22383,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 21625,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "stage": "native_plan_raw_regression",
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Livebook.Text.Delta.Operation, :from_compressed, 1}",
+    "project": "livebook",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 25920,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 24534,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          16384,
+          32768,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 23417,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "stage": "native_plan_raw_regression",
+    "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716"
+  },
+  {
+    "otp": "29",
+    "elixir": "1.20.2",
+    "target": "{Ecto.UUID, :cast, 1}",
+    "project": "ecto",
+    "cycles": [
+      {
+        "calls": 65536,
+        "cycle": 1,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 55544,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 2,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 49658,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      },
+      {
+        "calls": 65536,
+        "cycle": 3,
+        "hits": [
+          49152,
+          16384,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "returns": 65536,
+        "elapsed_us": 54049,
+        "native_payload_bytes": 128,
+        "transport_status": "complete",
+        "unchanged_results": true,
+        "unchanged_module_md5": true
+      }
+    ],
+    "stage": "explicit_counter_slots_raw_regression",
+    "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1"
+  }
+]
