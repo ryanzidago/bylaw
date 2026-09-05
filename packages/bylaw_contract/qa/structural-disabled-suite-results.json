@@ -1,0 +1,393 @@
+[
+  {
+    "pair": 1,
+    "mode": "disabled",
+    "elapsed": 9.85497779212892,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 2208,
+      "observed_suite_us": 9029397,
+      "stop_us": 4012,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 2,
+    "mode": "disabled",
+    "elapsed": 12.064507791772485,
+    "exit_code": 2,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "invalid": 108,
+        "passed": 1403,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 2776,
+      "observed_suite_us": 11212452,
+      "stop_us": 3269,
+      "coverage_status": "disabled",
+      "failure_summary": "Intellisense.ElixirTest setup_all: runtime_connect_done timeout after1500ms,108invalid; full raw failures in disabled-full-2.etf/log."
+    }
+  },
+  {
+    "pair": 3,
+    "mode": "disabled",
+    "elapsed": 10.085076750256121,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 3598,
+      "observed_suite_us": 9260210,
+      "stop_us": 3816,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 4,
+    "mode": "disabled",
+    "elapsed": 10.04849304119125,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 11128,
+      "observed_suite_us": 9169244,
+      "stop_us": 4074,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 5,
+    "mode": "disabled",
+    "elapsed": 10.531945874914527,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 2945,
+      "observed_suite_us": 9666599,
+      "stop_us": 3743,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 6,
+    "mode": "disabled",
+    "elapsed": 10.204512166790664,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 3092,
+      "observed_suite_us": 9379026,
+      "stop_us": 3765,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 7,
+    "mode": "disabled",
+    "elapsed": 11.342398833949119,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 3371,
+      "observed_suite_us": 10522854,
+      "stop_us": 3956,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 8,
+    "mode": "disabled",
+    "elapsed": 9.251968041993678,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 2863,
+      "observed_suite_us": 8415208,
+      "stop_us": 3945,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 9,
+    "mode": "disabled",
+    "elapsed": 9.850067832972854,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 3524,
+      "observed_suite_us": 8998310,
+      "stop_us": 3876,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  },
+  {
+    "pair": 10,
+    "mode": "disabled",
+    "elapsed": 9.961292792111635,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "nil",
+      "mode": "disabled",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1511,
+        "excluded": 185
+      },
+      "checks": [],
+      "init_us": 3157,
+      "observed_suite_us": 9106885,
+      "stop_us": 3994,
+      "coverage_status": "disabled",
+      "failure_summary": null
+    }
+  }
+]

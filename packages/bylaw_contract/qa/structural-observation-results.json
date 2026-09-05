@@ -1,0 +1,284 @@
+[
+  {
+    "pair": 1,
+    "mode": "baseline",
+    "elapsed": 13.012905083131045,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 11850080,
+      "observed_suite_us": 277066,
+      "stop_us": 59748,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 959512576,
+    "reported_peak_footprint_bytes": 941704608
+  },
+  {
+    "pair": 1,
+    "mode": "candidate",
+    "elapsed": 9.991804040968418,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 8805199,
+      "observed_suite_us": 267512,
+      "stop_us": 56741,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 961560576,
+    "reported_peak_footprint_bytes": 943703384
+  },
+  {
+    "pair": 2,
+    "mode": "candidate",
+    "elapsed": 10.63740187464282,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 9471460,
+      "observed_suite_us": 276367,
+      "stop_us": 61375,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 758415360,
+    "reported_peak_footprint_bytes": 740525352
+  },
+  {
+    "pair": 2,
+    "mode": "baseline",
+    "elapsed": 13.1292320410721,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 11893539,
+      "observed_suite_us": 277188,
+      "stop_us": 54946,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 990380032,
+    "reported_peak_footprint_bytes": 972604880
+  },
+  {
+    "pair": 3,
+    "mode": "baseline",
+    "elapsed": 14.002333875279874,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 12824701,
+      "observed_suite_us": 283135,
+      "stop_us": 56776,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 988135424,
+    "reported_peak_footprint_bytes": 970360272
+  },
+  {
+    "pair": 3,
+    "mode": "candidate",
+    "elapsed": 10.002395084127784,
+    "exit_code": 0,
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-profile-structural-startup/packages/bylaw_contract/qa/overhead-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "BylawOverheadCapture"
+    ],
+    "result": {
+      "incomplete": "[]",
+      "mode": "all",
+      "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+      "otp": "29",
+      "elixir": "1.20.2",
+      "test_states": {
+        "passed": 1
+      },
+      "checks": [
+        "Bylaw.Contract.Check.Typespec",
+        "Bylaw.Contract.Check.FunctionClauses",
+        "Bylaw.Contract.Check.ElixirCompiler"
+      ],
+      "init_us": 8801293,
+      "observed_suite_us": 280077,
+      "stop_us": 59694,
+      "failures": "[]",
+      "coverage_status": "complete"
+    },
+    "reported_max_rss_bytes": 928710656,
+    "reported_peak_footprint_bytes": 910902688
+  }
+]
