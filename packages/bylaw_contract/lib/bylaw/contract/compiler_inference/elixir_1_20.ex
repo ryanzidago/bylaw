@@ -111,6 +111,7 @@ defmodule Bylaw.Contract.CompilerInference.Elixir120 do
             arity: arity,
             index: index,
             argument_types: clause.argument_types,
+            argument_domain: clause.argument_domain,
             arguments_supported?: arguments_supported?(clause.argument_types, arity),
             output_ids: output_ids
           }
@@ -127,9 +128,15 @@ defmodule Bylaw.Contract.CompilerInference.Elixir120 do
   defp decode_clause({arguments, return_type}) do
     %{
       argument_types: decode_arguments(arguments),
+      argument_domain: argument_domain(arguments),
       return_types: return_type |> Descr.to_quoted() |> unwrap_dynamic() |> flatten_union()
     }
   end
+
+  defp argument_domain(arguments) when is_list(arguments),
+    do: arguments |> Enum.map(&Descr.upper_bound/1) |> Descr.tuple()
+
+  defp argument_domain(_arguments), do: Descr.term()
 
   defp decode_arguments(arguments) when is_list(arguments) do
     Enum.map(arguments, fn argument ->

@@ -235,10 +235,14 @@ defmodule Bylaw.Contract.CompilerInferenceAcceptanceTest do
       assert in_new_process(fn -> module.entry(:left) end) == :left
       coverage = Bylaw.Contract.stop(tracer)
 
-      assert coverage.compiler_calls == %{
-               {module, :choice, 1} => 1,
-               {module, :entry, 1} => 1
-             }
+      assert coverage.compiler_calls == %{{module, :choice, 1} => 1}
+
+      entry_alternatives =
+        Enum.filter(coverage.compiler_return_alternatives, &(&1.function == :entry))
+
+      assert length(entry_alternatives) == 2
+      assert Enum.all?(entry_alternatives, &MapSet.member?(coverage.unknown, &1.id))
+      refute Enum.any?(entry_alternatives, &Map.has_key?(coverage.hits, &1.id))
 
       choice_alternatives =
         Enum.filter(coverage.compiler_return_alternatives, &(&1.function == :choice))
@@ -498,7 +502,7 @@ defmodule Bylaw.Contract.CompilerInferenceAcceptanceTest do
 
     with_compiled_source(
       module,
-      "def choose(value), do: value",
+      "def choose(:item), do: :item\ndef choose(:other), do: :other",
       &replace_checker_with_stress_signature/1,
       assertion
     )
