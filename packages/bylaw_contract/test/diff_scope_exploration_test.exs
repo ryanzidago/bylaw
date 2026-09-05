@@ -78,7 +78,7 @@ defmodule Bylaw.Contract.DiffScopeExplorationTest do
     assert {:error, reasons} =
              Source.select(%{}, files("for n <- [:a, :b], do: def(unquote(n)(), do: :ok)"))
 
-    assert Enum.any?(reasons, &(&1.code == :unsupported_module_context))
+    assert Enum.any?(reasons, &(&1.code == :unsupported_definition_context))
 
     assert {:error, reasons} =
              Source.select(%{}, %{
@@ -176,7 +176,11 @@ defmodule Bylaw.Contract.DiffScopeExplorationTest do
   test "nested and top level lexical contexts cannot silently remap modules" do
     first = "defmodule First do; def run(), do: :nested; end"
     second = "defmodule Second do; def run(), do: First.run(); end"
-    assert {:error, _} = Source.select(files("#{first}; #{second}"), files("#{second}; #{first}"))
+
+    assert {:ok, selected} =
+             Source.select(files("#{first}; #{second}"), files("#{second}; #{first}"))
+
+    assert MapSet.member?(selected, {Demo.Second, :run, 0})
     child = "defmodule Child do; def run(), do: :nested; end"
 
     assert {:ok, selected} =
