@@ -1,0 +1,2220 @@
+{
+  "manifest": {
+    "calls": 1000,
+    "cycles": 3,
+    "limit_mib": 384,
+    "modes": [
+      "typespec",
+      "structural",
+      "default"
+    ],
+    "payload": 2048,
+    "repeats": 3,
+    "speeds": [
+      "running",
+      "paused",
+      "slow10"
+    ],
+    "variants": {
+      "baseline": 0,
+      "candidate-high": 4096,
+      "candidate-low": 64
+    }
+  },
+  "complete_hashes": {
+    "default": {
+      "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+      "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+    },
+    "structural": {
+      "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+      "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+    },
+    "typespec": {
+      "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+      "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+    }
+  },
+  "trials": [
+    {
+      "name": "default--paused--baseline--1",
+      "os_peak": 246465280,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--baseline--2",
+      "os_peak": 198345448,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--baseline--3",
+      "os_peak": 217481936,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-high--1",
+      "os_peak": 236684056,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-high--2",
+      "os_peak": 244220624,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-high--3",
+      "os_peak": 186352312,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-low--1",
+      "os_peak": 226886376,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 238
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 183
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-low--2",
+      "os_peak": 189039312,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1978
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 989
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--paused--candidate-low--3",
+      "os_peak": 181437112,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--running--baseline--1",
+      "os_peak": 234980120,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--baseline--2",
+      "os_peak": 235930320,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--baseline--3",
+      "os_peak": 259425000,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-high--1",
+      "os_peak": 192905936,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-high--2",
+      "os_peak": 228475624,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-high--3",
+      "os_peak": 191480528,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-low--1",
+      "os_peak": 206570216,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1764
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1769
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 884
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-low--2",
+      "os_peak": 241369808,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1887
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1873
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 936
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 884
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--running--candidate-low--3",
+      "os_peak": 209765120,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--baseline--1",
+      "os_peak": 196526824,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--baseline--2",
+      "os_peak": 214008576,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--baseline--3",
+      "os_peak": 231932696,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-high--1",
+      "os_peak": 239092504,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-high--2",
+      "os_peak": 232948480,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-high--3",
+      "os_peak": 197722856,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-low--1",
+      "os_peak": 236896976,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 882
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 882
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-low--2",
+      "os_peak": 227525376,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 884
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "default--slow10--candidate-low--3",
+      "os_peak": 156140240,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 963
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1821
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 911
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--baseline--1",
+      "os_peak": 123667128,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--baseline--2",
+      "os_peak": 152339152,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--baseline--3",
+      "os_peak": 181879480,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-high--1",
+      "os_peak": 156009144,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-high--2",
+      "os_peak": 155615952,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-high--3",
+      "os_peak": 146506400,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-low--1",
+      "os_peak": 125452960,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-low--2",
+      "os_peak": 128844448,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--paused--candidate-low--3",
+      "os_peak": 126141088,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--running--baseline--1",
+      "os_peak": 157385448,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--baseline--2",
+      "os_peak": 129614544,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--baseline--3",
+      "os_peak": 103973512,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-high--1",
+      "os_peak": 155534032,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-high--2",
+      "os_peak": 144261816,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-high--3",
+      "os_peak": 155173560,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-low--1",
+      "os_peak": 155468472,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-low--2",
+      "os_peak": 130368160,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 350
+            }
+          ]
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--running--candidate-low--3",
+      "os_peak": 130433696,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 702
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--baseline--1",
+      "os_peak": 140264144,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--baseline--2",
+      "os_peak": 152535760,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--baseline--3",
+      "os_peak": 129925816,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-high--1",
+      "os_peak": 132465312,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-high--2",
+      "os_peak": 129663648,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-high--3",
+      "os_peak": 156353184,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-low--1",
+      "os_peak": 160924344,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-low--2",
+      "os_peak": 160744120,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "structural--slow10--candidate-low--3",
+      "os_peak": 141509304,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 599
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--baseline--1",
+      "os_peak": 197214928,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--baseline--2",
+      "os_peak": 201540328,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--baseline--3",
+      "os_peak": 151569104,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-high--1",
+      "os_peak": 157647520,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-high--2",
+      "os_peak": 182403792,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-high--3",
+      "os_peak": 161071776,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-low--1",
+      "os_peak": 153109200,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-low--2",
+      "os_peak": 152617632,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--paused--candidate-low--3",
+      "os_peak": 150831776,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1872
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--baseline--1",
+      "os_peak": 179667688,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--baseline--2",
+      "os_peak": 156123832,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--baseline--3",
+      "os_peak": 155665104,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-high--1",
+      "os_peak": 154649272,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-high--2",
+      "os_peak": 156074680,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-high--3",
+      "os_peak": 181289704,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-low--1",
+      "os_peak": 150373096,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-low--2",
+      "os_peak": 193659624,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1802
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--running--candidate-low--3",
+      "os_peak": 132825784,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 66
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1774
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--baseline--1",
+      "os_peak": 153961168,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--baseline--2",
+      "os_peak": 202457808,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--baseline--3",
+      "os_peak": 206324432,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-high--1",
+      "os_peak": 155550392,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-high--2",
+      "os_peak": 157565600,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-high--3",
+      "os_peak": 154141392,
+      "cycles": [
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        },
+        {
+          "status": "complete",
+          "incomplete": []
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-low--1",
+      "os_peak": 187843256,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1885
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-low--2",
+      "os_peak": 209830584,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 540
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1872
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1798
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "typespec--slow10--candidate-low--3",
+      "os_peak": 152175288,
+      "cycles": [
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            }
+          ]
+        },
+        {
+          "status": "incomplete",
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1872
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

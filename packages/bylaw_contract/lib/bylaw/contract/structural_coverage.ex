@@ -428,14 +428,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
     arguments = {:var, 0, :_BylawContractArguments}
     selected = scoped_case(arguments, selection_clauses(clauses))
 
-    outcomes =
-      Enum.map(clauses, fn entry ->
-        {:tuple, 0,
-         [
-           outcome_case(arguments, entry.clause, :head),
-           outcome_case(arguments, entry.clause, :guard)
-         ]}
-      end)
+    outcomes = Enum.map(clauses, &outcome_case(arguments, &1.clause))
 
     body = {:tuple, 0, [selected, abstract_list(outcomes)]}
 
@@ -456,18 +449,22 @@ defmodule Bylaw.Contract.StructuralCoverage do
     clauses ++ [{:clause, 0, [{:var, 0, :_}], [], [{:atom, 0, :no_clause}]}]
   end
 
-  defp outcome_case(arguments, {:clause, annotation, patterns, guards, _}, mode) do
-    outcome_guards =
-      if mode == :head do
+  defp outcome_case(arguments, {:clause, annotation, patterns, guards, _}) do
+    matched =
+      {:clause, annotation, [list_pattern(patterns)], guards, [:erl_parse.abstract({true, true})]}
+
+    rejected =
+      if Enum.empty?(guards) do
         []
       else
-        guards
+        [
+          {:clause, annotation, [list_pattern(patterns)], [],
+           [:erl_parse.abstract({true, false})]}
+        ]
       end
 
-    scoped_case(arguments, [
-      {:clause, annotation, [list_pattern(patterns)], outcome_guards, [{:atom, 0, true}]},
-      {:clause, 0, [{:var, 0, :_}], [], [{:atom, 0, false}]}
-    ])
+    missed = {:clause, 0, [{:var, 0, :_}], [], [:erl_parse.abstract({false, false})]}
+    scoped_case(arguments, [matched] ++ rejected ++ [missed])
   end
 
   defp scoped_case(arguments, clauses) do
