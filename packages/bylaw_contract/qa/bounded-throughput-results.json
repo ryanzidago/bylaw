@@ -1,0 +1,4724 @@
+[
+  {
+    "name": "000-typespec-1-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92192,
+    "wall_s": 0.4292648327536881,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 454,
+          "stopped_us": 4263,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 355,
+          "stopped_us": 4041,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "001-typespec-1-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91600,
+    "wall_s": 1.9281443329527974,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767903,
+          "stopped_us": 771619,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767857,
+          "stopped_us": 770591,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "002-typespec-1-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 82336,
+    "wall_s": 0.42922799987718463,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 398,
+          "stopped_us": 3436,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 388,
+          "stopped_us": 3767,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "003-typespec-1-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91792,
+    "wall_s": 1.9259833749383688,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767591,
+          "stopped_us": 770380,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767884,
+          "stopped_us": 771335,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "004-typespec-1-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90688,
+    "wall_s": 0.43230250012129545,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 427,
+          "stopped_us": 4241,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 449,
+          "stopped_us": 3791,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "005-typespec-1-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90048,
+    "wall_s": 1.929690457880497,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767396,
+          "stopped_us": 769936,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767488,
+          "stopped_us": 770037,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "006-typespec-1-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96176,
+    "wall_s": 0.43729266710579395,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 1958,
+          "stopped_us": 10299,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 1628,
+          "stopped_us": 9254,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "007-typespec-1-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92032,
+    "wall_s": 1.9261959581635892,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767915,
+          "stopped_us": 771340,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767946,
+          "stopped_us": 770944,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "008-typespec-1-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 81760,
+    "wall_s": 0.43418208276852965,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 25,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4267
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1218,
+          "stopped_us": 3152,
+          "returns": 25,
+          "structural_calls": 0,
+          "coverage_hash": "8A0DCF969CBDCA22D4C24DAF09AEE97CF65FBF5818B7D1E28B9F3A5EE4F190FD",
+          "report_hash": "72627A5122AB7DF8F86DF34F187EB0D80B5D9718AA07B0DB4ECF173EF2CA2BAC",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 15,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4287
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1110,
+          "stopped_us": 3398,
+          "returns": 15,
+          "structural_calls": 0,
+          "coverage_hash": "0FE0159B2DD25BD91BDE6373338265B8F5B15FC4E3AEF1D9F4C9714173AF23AE",
+          "report_hash": "BE8A22CD57031EFEEF16EF423CFBCFD38ABA8AE21BBC66319B42EBE74FDEEC9E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "009-typespec-1-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90368,
+    "wall_s": 12.756136332638562,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6153901,
+          "stopped_us": 6157118,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6207270,
+          "stopped_us": 6211115,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "010-typespec-1-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91936,
+    "wall_s": 0.4347451669164002,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 18,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4320
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1187,
+          "stopped_us": 3112,
+          "returns": 18,
+          "structural_calls": 0,
+          "coverage_hash": "5E9836C8F6ED0009FEB1063CAEA4B13D5E161024A5ED6A85B1D3275AA2BAA5B6",
+          "report_hash": "7B45AB27C3A712C6F49DA44F4A87C0CBFCE48D8A602F170BF9C9CF8ED3580986",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 12,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4332
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1106,
+          "stopped_us": 2527,
+          "returns": 12,
+          "structural_calls": 0,
+          "coverage_hash": "C7EB997B49BB41366326FCAC58BD446B5C816D29012086DF6E28D2EE169D0360",
+          "report_hash": "58CE24EBD74EE3D8207824D4277A903E08DFCBBE7F6C9B716EE07C7C4361D2B9",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "011-typespec-1-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90192,
+    "wall_s": 13.183051083236933,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6150485,
+          "stopped_us": 6156362,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6618142,
+          "stopped_us": 6620678,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "012-typespec-1-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93152,
+    "wall_s": 0.4338694168254733,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 15,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4326
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1308,
+          "stopped_us": 3852,
+          "returns": 14,
+          "structural_calls": 0,
+          "coverage_hash": "6CB98ADE01106F362C00B8DD48221D7DC1A5B8B117DA32692492779A3049408B",
+          "report_hash": "0252403B77D0FCD5E8160D1485BD7FDE603DD7052969E7BC6B776D5FDD99BA75",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 13,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4329
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1162,
+          "stopped_us": 3842,
+          "returns": 13,
+          "structural_calls": 0,
+          "coverage_hash": "74CC9B7C9B20AC076B256A22C48C2EC0FAD4A579D518EB13566010E2F3C08C20",
+          "report_hash": "EC682A5F4038F89A78C1F3B4EA2258421367DDF3CCA0BB2B256EACA76EDA3EA2",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "013-typespec-1-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91056,
+    "wall_s": 12.896614791825414,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6145564,
+          "stopped_us": 6148442,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6273718,
+          "stopped_us": 6276769,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "014-typespec-1-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93216,
+    "wall_s": 0.4302102089859545,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 3,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4315
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 3738,
+          "stopped_us": 6996,
+          "returns": 2,
+          "structural_calls": 0,
+          "coverage_hash": "09CC132F3EB4E773E0C5A2E50F60BD16419530A9D546686DBE0820EE46D39BD7",
+          "report_hash": "A6D223E31DFE951CC1B84ECDC8A270F72558BA402EAF6C5019D2D94E22CFB695",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 2,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4317
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 3634,
+          "stopped_us": 6207,
+          "returns": 1,
+          "structural_calls": 0,
+          "coverage_hash": "6AB93AB6F7EC40118B942A1305F974B1ED75949C49A9D630BCACAD058EAA280E",
+          "report_hash": "F2A81271DFD817644C1BFB5A9A5265FCE807E80C39E579425968405966CC2E2F",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "015-typespec-1-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92432,
+    "wall_s": 12.698038375005126,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6155971,
+          "stopped_us": 6159403,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6148666,
+          "stopped_us": 6152390,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "016-typespec-8-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90384,
+    "wall_s": 0.42773066740483046,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 415,
+          "stopped_us": 3728,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 429,
+          "stopped_us": 3897,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "017-typespec-8-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91696,
+    "wall_s": 0.5369038339704275,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95970,
+          "stopped_us": 99061,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95967,
+          "stopped_us": 99700,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "018-typespec-8-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92480,
+    "wall_s": 0.43225966626778245,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 418,
+          "stopped_us": 4548,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 392,
+          "stopped_us": 4477,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "019-typespec-8-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91792,
+    "wall_s": 0.5369912502355874,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95925,
+          "stopped_us": 98755,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95741,
+          "stopped_us": 98886,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "6C35167B7A92E27C6E48C6BA078DB687408A716278583879A7151076E488AA5C",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "020-typespec-8-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90064,
+    "wall_s": 0.43388266675174236,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 438,
+          "stopped_us": 3751,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 438,
+          "stopped_us": 3770,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "021-typespec-8-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90576,
+    "wall_s": 0.5361419999971986,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95178,
+          "stopped_us": 98400,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95957,
+          "stopped_us": 98635,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "022-typespec-8-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90000,
+    "wall_s": 0.4355913340114057,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 1643,
+          "stopped_us": 10094,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 1650,
+          "stopped_us": 11050,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "023-typespec-8-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90896,
+    "wall_s": 0.5419958750717342,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95908,
+          "stopped_us": 99086,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95250,
+          "stopped_us": 98435,
+          "returns": 1024,
+          "structural_calls": 0,
+          "coverage_hash": "8DB52FA5C87801B6A50D3754E5B924600F9D42312FA044584D6E4DBAC044803A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "024-typespec-8-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91120,
+    "wall_s": 0.4331572907976806,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5728
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1154,
+          "stopped_us": 3405,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "E2655C3FB31804F894C921ACE19EA041FB1FCA713C2563BA2F1030ECB47FD744",
+          "report_hash": "CF1A2876219A417058D7B4B9B33E3467C878230A4ABC1D3C51624BA9B95957C9",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5722
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1092,
+          "stopped_us": 3163,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "055ED05897898649BB11FD9196D1F50613DAAABD1E99211B7F39923C3F17D97E",
+          "report_hash": "B72E0805A085DD8FB31E8D7E9FC9A7625E75C57EC4AC37D70363CDB27C53028B",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "025-typespec-8-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 89568,
+    "wall_s": 1.927310582716018,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767581,
+          "stopped_us": 770808,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767777,
+          "stopped_us": 771474,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "026-typespec-8-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 82720,
+    "wall_s": 0.32573508378118277,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5707
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1170,
+          "stopped_us": 4104,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "0ECAF3926D37055E499F2C3987BDDEDC7D57637ECB87A1F1FBAE37B6D8DB9F5D",
+          "report_hash": "6C37D40B34E8B386B1396A465FDAE55621C3491CB5E4E41DC80646877F51466A",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5078
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1442,
+          "stopped_us": 3702,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "E34234409321EABFAB68ADCA05AC0A644D2369AEC92E32616E98FAAD8E897A7E",
+          "report_hash": "0F416972F68343BE5D1A564EE6B21FA075C996038AACC44EA99F34FDAC0B66CE",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "027-typespec-8-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92000,
+    "wall_s": 1.930513707920909,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767310,
+          "stopped_us": 770552,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767111,
+          "stopped_us": 769437,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "B4B0048382585FB68B78C4539B74DD75E3D030927DD0C3411AABC71BAD33572B",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "028-typespec-8-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84560,
+    "wall_s": 0.43189754197373986,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5675
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1109,
+          "stopped_us": 3867,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "66175A52510C51091B346308FFB4998EA1B9021C69FD747BD50C0AA4A20F2304",
+          "report_hash": "2ADDE620CA3EBD97819FBEF6E4B853230C06FF5BC2026294406A84A2B2AA312D",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5793
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1164,
+          "stopped_us": 3802,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "A6D7A588AE2E0C16C021A2FC93BDF81303292B2D32B4ADD303642E36A617F8F7",
+          "report_hash": "0319137C23EB81E1961830CA5397E53B8CB100E4602537F8C44517C52DEBC09E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "029-typespec-8-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 89552,
+    "wall_s": 1.933584792073816,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767679,
+          "stopped_us": 770305,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767729,
+          "stopped_us": 771297,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "030-typespec-8-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 117328,
+    "wall_s": 0.4345954586751759,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5876
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 4600,
+          "stopped_us": 9432,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "A4C8DE4ECEC8F0BFB061B4D6089F4BC92806FEC11EF8DE473AE84F09CD7AA077",
+          "report_hash": "28851DEEEBC26CF99F688FA71EB8C827B6C893B09437B8DC370184293FE28F5F",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5837
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 5041,
+          "stopped_us": 10462,
+          "returns": 0,
+          "structural_calls": 0,
+          "coverage_hash": "7D50C23063E7B772073D316E587DD1B28B482A7872EDE5F9CAC650EAD1D31510",
+          "report_hash": "CB9B6D6A777C343AE7978B5751233370FBC514A2533D8884E33AD3BB77B28E76",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "031-typespec-8-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90512,
+    "wall_s": 1.9312235419638455,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "typespec",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 779460,
+          "stopped_us": 782094,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 769094,
+          "stopped_us": 771887,
+          "returns": 8192,
+          "structural_calls": 0,
+          "coverage_hash": "3F308BCCDDC0DCB551F98FF5BFEF60A59B955B00593B86AB05CAC2F64D65617A",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "032-structural-1-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90928,
+    "wall_s": 0.4275947497226298,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 274,
+          "stopped_us": 5135,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 290,
+          "stopped_us": 4624,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "033-structural-1-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90768,
+    "wall_s": 1.92922820802778,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 768189,
+          "stopped_us": 772494,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767542,
+          "stopped_us": 771640,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "034-structural-1-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90288,
+    "wall_s": 0.43601420894265175,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 347,
+          "stopped_us": 5038,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 354,
+          "stopped_us": 5157,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "035-structural-1-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93552,
+    "wall_s": 1.9376794579438865,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767376,
+          "stopped_us": 771817,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767670,
+          "stopped_us": 771874,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "036-structural-1-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93088,
+    "wall_s": 0.43761100014671683,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 364,
+          "stopped_us": 5310,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 367,
+          "stopped_us": 4670,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "037-structural-1-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91440,
+    "wall_s": 1.9451876250095665,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767456,
+          "stopped_us": 771928,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767564,
+          "stopped_us": 771087,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "038-structural-1-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96640,
+    "wall_s": 0.4399091247469187,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 1403,
+          "stopped_us": 6290,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 1298,
+          "stopped_us": 6050,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "039-structural-1-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94384,
+    "wall_s": 1.9305650000460446,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767244,
+          "stopped_us": 771709,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 768487,
+          "stopped_us": 793880,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "040-structural-1-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91712,
+    "wall_s": 0.4319784170947969,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4387
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1496,
+          "stopped_us": 4905,
+          "returns": 0,
+          "structural_calls": 55,
+          "coverage_hash": "8744C8FC7FAEE6BBD4AF884312AB9F98F2F439C665B3ED7B566D09B1E10B2933",
+          "report_hash": "2682ACEFD0A304F0A8068DDB0E299F7DB951EE6B3514283C4D76010E8BA10BD7",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4303
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1559,
+          "stopped_us": 4889,
+          "returns": 0,
+          "structural_calls": 139,
+          "coverage_hash": "114762177C39CDA9C4D3C3048AC3D55235D6FFE29DF94483FD0AD6B9895174DC",
+          "report_hash": "A39E8C4C5BB37BB54083F8E8BCF343C2AAAAEFBCC898426405BD9772A2A5FF30",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "041-structural-1-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91616,
+    "wall_s": 12.660830541048199,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6143470,
+          "stopped_us": 6147694,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6148777,
+          "stopped_us": 6153284,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "042-structural-1-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91040,
+    "wall_s": 0.4346856251358986,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4356
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1743,
+          "stopped_us": 4369,
+          "returns": 0,
+          "structural_calls": 86,
+          "coverage_hash": "9BF75AE4EACFF4B1EBBC2A9823036067F1D2EF53E8968C553D6AC5ACE1BBE66F",
+          "report_hash": "2BB4327C4F2E60AFBF6B7704792E8A9D031FED7ABC009551BFD528FDBD9A7403",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4354
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1627,
+          "stopped_us": 4902,
+          "returns": 0,
+          "structural_calls": 88,
+          "coverage_hash": "F1998CA81D75D2020749F051EF6F9C25057EB0F410A0BE135CFCE5E2DF4403CE",
+          "report_hash": "643593C1D0A5E585EB82175247D4008CA53AD2FE4C812D7C4BCB30791A41822E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "043-structural-1-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92080,
+    "wall_s": 12.64506504079327,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6144031,
+          "stopped_us": 6148737,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6143810,
+          "stopped_us": 6147810,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "044-structural-1-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91472,
+    "wall_s": 0.43452795781195164,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4339
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1665,
+          "stopped_us": 4681,
+          "returns": 0,
+          "structural_calls": 103,
+          "coverage_hash": "FFF96E045D22EB1E554FE93CBC3F23BB35D64753F3F89F54580F105A730DF4B7",
+          "report_hash": "0034CA778553BA37ED1832BC36948B18E48B39F6A67E7A201374A73BF1C2B869",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4306
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1643,
+          "stopped_us": 4488,
+          "returns": 0,
+          "structural_calls": 136,
+          "coverage_hash": "3223D13F460FD2E1009A22111A85295863700DBE5C2138CD60EFB08E23A97C99",
+          "report_hash": "340B1FE4573B9C9F516F41FC8D0F2F16F844681976B3AEEFF7A058A3BED76528",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "045-structural-1-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93440,
+    "wall_s": 12.658772791270167,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6149309,
+          "stopped_us": 6154500,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6143914,
+          "stopped_us": 6149749,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "046-structural-1-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 108208,
+    "wall_s": 0.4329068339429796,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4408
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 6003,
+          "stopped_us": 10380,
+          "returns": 0,
+          "structural_calls": 11,
+          "coverage_hash": "C6824E2BA66C47CD294C348C666EC8B88ECE90CDAEDD41434BE8166FDA42D974",
+          "report_hash": "BFE49CD98D3F0C8A18BD2E4E4501E2CE557E8D875277C1B73B5D5728C5D83E98",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4402
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 6042,
+          "stopped_us": 11152,
+          "returns": 0,
+          "structural_calls": 17,
+          "coverage_hash": "CB2612F1AFB25FDAA4A588260350344E6D787B7854AD5ECAA264946FF9258DB9",
+          "report_hash": "43B6050620EA058535CBC30441BD38055249C3A3941FEF71B7A7F8CCA8A0219E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "047-structural-1-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90048,
+    "wall_s": 12.663859750144184,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6143439,
+          "stopped_us": 6149066,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6145306,
+          "stopped_us": 6149212,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "048-structural-8-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84048,
+    "wall_s": 0.3219638327136636,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 255,
+          "stopped_us": 4190,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 220,
+          "stopped_us": 4548,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "049-structural-8-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91056,
+    "wall_s": 0.5388914160430431,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95311,
+          "stopped_us": 99819,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 96154,
+          "stopped_us": 99832,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "050-structural-8-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84384,
+    "wall_s": 0.3249823749065399,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 340,
+          "stopped_us": 4639,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 288,
+          "stopped_us": 4757,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "051-structural-8-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91520,
+    "wall_s": 0.5384057913906872,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95155,
+          "stopped_us": 98872,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95368,
+          "stopped_us": 100638,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "052-structural-8-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84464,
+    "wall_s": 0.3223589169792831,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 363,
+          "stopped_us": 4375,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 384,
+          "stopped_us": 4633,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "053-structural-8-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94080,
+    "wall_s": 0.5347989583387971,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95217,
+          "stopped_us": 98727,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95400,
+          "stopped_us": 100034,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "054-structural-8-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 83584,
+    "wall_s": 0.3229766245931387,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 1326,
+          "stopped_us": 5679,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 1212,
+          "stopped_us": 5627,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "055-structural-8-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92960,
+    "wall_s": 0.5376092079095542,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95446,
+          "stopped_us": 99731,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95855,
+          "stopped_us": 100095,
+          "returns": 0,
+          "structural_calls": 1024,
+          "coverage_hash": "7F4B9783BBA2EF170679DBEA0CC8B310F16C3E6D68764BEBC0EF77355E379E10",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "056-structural-8-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84480,
+    "wall_s": 0.3249107082374394,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5504
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1004,
+          "stopped_us": 4418,
+          "returns": 0,
+          "structural_calls": 18,
+          "coverage_hash": "AD7B89920F5200407FE43DAECAAF6A2314C92183873DF24C05C350B899880A29",
+          "report_hash": "E6B89D978D9CA453FDA1A4881F70E3231F7073878A423150146CBA0183019495",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 6021
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1160,
+          "stopped_us": 5029,
+          "returns": 0,
+          "structural_calls": 44,
+          "coverage_hash": "9D926A4CF49E2DCA90E8BA578757ED4EAF03C5E544486E02AC3D963DEF738744",
+          "report_hash": "8DF3BC73E8E768AEA042058DB3D6BF52ECC1DE46A55191EC70FB354A9F26AB4F",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "057-structural-8-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90624,
+    "wall_s": 1.9225327502936125,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767904,
+          "stopped_us": 771650,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767069,
+          "stopped_us": 771456,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "058-structural-8-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 85136,
+    "wall_s": 0.3246174999512732,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5455
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1390,
+          "stopped_us": 4525,
+          "returns": 0,
+          "structural_calls": 51,
+          "coverage_hash": "A0326FEDC3164F0288745D66DCA3BD10E09B2090065B515BED1069D6D8F62D9A",
+          "report_hash": "ED3AC957F4B90331E11E33CF2E594E24239CAB583FEBD3D88FFBAE8AF3938A3E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4933
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1713,
+          "stopped_us": 4699,
+          "returns": 0,
+          "structural_calls": 694,
+          "coverage_hash": "05656F6755023E5C1ACBCE8E192C61ED34B677053125F093B5F41F0F013D55AE",
+          "report_hash": "94014A70B57DA3BB9F1865A827124CF05175484ED168029524296C9775B50A81",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "059-structural-8-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92192,
+    "wall_s": 1.9234230406582355,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767210,
+          "stopped_us": 771354,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767540,
+          "stopped_us": 771540,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "060-structural-8-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 85904,
+    "wall_s": 0.3246477502398193,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5292
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 1376,
+          "stopped_us": 4537,
+          "returns": 0,
+          "structural_calls": 5,
+          "coverage_hash": "BDAB5A7F7C39E96DAA46C54284E5828A7BC2C04875A721C08578EED8621B6FF9",
+          "report_hash": "9D480A7711C3AA5E1F609B446752EFD06DAD2B3663138C6544C6D4128C85417B",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5136
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1433,
+          "stopped_us": 5084,
+          "returns": 0,
+          "structural_calls": 51,
+          "coverage_hash": "C96ED84D1AB5D91BAC8FFB5107DD41D39FE6CC5C77583632B23FE7CF10D28D22",
+          "report_hash": "3832C5DD8747B908AAF7698B9696DB9AD5844FAB699FD3D64683AEEB44E76EF9",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "061-structural-8-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92032,
+    "wall_s": 1.935920000076294,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767821,
+          "stopped_us": 772108,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767726,
+          "stopped_us": 771179,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "062-structural-8-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84704,
+    "wall_s": 0.4329923326149583,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5215
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 5257,
+          "stopped_us": 11693,
+          "returns": 0,
+          "structural_calls": 1,
+          "coverage_hash": "14466FFAB0F5A20C6B3E8E517A77C7C44248AA71B7B761D04E16C73351C05EE8",
+          "report_hash": "B4ADF2A752E107CDAAAAF85148B2BB4AC874FAFF6F50750FF10F11250848FEEC",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5109
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 5437,
+          "stopped_us": 10806,
+          "returns": 0,
+          "structural_calls": 1,
+          "coverage_hash": "B153CDA9AE0FC02A3C52BB024184BC095B6FEF643604B2C451474DCDF0FDF07D",
+          "report_hash": "DA9DE46EF49F8E12F3BC529AEEEF0D60CF50345450C2CF125AABDE18C5F853E5",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "063-structural-8-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93504,
+    "wall_s": 1.9357639160007238,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "structural",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767476,
+          "stopped_us": 771564,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767402,
+          "stopped_us": 771548,
+          "returns": 0,
+          "structural_calls": 8192,
+          "coverage_hash": "437A6572675F2CEB1148F3BCC4E5132E3646B38D165F90015BFAA81481F3AAEA",
+          "report_hash": "150FE982BCB5A537FB89F0B857176B1617BCE3A258FFB54F6181D1D7431FD3FD",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "064-default-1-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84576,
+    "wall_s": 0.4341641669161618,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 588,
+          "stopped_us": 8959,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 656,
+          "stopped_us": 8525,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "065-default-1-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91520,
+    "wall_s": 1.9364992501214147,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767908,
+          "stopped_us": 776520,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767383,
+          "stopped_us": 774931,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "066-default-1-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91488,
+    "wall_s": 0.4347932920791209,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 731,
+          "stopped_us": 8981,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 762,
+          "stopped_us": 8897,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "067-default-1-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90496,
+    "wall_s": 1.927877124864608,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767864,
+          "stopped_us": 775117,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 773337,
+          "stopped_us": 780147,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "068-default-1-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94736,
+    "wall_s": 0.4378343326970935,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 635,
+          "stopped_us": 9029,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 639,
+          "stopped_us": 8957,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "069-default-1-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91264,
+    "wall_s": 1.9391667093150318,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767085,
+          "stopped_us": 774211,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 768856,
+          "stopped_us": 775034,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "070-default-1-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 100688,
+    "wall_s": 0.433681458234787,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 2925,
+          "stopped_us": 15104,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 2703,
+          "stopped_us": 15519,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "071-default-1-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91744,
+    "wall_s": 1.94971725018695,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 768977,
+          "stopped_us": 778261,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767751,
+          "stopped_us": 775249,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "072-default-1-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92944,
+    "wall_s": 0.4324280829168856,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 25,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4300
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4329
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 2934,
+          "stopped_us": 9277,
+          "returns": 25,
+          "structural_calls": 1886,
+          "coverage_hash": "A48A119B9C7D3C8F589DF61CBFF519C5D85EEDB7A0DE02C5AC9D691EB1B69BDF",
+          "report_hash": "4A141469D729D763B17FC585401B61791549585C039B8E71470165C92A6ED68F",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 15,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4320
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 3754,
+          "stopped_us": 9743,
+          "returns": 15,
+          "structural_calls": 8192,
+          "coverage_hash": "5587F822F1C01A9B6B74A41D4F3475018578DF33F68663CE2B92F418D1340FE2",
+          "report_hash": "7B45AB27C3A712C6F49DA44F4A87C0CBFCE48D8A602F170BF9C9CF8ED3580986",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "073-default-1-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90800,
+    "wall_s": 12.943116374779493,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6252935,
+          "stopped_us": 6262974,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6262743,
+          "stopped_us": 6270982,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "074-default-1-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 88576,
+    "wall_s": 0.562923707999289,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 18,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4316
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4125
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 3211,
+          "stopped_us": 10019,
+          "returns": 18,
+          "structural_calls": 712,
+          "coverage_hash": "6118D6FA4A9E96C3C5656B5D4E910D867869431164917389B03B24016A2E876A",
+          "report_hash": "2559340C576B53E8327D538B1561B1EF94753D2EDA532954F350057AF3195849",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 12,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4328
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4581
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 3887,
+          "stopped_us": 11170,
+          "returns": 12,
+          "structural_calls": 147,
+          "coverage_hash": "DBC6713A18CE366B6F1B41DF7EBA184AE8B23009181C17F1E0E22205CE76BBAE",
+          "report_hash": "BA68F00ECD0D69644645B73B19B76ADE2F2C1CAF8547928959C96C80F83D62A8",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "075-default-1-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91248,
+    "wall_s": 12.774329333100468,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6187948,
+          "stopped_us": 6196042,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6155872,
+          "stopped_us": 6163222,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "076-default-1-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96336,
+    "wall_s": 0.4328195000998676,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 15,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4326
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 3413,
+          "stopped_us": 9139,
+          "returns": 14,
+          "structural_calls": 8192,
+          "coverage_hash": "9228336E5E1889EE746C5B6360C15B2E19F40FA7A6D667BEE59D0D302058DF62",
+          "report_hash": "0252403B77D0FCD5E8160D1485BD7FDE603DD7052969E7BC6B776D5FDD99BA75",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 13,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4323
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 3867,
+          "stopped_us": 8759,
+          "returns": 13,
+          "structural_calls": 8192,
+          "coverage_hash": "0660B765DBCFD6011D74C39B40313FD6BBFB7F14B93884E53EF3BB846E7F7AD3",
+          "report_hash": "F42C2B4EEEA10C2FAB5623EACCE85200972F30865B4447DAFD0D5E5AA3D4E880",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "077-default-1-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90592,
+    "wall_s": 12.66577749978751,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6144111,
+          "stopped_us": 6152319,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6148415,
+          "stopped_us": 6154493,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "078-default-1-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 124720,
+    "wall_s": 0.4307476249523461,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 4,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4311
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 14122,
+          "stopped_us": 18989,
+          "returns": 3,
+          "structural_calls": 8192,
+          "coverage_hash": "0C5F2FBE12F206F07916F06B5467F1F917DEFFA2E3A0956A34AE37101606BA87",
+          "report_hash": "1D6145DAE6D40D7B965C8E12367534F92D2FD123276E5655F4BE3AA782AF5650",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 2,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 5714
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 13464,
+          "stopped_us": 21492,
+          "returns": 2,
+          "structural_calls": 8192,
+          "coverage_hash": "1A22A7B0C0587FF4C029FE96A99E4CEA2A990E31E9C22F173ECDBCEF8FE8EE82",
+          "report_hash": "12661D7504C8AFE45147F892426E50EA7EA69DBE49A83465E1E531C4449D187E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "079-default-1-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90992,
+    "wall_s": 12.722237333189696,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "default",
+      "producers": 1,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 6145855,
+          "stopped_us": 6153541,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 6145569,
+          "stopped_us": 6152229,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "080-default-8-1024-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90912,
+    "wall_s": 0.42432829225435853,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 597,
+          "stopped_us": 7583,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 635,
+          "stopped_us": 8375,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "081-default-8-1024-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93968,
+    "wall_s": 0.6419135420583189,
+    "result": {
+      "size": 16,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 96134,
+          "stopped_us": 103600,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95372,
+          "stopped_us": 101388,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "082-default-8-1024-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90800,
+    "wall_s": 0.42966366605833173,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 750,
+          "stopped_us": 8914,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 912,
+          "stopped_us": 8988,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "083-default-8-1024-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92416,
+    "wall_s": 0.6478101252578199,
+    "result": {
+      "size": 4096,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 100301,
+          "stopped_us": 106467,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 96202,
+          "stopped_us": 102753,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "B7F64DBF27B9F906EFCD57C1763BCA87F1AFDBC3B54CDB700E79810BE6DB8911",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "084-default-8-1024-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92576,
+    "wall_s": 0.43089174991473556,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 598,
+          "stopped_us": 8549,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 635,
+          "stopped_us": 8432,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "085-default-8-1024-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 92576,
+    "wall_s": 0.649661208037287,
+    "result": {
+      "size": 8,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 95318,
+          "stopped_us": 102146,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 97065,
+          "stopped_us": 107770,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "086-default-8-1024-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94912,
+    "wall_s": 0.42777062486857176,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 3011,
+          "stopped_us": 14961,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 2947,
+          "stopped_us": 14920,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "087-default-8-1024-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94784,
+    "wall_s": 0.6352656250819564,
+    "result": {
+      "size": 256,
+      "total": 1024,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 96147,
+          "stopped_us": 102299,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 1024,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 95351,
+          "stopped_us": 101438,
+          "returns": 1024,
+          "structural_calls": 1024,
+          "coverage_hash": "9764D1B41BC90A1B1C8A0F1DABCCF0DCB03768FA4FE5C81948EF16E68F3A787F",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "088-default-8-8192-binary-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93360,
+    "wall_s": 0.4281668751500547,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4429
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 4110
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 2303,
+          "stopped_us": 8291,
+          "returns": 0,
+          "structural_calls": 34,
+          "coverage_hash": "2FE802B6A6410E99D096E8F86D5FF79DB2137071B43B514A880F51A78B87566F",
+          "report_hash": "A4B64E3A4F1B0B21EBB1385CCED62DE43B973493ECA1F3041E119B832D7BAAAB",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4563
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 6836
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 2150,
+          "stopped_us": 8415,
+          "returns": 0,
+          "structural_calls": 44,
+          "coverage_hash": "AD5BAA102A49CC12506C21D3EA824C3CB092DE730EC6666FB931E23FAB4A25D2",
+          "report_hash": "BA0EB31F1B51E1E924F2A77F4D137B09FC9EC96E883B916B71A9B6DA9E5224C1",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "089-default-8-8192-binary-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93056,
+    "wall_s": 1.9264239589683712,
+    "result": {
+      "size": 16,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767387,
+          "stopped_us": 776031,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767888,
+          "stopped_us": 778043,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "090-default-8-8192-binary-4096-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91680,
+    "wall_s": 0.4315482499077916,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4314
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 7448
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 2694,
+          "stopped_us": 8790,
+          "returns": 0,
+          "structural_calls": 12,
+          "coverage_hash": "8CDE7E49E85571298FB6EF3398F1EC9F37721FBCE61DE16AA4CC158DACA1010F",
+          "report_hash": "B9D51D2317B9C3DF680315E49A20FB608DC4B39E4C5D365F45484C6527323A27",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4625
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5032
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 2681,
+          "stopped_us": 9299,
+          "returns": 0,
+          "structural_calls": 51,
+          "coverage_hash": "D44B5B71C4338892E709A0A79EB77FB7B9E2EEABAEA81C25AEAB61EC8E77236D",
+          "report_hash": "63CDA6513E2ECBF81953AEEEA1E7893CDDD508B498301253B94C526EE67CE2F6",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "091-default-8-8192-binary-4096-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 91584,
+    "wall_s": 1.9171054591424763,
+    "result": {
+      "size": 4096,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "binary",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767757,
+          "stopped_us": 775804,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 768012,
+          "stopped_us": 776033,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "492E291C26BC420801F9881932EB4AE18A6394F13FD4CEA0F23942F9A247F5A5",
+          "report_hash": "BE9A86007077F5DA9CAAFD6DB86BEDAF7C7015A8470B13654AF862D8BA199B6E",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "092-default-8-8192-list-8-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90720,
+    "wall_s": 0.43743633292615414,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4125
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 6021
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 2359,
+          "stopped_us": 7457,
+          "returns": 0,
+          "structural_calls": 51,
+          "coverage_hash": "ACAB9D4B6199FB6085467D319E9103481320F2871160593C1F09581BEB6CD231",
+          "report_hash": "EB6ED3C7E79717018253F3E5EFE140462BB7A6F25D1A5861DEBED25449032E93",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4371
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 6771
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 1864,
+          "stopped_us": 7146,
+          "returns": 0,
+          "structural_calls": 51,
+          "coverage_hash": "F534F7C39CEDB17DBAEF0DD1DB5E8503E1271E134D44904CE7DB98BF3443F6B2",
+          "report_hash": "FD589D60D2F3925CFB53188D041A20BCDCBC827EFB37D84CE759C077C9C1951C",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "093-default-8-8192-list-8-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 90544,
+    "wall_s": 1.9251849162392318,
+    "result": {
+      "size": 8,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767478,
+          "stopped_us": 776056,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767461,
+          "stopped_us": 777580,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "094-default-8-8192-list-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 143072,
+    "wall_s": 0.4298417908139527,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "burst",
+      "cycles": [
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4382
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 7037
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 1,
+          "producer_us": 8989,
+          "stopped_us": 17407,
+          "returns": 0,
+          "structural_calls": 2,
+          "coverage_hash": "865DFDACD46CC75A6931B8885403B82199A9B22CE08A9E0AE6050E0D264A5E19",
+          "report_hash": "E98F977061BBDA9658E666ECDB1C5D7D33C2674C95C37BC674374A57BB21369B",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 0,
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 4096,
+              "observed": 4403
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 4096,
+              "observed": 5572
+            }
+          ],
+          "status": "incomplete",
+          "cycle": 2,
+          "producer_us": 8233,
+          "stopped_us": 18315,
+          "returns": 0,
+          "structural_calls": 1,
+          "coverage_hash": "1E31AEA1C4A1F7CF78E0F233D09BF3820AEA37EE5021CF80665A3EF881DAC6EB",
+          "report_hash": "F10401DDD7B3B736E46435D036CCBAE5CF63E506BCDD60BAD199E975590AF59D",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  },
+  {
+    "name": "095-default-8-8192-list-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 93536,
+    "wall_s": 1.9352029575966299,
+    "result": {
+      "size": 256,
+      "total": 8192,
+      "mode": "default",
+      "producers": 8,
+      "shape": "list",
+      "pacing": "paced",
+      "cycles": [
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 1,
+          "producer_us": 767377,
+          "stopped_us": 774934,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        },
+        {
+          "calls": 8192,
+          "incomplete": [],
+          "status": "complete",
+          "cycle": 2,
+          "producer_us": 767979,
+          "stopped_us": 776404,
+          "returns": 8192,
+          "structural_calls": 8192,
+          "coverage_hash": "D8053FD1969E6F53B8B7E855033512C4B728F521F898EAF85F6DDDC6D4B8C365",
+          "report_hash": "1C3D0A5E3F9A6D5375CBBD423B15C750DA6FF2B6BFCC4FAFEB8ED074E480B7D4",
+          "exact_when_complete": true,
+          "cleanup_verified": true
+        }
+      ]
+    }
+  }
+]
