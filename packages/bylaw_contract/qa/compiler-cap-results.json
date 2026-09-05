@@ -1,0 +1,260 @@
+[
+  {
+    "selected": [],
+    "warnings": [
+      "compiler inference unsupported for Ecto: Elixir checker chunk was rejected by safe term decoding",
+      "compiler inference unsupported for Ecto.Adapter.Schema: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Adapter.Storage: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Adapter.Transaction: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Queryable: compiler-inferred signatures are absent"
+    ],
+    "app": "ecto",
+    "cap": 10,
+    "eligible": [],
+    "test_states": {
+      "passed": 1591
+    },
+    "eligible_functions": 0,
+    "eligible_alternatives": 0,
+    "chosen_functions": 0,
+    "selected_functions": 0,
+    "selected_alternatives": 0,
+    "cap_omitted_functions": 0,
+    "cap_omitted_alternatives": 0,
+    "called_eligible_functions": 0,
+    "observed_functions": 0,
+    "assessable_alternatives": 0,
+    "hit_alternatives": 0,
+    "missed_alternatives": 0,
+    "unknown_alternatives": 131,
+    "native_selected_counts_equal_compiler": true,
+    "native_counts": {},
+    "module_statuses": {
+      "unsupported": 5,
+      "supported": 97
+    },
+    "init_us": 1823747,
+    "suite_us": 2396695,
+    "memory_before_bytes": 102759216,
+    "memory_after_bytes": 301026826,
+    "memory_end_bytes": 108717149,
+    "alternative_flags": {
+      "{false, false, false}": 17,
+      "{true, false, false}": 84,
+      "{true, true, false}": 30
+    }
+  },
+  {
+    "selected": [],
+    "warnings": [
+      "compiler inference unsupported for Ecto.Adapter.Schema: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Adapter.Storage: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Adapter.Transaction: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Ecto.Queryable: compiler-inferred signatures are absent"
+    ],
+    "app": "ecto",
+    "cap": 20,
+    "eligible": [],
+    "test_states": {
+      "passed": 1591
+    },
+    "eligible_functions": 0,
+    "eligible_alternatives": 0,
+    "chosen_functions": 0,
+    "selected_functions": 0,
+    "selected_alternatives": 0,
+    "cap_omitted_functions": 0,
+    "cap_omitted_alternatives": 0,
+    "called_eligible_functions": 0,
+    "observed_functions": 0,
+    "assessable_alternatives": 0,
+    "hit_alternatives": 0,
+    "missed_alternatives": 0,
+    "unknown_alternatives": 131,
+    "native_selected_counts_equal_compiler": true,
+    "native_counts": {},
+    "module_statuses": {
+      "unsupported": 4,
+      "supported": 98
+    },
+    "init_us": 2192491,
+    "suite_us": 2269867,
+    "memory_before_bytes": 98992666,
+    "memory_after_bytes": 296937638,
+    "memory_end_bytes": 103803333,
+    "alternative_flags": {
+      "{false, false, false}": 17,
+      "{true, false, false}": 84,
+      "{true, true, false}": 30
+    }
+  },
+  {
+    "selected": [
+      "{Livebook.NotebookManager, :handle_info, 2}",
+      "{Livebook.Runtime.Fly, :handle_info, 2}",
+      "{Livebook.Runtime.K8s, :handle_info, 2}",
+      "{Livebook.TeamsServer, :handle_call, 3}",
+      "{Livebook.Text.Delta.Operation, :split_at, 2}"
+    ],
+    "warnings": [
+      "compiler inference unsupported for Livebook.Apps.AppSpec: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.Factory: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.FileSystem: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.FileSystem.Git.Client: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.FileSystem.Livebook.FileSystem.Local: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.FileSystem.Livebook.FileSystem.S3: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.HubHelpers: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.Hubs.Provider: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.Runtime: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.Teams.Constants: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.Teams.WebSocket: Elixir checker chunk was rejected by safe term decoding",
+      "compiler inference unsupported for LivebookWeb.HTMLHelpers: Elixir checker chunk was rejected by safe term decoding",
+      "compiler inference unsupported for LivebookWeb.Router: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for LivebookWeb.SessionLive.PackageSearchComponent: Elixir checker chunk was rejected by safe term decoding",
+      "compiler clause instrumentation unsupported for Livebook.Notebook.Cell: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for Livebook.Runtime.Evaluator.ObjectTracker: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for LivebookWeb.AppAuthHook: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for LivebookWeb.SessionLive: no unambiguous source clause mappings"
+    ],
+    "app": "livebook",
+    "cap": 20,
+    "eligible": [
+      "{Livebook.Notebook.Cell, :type, 1}",
+      "{Livebook.NotebookManager, :handle_info, 2}",
+      "{Livebook.Runtime.Evaluator.ObjectTracker, :handle_call, 3}",
+      "{Livebook.Runtime.Fly, :handle_info, 2}",
+      "{Livebook.Runtime.K8s, :handle_info, 2}",
+      "{Livebook.TeamsServer, :handle_call, 3}",
+      "{Livebook.Text.Delta.Operation, :split_at, 2}",
+      "{LivebookWeb.AppAuthHook, :on_mount, 4}",
+      "{LivebookWeb.SessionLive, :send_output_update, 4}"
+    ],
+    "test_states": {
+      "passed": 1511,
+      "excluded": 185
+    },
+    "eligible_functions": 9,
+    "eligible_alternatives": 18,
+    "chosen_functions": 9,
+    "selected_functions": 5,
+    "selected_alternatives": 11,
+    "cap_omitted_functions": 0,
+    "cap_omitted_alternatives": 0,
+    "called_eligible_functions": 6,
+    "observed_functions": 2,
+    "assessable_alternatives": 5,
+    "hit_alternatives": 4,
+    "missed_alternatives": 1,
+    "unknown_alternatives": 724,
+    "native_selected_counts_equal_compiler": true,
+    "native_counts": {
+      "{Livebook.Notebook.Cell, :type, 1}": 6,
+      "{Livebook.NotebookManager, :handle_info, 2}": 10,
+      "{Livebook.Runtime.Evaluator.ObjectTracker, :handle_call, 3}": 322,
+      "{Livebook.Runtime.Fly, :handle_info, 2}": 0,
+      "{Livebook.Runtime.K8s, :handle_info, 2}": 0,
+      "{Livebook.TeamsServer, :handle_call, 3}": 0,
+      "{Livebook.Text.Delta.Operation, :split_at, 2}": 8,
+      "{LivebookWeb.AppAuthHook, :on_mount, 4}": 54,
+      "{LivebookWeb.SessionLive, :send_output_update, 4}": 7
+    },
+    "module_statuses": {
+      "unsupported": 14,
+      "supported": 341
+    },
+    "init_us": 6592924,
+    "suite_us": 9389571,
+    "memory_before_bytes": 96206897,
+    "memory_after_bytes": 111203673,
+    "memory_end_bytes": 148042903,
+    "alternative_flags": {
+      "{false, false, false}": 21,
+      "{false, true, false}": 2,
+      "{true, false, false}": 435,
+      "{true, true, false}": 253,
+      "{true, true, true}": 18
+    }
+  },
+  {
+    "selected": [
+      "{Livebook.NotebookManager, :handle_info, 2}",
+      "{Livebook.Runtime.Fly, :handle_info, 2}",
+      "{Livebook.Runtime.K8s, :handle_info, 2}",
+      "{Livebook.TeamsServer, :handle_call, 3}",
+      "{Livebook.Text.Delta.Operation, :split_at, 2}"
+    ],
+    "warnings": [
+      "compiler inference unsupported for Livebook.Apps.AppSpec: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.FileSystem: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.FileSystemHelpers: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for Livebook.Hubs.Provider: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.Runtime: compiler-inferred signatures are absent",
+      "compiler inference unsupported for Livebook.Teams.WebSocket: Elixir checker chunk was rejected by safe term decoding",
+      "compiler inference unsupported for LivebookWeb.HTMLHelpers: Elixir checker chunk was rejected by safe term decoding",
+      "compiler inference unsupported for LivebookWeb.Router: compiler inference inspection exceeded 100ms",
+      "compiler inference unsupported for LivebookWeb.SessionLive.PackageSearchComponent: Elixir checker chunk was rejected by safe term decoding",
+      "compiler clause instrumentation unsupported for Livebook.Notebook.Cell: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for Livebook.Runtime.Evaluator.ObjectTracker: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for LivebookWeb.AppAuthHook: no unambiguous source clause mappings",
+      "compiler clause instrumentation unsupported for LivebookWeb.SessionLive: no unambiguous source clause mappings"
+    ],
+    "app": "livebook",
+    "cap": 10,
+    "eligible": [
+      "{Livebook.Notebook.Cell, :type, 1}",
+      "{Livebook.NotebookManager, :handle_info, 2}",
+      "{Livebook.Runtime.Evaluator.ObjectTracker, :handle_call, 3}",
+      "{Livebook.Runtime.Fly, :handle_info, 2}",
+      "{Livebook.Runtime.K8s, :handle_info, 2}",
+      "{Livebook.TeamsServer, :handle_call, 3}",
+      "{Livebook.Text.Delta.Operation, :split_at, 2}",
+      "{LivebookWeb.AppAuthHook, :on_mount, 4}",
+      "{LivebookWeb.SessionLive, :send_output_update, 4}"
+    ],
+    "test_states": {
+      "passed": 1511,
+      "excluded": 185
+    },
+    "eligible_functions": 9,
+    "eligible_alternatives": 18,
+    "chosen_functions": 9,
+    "selected_functions": 5,
+    "selected_alternatives": 11,
+    "cap_omitted_functions": 0,
+    "cap_omitted_alternatives": 0,
+    "called_eligible_functions": 6,
+    "observed_functions": 2,
+    "assessable_alternatives": 5,
+    "hit_alternatives": 4,
+    "missed_alternatives": 1,
+    "unknown_alternatives": 747,
+    "native_selected_counts_equal_compiler": true,
+    "native_counts": {
+      "{Livebook.Notebook.Cell, :type, 1}": 6,
+      "{Livebook.NotebookManager, :handle_info, 2}": 10,
+      "{Livebook.Runtime.Evaluator.ObjectTracker, :handle_call, 3}": 314,
+      "{Livebook.Runtime.Fly, :handle_info, 2}": 0,
+      "{Livebook.Runtime.K8s, :handle_info, 2}": 0,
+      "{Livebook.TeamsServer, :handle_call, 3}": 0,
+      "{Livebook.Text.Delta.Operation, :split_at, 2}": 8,
+      "{LivebookWeb.AppAuthHook, :on_mount, 4}": 54,
+      "{LivebookWeb.SessionLive, :send_output_update, 4}": 7
+    },
+    "module_statuses": {
+      "unsupported": 9,
+      "supported": 346
+    },
+    "init_us": 2658079,
+    "suite_us": 9220904,
+    "memory_before_bytes": 86678580,
+    "memory_after_bytes": 238948564,
+    "memory_end_bytes": 151286505,
+    "alternative_flags": {
+      "{false, false, false}": 22,
+      "{false, true, false}": 2,
+      "{true, false, false}": 455,
+      "{true, true, false}": 255,
+      "{true, true, true}": 18
+    }
+  }
+]
