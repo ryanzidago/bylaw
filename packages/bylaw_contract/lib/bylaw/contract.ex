@@ -73,7 +73,11 @@ defmodule Bylaw.Contract do
   third argument for escape-free output, or `colors: true` to force colors.
   Summary data is never colored.
   """
-  @spec print_report(coverage :: map(), device :: IO.device(), options :: keyword()) :: :ok
+  @spec print_report(
+          coverage :: map(),
+          device :: IO.device(),
+          options :: list({:colors, boolean()})
+        ) :: :ok
   def print_report(coverage, device \\ :stdio, options \\ []),
     do: Report.print(coverage, device, Keyword.get(options, :colors, IO.ANSI.enabled?()))
 
