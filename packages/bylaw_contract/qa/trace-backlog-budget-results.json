@@ -1,0 +1,694 @@
+{
+  "base_revision": "86e784c77ab6e89acce65235729a4f4ed1264c22",
+  "runtime": "Elixir1.20.2 / OTP29.0.3",
+  "manifest": {
+    "calls": 1000,
+    "cycles": 3,
+    "limit_mib": 384,
+    "modes": [
+      "typespec",
+      "structural",
+      "default"
+    ],
+    "payload": 2048,
+    "repeats": 3,
+    "speeds": [
+      "running",
+      "paused",
+      "slow10"
+    ],
+    "variants": {
+      "baseline": 0,
+      "candidate-high": 4096,
+      "candidate-low": 64
+    }
+  },
+  "groups": {
+    "default--paused--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 149722322,
+      "queue_peak": 3000,
+      "worker_memory_peak": 98900248,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        235455256,
+        265995008
+      ],
+      "cleanup_beam_range": [
+        49274953,
+        50638794
+      ],
+      "observed_excess_range": []
+    },
+    "default--paused--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 152733022,
+      "queue_peak": 3000,
+      "worker_memory_peak": 98900488,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        192987856,
+        250544896
+      ],
+      "cleanup_beam_range": [
+        49342038,
+        53678718
+      ],
+      "observed_excess_range": []
+    },
+    "default--paused--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 146614578,
+      "queue_peak": 2943,
+      "worker_memory_peak": 97022296,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        194052816,
+        250217216
+      ],
+      "cleanup_beam_range": [
+        49274770,
+        50737010
+      ],
+      "observed_excess_range": [
+        257,
+        1886
+      ]
+    },
+    "default--running--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 95075412,
+      "queue_peak": 1362,
+      "worker_memory_peak": 45516392,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        191283944,
+        240960256
+      ],
+      "cleanup_beam_range": [
+        49239140,
+        50629396
+      ],
+      "observed_excess_range": []
+    },
+    "default--running--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 93966392,
+      "queue_peak": 1332,
+      "worker_memory_peak": 44528072,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        204571368,
+        241271552
+      ],
+      "cleanup_beam_range": [
+        49332240,
+        50738640
+      ],
+      "observed_excess_range": []
+    },
+    "default--running--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 54495252,
+      "queue_peak": 0,
+      "worker_memory_peak": 701736,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        181174992,
+        240583400
+      ],
+      "cleanup_beam_range": [
+        49274796,
+        53654476
+      ],
+      "observed_excess_range": [
+        66,
+        1886
+      ]
+    },
+    "default--slow10--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 96122842,
+      "queue_peak": 1356,
+      "worker_memory_peak": 45253128,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        192086736,
+        239174376
+      ],
+      "cleanup_beam_range": [
+        49205602,
+        50663378
+      ],
+      "observed_excess_range": []
+    },
+    "default--slow10--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 96389526,
+      "queue_peak": 1328,
+      "worker_memory_peak": 44396440,
+      "coverage_hashes": [
+        "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547"
+      ],
+      "report_hashes": [
+        "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD"
+      ],
+      "os_peaks_range": [
+        240567064,
+        263013144
+      ],
+      "cleanup_beam_range": [
+        49319622,
+        51823206
+      ],
+      "observed_excess_range": []
+    },
+    "default--slow10--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 51580282,
+      "queue_peak": 0,
+      "worker_memory_peak": 702536,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        169673400,
+        216318720
+      ],
+      "cleanup_beam_range": [
+        49271274,
+        50715578
+      ],
+      "observed_excess_range": [
+        204,
+        1886
+      ]
+    },
+    "structural--paused--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 83747917,
+      "queue_peak": 1000,
+      "worker_memory_peak": 32986752,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        151896784,
+        179258064
+      ],
+      "cleanup_beam_range": [
+        49070029,
+        50526309
+      ],
+      "observed_excess_range": []
+    },
+    "structural--paused--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 84979157,
+      "queue_peak": 1000,
+      "worker_memory_peak": 32974680,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        123339448,
+        153813688
+      ],
+      "cleanup_beam_range": [
+        49101813,
+        51645509
+      ],
+      "observed_excess_range": []
+    },
+    "structural--paused--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 86774659,
+      "queue_peak": 1000,
+      "worker_memory_peak": 32987096,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        118506120,
+        155959968
+      ],
+      "cleanup_beam_range": [
+        49144059,
+        53440707
+      ],
+      "observed_excess_range": [
+        1000,
+        1000
+      ]
+    },
+    "structural--running--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 51135695,
+      "queue_peak": 0,
+      "worker_memory_peak": 372376,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        127648440,
+        160383672
+      ],
+      "cleanup_beam_range": [
+        49062959,
+        50531415
+      ],
+      "observed_excess_range": []
+    },
+    "structural--running--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 54176263,
+      "queue_peak": 0,
+      "worker_memory_peak": 405352,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        124191416,
+        159482576
+      ],
+      "cleanup_beam_range": [
+        49137655,
+        53451647
+      ],
+      "observed_excess_range": []
+    },
+    "structural--running--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 50610269,
+      "queue_peak": 0,
+      "worker_memory_peak": 471064,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        129041032,
+        142688952
+      ],
+      "cleanup_beam_range": [
+        49112093,
+        49841645
+      ],
+      "observed_excess_range": [
+        518,
+        1000
+      ]
+    },
+    "structural--slow10--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 51152181,
+      "queue_peak": 0,
+      "worker_memory_peak": 372792,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        148013704,
+        158925496
+      ],
+      "cleanup_beam_range": [
+        49669989,
+        50535333
+      ],
+      "observed_excess_range": []
+    },
+    "structural--slow10--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 52533149,
+      "queue_peak": 0,
+      "worker_memory_peak": 405768,
+      "coverage_hashes": [
+        "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C"
+      ],
+      "report_hashes": [
+        "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48"
+      ],
+      "os_peaks_range": [
+        126403208,
+        156304032
+      ],
+      "cleanup_beam_range": [
+        49104037,
+        51761085
+      ],
+      "observed_excess_range": []
+    },
+    "structural--slow10--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 54005891,
+      "queue_peak": 0,
+      "worker_memory_peak": 438520,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        130564768,
+        143196832
+      ],
+      "cleanup_beam_range": [
+        49104875,
+        53407987
+      ],
+      "observed_excess_range": [
+        123,
+        1000
+      ]
+    },
+    "typespec--paused--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 115126949,
+      "queue_peak": 2000,
+      "worker_memory_peak": 65913272,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        155239096,
+        207962808
+      ],
+      "cleanup_beam_range": [
+        48286885,
+        48951261
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--paused--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 114539635,
+      "queue_peak": 2000,
+      "worker_memory_peak": 65913392,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        155665104,
+        182010600
+      ],
+      "cleanup_beam_range": [
+        48342291,
+        48404731
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--paused--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 116331961,
+      "queue_peak": 2000,
+      "worker_memory_peak": 65913392,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        155796152,
+        208913128
+      ],
+      "cleanup_beam_range": [
+        48294417,
+        50152929
+      ],
+      "observed_excess_range": [
+        1763,
+        1886
+      ]
+    },
+    "typespec--running--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 93854215,
+      "queue_peak": 1349,
+      "worker_memory_peak": 44682776,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        155845328,
+        195674808
+      ],
+      "cleanup_beam_range": [
+        48932791,
+        48969207
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--running--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 94608133,
+      "queue_peak": 1367,
+      "worker_memory_peak": 45276032,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        152650448,
+        171000504
+      ],
+      "cleanup_beam_range": [
+        49054637,
+        49073149
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--running--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 52586387,
+      "queue_peak": 0,
+      "worker_memory_peak": 296368,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        149668488,
+        154010320
+      ],
+      "cleanup_beam_range": [
+        48358627,
+        51955283
+      ],
+      "observed_excess_range": [
+        1768,
+        1886
+      ]
+    },
+    "typespec--slow10--baseline": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 93004925,
+      "queue_peak": 1349,
+      "worker_memory_peak": 44682952,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        154174160,
+        163414736
+      ],
+      "cleanup_beam_range": [
+        48287405,
+        48953901
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--slow10--candidate-high": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "complete": 9
+      },
+      "beam_peak": 95750851,
+      "queue_peak": 1356,
+      "worker_memory_peak": 44880872,
+      "coverage_hashes": [
+        "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D"
+      ],
+      "report_hashes": [
+        "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41"
+      ],
+      "os_peaks_range": [
+        153469648,
+        154501840
+      ],
+      "cleanup_beam_range": [
+        48324139,
+        52162739
+      ],
+      "observed_excess_range": []
+    },
+    "typespec--slow10--candidate-low": {
+      "trials": 3,
+      "cycles": 9,
+      "statuses": {
+        "incomplete": 9
+      },
+      "beam_peak": 50558281,
+      "queue_peak": 0,
+      "worker_memory_peak": 231128,
+      "coverage_hashes": [],
+      "report_hashes": [],
+      "os_peaks_range": [
+        143213192,
+        201392848
+      ],
+      "cleanup_beam_range": [
+        48317377,
+        50156025
+      ],
+      "observed_excess_range": [
+        1768,
+        1887
+      ]
+    }
+  }
+}

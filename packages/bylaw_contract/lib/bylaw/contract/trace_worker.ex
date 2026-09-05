@@ -1,6 +1,7 @@
 defmodule Bylaw.Contract.TraceWorker do
   @moduledoc false
   use GenServer
+  alias Bylaw.Contract.TraceQueueBudget
 
   @return_trace_match_spec [{:_, [], [{:return_trace}]}]
   @return_only_trace_match_spec [{:_, [], [{:return_trace}, {:message, false}]}]
@@ -10,10 +11,11 @@ defmodule Bylaw.Contract.TraceWorker do
           modules :: list(module()),
           check :: module(),
           opts :: list(),
-          claims :: MapSet.t()
+          claims :: MapSet.t(),
+          max_trace_queue :: pos_integer()
         ) :: GenServer.on_start()
-  def start_link(modules, check, opts, claims),
-    do: GenServer.start_link(__MODULE__, {modules, check, opts, claims})
+  def start_link(modules, check, opts, claims, limit \\ 4096),
+    do: GenServer.start_link(__MODULE__, {modules, check, opts, claims, limit})
 
   @doc false
   @spec claims(worker :: GenServer.server()) :: MapSet.t()
@@ -38,7 +40,7 @@ defmodule Bylaw.Contract.TraceWorker do
     do: GenServer.cast(worker, {:ex_unit_test_finished, label})
 
   @impl GenServer
-  def init({modules, check, opts, claims}) do
+  def init({modules, check, opts, claims, limit}) do
     Process.flag(:trap_exit, true)
     Process.flag(:message_queue_data, :off_heap)
 
@@ -46,6 +48,7 @@ defmodule Bylaw.Contract.TraceWorker do
       {:ok, check_state, plan} ->
         runtime = %{
           module: check,
+          queue_limit: limit,
           state: check_state,
           calls: plan.calls,
           returns: plan.returns,
@@ -64,6 +67,7 @@ defmodule Bylaw.Contract.TraceWorker do
     if Enum.empty?(runtime.calls) and Enum.empty?(runtime.returns) do
       {:ok,
        %{
+         budget: nil,
          transport: :passive,
          session: nil,
          active_test_labels: %{},
@@ -81,6 +85,7 @@ defmodule Bylaw.Contract.TraceWorker do
     with {:ok, session} <- start_trace_session(runtime) do
       {:ok,
        %{
+         budget: TraceQueueBudget.start(self(), session, runtime.queue_limit),
          transport: :process,
          session: session,
          active_test_labels: %{},
@@ -155,15 +160,27 @@ defmodule Bylaw.Contract.TraceWorker do
   end
 
   def handle_call(:stop, _, state) do
+    TraceQueueBudget.stop(state.budget)
     state = stop_trace(state)
     coverage = state.runtime.module.coverage(state.runtime.state)
+    reasons = TraceQueueBudget.reason(state.budget, state.runtime.module)
+
+    coverage =
+      if Enum.any?(reasons) do
+        Map.put(coverage, :incomplete, reasons)
+      else
+        coverage
+      end
+
     state.runtime.module.terminate(state.runtime.state)
 
-    {:stop, :normal, {state.runtime.module, coverage}, %{state | session: nil, runtime: nil}}
+    {:stop, :normal, {state.runtime.module, coverage},
+     %{state | session: nil, runtime: nil, budget: nil}}
   end
 
   @impl GenServer
   def terminate(_, state) do
+    TraceQueueBudget.stop(Map.get(state, :budget))
     destroy_session(Map.get(state, :session))
 
     if state.runtime do
@@ -176,7 +193,7 @@ defmodule Bylaw.Contract.TraceWorker do
   defp observe(event, state) do
     runtime = state.runtime
 
-    if observes?(runtime, event) do
+    if TraceQueueBudget.check(state.budget, 1) == 0 and observes?(runtime, event) do
       runtime.module.observe(event, runtime.state)
       |> apply_result(state)
     else
@@ -282,29 +299,39 @@ defmodule Bylaw.Contract.TraceWorker do
 
   defp stop_trace(%{session: session} = state) do
     cancel_process_scan(state.scan_timer)
-    reference = :trace.delivered(session, :all)
 
-    :trace.process(session, :all, false, [:call])
-    state = drain_trace(state, reference)
+    state =
+      if TraceQueueBudget.check(state.budget) == 0 do
+        reference = :trace.delivered(session, :all)
+        :trace.process(session, :all, false, [:call])
+        drain_trace(state, reference)
+      else
+        state
+      end
+
     destroy_session(session)
     %{state | session: nil}
   end
 
   defp drain_trace(state, reference) do
-    receive do
-      {:trace_delivered, :all, ^reference} ->
-        state
+    if TraceQueueBudget.check(state.budget) > 0 do
+      state
+    else
+      receive do
+        {:trace_delivered, :all, ^reference} ->
+          state
 
-      {:trace, _, :call, {_, _, arguments}} = message when is_list(arguments) ->
-        {:noreply, state} = handle_info(message, state)
-        drain_trace(state, reference)
+        {:trace, _, :call, {_, _, arguments}} = message when is_list(arguments) ->
+          {:noreply, state} = handle_info(message, state)
+          drain_trace(state, reference)
 
-      {:trace, _, :return_from, {_, _, _}, _} = message ->
-        {:noreply, state} = handle_info(message, state)
-        drain_trace(state, reference)
+        {:trace, _, :return_from, {_, _, _}, _} = message ->
+          {:noreply, state} = handle_info(message, state)
+          drain_trace(state, reference)
 
-      _ ->
-        drain_trace(state, reference)
+        _ ->
+          drain_trace(state, reference)
+      end
     end
   end
 
@@ -358,8 +385,20 @@ defmodule Bylaw.Contract.TraceWorker do
 
   defp configure_runtime_patterns(state) do
     runtime = state.runtime
-    configure_patterns(state.session, runtime.calls, runtime.returns, runtime.trace_scope)
-    %{state | patterns_configured?: true}
+
+    if TraceQueueBudget.check(state.budget) == 0 do
+      configure_patterns(state.session, runtime.calls, runtime.returns, runtime.trace_scope)
+      %{state | patterns_configured?: true}
+    else
+      state
+    end
+  catch
+    :error, :badarg ->
+      if TraceQueueBudget.check(state.budget) > 0 do
+        state
+      else
+        :erlang.error(:badarg)
+      end
   end
 
   defp destroy_session(nil), do: :ok
