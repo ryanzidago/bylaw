@@ -4,9 +4,29 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesPropertyTest d
 
   alias Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes
 
+  test "renders the generated Sharada character as a parseable literal" do
+    literal = {<<0x111C2::utf8>>, 51}
+    source = literal_source(literal)
+    assert {:ok, quoted} = Code.string_to_quoted(source)
+    assert {^literal, []} = Code.eval_quoted(quoted)
+
+    "defmodule Example do\n  @value #{source}\nend"
+    |> to_source_file()
+    |> run_check(NoRemoteCallsInModuleAttributes)
+    |> refute_issues()
+  end
+
+  property "rendered nested literal source preserves its original value" do
+    check all(literal <- literal()) do
+      source = literal_source(literal)
+      assert {:ok, quoted} = Code.string_to_quoted(source)
+      assert {^literal, []} = Code.eval_quoted(quoted)
+    end
+  end
+
   property "literal attributes remain accepted across arbitrary nesting" do
     check all(literal <- literal()) do
-      literal_source = inspect(literal, limit: :infinity, printable_limit: :infinity)
+      literal_source = literal_source(literal)
       source = "defmodule Example do\n  @value #{literal_source}\nend"
 
       source
@@ -32,6 +52,9 @@ defmodule Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributesPropertyTest d
       |> assert_issue(%{trigger: "#{module}.#{function}"})
     end
   end
+
+  defp literal_source(literal),
+    do: inspect(literal, limit: :infinity, printable_limit: :infinity, binaries: :as_binaries)
 
   defp literal do
     scalar =
