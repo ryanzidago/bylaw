@@ -226,17 +226,25 @@ defmodule Bylaw.Credo.Check.Elixir.NoExtraPublicBehaviourFunctions do
   end
 
   defp alias_entries({:alias, _meta, [{:__aliases__, _aliases_meta, aliases}]}) do
-    [{List.last(aliases), Module.concat(aliases)}]
+    alias_entry(List.last(aliases), aliases)
   end
 
   defp alias_entries(
          {:alias, _meta,
           [{:__aliases__, _aliases_meta, aliases}, [as: {:__aliases__, _as_meta, [as]}]]}
        ) do
-    [{as, Module.concat(aliases)}]
+    alias_entry(as, aliases)
   end
 
   defp alias_entries(_ast), do: []
+
+  defp alias_entry(name, aliases) do
+    if Enum.all?(aliases, &is_atom/1) do
+      [{name, Module.concat(aliases)}]
+    else
+      []
+    end
+  end
 
   defp behaviour_attribute({:@, _meta, [{:behaviour, _attribute_meta, [behaviour_ast]}]}, aliases) do
     case module_attribute_value(behaviour_ast, aliases) do
