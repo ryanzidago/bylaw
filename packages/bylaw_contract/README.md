@@ -214,6 +214,15 @@ checks: [
 ]
 ```
 
+Repeated nested aliases use a compact internal graph, including across process
+handoffs. Expansion stops once a required type member is unassessable, retaining
+its unsupported reason and any applicable input partitions. Each nested type
+expansion allows at most 4,096 uncached alias resolutions; each top-level union
+flattening allows at most 4,096 visits. Exceeding either bound makes the affected
+type unassessable, never missed. These are expansion-work bounds, not a bound on
+whole-suite memory or on the size of caller values. Function types are matched
+by arity without expanding their unused argument and return signatures.
+
 The current implementation resolves local and remote type aliases and handles
 literals, common scalar types, tuples, lists, ranges, functions, and maps with
 literal required keys. It derives deterministic classes for `integer()`

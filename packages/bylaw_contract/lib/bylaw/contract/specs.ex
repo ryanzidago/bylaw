@@ -2,8 +2,10 @@ defmodule Bylaw.Contract.Specs do
   @moduledoc false
 
   alias Bylaw.Contract.TypeMatcher
+  alias Bylaw.Contract.TypeExpansion
 
   @types_cache_key {__MODULE__, :types_cache}
+  @max_union_visits 4096
 
   @spec load(modules :: list(module())) :: map()
   def load(modules) do
@@ -213,6 +215,14 @@ defmodule Bylaw.Contract.Specs do
     }
   end
 
+  defp partition_single_type({display_type, {:bylaw_contract, :type_graph, root, nodes}}) do
+    {display_type, root}
+    |> partition_single_type()
+    |> Enum.map(fn class ->
+      %{class | match_type: TypeExpansion.wrap(class.match_type, nodes)}
+    end)
+  end
+
   defp partition_single_type({display_type, match_type}) do
     source_label = format_type(display_type)
     partitions_for(match_type, source_label)
@@ -390,91 +400,71 @@ defmodule Bylaw.Contract.Specs do
 
   defp display_type_for_range(display_type, _), do: display_type
 
-  defp flatten_union({:ann_type, _, [_, type]}, module, seen) do
-    flatten_union(type, module, seen)
-  end
-
-  defp flatten_union({:type, _, :union, members}, module, seen) do
-    Enum.flat_map(members, &flatten_union(&1, module, seen))
-  end
-
-  defp flatten_union({:user_type, _, name, arguments} = original, module, seen) do
-    flatten_alias(original, module, name, arguments, module, seen)
-  end
-
-  defp flatten_union(
-         {:remote_type, _, [{:atom, _, remote_module}, {:atom, _, name}, arguments]} = original,
-         _,
-         seen
-       ) do
-    flatten_alias(original, remote_module, name, arguments, remote_module, seen)
-  end
-
-  defp flatten_union(type, module, _) do
-    [{type, expand(type, module, %{})}]
-  end
-
-  defp flatten_alias(original, type_module, name, arguments, display_module, seen) do
-    key = {type_module, name, Enum.count(arguments)}
-
-    if Map.has_key?(seen, key) do
-      [{original, {:unsupported, {:recursive_type, key}}}]
-    else
-      case resolve(type_module, name, arguments) do
-        {:ok, resolved} ->
-          resolved_members = flatten_union(resolved, display_module, Map.put(seen, key, true))
-
-          if Enum.count(resolved_members) > 1 do
-            resolved_members
-          else
-            [{original, expand(original, display_module, %{})}]
-          end
-
-        :error ->
-          [{original, {:unsupported, {:unknown_type, key}}}]
-      end
+  defp flatten_union(type, module, seen) do
+    case visit_union(type, module, seen, @max_union_visits) do
+      {:ok, members, _remaining} -> members
+      :limit -> [{type, {:unsupported, {:union_expansion_limit, @max_union_visits}}}]
     end
   end
 
-  defp expand({:ann_type, _, [_, type]}, module, seen), do: expand(type, module, seen)
+  defp visit_union(_type, _module, _seen, 0), do: :limit
 
-  defp expand({:user_type, _, name, arguments}, module, seen) do
-    expand_alias(module, name, arguments, seen)
+  defp visit_union(type, module, seen, remaining),
+    do: flatten_members(type, module, seen, remaining - 1)
+
+  defp flatten_members({:ann_type, _, [_, type]}, module, seen, remaining),
+    do: visit_union(type, module, seen, remaining)
+
+  defp flatten_members({:type, _, :union, members}, module, seen, remaining) do
+    Enum.reduce_while(members, {:ok, [], remaining}, fn member, {:ok, groups, remaining} ->
+      case visit_union(member, module, seen, remaining) do
+        {:ok, members, remaining} -> {:cont, {:ok, [members | groups], remaining}}
+        :limit -> {:halt, :limit}
+      end
+    end)
+    |> case do
+      {:ok, groups, remaining} -> {:ok, groups |> Enum.reverse() |> List.flatten(), remaining}
+      :limit -> :limit
+    end
   end
 
-  defp expand(
-         {:remote_type, _, [{:atom, _, remote_module}, {:atom, _, name}, arguments]},
-         _,
-         seen
-       ) do
-    expand_alias(remote_module, name, arguments, seen)
-  end
+  defp flatten_members({:user_type, _, name, arguments} = original, module, seen, remaining),
+    do: flatten_alias(original, module, name, arguments, seen, remaining)
 
-  defp expand(tuple, module, seen) when is_tuple(tuple) do
-    tuple
-    |> Tuple.to_list()
-    |> Enum.map(&expand(&1, module, seen))
-    |> List.to_tuple()
-  end
+  defp flatten_members(
+         {:remote_type, _, [{:atom, _, module}, {:atom, _, name}, arguments]} = original,
+         _caller,
+         seen,
+         remaining
+       ),
+       do: flatten_alias(original, module, name, arguments, seen, remaining)
 
-  defp expand(list, module, seen) when is_list(list) do
-    Enum.map(list, &expand(&1, module, seen))
-  end
+  defp flatten_members(type, module, _seen, remaining),
+    do: {:ok, [{type, expand(type, module, %{})}], remaining}
 
-  defp expand(other, _, _), do: other
-
-  defp expand_alias(module, name, arguments, seen) do
+  defp flatten_alias(original, module, name, arguments, seen, remaining) do
     key = {module, name, Enum.count(arguments)}
 
     if Map.has_key?(seen, key) do
-      {:unsupported, {:recursive_type, key}}
+      {:ok, [{original, {:unsupported, {:recursive_type, key}}}], remaining}
     else
       case resolve(module, name, arguments) do
-        {:ok, resolved} -> expand(resolved, module, Map.put(seen, key, true))
-        :error -> {:unsupported, {:unknown_type, key}}
+        {:ok, resolved} ->
+          case visit_union(resolved, module, Map.put(seen, key, true), remaining) do
+            {:ok, [{_display, match_type}], remaining} ->
+              {:ok, [{original, match_type}], remaining}
+
+            other ->
+              other
+          end
+
+        :error ->
+          {:ok, [{original, {:unsupported, {:unknown_type, key}}}], remaining}
       end
     end
   end
+
+  defp expand(type, module, _seen), do: TypeExpansion.expand(type, module, &resolve/3)
 
   defp resolve(module, name, arguments) do
     with {:module, ^module} <- Code.ensure_loaded(module),
