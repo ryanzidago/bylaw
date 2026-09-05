@@ -1,0 +1,10 @@
+Running ExUnit with seed: 635518, max_cases: 28
+Excluding tags: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false]
+
+....................
+Finished in 0.00 seconds (0.00s async, 0.00s sync)
+
+Result: 20 passed
+Bylaw.Contract QA: functions=1 arguments=1 calls=1 input_classes=1 supported_input_classes=1 observed_input_classes=1 missed_input_classes=0 unsupported_input_classes=0 boundaries=0 observed_boundaries=0 missed_boundaries=0 return_groups=0 return_events=0 return_alternatives=0 supported_return_alternatives=0 observed_return_alternatives=0 missed_return_alternatives=0 unsupported_return_alternatives=0 compiler_return_groups=0 compiler_call_events=0 compiler_return_alternatives=0 supported_compiler_return_alternatives=0 observed_compiler_return_alternatives=0 missed_compiler_return_alternatives=0 unsupported_compiler_return_alternatives=0 compiler_modules=0 compiler_unsupported=0 compiler_warnings=0 clauses=15 clauses_selected=14 clauses_head_matched=15 guarded_clauses=14 guards_passed=13 guards_rejected=13 callable_arities=2 arity_calls=21 structural_unsupported=0 warnings=0
+[os_mon] memory supervisor port (memsup): Erlang has closed
+[os_mon] cpu supervisor port (cpu_sup): Erlang has closed

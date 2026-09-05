@@ -7,6 +7,17 @@ defmodule Bylaw.Contract.ExUnitFormatter do
   suite exercises more than one application. Set `BYLAW_CONTRACT_REPORT=summary`
   for compact, machine-readable output.
 
+  `BYLAW_CONTRACT_DIFF_BASE` optionally scopes observation to committed source
+  changes from the reference's merge-base with the checked-out HEAD. Explicit
+  `bylaw_contract: [diff_base: ref]` overrides the environment; `false` disables
+  diff scope. `diff_paths` defaults to `["lib"]`, relative to `diff_root` (the
+  current directory by default). Source paths must be clean and selected modules
+  must match the application's compiled source and loaded BEAMs.
+
+  Invalid or incomplete scoped observation yields exit status 2 after the suite,
+  preserving an existing nonzero status. Empty selection runs the normal suite
+  without check workers. Ordinary observational gaps do not fail the process.
+
   Human diagnostics honor ExUnit's `colors: [enabled: boolean]` option, defaulting
   to `IO.ANSI.enabled?/0`. Summary output never contains ANSI styling.
 
@@ -26,23 +37,67 @@ defmodule Bylaw.Contract.ExUnitFormatter do
   use GenServer
 
   alias Bylaw.Contract.Tracer
+  alias Bylaw.Contract.FormatterDiffScope
 
   @impl GenServer
   def init(ex_unit_options) do
-    with {:ok, modules} <- application_modules(),
-         {:ok, options} <- observation_options(ex_unit_options),
-         {:ok, tracer} <- Bylaw.Contract.start(modules, options) do
-      {:ok, %{tracer: tracer, error: nil, colors: colors_enabled?(ex_unit_options)}}
-    else
-      {:error, reason} ->
-        {:ok, %{tracer: nil, error: reason}}
+    case observation_options(ex_unit_options) do
+      {:ok, options} -> initialize(ex_unit_options, options)
+      {:error, reason} -> {:ok, %{tracer: nil, error: reason, completion: track_completion()}}
     end
+  end
+
+  defp initialize(ex_unit_options, options) do
+    base = FormatterDiffScope.base(options)
+
+    completion =
+      if base == {:ok, :all} do
+        nil
+      else
+        track_completion()
+      end
+
+    state = %{
+      tracer: nil,
+      error: nil,
+      colors: colors_enabled?(ex_unit_options),
+      completion: completion
+    }
+
+    try do
+      with {:ok, modules} <- application_modules(),
+           {:ok, options} <- FormatterDiffScope.options(modules, options, base),
+           {:ok, tracer} <- Bylaw.Contract.start(modules, options) do
+        {:ok, %{state | tracer: tracer}}
+      else
+        {:error, reason} -> {:ok, %{state | error: reason}}
+      end
+    rescue
+      error -> {:ok, %{state | error: Exception.message(error)}}
+    end
+  end
+
+  defp track_completion do
+    completion = :atomics.new(1, [])
+    :atomics.put(completion, 1, 2)
+
+    System.at_exit(fn status ->
+      if status == 0 and :atomics.get(completion, 1) != 0 do
+        exit({:shutdown, 2})
+      end
+    end)
+
+    completion
   end
 
   defp observation_options(ex_unit_options) do
     case Keyword.get(ex_unit_options, :bylaw_contract, []) do
       options when is_list(options) ->
-        {:ok, options}
+        if Keyword.keyword?(options) do
+          {:ok, options}
+        else
+          {:error, "expected :bylaw_contract to be a keyword list, got: #{inspect(options)}"}
+        end
 
       options ->
         {:error, "expected :bylaw_contract to be a keyword list, got: #{inspect(options)}"}
@@ -68,11 +123,16 @@ defmodule Bylaw.Contract.ExUnitFormatter do
   def handle_cast({:suite_finished, _}, %{tracer: tracer} = state) when is_pid(tracer) do
     coverage = Bylaw.Contract.stop(tracer)
     print_result(coverage, state.colors)
+
+    if state.completion && Map.get(coverage, :status) != :incomplete do
+      :atomics.put(state.completion, 1, 0)
+    end
+
     {:noreply, %{state | tracer: nil}}
   end
 
   def handle_cast({:suite_finished, _}, %{error: error} = state) do
-    IO.puts("Bylaw.Contract QA error: #{error}")
+    IO.puts("Bylaw.Contract QA error: #{inspect(error)}")
     {:noreply, state}
   end
 
@@ -140,8 +200,17 @@ defmodule Bylaw.Contract.ExUnitFormatter do
     |> Keyword.get(:enabled, IO.ANSI.enabled?())
   end
 
+  defp print_result(%{status: :incomplete} = coverage, colors) do
+    Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
+  end
+
   defp print_result(coverage, colors) do
     if System.get_env("BYLAW_CONTRACT_REPORT") == "summary" do
+      case coverage do
+        %{selected_functions: []} -> Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
+        _ -> :ok
+      end
+
       summary = Bylaw.Contract.summary(coverage)
 
       IO.puts(

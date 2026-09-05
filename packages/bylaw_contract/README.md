@@ -176,6 +176,66 @@ the target project's own Elixir/OTP toolchain compiles it:
 The formatter inspects the current Mix application. For umbrella or
 multi-application tests, set `BYLAW_CONTRACT_APPS=app_one,app_two`.
 
+## Observe functions changed from a Git base
+
+With the formatter enabled, scope observation to committed source changes:
+
+```sh
+BYLAW_CONTRACT_DIFF_BASE=origin/main mix test
+```
+
+This compares the merge-base of the reference and the checked-out `HEAD` with
+that `HEAD`. The ordinary test suite runs once; the formatter owns one observer.
+Omitting the environment variable preserves full observation without requiring
+Git. An explicit formatter option overrides the environment:
+
+```elixir
+ExUnit.start(
+  formatters: [ExUnit.CLIFormatter, Bylaw.Contract.ExUnitFormatter],
+  bylaw_contract: [diff_base: "origin/main", diff_paths: ["lib"]]
+)
+```
+
+Use `diff_base: false` for full scope. Empty, whitespace-only, and non-string
+references are invalid. `diff_paths` is a nonempty list of relative source paths,
+without parent traversal; it defaults to `["lib"]`. `diff_root` defaults to the
+current project directory and sets the directory those paths are relative to.
+The adapter locates the enclosing Git repository, including for nested projects.
+
+Declared paths must be clean, including staged and untracked source files.
+Unsupported source mapping, missing history/Git, modules outside the current
+application, or stale compiled artifacts are errors. The formatter checks Mix's
+Elixir compiler manifest against committed/current source and compares loaded
+module MD5s with persisted BEAMs. Normal Mix compilation is required; this does
+not replay compilation or prove that external configuration and dependencies
+are unchanged. The manifest adapter uses the compiler records available in the
+running Elixir toolchain and refuses unavailable metadata.
+
+Valid empty scope starts no check workers and prints an explicit diagnostic.
+Invalid or incomplete scoped observation makes an otherwise successful process
+exit with status 2. Existing nonzero statuses, including `mix test --exit-status`,
+are preserved. Actionable observational gaps do not introduce a new pass/fail
+threshold. Exit hooks continue to run; the formatter does not halt the VM early.
+
+Source selection covers direct authored definitions and their default arities.
+It does not infer transitive impact through callers, macros, shared types, or
+configuration. Unresolved source is reported explicitly, never converted to
+empty success. Use `Bylaw.Contract.SourceSelection.select/2` with explicit source
+maps or `Bylaw.Contract.start(modules, only: mfas)` when Git integration is not
+needed.
+
+For stacked work, compare with the parent branch for one layer or the original
+base branch for cumulative changes. In CI, fetch the chosen reference and enough
+history for its merge-base. A synthetic merge checkout is compared using its
+actual `HEAD`; after rebasing, the merge-base is recalculated from the rebased
+history. For example:
+
+```sh
+BYLAW_CONTRACT_DIFF_BASE=parent-branch mix test
+BYLAW_CONTRACT_DIFF_BASE=origin/main mix test
+BYLAW_CONTRACT_DIFF_BASE=HEAD mix test # intentionally empty
+```
+
 ## Companion Credo checks
 
 Enable [`Credo.Check.Readability.Specs`](https://hexdocs.pm/credo/Credo.Check.Readability.Specs.html)
