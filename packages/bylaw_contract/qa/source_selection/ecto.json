@@ -1,0 +1,25 @@
+{
+  "path": "lib/ecto/repo/assoc.ex",
+  "otp": "29",
+  "selected": [
+    {
+      "arity": 4,
+      "function": "query",
+      "module": "Ecto.Repo.Assoc"
+    }
+  ],
+  "elixir": "1.20.2",
+  "project": "ecto",
+  "source_sha256": "dd5a0eff1b203ddef2fe70b2e40e45d74291b82a5940c73d852c5de07bff265c",
+  "unchanged_empty": true,
+  "moved_empty": true,
+  "unresolved": {
+    "path": "lib/ecto/uuid.ex",
+    "reasons": [
+      {
+        "code": "unsupported_definition_context",
+        "module": "Elixir.Ecto.UUID"
+      }
+    ]
+  }
+}
