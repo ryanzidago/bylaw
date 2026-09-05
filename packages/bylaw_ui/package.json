@@ -45,7 +45,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepack": "bun run qa",
-    "qa": "bun run format:check && bun run build && bun run typecheck && bun test",
+    "qa": "bun run format:check && bun run build && bun run typecheck && bun test --max-concurrency=1",
     "test": "bun test",
     "test:browser": "bun test test/browser",
     "test:package": "bun run scripts/test-package-consumption.ts",
