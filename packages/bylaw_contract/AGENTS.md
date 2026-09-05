@@ -1,5 +1,15 @@
 # AGENTS.md
 
+## Scope
+
+- Keep APIs and fixes generic, using explicit modules/options and
+  application-neutral reproductions.
+- Umbrellas, application management, and repository/test orchestration are
+  caller concerns.
+- Exclude QA repos with incompatible Elixir/OTP versions; record why. No
+  upgrades, backports, or shims are required. Keep failures and incomplete
+  observations from compatible runs visible.
+
 ## Reporting UX
 
 - Default output shows only actionable misses; retain other data programmatically.
