@@ -11,6 +11,20 @@ cat >"$fixture_root/bin/git" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${1:-}" == "-C" ]]; then
+  primary="$2"
+  shift 2
+  case "${1:-}" in
+    rev-parse | fetch) exit 0 ;;
+    merge)
+      cd "$primary"
+      "$POST_MERGE_HOOK"
+      printf '%s\n' finished >"$SWITCH_LOG"
+      exit 0
+      ;;
+  esac
+fi
+
 if [[ "${1:-}" == "symbolic-ref" ]]; then
   printf '%s\n' "${CURRENT_BRANCH:-main}"
   exit 0
@@ -35,6 +49,9 @@ for argument in "$@"; do
       ;;
     remove)
       printf '%s\n' "$*" >>"$REMOVE_LOG"
+      if [[ -n "${SWITCH_PID:-}" && "$*" == *"--reap /repo/merged-clean"* ]]; then
+        kill -TERM "$SWITCH_PID"
+      fi
       exit 0
       ;;
   esac
@@ -234,5 +251,71 @@ if [[ -s "$fixture_root/removed" || -s "$fixture_root/gh-calls" ]]; then
   echo "cleanup must only run from the primary branch" >&2
   exit 1
 fi
+
+test_active_switch_survives_nested_post_merge_cleanup() {
+  local primary="$fixture_root/primary checkout"
+  local pre_switch quoted_primary
+  mkdir -p "$primary/scripts"
+  ln -s "$repository_root/scripts/remove-finished-pr-worktrees" "$primary/scripts/remove-finished-pr-worktrees"
+  cat >"$primary/scripts/qa.sh" <<'EOF'
+#!/usr/bin/env bash
+printf '%s\n' checked >>"$QA_LOG"
+EOF
+  chmod +x "$primary/scripts/qa.sh"
+
+  pre_switch="$(sed -n 's/^pre-switch = "\(.*\)"$/\1/p' "$repository_root/.config/wt.toml")"
+  [[ -n "$pre_switch" ]]
+  printf -v quoted_primary '%q' "$primary"
+  pre_switch="${pre_switch//\{\{ primary_worktree_path \}\}/$quoted_primary}"
+  : >"$fixture_root/removed"
+  : >"$fixture_root/gh-calls"
+
+  if ! PATH="$fixture_root/bin:$PATH" \
+    WT_FIXTURE="$fixture_root/worktrees.json" \
+    PR_FIXTURE="$fixture_root/prs.json" \
+    REMOVE_LOG="$fixture_root/removed" \
+    GH_LOG="$fixture_root/gh-calls" \
+    QA_LOG="$fixture_root/qa-calls" \
+    SWITCH_LOG="$fixture_root/switch-finished" \
+    POST_MERGE_HOOK="$repository_root/.githooks/post-merge" \
+    PRE_SWITCH="$pre_switch" \
+    bash -c 'export SWITCH_PID="$$"; eval "$PRE_SWITCH"'; then
+    for attempt in {1..50}; do
+      [[ -s "$fixture_root/switch-finished" ]] && break
+      sleep 0.02
+    done
+    echo "nested post-merge cleanup terminated the active switch" >&2
+    return 1
+  fi
+
+  if [[ ! -s "$fixture_root/switch-finished" || ! -s "$fixture_root/qa-calls" ]]; then
+    echo "the primary refresh and its QA must finish during the switch" >&2
+    return 1
+  fi
+  if [[ -s "$fixture_root/removed" || -s "$fixture_root/gh-calls" ]]; then
+    echo "nested cleanup must preserve all worktrees while switching" >&2
+    return 1
+  fi
+}
+
+test_explicit_switch_context_preserves_all_worktrees() {
+  : >"$fixture_root/removed"
+  : >"$fixture_root/gh-calls"
+  PATH="$fixture_root/bin:$PATH" \
+    WT_FIXTURE="$fixture_root/worktrees.json" \
+    PR_FIXTURE="$fixture_root/prs.json" \
+    REMOVE_LOG="$fixture_root/removed" \
+    GH_LOG="$fixture_root/gh-calls" \
+    BYLAW_WORKTREE_SWITCH=1 \
+    "$repository_root/scripts/remove-finished-pr-worktrees"
+
+  if [[ -s "$fixture_root/removed" || -s "$fixture_root/gh-calls" ]]; then
+    echo "explicit switch context must defer cleanup before enumerating worktrees" >&2
+    return 1
+  fi
+}
+
+test_active_switch_survives_nested_post_merge_cleanup
+test_explicit_switch_context_preserves_all_worktrees
 
 echo "Finished PR worktree cleanup tests passed."

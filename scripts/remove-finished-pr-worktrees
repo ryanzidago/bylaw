@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+if [[ "${BYLAW_WORKTREE_SWITCH:-0}" == "1" ]]; then
+  echo "Deferring finished PR worktree cleanup during an active Worktrunk switch"
+  exit 0
+fi
+
 branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null || true)"
 
 case "$branch" in
