@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Map normalized compiler input domains to actual source clauses before
+  injecting counters, preventing false return hits and misses when inference
+  merges or reorders clauses. Keep ambiguous mappings unassessable per function.
+
 - Initialize check state in its owning worker, avoid duplicate typespec target
   indexes, release structural classifier ASTs, and assemble final coverage in
   the caller to reduce process-copy amplification. Preserve ordered claims and

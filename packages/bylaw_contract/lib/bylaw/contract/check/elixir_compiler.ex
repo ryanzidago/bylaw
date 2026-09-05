@@ -13,6 +13,7 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
 
   @behaviour Bylaw.Contract.Check
 
+  alias Bylaw.Contract.CompilerClauseMapper
   alias Bylaw.Contract.CompilerInference
   alias Bylaw.Contract.CompilerObserver
 
@@ -73,20 +74,19 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
 
     observer_token = CompilerObserver.start()
 
-    {instrumented_modules, instrumentation_warnings} =
+    {instrumented_modules, mapped_rules, instrumentation_warnings} =
       instrument_modules(selected_rules_by_mfa, observer_token)
 
+    mapped_mfas = MapSet.new(mapped_rules, &mfa/1)
+
     alternatives_by_mfa =
-      Map.filter(selected_alternatives_by_mfa, fn {{module, _, _}, _alternatives} ->
-        Map.has_key?(instrumented_modules, module)
+      Map.filter(selected_alternatives_by_mfa, fn {mfa, _alternatives} ->
+        MapSet.member?(mapped_mfas, mfa)
       end)
 
     assessable_mfas = alternatives_by_mfa |> Map.keys() |> MapSet.new()
 
-    rules_by_mfa =
-      Map.filter(selected_rules_by_mfa, fn {mfa, _rules} ->
-        MapSet.member?(assessable_mfas, mfa)
-      end)
+    rules_by_mfa = Enum.group_by(mapped_rules, &mfa/1)
 
     unassessable_selected =
       selected_alternatives_by_mfa
@@ -173,21 +173,31 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
       |> Enum.flat_map(&elem(&1, 1))
       |> Enum.group_by(& &1.module)
 
-    {instrumented, warnings} =
-      Enum.reduce(rules_by_module, {%{}, []}, fn {module, rules}, {instrumented, warnings} ->
+    {instrumented, mapped, warnings} =
+      Enum.reduce(rules_by_module, {%{}, [], []}, fn {module, rules},
+                                                     {instrumented, mapped, warnings} ->
         case instrument_module(module, rules, observer_token) do
-          {:ok, original} ->
-            {Map.put(instrumented, module, original), warnings}
+          {:ok, original, source_rules} ->
+            unmapped =
+              MapSet.difference(MapSet.new(rules, &mfa/1), MapSet.new(source_rules, &mfa/1))
+
+            mapping_warnings =
+              Enum.map(unmapped, fn {module, function, arity} ->
+                "compiler source clause mapping unsupported for #{inspect(module)}.#{function}/#{arity}"
+              end)
+
+            {Map.put(instrumented, module, original), source_rules ++ mapped,
+             mapping_warnings ++ warnings}
 
           {:error, reason} ->
             warning =
               "compiler clause instrumentation unsupported for #{inspect(module)}: #{reason}"
 
-            {instrumented, [warning | warnings]}
+            {instrumented, mapped, [warning | warnings]}
         end
       end)
 
-    {instrumented, Enum.reverse(warnings)}
+    {instrumented, mapped, Enum.reverse(warnings)}
   end
 
   defp instrument_module(module, _rules, _observer_token)
@@ -203,11 +213,14 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
     with {^module, binary, filename} <- :code.get_object_code(module),
          {:ok, {^module, [{:abstract_code, {:raw_abstract_v1, forms}}]}} <-
            :beam_lib.chunks(binary, [:abstract_code]),
-         instrumented_forms <- inject_counters(forms, module, rules, observer_token),
+         source_rules <- CompilerClauseMapper.map(forms, module, rules),
+         false <- Enum.empty?(source_rules),
+         instrumented_forms <- inject_counters(forms, module, source_rules, observer_token),
          {:ok, instrumented_binary} <- compile_instrumented(module, instrumented_forms),
          {:module, ^module} <- load_instrumented(module, instrumented_binary) do
-      {:ok, %{module: module, binary: binary, filename: filename}}
+      {:ok, %{module: module, binary: binary, filename: filename}, source_rules}
     else
+      true -> {:error, "no unambiguous source clause mappings"}
       :error -> {:error, "compiled BEAM object code is unavailable"}
       {:error, reason} -> {:error, inspect(reason)}
       other -> {:error, inspect(other)}
