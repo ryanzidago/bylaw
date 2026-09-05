@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Require Elixir 1.20 or newer, matching the compiler helpers used by the
+  experimental compiler check. Elixir 1.19 is no longer supported.
+
 - Preserve structural coverage of surviving functions when Elixir eliminates
   private definitions explicitly marked unreachable in debug metadata. Validate
   metadata before reconstructing abstract code, and retain diagnostics for
