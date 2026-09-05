@@ -1,0 +1,14 @@
+{
+  "bylaw_revision": "f1cdcd65574a88d4475070eaf5e69a03e25f61ec",
+  "architecture": "arm64",
+  "raw_directory": "/tmp/bylaw-combined-workload",
+  "toolchain": "Elixir 1.20.2 / OTP 29.0.3",
+  "files": {
+    "native.c": "12fa1ff0fcc0dda996ec8f137737e13f71ca64b4b55158b6ae9a2b3f9284c672",
+    "target-plan.exs": "a013ca93bbd712b7b170e9cb8ad5b82e43525b35b496494a6b817269d63e9f5d",
+    "clause-plan.exs": "71f31fd12b7e89c60efe8d476102b6b484efeb9c231fcac5edefe871c40c5420",
+    "combined-workload.exs": "4d10e9222f13b34967f331ae2c3995513a8735573dd2b6e484d664b2504acfd1",
+    "combined-workload-run.py": "b4066cf6b21ec35f41e4516f1236ba52e919b8415d1a70cae51041182ef14582"
+  },
+  "clang_analyzer_diagnostics": 0
+}

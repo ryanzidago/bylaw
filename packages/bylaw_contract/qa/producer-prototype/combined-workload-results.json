@@ -1,0 +1,1306 @@
+[
+  {
+    "name": "000-baseline-1-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 97392,
+    "wall_s": 0.4400318330153823,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 16,
+      "stopped_us": 16
+    }
+  },
+  {
+    "name": "001-native-1-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95232,
+    "wall_s": 0.4495050827972591,
+    "result": {
+      "calls": 1024,
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 1294,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 3260
+    }
+  },
+  {
+    "name": "002-trace-1-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 100912,
+    "wall_s": 0.4374609589576721,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 906,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 8976
+    }
+  },
+  {
+    "name": "003-baseline-8-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95232,
+    "wall_s": 0.44739437475800514,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 20,
+      "stopped_us": 20
+    }
+  },
+  {
+    "name": "004-native-8-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 103296,
+    "wall_s": 0.4424615418538451,
+    "result": {
+      "calls": 1024,
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 1567,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 3698
+    }
+  },
+  {
+    "name": "005-trace-8-1024-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 100048,
+    "wall_s": 0.44507037522271276,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 818,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 9035
+    }
+  },
+  {
+    "name": "006-baseline-1-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94464,
+    "wall_s": 1.116761458106339,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 768436,
+      "stopped_us": 768437
+    }
+  },
+  {
+    "name": "007-native-1-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 99872,
+    "wall_s": 1.2053439170122147,
+    "result": {
+      "calls": 1024,
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 768674,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 771936
+    }
+  },
+  {
+    "name": "008-trace-1-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 99024,
+    "wall_s": 1.2199899582192302,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 768098,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 774882
+    }
+  },
+  {
+    "name": "009-baseline-8-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 105392,
+    "wall_s": 0.5468755839392543,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 95301,
+      "stopped_us": 95302
+    }
+  },
+  {
+    "name": "010-native-8-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 100432,
+    "wall_s": 0.5375154167413712,
+    "result": {
+      "calls": 1024,
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 95480,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 97150
+    }
+  },
+  {
+    "name": "011-trace-8-1024-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 103200,
+    "wall_s": 0.5500619588419795,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 96029,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 103550
+    }
+  },
+  {
+    "name": "012-baseline-1-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95712,
+    "wall_s": 0.4400256248190999,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 14,
+      "stopped_us": 14
+    }
+  },
+  {
+    "name": "013-native-1-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 98128,
+    "wall_s": 0.43541891733184457,
+    "result": {
+      "calls": 1024,
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 5779,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 7378
+    }
+  },
+  {
+    "name": "014-trace-1-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101984,
+    "wall_s": 0.4486280418932438,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 3714,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 25839
+    }
+  },
+  {
+    "name": "015-baseline-8-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 84272,
+    "wall_s": 0.44890062510967255,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 26,
+      "stopped_us": 26
+    }
+  },
+  {
+    "name": "016-native-8-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101584,
+    "wall_s": 0.4378386251628399,
+    "result": {
+      "calls": 1024,
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 5760,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 7841
+    }
+  },
+  {
+    "name": "017-trace-8-1024-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 102240,
+    "wall_s": 0.43421175004914403,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 1827,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 18373
+    }
+  },
+  {
+    "name": "018-baseline-1-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 97488,
+    "wall_s": 1.2070439998060465,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 768211,
+      "stopped_us": 768211
+    }
+  },
+  {
+    "name": "019-native-1-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 99360,
+    "wall_s": 1.2074574157595634,
+    "result": {
+      "calls": 1024,
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 776619,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 778570
+    }
+  },
+  {
+    "name": "020-trace-1-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96864,
+    "wall_s": 1.3308443338610232,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 779451,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 787059
+    }
+  },
+  {
+    "name": "021-baseline-8-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 97488,
+    "wall_s": 0.5448205000720918,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 1024,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 95686,
+      "stopped_us": 95687
+    }
+  },
+  {
+    "name": "022-native-8-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95856,
+    "wall_s": 0.45098508428782225,
+    "result": {
+      "calls": 1024,
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "native",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 96136,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 98425
+    }
+  },
+  {
+    "name": "023-trace-8-1024-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96416,
+    "wall_s": 0.5476446249522269,
+    "result": {
+      "calls": 1024,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 1024,
+      "mode": "trace",
+      "returns": 1024,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 108616,
+      "classification_counts": [
+        1024,
+        0,
+        0,
+        0,
+        1024,
+        1024,
+        1024,
+        1024,
+        0
+      ],
+      "stopped_us": 115908
+    }
+  },
+  {
+    "name": "024-baseline-1-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 105088,
+    "wall_s": 0.44679325027391315,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 97,
+      "stopped_us": 98
+    }
+  },
+  {
+    "name": "025-native-1-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101280,
+    "wall_s": 0.4440272501669824,
+    "result": {
+      "calls": 8192,
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 10781,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 12347
+    }
+  },
+  {
+    "name": "026-trace-1-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101136,
+    "wall_s": 0.4329575840383768,
+    "result": {
+      "calls": 7,
+      "incomplete": [
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.Typespec",
+          "limit": 4096,
+          "observed": 4343
+        }
+      ],
+      "size": 16,
+      "status": "incomplete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 6,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 4074,
+      "classification_counts": [
+        6,
+        0,
+        0,
+        0,
+        7,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 9392
+    }
+  },
+  {
+    "name": "027-baseline-8-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96640,
+    "wall_s": 0.44943354092538357,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 56,
+      "stopped_us": 56
+    }
+  },
+  {
+    "name": "028-native-8-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 103392,
+    "wall_s": 0.4400597922503948,
+    "result": {
+      "calls": 8192,
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 6441,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 8269
+    }
+  },
+  {
+    "name": "029-trace-8-8192-16-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 103584,
+    "wall_s": 0.445223624818027,
+    "result": {
+      "calls": 0,
+      "incomplete": [
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.Typespec",
+          "limit": 4096,
+          "observed": 4351
+        },
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+          "limit": 4096,
+          "observed": 5874
+        }
+      ],
+      "size": 16,
+      "status": "incomplete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 0,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 2912,
+      "classification_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        12,
+        12,
+        12,
+        0
+      ],
+      "stopped_us": 9109
+    }
+  },
+  {
+    "name": "030-baseline-1-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 102464,
+    "wall_s": 6.502830583136529,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6151482,
+      "stopped_us": 6151483
+    }
+  },
+  {
+    "name": "031-native-1-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95968,
+    "wall_s": 6.603327749762684,
+    "result": {
+      "calls": 8192,
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6146918,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 6149299
+    }
+  },
+  {
+    "name": "032-trace-1-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 106032,
+    "wall_s": 6.535035999957472,
+    "result": {
+      "calls": 8192,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6148097,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 6156694
+    }
+  },
+  {
+    "name": "033-baseline-8-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94976,
+    "wall_s": 1.2030273331329226,
+    "result": {
+      "size": 16,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 768181,
+      "stopped_us": 768182
+    }
+  },
+  {
+    "name": "034-native-8-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 95840,
+    "wall_s": 1.212455458007753,
+    "result": {
+      "calls": 8192,
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 769119,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 771977
+    }
+  },
+  {
+    "name": "035-trace-8-8192-16-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 106288,
+    "wall_s": 1.1987537499517202,
+    "result": {
+      "calls": 8192,
+      "incomplete": [],
+      "size": 16,
+      "status": "complete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 769069,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 777223
+    }
+  },
+  {
+    "name": "036-baseline-1-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 89184,
+    "wall_s": 0.446596291847527,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 83,
+      "stopped_us": 83
+    }
+  },
+  {
+    "name": "037-native-1-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101264,
+    "wall_s": 0.44545499980449677,
+    "result": {
+      "calls": 8192,
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 46780,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 48348
+    }
+  },
+  {
+    "name": "038-trace-1-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 106976,
+    "wall_s": 0.44046791596338153,
+    "result": {
+      "calls": 1,
+      "incomplete": [
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.Typespec",
+          "limit": 4096,
+          "observed": 4322
+        }
+      ],
+      "size": 256,
+      "status": "incomplete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 0,
+      "producers": 1,
+      "pacing": "burst",
+      "producer_us": 15147,
+      "classification_counts": [
+        0,
+        0,
+        0,
+        0,
+        1,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 21041
+    }
+  },
+  {
+    "name": "039-baseline-8-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96912,
+    "wall_s": 0.6684757079929113,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 158,
+      "stopped_us": 159
+    }
+  },
+  {
+    "name": "040-native-8-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94768,
+    "wall_s": 0.6759494999423623,
+    "result": {
+      "calls": 8192,
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 28198,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 32614
+    }
+  },
+  {
+    "name": "041-trace-8-8192-256-burst",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94128,
+    "wall_s": 0.441731832921505,
+    "result": {
+      "calls": 0,
+      "incomplete": [
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.Typespec",
+          "limit": 4096,
+          "observed": 7923
+        },
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+          "limit": 4096,
+          "observed": 4160
+        }
+      ],
+      "size": 256,
+      "status": "incomplete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 0,
+      "producers": 8,
+      "pacing": "burst",
+      "producer_us": 13936,
+      "classification_counts": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        766,
+        766,
+        766,
+        0
+      ],
+      "stopped_us": 24405
+    }
+  },
+  {
+    "name": "042-baseline-1-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 103328,
+    "wall_s": 6.607229750137776,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6146395,
+      "stopped_us": 6146396
+    }
+  },
+  {
+    "name": "043-native-1-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 99120,
+    "wall_s": 6.543982166796923,
+    "result": {
+      "calls": 8192,
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6144985,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 6146590
+    }
+  },
+  {
+    "name": "044-trace-1-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 96096,
+    "wall_s": 6.6084976671263576,
+    "result": {
+      "calls": 8192,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 8192,
+      "producers": 1,
+      "pacing": "paced",
+      "producer_us": 6151236,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 6158321
+    }
+  },
+  {
+    "name": "045-baseline-8-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 94640,
+    "wall_s": 1.2100792503915727,
+    "result": {
+      "size": 256,
+      "status": "unobserved",
+      "total": 8192,
+      "mode": "baseline",
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 771739,
+      "stopped_us": 771739
+    }
+  },
+  {
+    "name": "046-native-8-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 101728,
+    "wall_s": 1.2260601250454783,
+    "result": {
+      "calls": 8192,
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "native",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 801411,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "native_payload_bytes": 3992,
+      "stopped_us": 803396
+    }
+  },
+  {
+    "name": "047-trace-8-8192-256-paced",
+    "exit_code": 0,
+    "watchdog": null,
+    "peak_rss_kib": 105984,
+    "wall_s": 1.2180069158785045,
+    "result": {
+      "calls": 8192,
+      "incomplete": [],
+      "size": 256,
+      "status": "complete",
+      "total": 8192,
+      "mode": "trace",
+      "returns": 8192,
+      "producers": 8,
+      "pacing": "paced",
+      "producer_us": 824130,
+      "classification_counts": [
+        8192,
+        0,
+        0,
+        0,
+        8192,
+        8192,
+        8192,
+        8192,
+        0
+      ],
+      "stopped_us": 833057
+    }
+  }
+]
