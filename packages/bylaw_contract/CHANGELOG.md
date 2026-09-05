@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Store repeated typespec aliases as compact graphs, bound alias and union
+  expansion work, and stop expanding unsupported members while preserving
+  input partitions and source locations.
+
 - Preserve compiler alternatives and independent function inference when return
   union normalization absorbs or merges clause labels; keep functions without
   an exact clause mapping unassessable instead of rejecting the entire module.
