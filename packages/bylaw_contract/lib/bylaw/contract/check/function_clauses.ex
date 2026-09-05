@@ -51,9 +51,12 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
   end
 
   @impl Bylaw.Contract.Check
-  def observe({:return, _mfa, _value}, state), do: state
+  def observe(event, state), do: observe(event, self(), state)
 
-  def observe({:call, mfa, arguments}, state) do
+  @impl Bylaw.Contract.Check
+  def observe({:return, _mfa, _value}, _caller, state), do: state
+
+  def observe({:call, mfa, arguments}, caller, state) do
     clauses = Map.get(state.clauses_by_mfa, mfa, [])
 
     arity_calls =
@@ -63,7 +66,7 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
         state.arity_calls
       end
 
-    {clause_outcomes, unmatched_clause_calls} = classify(state, clauses, arguments, mfa)
+    {clause_outcomes, unmatched_clause_calls} = classify(state, clauses, arguments, mfa, caller)
 
     %{
       state
@@ -90,12 +93,15 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
   @impl Bylaw.Contract.Check
   def terminate(state), do: StructuralCoverage.stop_shadow(state.shadow)
 
-  defp classify(state, [], _arguments, _mfa),
+  defp classify(state, [], _arguments, _mfa, _caller),
     do: {state.clause_outcomes, state.unmatched_clause_calls}
 
-  defp classify(state, clauses, arguments, mfa) do
+  defp classify(state, clauses, arguments, mfa, caller) do
     classifier = Map.fetch!(state.classifiers_by_mfa, mfa)
-    {selected, raw_outcomes} = StructuralCoverage.classify(state.shadow, classifier, arguments)
+
+    {selected, raw_outcomes} =
+      StructuralCoverage.classify(state.shadow, classifier, arguments, caller)
+
     clause_outcomes = count_outcomes(clauses, raw_outcomes, selected, state.clause_outcomes)
 
     unmatched_clause_calls =

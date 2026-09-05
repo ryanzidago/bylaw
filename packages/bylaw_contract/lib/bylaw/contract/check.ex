@@ -47,6 +47,16 @@ defmodule Bylaw.Contract.Check do
   @callback observe(event(), state :: term()) :: observe_result()
 
   @doc """
+  Optionally consumes an event with the PID of the process that produced it.
+
+  When implemented, this callback is used instead of `observe/2`. The event
+  shape is unchanged; checks without this callback continue using `observe/2`.
+  Checks must still implement `observe/2` for compatibility with direct invocation.
+  """
+  @callback observe(event(), caller :: pid(), state :: term()) :: observe_result()
+  @optional_callbacks observe: 3
+
+  @doc """
   Returns the coverage data accumulated by the check.
 
   The result is retained under the check module in the final `:checks` map.

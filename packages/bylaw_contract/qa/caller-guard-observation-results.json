@@ -1,0 +1,187 @@
+{
+  "full": [
+    {
+      "pair": 1,
+      "mode": "baseline",
+      "elapsed": 18.117891625035554,
+      "exit_code": 2,
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-recover-complete-observation/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--max-cases",
+        "28",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "result": {
+        "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4108}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4230}]",
+        "mode": "all",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "otp": "29",
+        "elixir": "1.20.2",
+        "test_states": {
+          "invalid": 108,
+          "passed": 1403,
+          "excluded": 185
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses",
+          "Bylaw.Contract.Check.ElixirCompiler"
+        ],
+        "init_us": 10516656,
+        "observed_suite_us": 6518620,
+        "stop_us": 68618,
+        "coverage_status": "incomplete",
+        "failure_summary": "Intellisense.ElixirTest setup_all runtime connection timeout; 108 invalid tests. Full exception payload retained in /tmp/bylaw-caller-guard/full-1-baseline.etf and .log."
+      }
+    },
+    {
+      "pair": 1,
+      "mode": "candidate",
+      "elapsed": 19.169304915703833,
+      "exit_code": 0,
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--max-cases",
+        "28",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "result": {
+        "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4192}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4134}]",
+        "mode": "all",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "otp": "29",
+        "elixir": "1.20.2",
+        "test_states": {
+          "passed": 1511,
+          "excluded": 185
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses",
+          "Bylaw.Contract.Check.ElixirCompiler"
+        ],
+        "init_us": 10441934,
+        "observed_suite_us": 7675433,
+        "stop_us": 92078,
+        "coverage_status": "incomplete",
+        "failure_summary": null
+      }
+    }
+  ],
+  "isolated": [
+    {
+      "pair": 1,
+      "mode": "baseline",
+      "elapsed": 22.35293258400634,
+      "exit_code": 0,
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-recover-complete-observation/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "test/livebook/runtime/erl_dist/node_manager_test.exs",
+        "--seed",
+        "922331",
+        "--max-cases",
+        "28",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "result": {
+        "incomplete": "[]",
+        "mode": "all",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "otp": "29",
+        "elixir": "1.20.2",
+        "test_states": {
+          "passed": 1
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses",
+          "Bylaw.Contract.Check.ElixirCompiler"
+        ],
+        "init_us": 20324212,
+        "observed_suite_us": 408199,
+        "stop_us": 61259,
+        "coverage_status": "complete",
+        "failure_summary": null
+      }
+    },
+    {
+      "pair": 1,
+      "mode": "candidate",
+      "elapsed": 14.564390082843602,
+      "exit_code": 0,
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-preserve-caller-guard-context/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "test/livebook/runtime/erl_dist/node_manager_test.exs",
+        "--seed",
+        "922331",
+        "--max-cases",
+        "28",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "result": {
+        "incomplete": "[]",
+        "mode": "all",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "otp": "29",
+        "elixir": "1.20.2",
+        "test_states": {
+          "passed": 1
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses",
+          "Bylaw.Contract.Check.ElixirCompiler"
+        ],
+        "init_us": 12483333,
+        "observed_suite_us": 401437,
+        "stop_us": 70343,
+        "coverage_status": "complete",
+        "failure_summary": null
+      }
+    }
+  ]
+}
