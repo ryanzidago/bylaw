@@ -24,7 +24,7 @@ defmodule Bylaw.DbPropertyTest do
   end
 
   property "validation preserves target issue order" do
-    check all(target_ids <- uniq_list_of(integer(), min_length: 1)) do
+    check all(target_ids <- list_of(integer(), min_length: 1)) do
       targets =
         Enum.map(target_ids, fn target_id ->
           %Target{adapter: __MODULE__, meta: %{id: target_id}}
