@@ -151,6 +151,15 @@ the target project's own Elixir/OTP toolchain compiles it:
 The formatter inspects the current Mix application. For umbrella or
 multi-application tests, set `BYLAW_CONTRACT_APPS=app_one,app_two`.
 
+## Companion Credo checks
+
+Enable [`Credo.Check.Readability.Specs`](https://hexdocs.pm/credo/Credo.Check.Readability.Specs.html)
+to require specs; use `include_defp: true` to include private functions.
+Bylaw.Contract measures coverage of existing specs and does not flag missing ones.
+
+[Bylaw.Credo](https://hexdocs.pm/bylaw_credo/readme.html#companion-to-bylaw-contract)
+also provides checks for clearer specs and explicit success/error results.
+
 ## Compiler-inferred return alternatives (experimental)
 
 Elixir 1.20 records inferred public-function signatures in a private `ExCk`
