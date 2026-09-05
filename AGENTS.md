@@ -243,9 +243,16 @@ mix usage_rules.search_docs "Enum.zip" --query-by title
 
 ## Beads issue IDs
 
-Give every new Beads issue a concise, descriptive, human-readable ID by passing
-`--id bylaw-<kebab-case-slug>` to `bd create`. Immediately rename any issue
-created with an opaque generated ID.
+Give every new Beads issue a concise, descriptive, human-readable ID prefixed
+with its owning package name, replacing underscores with hyphens. Pass the ID
+explicitly to `bd create`: for example, `--id bylaw-contract-<kebab-case-slug>`
+for `bylaw_contract`, or `--id bylaw-ecto-query-<kebab-case-slug>` for
+`bylaw_ecto_query`. Use `bylaw-<kebab-case-slug>` for shared repository
+workflow tasks that do not belong to one package.
+
+Immediately rename any issue created with an opaque generated ID or without
+the appropriate package prefix. Use `bd rename <old-id> <new-id>` to preserve
+the issue and update its references and dependencies.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:970c3bf2 -->
 ## Beads Issue Tracker
