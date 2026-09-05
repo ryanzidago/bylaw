@@ -12,7 +12,15 @@ defmodule Bylaw.Contract.Tracer do
   def start_link(modules, checks), do: GenServer.start_link(__MODULE__, {modules, checks})
 
   @spec stop(tracer :: GenServer.server()) :: map()
-  def stop(tracer), do: GenServer.call(tracer, :stop, :infinity)
+  def stop(tracer) do
+    tracer
+    |> GenServer.call(:stop, :infinity)
+    |> Enum.reduce(empty_coverage(), fn {check, check_coverage}, coverage ->
+      coverage
+      |> put_in([:checks, check], check_coverage)
+      |> merge_coverage(check_coverage)
+    end)
+  end
 
   @spec start_observation_window(tracer :: GenServer.server()) :: :ok
   def start_observation_window(tracer), do: GenServer.cast(tracer, :start_observation_window)
@@ -27,33 +35,18 @@ defmodule Bylaw.Contract.Tracer do
 
   @impl GenServer
   def init({modules, check_specs}) do
+    Process.flag(:trap_exit, true)
     Enum.each(modules, &Code.ensure_loaded/1)
 
-    case init_checks(modules, check_specs) do
-      {:ok, runtimes} ->
-        case start_workers(runtimes) do
-          {:ok, workers} ->
-            {:ok, %{workers: workers}}
-
-          {:error, reason} ->
-            {:stop, reason}
-        end
-
-      {:error, reason} ->
-        {:stop, reason}
+    case start_workers(modules, check_specs) do
+      {:ok, workers} -> {:ok, %{workers: workers}}
+      {:error, reason} -> {:stop, reason}
     end
   end
 
   @impl GenServer
   def handle_call(:stop, _, state) do
-    coverage =
-      Enum.reduce(state.workers, empty_coverage(), fn worker, coverage ->
-        {check, check_coverage} = TraceWorker.stop(worker)
-
-        coverage
-        |> put_in([:checks, check], check_coverage)
-        |> merge_coverage(check_coverage)
-      end)
+    coverage = Enum.map(state.workers, &TraceWorker.stop/1)
 
     {:stop, :normal, coverage, %{state | workers: []}}
   end
@@ -75,70 +68,56 @@ defmodule Bylaw.Contract.Tracer do
   end
 
   @impl GenServer
+  def handle_info({:EXIT, _worker, :normal}, state), do: {:noreply, state}
+
+  def handle_info({:EXIT, _worker, reason}, state), do: {:stop, reason, state}
+
+  @impl GenServer
   def terminate(_, state) do
     Enum.each(state.workers, &stop_worker/1)
     :ok
   end
 
-  defp init_checks(modules, check_specs) do
+  defp start_workers(modules, check_specs) do
     Enum.reduce_while(check_specs, {:ok, [], MapSet.new()}, fn {check, opts},
-                                                               {:ok, runtimes, claims} ->
-      context = %{claims: claims}
-
-      case check.init(modules, opts, context) do
-        {:ok, check_state, plan} ->
-          runtime = %{
-            module: check,
-            state: check_state,
-            calls: plan.calls,
-            returns: plan.returns,
-            process_scope: Map.get(plan, :process_scope, :all),
-            trace_scope: Map.get(plan, :trace_scope, :local)
-          }
-
-          {:cont, {:ok, [runtime | runtimes], MapSet.union(claims, plan.claims)}}
+                                                               {:ok, workers, claims} ->
+      case TraceWorker.start_link(modules, check, opts, claims) do
+        {:ok, worker} ->
+          claims = MapSet.union(claims, TraceWorker.claims(worker))
+          {:cont, {:ok, [worker | workers], claims}}
 
         {:error, reason} ->
-          terminate_pending_checks(runtimes)
+          Enum.each(workers, &stop_worker/1)
           {:halt, {:error, reason}}
       end
     end)
     |> case do
-      {:ok, runtimes, _claims} -> {:ok, Enum.reverse(runtimes)}
+      {:ok, workers, _claims} -> activate_workers(Enum.reverse(workers))
       error -> error
     end
   end
 
-  defp start_workers(runtimes), do: start_workers(runtimes, [])
+  defp activate_workers(workers) do
+    Enum.reduce_while(workers, {:ok, workers}, fn worker, result ->
+      case TraceWorker.activate(worker) do
+        :ok ->
+          {:cont, result}
 
-  defp start_workers([], workers), do: {:ok, Enum.reverse(workers)}
-
-  defp start_workers([runtime | remaining], workers) do
-    case TraceWorker.start_link(runtime) do
-      {:ok, worker} ->
-        start_workers(remaining, [worker | workers])
-
-      {:error, reason} ->
-        Enum.each(workers, &stop_worker/1)
-        terminate_pending_checks(remaining)
-        {:error, reason}
-    end
+        {:error, reason} ->
+          Enum.each(Enum.reverse(workers), &stop_worker/1)
+          {:halt, {:error, reason}}
+      end
+    end)
   end
 
   defp stop_worker(worker) do
     if Process.alive?(worker) do
-      TraceWorker.stop(worker)
+      GenServer.stop(worker, :normal, :infinity)
     end
 
     :ok
   catch
     :exit, _ -> :ok
-  end
-
-  defp terminate_pending_checks(runtimes) do
-    runtimes
-    |> Enum.reverse()
-    |> Enum.each(fn runtime -> runtime.module.terminate(runtime.state) end)
   end
 
   defp empty_coverage do

@@ -10,17 +10,18 @@ end
 
 measure = fn module ->
   {:ok, state, _} = Bylaw.Contract.Check.Typespec.init([module], [], %{claims: MapSet.new()})
+  coverage = Bylaw.Contract.Check.Typespec.coverage(state)
   word_size = :erlang.system_info(:wordsize)
 
   metadata =
-    Map.new(Map.take(state, [:input_classes, :boundaries, :return_alternatives]), fn {kind,
-                                                                                      targets} ->
+    Map.new(Map.take(coverage, [:input_classes, :boundaries, :return_alternatives]), fn {kind,
+                                                                                         targets} ->
       {kind, Enum.map(targets, &Map.delete(&1, :match_type))}
     end)
 
   %{
-    targets: length(state.input_classes),
-    supported: Enum.count(state.input_classes, & &1.supported?),
+    targets: length(coverage.input_classes),
+    supported: Enum.count(coverage.input_classes, & &1.supported?),
     shared_bytes: :erts_debug.size(state) * word_size,
     flat_bytes: :erts_debug.flat_size(state) * word_size,
     metadata_sha256:

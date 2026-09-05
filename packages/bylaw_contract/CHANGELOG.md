@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Initialize check state in its owning worker, avoid duplicate typespec target
+  indexes, release structural classifier ASTs, and assemble final coverage in
+  the caller to reduce process-copy amplification. Preserve ordered claims and
+  clean up initialized workers when startup fails.
+- Keep compiler observation of its own runtime modules unassessable with an
+  explicit warning, avoiding hot-reload termination of the active observer.
+
 - Store repeated typespec aliases as compact graphs, bound alias and union
   expansion work, and stop expanding unsupported members while preserving
   input partitions and source locations.
