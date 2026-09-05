@@ -1,6 +1,6 @@
 defmodule Bylaw.Contract do
   @moduledoc """
-  Runtime observation derived from Elixir typespecs.
+  Runtime observations produced by explicitly selected contract checks.
 
   Bylaw.Contract is intentionally narrower than code coverage. It observes calls
   made during a test run and reports which declared input classes and exact
@@ -9,12 +9,40 @@ defmodule Bylaw.Contract do
   It does not prove complete type or value-space coverage.
   """
 
+  alias Bylaw.Contract.Check
   alias Bylaw.Contract.Report
   alias Bylaw.Contract.Tracer
 
-  @doc "Starts tracing typespec-derived input classes and return alternatives in `modules`."
+  @default_checks [Check.Typespec, Check.FunctionClauses]
+
+  @typedoc "A check module or a check module with explicit options."
+  @type check_spec :: module() | {module(), Check.opts()}
+
+  @typedoc "The ordered contract checks to run."
+  @type checks :: list(check_spec())
+
+  @typedoc "Options controlling runtime contract observation."
+  @type start_option :: {:checks, checks()}
+
+  @doc "Starts the default typespec and structural checks for `modules`."
   @spec start(modules :: list(module())) :: GenServer.on_start()
-  def start(modules) when is_list(modules), do: Tracer.start_link(modules)
+  def start(modules) when is_list(modules), do: start(modules, [])
+
+  @doc """
+  Starts tracing with an explicit ordered check list.
+
+  A check spec is either a module implementing `Bylaw.Contract.Check` or a
+  `{check_module, opts}` tuple. The default check list enables
+  `Bylaw.Contract.Check.Typespec` and `Bylaw.Contract.Check.FunctionClauses`.
+  Passing an empty check list disables all observation.
+  """
+  @spec start(modules :: list(module()), opts :: list(start_option())) :: GenServer.on_start()
+  def start(modules, opts) when is_list(modules) and is_list(opts) do
+    opts = Keyword.validate!(opts, checks: @default_checks)
+    checks = opts |> Keyword.fetch!(:checks) |> normalize_checks!()
+
+    Tracer.start_link(modules, checks)
+  end
 
   @doc "Stops a tracer and returns its coverage data."
   @spec stop(tracer :: pid()) :: map()
@@ -27,4 +55,57 @@ defmodule Bylaw.Contract do
   @doc "Returns aggregate counters for a coverage result."
   @spec summary(coverage :: map()) :: map()
   def summary(coverage), do: Report.summary(coverage)
+
+  defp normalize_checks!(checks) when is_list(checks) do
+    checks
+    |> Enum.reduce({MapSet.new(), []}, fn check_spec, {seen, normalized} ->
+      {check, check_opts} = normalize_check_spec!(check_spec)
+
+      if MapSet.member?(seen, check) do
+        raise ArgumentError, "duplicate contract check: #{inspect(check)}"
+      end
+
+      validate_check!(check)
+      {MapSet.put(seen, check), [{check, check_opts} | normalized]}
+    end)
+    |> elem(1)
+    |> Enum.reverse()
+  end
+
+  defp normalize_checks!(checks) do
+    raise ArgumentError, "expected :checks to be a list, got: #{inspect(checks)}"
+  end
+
+  defp normalize_check_spec!(check) when is_atom(check), do: {check, []}
+
+  defp normalize_check_spec!({check, opts})
+       when is_atom(check) and is_list(opts) do
+    if Keyword.keyword?(opts) do
+      {check, opts}
+    else
+      invalid_check_spec!({check, opts})
+    end
+  end
+
+  defp normalize_check_spec!(check_spec), do: invalid_check_spec!(check_spec)
+
+  defp invalid_check_spec!(check_spec) do
+    raise ArgumentError,
+          "expected a contract check module or {module, keyword}, got: #{inspect(check_spec)}"
+  end
+
+  defp validate_check!(check) do
+    callbacks = [{:init, 3}, {:observe, 2}, {:coverage, 1}, {:terminate, 1}]
+
+    with {:module, ^check} <- Code.ensure_loaded(check),
+         true <-
+           Enum.all?(callbacks, fn {function, arity} ->
+             function_exported?(check, function, arity)
+           end) do
+      :ok
+    else
+      _ ->
+        raise ArgumentError, "expected #{inspect(check)} to implement Bylaw.Contract.Check"
+    end
+  end
 end

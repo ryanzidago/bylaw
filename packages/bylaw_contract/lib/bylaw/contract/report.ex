@@ -8,6 +8,15 @@ defmodule Bylaw.Contract.Report do
     observed_boundaries = Enum.count(coverage.boundaries, &observed?(&1, coverage))
     supported_returns = Enum.filter(coverage.return_alternatives, & &1.supported?)
     observed_returns = Enum.count(supported_returns, &observed?(&1, coverage))
+    compiler_returns = Map.get(coverage, :compiler_return_alternatives, [])
+    supported_compiler_returns = Enum.filter(compiler_returns, & &1.supported?)
+
+    assessable_compiler_returns =
+      Enum.reject(supported_compiler_returns, &MapSet.member?(coverage.unknown, &1.id))
+
+    observed_compiler_returns =
+      Enum.count(assessable_compiler_returns, &observed?(&1, coverage))
+
     clauses = Map.get(coverage, :clauses, [])
     clause_outcomes = Map.get(coverage, :clause_outcomes, %{})
     guarded_clauses = Enum.filter(clauses, & &1.guarded?)
@@ -45,6 +54,25 @@ defmodule Bylaw.Contract.Report do
       missed_return_alternatives: Enum.count(supported_returns) - observed_returns,
       unsupported_return_alternatives:
         Enum.count(coverage.return_alternatives) - Enum.count(supported_returns),
+      compiler_return_groups:
+        compiler_returns
+        |> Enum.map(&{&1.module, &1.function, &1.arity})
+        |> Enum.uniq()
+        |> Enum.count(),
+      compiler_call_events: Enum.sum(Map.values(Map.get(coverage, :compiler_calls, %{}))),
+      compiler_return_alternatives: Enum.count(compiler_returns),
+      supported_compiler_return_alternatives: Enum.count(assessable_compiler_returns),
+      observed_compiler_return_alternatives: observed_compiler_returns,
+      missed_compiler_return_alternatives:
+        Enum.count(assessable_compiler_returns) - observed_compiler_returns,
+      unsupported_compiler_return_alternatives:
+        Enum.count(compiler_returns) - Enum.count(assessable_compiler_returns),
+      compiler_modules: Enum.count(Map.get(coverage, :compiler_modules, [])),
+      compiler_unsupported:
+        coverage
+        |> Map.get(:compiler_modules, [])
+        |> Enum.count(&(&1.status == :unsupported)),
+      compiler_warnings: Enum.count(Map.get(coverage, :compiler_warnings, [])),
       clauses: Enum.count(clauses),
       clauses_selected: count_observed(clauses, clause_outcomes, :selected),
       clauses_head_matched: count_observed(clauses, clause_outcomes, :head_matches),
@@ -64,7 +92,7 @@ defmodule Bylaw.Contract.Report do
   @spec print(coverage :: map(), device :: IO.device()) :: :ok
   def print(coverage, device) do
     print_typespec_gaps(coverage, device)
-
+    print_compiler_inference_gaps(coverage, device)
     print_structural_coverage(coverage, device)
     :ok
   end
@@ -162,6 +190,37 @@ defmodule Bylaw.Contract.Report do
   end
 
   defp observed?(target, coverage), do: Map.get(coverage.hits, target.id, 0) > 0
+
+  defp print_compiler_inference_gaps(coverage, device) do
+    gaps =
+      coverage
+      |> Map.get(:compiler_return_alternatives, [])
+      |> Enum.filter(& &1.supported?)
+      |> Enum.reject(&MapSet.member?(coverage.unknown, &1.id))
+      |> Enum.reject(&observed?(&1, coverage))
+
+    if Enum.any?(gaps) do
+      IO.puts(device, "\nBylaw.Contract compiler-inferred gaps")
+
+      gaps
+      |> Enum.group_by(&{&1.module, &1.function, &1.arity})
+      |> Enum.sort_by(fn {mfa, _} -> mfa end)
+      |> Enum.each(&print_compiler_inference_group(&1, device))
+    end
+  end
+
+  defp print_compiler_inference_group({{module, function, arity}, alternatives}, device) do
+    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
+
+    Enum.each(alternatives, fn alternative ->
+      IO.puts(
+        device,
+        "    ✗ compiler-inferred return\n" <>
+          "      Missed compiler-inferred return alternative - no test observes:\n\n" <>
+          "      return: #{alternative.label}\n"
+      )
+    end)
+  end
 
   defp print_structural_coverage(coverage, device) do
     clauses = Map.get(coverage, :clauses, [])

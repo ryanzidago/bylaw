@@ -111,37 +111,108 @@ range—was tested.
 
 ## Add it to a test suite
 
-Start the tracer after `ExUnit.start/0`, naming the application modules to
-inspect, and print the result after the suite:
+Add the formatter to `test_helper.exs` and select the checks to run explicitly:
 
 ```elixir
-ExUnit.start()
+alias Bylaw.Contract.Check
 
-{:ok, tracer} = Bylaw.Contract.start([MyApp.Accounts, MyApp.Billing])
-
-ExUnit.after_suite(fn _result ->
-  tracer
-  |> Bylaw.Contract.stop()
-  |> Bylaw.Contract.print_report()
-end)
+ExUnit.start(
+  formatters: [ExUnit.CLIFormatter, Bylaw.Contract.ExUnitFormatter],
+  bylaw_contract: [
+    checks: [Check.Typespec, Check.FunctionClauses]
+  ]
+)
 ```
 
-For a no-code-change trial, put Bylaw.Contract's compiled `ebin` directory on the
-code path and add its formatter alongside ExUnit's normal formatter:
+The default check list is also `[Check.Typespec, Check.FunctionClauses]`. Pass
+an explicit list to enable or disable checks independently; `checks: []`
+disables all contract observation. A check spec is a check module or
+`{check_module, options}`. Checks initialize in list order, and earlier checks
+take precedence over later checks for overlapping obligation families.
+Duplicate check modules are rejected.
 
-```sh
-BYLAW_CONTRACT_REPORT=summary \
-  elixir -pa /path/to/bylaw_contract/_build/test/lib/bylaw_contract/ebin \
-  -e ':application.load(:bylaw_contract); Enum.each(Application.spec(:bylaw_contract, :modules), &Code.ensure_loaded!/1)' \
-  -S mix test \
-  --formatter ExUnit.CLIFormatter \
-  --formatter Bylaw.Contract.ExUnitFormatter
+For a local source trial, add Bylaw.Contract as a test-only path dependency so
+the target project's own Elixir/OTP toolchain compiles it:
+
+```elixir
+{:bylaw_contract,
+ path: "/absolute/path/to/bylaw/packages/bylaw_contract",
+ only: :test}
 ```
 
 The formatter inspects the current Mix application. For umbrella or
-multi-application tests, set `BYLAW_CONTRACT_APPS=app_one,app_two`. The eager-load
-step is needed for a path-only trial because Mix removes code paths that are
-not project dependencies; it is unnecessary once Bylaw.Contract is a dependency.
+multi-application tests, set `BYLAW_CONTRACT_APPS=app_one,app_two`.
+
+## Compiler-inferred return alternatives (experimental)
+
+Elixir 1.20 records inferred public-function signatures in a private `ExCk`
+BEAM chunk. Enable the Elixir compiler check after the typespec check to use
+unambiguous, finite return alternatives as secondary test obligations:
+
+```elixir
+alias Bylaw.Contract.Check
+
+ExUnit.start(
+  formatters: [ExUnit.CLIFormatter, Bylaw.Contract.ExUnitFormatter],
+  bylaw_contract: [
+    checks: [Check.Typespec, Check.FunctionClauses, Check.ElixirCompiler]
+  ]
+)
+```
+
+This integration is deliberately opt-in and versioned. It reads the compiled
+module already loaded by the test VM; it does not invoke or replay the
+compiler. The current adapter accepts only checker version
+`:elixir_checker_v8`, as emitted by the tested Elixir 1.20 toolchains. Missing
+chunks, absent inference, incompatible checker versions, and descriptor shapes
+that cannot be matched safely remain explicit unassessable data rather than
+false gaps. Checker chunks that would require creating atoms during decoding
+are rejected as unsupported. Each module is decoded in a short-lived monitored
+process with a fixed time limit, so compiler descriptors whose quoted form
+expands pathologically become unassessable without growing the long-lived
+observer process.
+
+Runtime obligations are limited to user-authored `def` and `defp`
+definitions identified by Elixir debug metadata. Macro-generated exports are
+excluded by their compiler context rather than library-specific function
+names, and protocol implementation modules are excluded as a class. Generated
+default-argument wrappers are also excluded because they delegate to the
+authored full-arity function.
+When Elixir debug information is absent, the inferred alternatives remain
+available as unassessable data but Bylaw does not guess which functions were
+authored or instrument them.
+
+Check order defines precedence for overlapping obligation families. Declared
+typespec obligations remain authoritative when `Check.Typespec` precedes
+`Check.ElixirCompiler`.
+
+The compiler check does not enable VM tracing and never inspects returns. It
+temporarily reloads selected modules with one lightweight ETS counter injected
+at each selected clause entry. A called clause credits a return alternative
+only when every relevant input descriptor is supported and that compiler rule
+identifies exactly one finite alternative. For example, separate `:accept` and
+`:reject` function clauses can establish distinct outcomes. A single clause
+whose inferred return is
+`:ok | {:error, reason}` cannot establish which value was returned, so both
+alternatives remain unassessable rather than becoming false gaps. This signal
+demonstrates that a suite executed a clause whose compiler-inferred outcome is
+unique; it does not prove a business-correct assertion.
+
+The counters include local calls, child processes, and application background
+work. This is a suite-level execution signal; it does not attribute a call to a
+particular test or assertion. Original module binaries are restored when
+observation stops, and Bylaw does not start the OTP `:cover` server. A module
+whose abstract code cannot be recompiled remains unassessable. By default at
+most 10 inferred functions are instrumented. Functions beyond that
+deterministic cap are unassessable. `compiler_call_events` counts the matching
+clause calls recorded by the injected counters.
+Override the function cap when needed:
+
+```elixir
+checks: [
+  {Check.ElixirCompiler, max_functions: 1_000}
+]
+```
 
 The current implementation resolves local and remote type aliases and handles
 literals, common scalar types, tuples, lists, ranges, functions, and maps with
