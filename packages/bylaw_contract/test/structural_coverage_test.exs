@@ -181,7 +181,7 @@ defmodule Bylaw.Contract.StructuralCoverageTest do
            )
 
     {:ok, output} = StringIO.open("")
-    assert :ok = Bylaw.Contract.print_report(coverage, output)
+    assert :ok = Bylaw.Contract.print_report(coverage, output, colors: false)
     {_, report} = StringIO.contents(output)
 
     refute report =~ "Unsupported structural modules"

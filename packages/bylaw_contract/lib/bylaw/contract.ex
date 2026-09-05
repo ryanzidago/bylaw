@@ -66,9 +66,16 @@ defmodule Bylaw.Contract do
   @spec stop(tracer :: pid()) :: map()
   def stop(tracer), do: Tracer.stop(tracer)
 
-  @doc "Prints actionable coverage gaps, or an incomplete-observation diagnostic."
-  @spec print_report(coverage :: map(), device :: IO.device()) :: :ok
-  def print_report(coverage, device \\ :stdio), do: Report.print(coverage, device)
+  @doc """
+  Prints actionable coverage gaps, or an incomplete-observation diagnostic.
+
+  Diagnostic colors default to `IO.ANSI.enabled?/0`. Pass `colors: false` as the
+  third argument for escape-free output, or `colors: true` to force colors.
+  Summary data is never colored.
+  """
+  @spec print_report(coverage :: map(), device :: IO.device(), options :: keyword()) :: :ok
+  def print_report(coverage, device \\ :stdio, options \\ []),
+    do: Report.print(coverage, device, Keyword.get(options, :colors, IO.ANSI.enabled?()))
 
   @doc "Returns aggregate counters, or incomplete status and reasons when observation aborted."
   @spec summary(coverage :: map()) :: map()

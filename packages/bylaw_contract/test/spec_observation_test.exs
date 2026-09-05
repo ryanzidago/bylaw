@@ -169,7 +169,7 @@ defmodule Bylaw.Contract.SpecObservationTest do
     assert summary.missed_boundaries == 2
 
     {:ok, device} = StringIO.open("")
-    assert Bylaw.Contract.print_report(coverage, device) == :ok
+    assert Bylaw.Contract.print_report(coverage, device, colors: false) == :ok
     {_, report} = StringIO.contents(device)
 
     assert report =~ "no test exercises this declared boundary value"
@@ -198,7 +198,7 @@ defmodule Bylaw.Contract.SpecObservationTest do
     }
 
     {:ok, device} = StringIO.open("")
-    Bylaw.Contract.print_report(coverage, device)
+    Bylaw.Contract.print_report(coverage, device, colors: false)
     {_, report} = StringIO.contents(device)
 
     assert report == ""
@@ -271,7 +271,7 @@ defmodule Bylaw.Contract.SpecObservationTest do
 
   defp report(coverage) do
     {:ok, device} = StringIO.open("")
-    :ok = Bylaw.Contract.print_report(coverage, device)
+    :ok = Bylaw.Contract.print_report(coverage, device, colors: false)
     {_, output} = StringIO.contents(device)
     output
   end

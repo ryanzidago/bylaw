@@ -132,6 +132,15 @@ ExUnit.start(
 )
 ```
 
+Human diagnostics use red for missed targets, cyan for source locations, and
+dim text for supporting specs. They follow ExUnit's `colors: [enabled: false]`
+option (or `mix test --no-color`); `enabled: true` explicitly forces colors.
+Without an explicit setting, colors follow `IO.ANSI.enabled?/0`.
+For direct reporting, use `Bylaw.Contract.print_report(coverage, :stdio,
+colors: false)` to disable colors or `colors: true` to force them. Color-off
+output contains no ANSI escapes. Successful reports remain silent, and summary
+output and coverage data never contain styling.
+
 The default check list is also `[Check.Typespec, Check.FunctionClauses]`. Pass
 an explicit list to enable or disable checks independently; `checks: []`
 disables all contract observation. A check spec is a check module or

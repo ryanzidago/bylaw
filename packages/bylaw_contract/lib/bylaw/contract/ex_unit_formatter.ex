@@ -7,6 +7,9 @@ defmodule Bylaw.Contract.ExUnitFormatter do
   suite exercises more than one application. Set `BYLAW_CONTRACT_REPORT=summary`
   for compact, machine-readable output.
 
+  Human diagnostics honor ExUnit's `colors: [enabled: boolean]` option, defaulting
+  to `IO.ANSI.enabled?/0`. Summary output never contains ANSI styling.
+
   Select checks through the arbitrary ExUnit option passed to formatters:
 
       ExUnit.start(
@@ -29,7 +32,7 @@ defmodule Bylaw.Contract.ExUnitFormatter do
     with {:ok, modules} <- application_modules(),
          {:ok, options} <- observation_options(ex_unit_options),
          {:ok, tracer} <- Bylaw.Contract.start(modules, options) do
-      {:ok, %{tracer: tracer, error: nil}}
+      {:ok, %{tracer: tracer, error: nil, colors: colors_enabled?(ex_unit_options)}}
     else
       {:error, reason} ->
         {:ok, %{tracer: nil, error: reason}}
@@ -64,7 +67,7 @@ defmodule Bylaw.Contract.ExUnitFormatter do
 
   def handle_cast({:suite_finished, _}, %{tracer: tracer} = state) when is_pid(tracer) do
     coverage = Bylaw.Contract.stop(tracer)
-    print_result(coverage)
+    print_result(coverage, state.colors)
     {:noreply, %{state | tracer: nil}}
   end
 
@@ -131,7 +134,13 @@ defmodule Bylaw.Contract.ExUnitFormatter do
     end)
   end
 
-  defp print_result(coverage) do
+  defp colors_enabled?(options) do
+    options
+    |> Keyword.get(:colors, [])
+    |> Keyword.get(:enabled, IO.ANSI.enabled?())
+  end
+
+  defp print_result(coverage, colors) do
     if System.get_env("BYLAW_CONTRACT_REPORT") == "summary" do
       summary = Bylaw.Contract.summary(coverage)
 
@@ -183,7 +192,7 @@ defmodule Bylaw.Contract.ExUnitFormatter do
           )
       )
     else
-      Bylaw.Contract.print_report(coverage)
+      Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
     end
   end
 end
