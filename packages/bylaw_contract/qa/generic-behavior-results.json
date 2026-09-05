@@ -1,0 +1,103 @@
+[
+  {
+    "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4263}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4154}]",
+    "status": "incomplete",
+    "otp": "29",
+    "elixir": "1.20.2",
+    "app": "ecto",
+    "test_states": {
+      "passed": 1591
+    },
+    "checks": [
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "failures": "[]",
+    "structural_modules": {
+      "supported": 102
+    },
+    "summary": {
+      "incomplete": [
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.Typespec",
+          "limit": 4096,
+          "observed": 4263
+        },
+        {
+          "reason": "trace_queue_limit",
+          "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+          "limit": 4096,
+          "observed": 4154
+        }
+      ],
+      "status": "incomplete"
+    },
+    "init_us": 5495179,
+    "retained_calls": 1907,
+    "retained_arity_calls": 502,
+    "retained_return_events": 988
+  },
+  {
+    "incomplete": "[]",
+    "status": "complete",
+    "otp": "29",
+    "elixir": "1.20.2",
+    "app": "livebook",
+    "test_states": {
+      "passed": 1
+    },
+    "checks": [
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "failures": "[]",
+    "structural_modules": {
+      "supported": 355
+    },
+    "summary": {
+      "missed_input_classes": 2095,
+      "guarded_clauses": 275,
+      "input_classes": 2265,
+      "boundaries": 0,
+      "missed_return_alternatives": 648,
+      "observed_boundaries": 0,
+      "missed_boundaries": 0,
+      "warnings": 0,
+      "return_events": 5,
+      "guards_rejected": 0,
+      "arity_calls": 49,
+      "calls": 16,
+      "missed_compiler_return_alternatives": 0,
+      "compiler_return_alternatives": 0,
+      "unsupported_compiler_return_alternatives": 0,
+      "clauses_head_matched": 41,
+      "observed_input_classes": 18,
+      "supported_compiler_return_alternatives": 0,
+      "compiler_warnings": 0,
+      "compiler_call_events": 0,
+      "return_alternatives": 683,
+      "supported_input_classes": 2113,
+      "structural_unsupported": 0,
+      "clauses_selected": 41,
+      "supported_return_alternatives": 651,
+      "functions": 784,
+      "callable_arities": 3693,
+      "compiler_modules": 0,
+      "guards_passed": 0,
+      "compiler_unsupported": 0,
+      "return_groups": 297,
+      "compiler_return_groups": 0,
+      "unsupported_input_classes": 152,
+      "clauses": 5246,
+      "unsupported_return_alternatives": 32,
+      "observed_return_alternatives": 3,
+      "observed_compiler_return_alternatives": 0,
+      "arguments": 1383
+    },
+    "init_us": 6854016,
+    "retained_calls": 16,
+    "retained_arity_calls": 49,
+    "retained_return_events": 5
+  }
+]
