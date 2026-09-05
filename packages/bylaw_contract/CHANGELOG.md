@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Preserve compiler alternatives and independent function inference when return
+  union normalization absorbs or merges clause labels; keep functions without
+  an exact clause mapping unassessable instead of rejecting the entire module.
+
 - Add opt-in, checker-versioned observation of unambiguous finite return
   alternatives from Elixir 1.20's private compiler-inference BEAM chunk.
 - Limit compiler-inferred runtime obligations to authored functions using

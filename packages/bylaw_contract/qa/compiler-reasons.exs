@@ -80,15 +80,16 @@ IO.inspect(
     selected_alternatives: selected_count,
     cap_omitted_alternatives: omitted_count,
     overlapping_flags: %{
+      missing_exact_clause_mapping: Enum.count(authored, &(not Map.has_key?(rules, mfa.(&1)))),
       unsupported_return_shape: Enum.count(authored, &(not &1.supported?)),
       non_finite_return_group: Enum.count(authored, &(not &1.runtime_safe?)),
       unsupported_input_group:
         Enum.count(authored, fn a ->
-          Enum.any?(Map.fetch!(rules, mfa.(a)), &(not &1.arguments_supported?))
+          Enum.any?(Map.get(rules, mfa.(a), []), &(not &1.arguments_supported?))
         end),
       no_single_output_rule:
         Enum.count(authored, fn a ->
-          not Enum.any?(Map.fetch!(rules, mfa.(a)), &(&1.output_ids == MapSet.new([a.id])))
+          not Enum.any?(Map.get(rules, mfa.(a), []), &(&1.output_ids == MapSet.new([a.id])))
         end)
     }
   },

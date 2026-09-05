@@ -74,25 +74,7 @@ defmodule Bylaw.Contract.CompilerInference.Elixir120 do
       ids_by_label = Map.new(alternatives, &{&1.label, &1.id})
 
       inference_rules =
-        decoded_clauses
-        |> Enum.with_index(1)
-        |> Enum.map(fn {clause, index} ->
-          output_ids =
-            clause.return_types
-            |> Enum.map(&Macro.to_string/1)
-            |> Enum.map(&Map.fetch!(ids_by_label, &1))
-            |> MapSet.new()
-
-          %{
-            module: module,
-            function: function,
-            arity: arity,
-            index: index,
-            argument_types: clause.argument_types,
-            arguments_supported?: arguments_supported?(clause.argument_types, arity),
-            output_ids: output_ids
-          }
-        end)
+        exact_inference_rules(module, function, arity, decoded_clauses, ids_by_label)
 
       inferable_ids = inferable_ids(inference_rules, runtime_safe?)
 
@@ -108,6 +90,39 @@ defmodule Bylaw.Contract.CompilerInference.Elixir120 do
   end
 
   defp decode_export(_module, _export), do: empty_decoded_export()
+
+  defp exact_inference_rules(module, function, arity, clauses, ids_by_label) do
+    rules =
+      clauses
+      |> Enum.with_index(1)
+      |> Enum.map(fn {clause, index} ->
+        output_ids =
+          clause.return_types
+          |> Enum.map(&Macro.to_string/1)
+          |> Enum.map(&Map.get(ids_by_label, &1))
+          |> MapSet.new()
+
+        if MapSet.member?(output_ids, nil) do
+          nil
+        else
+          %{
+            module: module,
+            function: function,
+            arity: arity,
+            index: index,
+            argument_types: clause.argument_types,
+            arguments_supported?: arguments_supported?(clause.argument_types, arity),
+            output_ids: output_ids
+          }
+        end
+      end)
+
+    if Enum.any?(rules, &is_nil/1) do
+      []
+    else
+      rules
+    end
+  end
 
   defp decode_clause({arguments, return_type}) do
     %{
