@@ -1,7 +1,11 @@
 # Bylaw.Contract external QA — 2026-09-05
 
-This is an in-progress evidence log. Clones are disposable and were created
+This is the historical initial-run evidence log. Clones were disposable and created
 under `/tmp/bylaw-contract-qa.Ef0vbA`; no external repository was committed to.
+The timing failures below did not have controlled disabled baselines and must
+not be attributed to external causes solely because no Bylaw exception appeared.
+See [the paired overhead investigation](qa-overhead-2026-09-05.md) for subsequent
+evidence, runtime differences, incomplete observations, and remaining uncertainty.
 
 ## Toolchain
 
@@ -15,9 +19,9 @@ with OTP 29. No `.tool-versions` file was added.
 | --- | --- | --- |
 | Plausible | `543b30185c104ce17900d03c95d95429180acc0b` | run complete below; 4 external setup failures |
 | Changelog | `3e46efd3773e9c375633d49d9353608f294da15d` | run complete below |
-| Realtime | `21ce9acb5a171b07d7494a80fe0a3f2d008f5710` | run complete below; 1 external infrastructure/test failure |
+| Realtime | `21ce9acb5a171b07d7494a80fe0a3f2d008f5710` | run complete below; 1 peer-start failure, attribution unresolved |
 | Phoenix | `1e6183e9ebab9994cf6e43d3af445f32664cc10c` | run complete below |
-| Phoenix LiveView | `8015b9c09a5606f5f3e7204a64ecf9cc28c5b683` | run complete; external async/LiveReload timing failures observed |
+| Phoenix LiveView | `8015b9c09a5606f5f3e7204a64ecf9cc28c5b683` | terminal summary missing; async/LiveReload timing failures observed, attribution unresolved |
 | FLAME | `2b124f3ffdede8c1f125ce36b237bef1c50940a3` | run complete below |
 | Livebook | `f18f2035bac89d6c08497f5f2d7e7c4f56e80716` | run complete below |
 | Ecto | `11784f821a1bb0eedeee59583e311d836cb39ee1` | run complete below |
@@ -134,12 +138,12 @@ structural_unsupported=0 warnings=0
 
 The complete suite was rerun under the repository's native Elixir 1.18.3 /
 OTP 27.3.3 mise toolchain with the local path dependency and all three checks.
-The run completed without a durable final formatter line after the terminal
-session closed, but failures observed in the run were external timing-sensitive
+No durable final formatter line was retained after the terminal session closed,
+so a complete terminal result is unverified. Failures observed were timing-sensitive
 tests, including `Phoenix.LiveView.StreamAsyncTest` at
 `test/phoenix_live_view/integrations/stream_async_test.exs:224` and the earlier
 `Phoenix.LiveView.LiveReloadTest` custom-reloader timeout. No Bylaw exception
-or compiler-check failure was observed.
+or compiler-check failure was observed; this does not establish an external cause.
 
 ## Vutuv
 
@@ -220,7 +224,7 @@ BYLAW_CONTRACT_REPORT=summary mise exec -- mix test \
 ```
 
 Result: **1,510/1,511 passed** (87/87 doctests, 1,423/1,424 tests), 185
-excluded, 1 failure, 6.9 seconds. The observed external failure was
+excluded, 1 failure, 6.9 seconds. The observed failure, with unresolved attribution, was
 `Livebook.Runtime.ErlDist.NodeManagerTest`, `test terminates when the last
 runtime server terminates`, which timed out waiting for
 `{:runtime_connect_done, pid, {:ok, runtime}}`.
@@ -251,7 +255,7 @@ host ports 55432 and 55433, migrated, seeded, and the suite was rerun. The
 complete run took 616.6 seconds: **2,195/2,196 passed** (23 doctests, 2,173
 tests), 6 excluded, 1 failure. The failure was `Realtime.GenRpcBadTcpTest`,
 which timed out starting a peer and emitted SQL sandbox/peer lifecycle logs;
-this is recorded as an external infrastructure/test signal.
+the missing disabled baseline leaves attribution unresolved.
 
 Summary:
 

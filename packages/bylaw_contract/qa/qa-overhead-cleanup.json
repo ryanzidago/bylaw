@@ -1,0 +1,104 @@
+{
+  "services": [
+    {
+      "project": "bylaw-overhead-rt-registry",
+      "kind": "realtime",
+      "port": 55012,
+      "ids": [
+        "a6d527caf2ace1907e7feb0b947ba841a35746cb1f98fac6f3e684b34a444bfd"
+      ],
+      "compose": [
+        "docker",
+        "compose",
+        "-p",
+        "bylaw-overhead-rt-registry",
+        "-f",
+        "/tmp/bylaw-overhead-pairs/realtime/compose.realtime-db.yml"
+      ]
+    },
+    {
+      "project": "bylaw-overhead-rt-tenant-1",
+      "kind": "tenant",
+      "port": 55013,
+      "ids": [
+        "20a48940bfd2f90e353e8161a5c6b3e09a7e54e898413d882a95e907cf021b01"
+      ],
+      "compose": [
+        "docker",
+        "compose",
+        "-p",
+        "bylaw-overhead-rt-tenant-1",
+        "-f",
+        "/tmp/bylaw-overhead-pairs/realtime/compose.tenant-db.yml"
+      ]
+    },
+    {
+      "project": "bylaw-overhead-rt-tenant-2",
+      "kind": "tenant",
+      "port": 55014,
+      "ids": [
+        "cc903060bd0c293e72eef1ad47a11aba62ae4a98eed36618df55693e5bd3f193"
+      ],
+      "compose": [
+        "docker",
+        "compose",
+        "-p",
+        "bylaw-overhead-rt-tenant-2",
+        "-f",
+        "/tmp/bylaw-overhead-pairs/realtime/compose.tenant-db.yml"
+      ]
+    },
+    {
+      "project": "bylaw-overhead-rt-tenant-3",
+      "kind": "tenant",
+      "port": 55015,
+      "ids": [
+        "6d3f88819c840eb206f59cd8bdd5334f83357d7946531dca865a62ee19bed19a"
+      ],
+      "compose": [
+        "docker",
+        "compose",
+        "-p",
+        "bylaw-overhead-rt-tenant-3",
+        "-f",
+        "/tmp/bylaw-overhead-pairs/realtime/compose.tenant-db.yml"
+      ]
+    },
+    {
+      "project": "bylaw-overhead-rt-tenant-4",
+      "kind": "tenant",
+      "port": 55016,
+      "ids": [
+        "d5bd9b355d453f9e185cfbb959040dacd3670a75c4c5b8bc8d90fef82cf1effd"
+      ],
+      "compose": [
+        "docker",
+        "compose",
+        "-p",
+        "bylaw-overhead-rt-tenant-4",
+        "-f",
+        "/tmp/bylaw-overhead-pairs/realtime/compose.tenant-db.yml"
+      ]
+    }
+  ],
+  "container_cleanup": {
+    "stopped_ids": [
+      "a6d527caf2ace1907e7feb0b947ba841a35746cb1f98fac6f3e684b34a444bfd",
+      "20a48940bfd2f90e353e8161a5c6b3e09a7e54e898413d882a95e907cf021b01",
+      "cc903060bd0c293e72eef1ad47a11aba62ae4a98eed36618df55693e5bd3f193",
+      "6d3f88819c840eb206f59cd8bdd5334f83357d7946531dca865a62ee19bed19a",
+      "d5bd9b355d453f9e185cfbb959040dacd3670a75c4c5b8bc8d90fef82cf1effd"
+    ],
+    "containers_and_volumes_preserved": true
+  },
+  "clone_cleanup": [
+    {
+      "source": "/tmp/bylaw-overhead-pairs/phoenix_live_view",
+      "recovery_path": "/Users/ryanzidago/.Trash/bylaw-overhead-phoenix_live_view-92b8d979"
+    },
+    {
+      "source": "/tmp/bylaw-overhead-pairs/realtime",
+      "recovery_path": "/Users/ryanzidago/.Trash/bylaw-overhead-realtime-b6082504"
+    }
+  ]
+}

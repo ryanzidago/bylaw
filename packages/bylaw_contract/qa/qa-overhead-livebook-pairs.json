@@ -1,0 +1,438 @@
+[
+  {
+    "pair": 1,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 1.146748290862888,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-1-disabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 131514368,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 113181344
+  },
+  {
+    "pair": 1,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 0,
+    "elapsed": 13.273934083990753,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-1-enabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 961265664,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-node-1-enabled.etf",
+    "incomplete": "[]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "passed": 1
+    },
+    "coverage_status": "complete",
+    "reported_peak_footprint_bytes": 943474104
+  },
+  {
+    "pair": 2,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 0,
+    "elapsed": 13.158418666571379,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-2-enabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 996311040,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-node-2-enabled.etf",
+    "incomplete": "[]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "passed": 1
+    },
+    "coverage_status": "complete",
+    "reported_peak_footprint_bytes": 978519480
+  },
+  {
+    "pair": 2,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 1.072879834100604,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-2-disabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 131416064,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 113050272
+  },
+  {
+    "pair": 3,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 1.03136433288455,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-3-disabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 133316608,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 114999992
+  },
+  {
+    "pair": 3,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "test/livebook/runtime/erl_dist/node_manager_test.exs",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 0,
+    "elapsed": 13.058050209190696,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-node-3-enabled.log",
+    "scope": "node",
+    "terminal_result": [
+      "1 passed"
+    ],
+    "reported_max_rss_bytes": 992100352,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-node-3-enabled.etf",
+    "incomplete": "[]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "passed": 1
+    },
+    "coverage_status": "complete",
+    "reported_peak_footprint_bytes": 974243160
+  },
+  {
+    "pair": 1,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 9.449225124903023,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-1-disabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1511 passed (87 doctests, 1424 tests), 185 excluded"
+    ],
+    "reported_max_rss_bytes": 690601984,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 671499584
+  },
+  {
+    "pair": 1,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 2,
+    "elapsed": 20.04885783372447,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-1-enabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1403 passed (87 doctests, 1316 tests), 108 invalid, 185 excluded"
+    ],
+    "reported_max_rss_bytes": 1130921984,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-full-1-enabled.etf",
+    "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4202}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4542}]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "invalid": 108,
+      "passed": 1403,
+      "excluded": 185
+    },
+    "coverage_status": "incomplete",
+    "reported_peak_footprint_bytes": 1113310912
+  },
+  {
+    "pair": 2,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 0,
+    "elapsed": 20.579741207882762,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-2-enabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1511 passed (87 doctests, 1424 tests), 185 excluded"
+    ],
+    "reported_max_rss_bytes": 1084981248,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-full-2-enabled.etf",
+    "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4180}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4585}]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "passed": 1511,
+      "excluded": 185
+    },
+    "coverage_status": "incomplete",
+    "reported_peak_footprint_bytes": 1067386584
+  },
+  {
+    "pair": 2,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 9.527469959110022,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-2-disabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1511 passed (87 doctests, 1424 tests), 185 excluded"
+    ],
+    "reported_max_rss_bytes": 665239552,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 646104336
+  },
+  {
+    "pair": 3,
+    "mode": "disabled",
+    "command": [
+      "elixir",
+      "-r",
+      "/tmp/bylaw-overhead-pairs/baseline.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter"
+    ],
+    "exit_code": 0,
+    "elapsed": 9.54475420806557,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-3-disabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1511 passed (87 doctests, 1424 tests), 185 excluded"
+    ],
+    "reported_max_rss_bytes": 685277184,
+    "disabled_verified": true,
+    "reported_peak_footprint_bytes": 666224008
+  },
+  {
+    "pair": 3,
+    "mode": "enabled",
+    "command": [
+      "elixir",
+      "-pa",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-bound-default-trace-backlog/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+      "-r",
+      "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-qa-overhead-after-budget/packages/bylaw_contract/qa/candidate-capture.exs",
+      "-S",
+      "mix",
+      "test",
+      "--seed",
+      "922331",
+      "--max-cases",
+      "28",
+      "--formatter",
+      "ExUnit.CLIFormatter",
+      "--formatter",
+      "Bylaw.Contract.QA.CandidateCapture"
+    ],
+    "exit_code": 0,
+    "elapsed": 20.39886416681111,
+    "log": "/tmp/bylaw-overhead-pairs/livebook-full-3-enabled.log",
+    "scope": "full",
+    "terminal_result": [
+      "1511 passed (87 doctests, 1424 tests), 185 excluded"
+    ],
+    "reported_max_rss_bytes": 1101971456,
+    "disabled_verified": false,
+    "capture": "/tmp/bylaw-overhead-pairs/livebook-full-3-enabled.etf",
+    "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4180}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4216}]",
+    "checks": [
+      "Bylaw.Contract.Check.ElixirCompiler",
+      "Bylaw.Contract.Check.FunctionClauses",
+      "Bylaw.Contract.Check.Typespec"
+    ],
+    "test_states": {
+      "passed": 1511,
+      "excluded": 185
+    },
+    "coverage_status": "incomplete",
+    "reported_peak_footprint_bytes": 1084327568
+  }
+]
