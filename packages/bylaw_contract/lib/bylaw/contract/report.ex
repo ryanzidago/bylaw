@@ -2,6 +2,8 @@ defmodule Bylaw.Contract.Report do
   @moduledoc false
 
   @spec summary(coverage :: map()) :: map()
+  def summary(%{status: :incomplete} = coverage), do: Map.take(coverage, [:status, :incomplete])
+
   def summary(coverage) do
     supported_classes = Enum.filter(coverage.input_classes, & &1.supported?)
     observed_classes = Enum.count(supported_classes, &observed?(&1, coverage))
@@ -90,6 +92,19 @@ defmodule Bylaw.Contract.Report do
   end
 
   @spec print(coverage :: map(), device :: IO.device()) :: :ok
+  def print(%{status: :incomplete, incomplete: reasons}, device) do
+    IO.puts(device, "Bylaw.Contract observation incomplete; coverage gaps were not assessed.")
+
+    Enum.each(reasons, fn reason ->
+      IO.puts(
+        device,
+        "#{inspect(reason.check)}: trace queue exceeded #{reason.limit} messages (observed #{reason.observed})."
+      )
+    end)
+
+    :ok
+  end
+
   def print(coverage, device) do
     print_typespec_gaps(coverage, device)
     print_compiler_inference_gaps(coverage, device)

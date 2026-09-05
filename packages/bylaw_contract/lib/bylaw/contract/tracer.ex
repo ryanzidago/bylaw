@@ -7,9 +7,11 @@ defmodule Bylaw.Contract.Tracer do
 
   @spec start_link(
           modules :: list(module()),
-          checks :: list({module(), Check.opts()})
+          checks :: list({module(), Check.opts()}),
+          max_trace_queue :: pos_integer()
         ) :: GenServer.on_start()
-  def start_link(modules, checks), do: GenServer.start_link(__MODULE__, {modules, checks})
+  def start_link(modules, checks, limit \\ 4096),
+    do: GenServer.start_link(__MODULE__, {modules, checks, limit})
 
   @spec stop(tracer :: GenServer.server()) :: map()
   def stop(tracer) do
@@ -20,7 +22,11 @@ defmodule Bylaw.Contract.Tracer do
       |> put_in([:checks, check], check_coverage)
       |> merge_coverage(check_coverage)
     end)
+    |> mark_incomplete()
   end
+
+  defp mark_incomplete(%{incomplete: _} = coverage), do: Map.put(coverage, :status, :incomplete)
+  defp mark_incomplete(coverage), do: coverage
 
   @spec start_observation_window(tracer :: GenServer.server()) :: :ok
   def start_observation_window(tracer), do: GenServer.cast(tracer, :start_observation_window)
@@ -34,11 +40,11 @@ defmodule Bylaw.Contract.Tracer do
     do: GenServer.cast(tracer, {:ex_unit_test_finished, label})
 
   @impl GenServer
-  def init({modules, check_specs}) do
+  def init({modules, check_specs, limit}) do
     Process.flag(:trap_exit, true)
     Enum.each(modules, &Code.ensure_loaded/1)
 
-    case start_workers(modules, check_specs) do
+    case start_workers(modules, check_specs, limit) do
       {:ok, workers} -> {:ok, %{workers: workers}}
       {:error, reason} -> {:stop, reason}
     end
@@ -78,10 +84,10 @@ defmodule Bylaw.Contract.Tracer do
     :ok
   end
 
-  defp start_workers(modules, check_specs) do
+  defp start_workers(modules, check_specs, limit) do
     Enum.reduce_while(check_specs, {:ok, [], MapSet.new()}, fn {check, opts},
                                                                {:ok, workers, claims} ->
-      case TraceWorker.start_link(modules, check, opts, claims) do
+      case TraceWorker.start_link(modules, check, opts, claims, limit) do
         {:ok, worker} ->
           claims = MapSet.union(claims, TraceWorker.claims(worker))
           {:cont, {:ok, [worker | workers], claims}}
@@ -146,6 +152,9 @@ defmodule Bylaw.Contract.Tracer do
 
   defp merge_coverage(coverage, check_coverage) do
     Enum.reduce(check_coverage, coverage, fn
+      {:incomplete, reasons}, merged ->
+        Map.update(merged, :incomplete, reasons, &(&1 ++ reasons))
+
       {:unknown, unknown}, merged ->
         Map.update!(merged, :unknown, &MapSet.union(&1, unknown))
 

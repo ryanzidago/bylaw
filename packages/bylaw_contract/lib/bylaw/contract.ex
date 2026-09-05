@@ -22,7 +22,7 @@ defmodule Bylaw.Contract do
   @type checks :: list(check_spec())
 
   @typedoc "Options controlling runtime contract observation."
-  @type start_option :: {:checks, checks()}
+  @type start_option :: {:checks, checks()} | {:max_trace_queue, pos_integer()}
 
   @doc "Starts the default typespec and structural checks for `modules`."
   @spec start(modules :: list(module())) :: GenServer.on_start()
@@ -35,24 +35,42 @@ defmodule Bylaw.Contract do
   `{check_module, opts}` tuple. The default check list enables
   `Bylaw.Contract.Check.Typespec` and `Bylaw.Contract.Check.FunctionClauses`.
   Passing an empty check list disables all observation.
+
+  `:max_trace_queue` defaults to 4096 messages per check worker. Queues are
+  checked before consuming trace events and independently every 5 milliseconds.
+  Exceeding the threshold destroys that check's trace session and marks the result
+  incomplete. Queues may overshoot between checks; this is not a byte-memory
+  limit. Partial data remains available, but reports do not classify gaps from
+  an incomplete observation.
   """
   @spec start(modules :: list(module()), opts :: list(start_option())) :: GenServer.on_start()
   def start(modules, opts) when is_list(modules) and is_list(opts) do
-    opts = Keyword.validate!(opts, checks: @default_checks)
+    opts = Keyword.validate!(opts, checks: @default_checks, max_trace_queue: 4096)
+    limit = Keyword.fetch!(opts, :max_trace_queue)
+
+    unless is_integer(limit) and limit > 0,
+      do: raise(ArgumentError, "expected :max_trace_queue to be a positive integer")
+
     checks = opts |> Keyword.fetch!(:checks) |> normalize_checks!()
 
-    Tracer.start_link(modules, checks)
+    Tracer.start_link(modules, checks, limit)
   end
 
-  @doc "Stops a tracer and returns its coverage data."
+  @doc """
+  Stops a tracer and returns its coverage data.
+
+  If any worker exceeded its queue budget, the map has `status: :incomplete`
+  and an `:incomplete` list of check, reason, limit, and observed queue counts.
+  Retained counters and targets then describe partial observation only.
+  """
   @spec stop(tracer :: pid()) :: map()
   def stop(tracer), do: Tracer.stop(tracer)
 
-  @doc "Prints a human-readable report of actionable coverage gaps."
+  @doc "Prints actionable coverage gaps, or an incomplete-observation diagnostic."
   @spec print_report(coverage :: map(), device :: IO.device()) :: :ok
   def print_report(coverage, device \\ :stdio), do: Report.print(coverage, device)
 
-  @doc "Returns aggregate counters for a coverage result."
+  @doc "Returns aggregate counters, or incomplete status and reasons when observation aborted."
   @spec summary(coverage :: map()) :: map()
   def summary(coverage), do: Report.summary(coverage)
 

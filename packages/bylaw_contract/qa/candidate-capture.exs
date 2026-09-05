@@ -1,6 +1,7 @@
 # Load with elixir -pa BYLAW_EBIN -r qa/candidate-capture.exs -S mix test
 #   --formatter ExUnit.CLIFormatter --formatter Bylaw.Contract.QA.CandidateCapture
 # Set BYLAW_CONTRACT_APPS, BYLAW_AUDIT_EBIN, and BYLAW_AUDIT_OUTPUT explicitly.
+# Optional BYLAW_AUDIT_MAX_TRACE_QUEUE passes an explicit runtime queue threshold.
 defmodule Bylaw.Contract.QA.CandidateCapture do
   use GenServer
 
@@ -12,7 +13,14 @@ defmodule Bylaw.Contract.QA.CandidateCapture do
     Code.prepend_path(System.fetch_env!("BYLAW_AUDIT_EBIN"))
     File.write!(System.fetch_env!("BYLAW_AUDIT_OUTPUT") <> ".lifecycle", "init\n")
     checks = [Check.Typespec, Check.FunctionClauses, Check.ElixirCompiler]
-    options = Keyword.put(options, :bylaw_contract, checks: checks)
+
+    contract_options =
+      case System.get_env("BYLAW_AUDIT_MAX_TRACE_QUEUE") do
+        nil -> [checks: checks]
+        value -> [checks: checks, max_trace_queue: String.to_integer(value)]
+      end
+
+    options = Keyword.put(options, :bylaw_contract, contract_options)
     {:ok, state} = ExUnitFormatter.init(options)
 
     File.write!(System.fetch_env!("BYLAW_AUDIT_OUTPUT") <> ".lifecycle", "initialized\n", [
@@ -37,7 +45,8 @@ defmodule Bylaw.Contract.QA.CandidateCapture do
      Map.merge(state, %{
        test_states: %{},
        failed_tests: [],
-       audit_options: Keyword.take(options, [:seed, :exclude, :include, :max_cases])
+       audit_options:
+         Keyword.take(options, [:seed, :exclude, :include, :max_cases, :bylaw_contract])
      })}
   end
 

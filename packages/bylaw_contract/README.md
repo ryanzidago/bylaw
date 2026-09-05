@@ -139,6 +139,22 @@ disables all contract observation. A check spec is a check module or
 take precedence over later checks for overlapping obligation families.
 Duplicate check modules are rejected.
 
+Each active check has a default queue threshold of 4,096 messages. Pass
+`max_trace_queue: positive_integer` alongside `checks` (or directly to
+`Bylaw.Contract.start/2`) to choose another finite threshold. It counts worker
+mailbox messages and the trace event being consumed. Checks run before each
+trace event and independently every 5 ms, so queues can overshoot between
+checks. This is a backlog threshold, not a hard byte-memory limit.
+
+Exceeding the threshold permanently destroys that check's trace session.
+`stop/1` retains partial data with `status: :incomplete` and an `:incomplete`
+list identifying the check, limit and observed queue count. `summary/1` then
+returns status and reasons instead of gap counters; the human report prints an
+incomplete-observation diagnostic rather than unassessed gaps. Successful
+observations retain their existing coverage and report format. A larger
+threshold permits more backlog and memory use; it does not make the consumer
+faster.
+
 For a local source trial, add Bylaw.Contract as a test-only path dependency so
 the target project's own Elixir/OTP toolchain compiles it:
 
