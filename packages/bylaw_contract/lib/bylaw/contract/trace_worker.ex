@@ -48,6 +48,7 @@ defmodule Bylaw.Contract.TraceWorker do
       {:ok, check_state, plan} ->
         runtime = %{
           module: check,
+          observes_caller?: function_exported?(check, :observe, 3),
           queue_limit: limit,
           state: check_state,
           calls: plan.calls,
@@ -101,14 +102,14 @@ defmodule Bylaw.Contract.TraceWorker do
   end
 
   @impl GenServer
-  def handle_info({:trace, _process, :call, {module, function, arguments}}, state)
+  def handle_info({:trace, caller, :call, {module, function, arguments}}, state)
       when is_list(arguments) do
     event = {:call, {module, function, Enum.count(arguments)}, arguments}
-    {:noreply, observe(event, state)}
+    {:noreply, observe(event, caller, state)}
   end
 
-  def handle_info({:trace, _process, :return_from, mfa, value}, state) do
-    {:noreply, observe({:return, mfa, value}, state)}
+  def handle_info({:trace, caller, :return_from, mfa, value}, state) do
+    {:noreply, observe({:return, mfa, value}, caller, state)}
   end
 
   def handle_info(:scan_ex_unit_processes, state) do
@@ -190,12 +191,18 @@ defmodule Bylaw.Contract.TraceWorker do
     :ok
   end
 
-  defp observe(event, state) do
+  defp observe(event, caller, state) do
     runtime = state.runtime
 
     if TraceQueueBudget.check(state.budget, 1) == 0 and observes?(runtime, event) do
-      runtime.module.observe(event, runtime.state)
-      |> apply_result(state)
+      result =
+        if runtime.observes_caller? do
+          runtime.module.observe(event, caller, runtime.state)
+        else
+          runtime.module.observe(event, runtime.state)
+        end
+
+      apply_result(result, state)
     else
       state
     end

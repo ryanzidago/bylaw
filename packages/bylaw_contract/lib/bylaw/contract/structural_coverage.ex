@@ -61,13 +61,15 @@ defmodule Bylaw.Contract.StructuralCoverage do
   @spec classify(
           shadow_module :: module(),
           classifier :: map(),
-          arguments :: list(term())
+          arguments :: list(term()),
+          caller :: pid()
         ) :: {non_neg_integer() | :no_clause, list({boolean(), boolean()})}
-  def classify(shadow_module, classifier, arguments) do
+  def classify(shadow_module, classifier, arguments, caller) do
     apply(shadow_module, classifier.classifier_function, [
       classifier.source_function,
       classifier.source_arity,
-      arguments
+      arguments,
+      caller
     ])
   end
 
@@ -394,7 +396,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
   end
 
   defp shadow_forms(shadow_module, classifiers) do
-    exports = Enum.map(classifiers, &{&1.classifier_function, 3})
+    exports = Enum.map(classifiers, &{&1.classifier_function, 4})
 
     [
       {:attribute, 0, :module, shadow_module},
@@ -405,10 +407,12 @@ defmodule Bylaw.Contract.StructuralCoverage do
 
   defp classifier_form(classifier) do
     clauses = Enum.map(classifier.mfa_classifiers, &classifier_mfa_clause/1)
-    {:function, 0, classifier.classifier_function, 3, clauses}
+    {:function, 0, classifier.classifier_function, 4, clauses}
   end
 
   defp classifier_mfa_clause(%{mfa: {_, function, arity}, clauses: clauses}) do
+    caller = caller_variable(clauses)
+    clauses = Enum.map(clauses, &replace_caller_guards(&1, caller))
     arguments = {:var, 0, :_BylawContractArguments}
     selected = scoped_case(arguments, selection_clauses(clauses))
 
@@ -416,9 +420,59 @@ defmodule Bylaw.Contract.StructuralCoverage do
 
     body = {:tuple, 0, [selected, abstract_list(outcomes)]}
 
-    {:clause, 0, [:erl_parse.abstract(function), :erl_parse.abstract(arity), arguments], [],
-     [body]}
+    {:clause, 0, [:erl_parse.abstract(function), :erl_parse.abstract(arity), arguments, caller],
+     [], [body]}
   end
+
+  defp caller_variable(clauses) do
+    used =
+      Enum.reduce(clauses, MapSet.new(), fn entry, names ->
+        {:clause, _, patterns, guards, _} = entry.clause
+        variable_names({patterns, guards}, names)
+      end)
+
+    name =
+      Stream.iterate(0, &(&1 + 1))
+      |> Enum.find_value(fn index ->
+        # Compiler names are reused; their count is bounded by conflicting source variables.
+        # credo:disable-for-next-line Credo.Check.Warning.UnsafeToAtom
+        name = String.to_atom("_BylawContractCaller#{index}")
+
+        if not MapSet.member?(used, name) do
+          name
+        end
+      end)
+
+    {:var, 0, name}
+  end
+
+  defp variable_names({:var, _, name}, names), do: MapSet.put(names, name)
+
+  defp variable_names(term, names) when is_tuple(term),
+    do: variable_names(Tuple.to_list(term), names)
+
+  defp variable_names(terms, names) when is_list(terms),
+    do: Enum.reduce(terms, names, &variable_names/2)
+
+  defp variable_names(_, names), do: names
+
+  defp replace_caller_guards(entry, caller) do
+    {:clause, annotation, patterns, guards, body} = entry.clause
+    %{entry | clause: {:clause, annotation, patterns, replace_self(guards, caller), body}}
+  end
+
+  defp replace_self({:call, _, {:remote, _, {:atom, _, :erlang}, {:atom, _, :self}}, []}, caller),
+    do: caller
+
+  defp replace_self({:call, _, {:atom, _, :self}, []}, caller), do: caller
+
+  defp replace_self(term, caller) when is_tuple(term),
+    do: term |> Tuple.to_list() |> Enum.map(&replace_self(&1, caller)) |> List.to_tuple()
+
+  defp replace_self(terms, caller) when is_list(terms),
+    do: Enum.map(terms, &replace_self(&1, caller))
+
+  defp replace_self(term, _caller), do: term
 
   defp selection_clauses(classifier_clauses) do
     clauses =
