@@ -1,0 +1,39 @@
+** (Mix) Could not invoke task "test": 1 error found!
+--no-prune-code-paths : Unknown option
+
+Supported options:
+  --all-warnings, --no-all-warnings
+  --archives-check, --no-archives-check
+  --breakpoints, --no-breakpoints (alias: -b)
+  --color, --no-color
+  --compile, --no-compile
+  --cover, --no-cover
+  --deps-check, --no-deps-check
+  --dry-run, --no-dry-run
+  --elixir-version-check, --no-elixir-version-check
+  --exclude STRING (may be given more than once)
+  --exit-status INTEGER
+  --export-coverage STRING
+  --failed, --no-failed
+  --force, --no-force
+  --formatter STRING (may be given more than once)
+  --include STRING (may be given more than once)
+  --listen-on-stdin, --no-listen-on-stdin
+  --max-cases INTEGER
+  --max-failures INTEGER
+  --max-requires INTEGER
+  --name-pattern REGEX (alias: -n)
+  --only STRING (may be given more than once)
+  --partitions INTEGER
+  --preload-modules, --no-preload-modules
+  --profile-require STRING
+  --raise, --no-raise
+  --repeat-until-failure INTEGER
+  --seed INTEGER
+  --slowest INTEGER
+  --slowest-modules INTEGER
+  --stale, --no-stale
+  --start, --no-start
+  --timeout INTEGER
+  --trace, --no-trace
+  --warnings-as-errors, --no-warnings-as-errors

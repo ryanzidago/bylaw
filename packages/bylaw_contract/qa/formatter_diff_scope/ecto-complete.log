@@ -1,0 +1,7 @@
+Running ExUnit with seed: 966039, max_cases: 28
+
+..................................................................................................................................................................................
+Finished in 1.0 seconds (1.0s async, 0.00s sync)
+
+Result: 178 passed
+Bylaw.Contract QA: functions=0 arguments=0 calls=0 input_classes=0 supported_input_classes=0 observed_input_classes=0 missed_input_classes=0 unsupported_input_classes=0 boundaries=0 observed_boundaries=0 missed_boundaries=0 return_groups=0 return_events=0 return_alternatives=0 supported_return_alternatives=0 observed_return_alternatives=0 missed_return_alternatives=0 unsupported_return_alternatives=0 compiler_return_groups=0 compiler_call_events=0 compiler_return_alternatives=0 supported_compiler_return_alternatives=0 observed_compiler_return_alternatives=0 missed_compiler_return_alternatives=0 unsupported_compiler_return_alternatives=0 compiler_modules=0 compiler_unsupported=0 compiler_warnings=0 clauses=1 clauses_selected=0 clauses_head_matched=0 guarded_clauses=0 guards_passed=0 guards_rejected=0 callable_arities=1 arity_calls=0 structural_unsupported=0 warnings=0

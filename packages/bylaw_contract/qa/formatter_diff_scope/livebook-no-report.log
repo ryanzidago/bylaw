@@ -1,0 +1,9 @@
+Running ExUnit with seed: 723816, max_cases: 28
+Excluding tags: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false]
+
+....................
+Finished in 0.01 seconds (0.01s async, 0.00s sync)
+
+Result: 20 passed
+[os_mon] memory supervisor port (memsup): Erlang has closed
+[os_mon] cpu supervisor port (cpu_sup): Erlang has closed

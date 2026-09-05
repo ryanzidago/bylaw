@@ -1,0 +1,9 @@
+** (ArgumentError) could not put/update key :live_reload on a nil value
+    (elixir 1.20.2) lib/access.ex:436: Access.get_and_update/3
+    (elixir 1.20.2) lib/keyword.ex:508: Keyword.get_and_update/4
+    /private/tmp/bylaw-reasons.oRUJf0/livebook/mix.exs:54: Livebook.MixProject.application/0
+    (mix 1.20.2) lib/mix/tasks/compile.all.ex:107: Mix.Tasks.Compile.All.compile_apps/2
+    (mix 1.20.2) lib/mix/tasks/compile.all.ex:40: Mix.Tasks.Compile.All.do_run/2
+    (mix 1.20.2) lib/mix/sync/lock.ex:122: Mix.Sync.Lock.with_lock/3
+    (mix 1.20.2) lib/mix/task.ex:502: anonymous fn/3 in Mix.Task.run_task/5
+    (mix 1.20.2) lib/mix/tasks/compile.ex:145: Mix.Tasks.Compile.run/1
