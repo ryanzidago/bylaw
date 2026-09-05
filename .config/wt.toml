@@ -1,4 +1,4 @@
-pre-switch = "if git -C {{ primary_worktree_path }} rev-parse --verify '@{upstream}' >/dev/null 2>&1; then git -C {{ primary_worktree_path }} fetch --quiet && git -C {{ primary_worktree_path }} merge --ff-only '@{upstream}'; fi"
+pre-switch = "if git -C {{ primary_worktree_path }} rev-parse --verify '@{upstream}' >/dev/null 2>&1; then git -C {{ primary_worktree_path }} fetch --quiet && BYLAW_WORKTREE_SWITCH=1 git -C {{ primary_worktree_path }} merge --ff-only '@{upstream}'; fi"
 
 [pre-start]
 hooks = "scripts/install-hooks"

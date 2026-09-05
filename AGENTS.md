@@ -49,6 +49,9 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - The post-merge hook removes clean worktrees for merged PRs and clean
   worktrees for closed PRs. It preserves dirty worktrees, open or reopened PRs,
   branches without PRs, and the local branch for a closed-but-unmerged PR.
+- Finished-PR cleanup is deferred when a post-merge hook runs inside the
+  Worktrunk pre-switch refresh, preserving the active switch's source worktree.
+  A later ordinary post-merge cleanup can remove those completed worktrees.
 - Keep unrelated changes out of the same commit or PR.
 - Read the nearby code and tests before changing behavior.
 - Prefer focused, explicit modules over broad orchestration APIs.
