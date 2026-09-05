@@ -30,9 +30,9 @@ def deps do
 end
 ```
 
-The package requires Erlang/OTP 27 or newer because it uses isolated sessions
-from the recent `:trace` API. The Bylaw development toolchain currently tests
-it on Erlang/OTP 29 with Elixir 1.20.
+The package requires Elixir 1.20 or newer and Erlang/OTP 27 or newer. It uses
+isolated sessions from the recent `:trace` API. The Bylaw development toolchain
+currently tests it on Erlang/OTP 29 with Elixir 1.20.
 
 Checks initialize sequentially in their own workers, with earlier claims
 passed to later checks. Trace sessions activate after initialization succeeds.
