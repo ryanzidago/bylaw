@@ -57,34 +57,18 @@ defmodule Bylaw.Contract.StructuralCoverage do
   def stop_shadow(nil), do: :ok
   def stop_shadow(shadow_module) when is_atom(shadow_module), do: unload_shadow(shadow_module)
 
+  @doc false
   @spec classify(
           shadow_module :: module(),
           classifier :: map(),
-          clauses :: list(map()),
           arguments :: list(term())
-        ) :: map()
-  def classify(shadow_module, classifier, clauses, arguments) do
-    {selected_position, raw_outcomes} =
-      apply(shadow_module, classifier.classifier_function, [
-        classifier.source_function,
-        classifier.source_arity,
-        arguments
-      ])
-
-    outcomes =
-      clauses
-      |> Enum.zip(raw_outcomes)
-      |> Map.new(fn {clause, {head_matches?, guard_passes?}} ->
-        {clause.id,
-         %{
-           head_matches?: head_matches?,
-           guard_passes?: guard_passes?,
-           guard_rejected?: clause.guarded? and head_matches? and not guard_passes?,
-           selected?: selected_position == clause.position
-         }}
-      end)
-
-    %{selected: selected_position, outcomes: outcomes}
+        ) :: {non_neg_integer() | :no_clause, list({boolean(), boolean()})}
+  def classify(shadow_module, classifier, arguments) do
+    apply(shadow_module, classifier.classifier_function, [
+      classifier.source_function,
+      classifier.source_arity,
+      arguments
+    ])
   end
 
   defp empty_result do

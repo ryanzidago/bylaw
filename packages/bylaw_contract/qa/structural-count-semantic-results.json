@@ -1,0 +1,3428 @@
+{
+  "manifest": {
+    "calls": 1000,
+    "cycles": 3,
+    "limit_mib": 384,
+    "modes": [
+      "typespec",
+      "structural",
+      "default"
+    ],
+    "payload": 2048,
+    "repeats": 3,
+    "speeds": [
+      "running",
+      "paused",
+      "slow10"
+    ],
+    "variants": {
+      "baseline": 0,
+      "candidate-high": 4096,
+      "candidate-low": 64
+    }
+  },
+  "trials": [
+    {
+      "name": "default--paused--baseline--1",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31702,
+          "stop_us": 98191
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31757,
+          "stop_us": 104613
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31393,
+          "stop_us": 100865
+        }
+      ],
+      "os_peak": 187024104
+    },
+    {
+      "name": "default--paused--baseline--2",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31554,
+          "stop_us": 105311
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29758,
+          "stop_us": 101854
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 28744,
+          "stop_us": 99405
+        }
+      ],
+      "os_peak": 233734912
+    },
+    {
+      "name": "default--paused--baseline--3",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31376,
+          "stop_us": 101848
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31296,
+          "stop_us": 101521
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 28553,
+          "stop_us": 99584
+        }
+      ],
+      "os_peak": 267207400
+    },
+    {
+      "name": "default--paused--candidate-high--1",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31587,
+          "stop_us": 101398
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31093,
+          "stop_us": 97918
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31186,
+          "stop_us": 98815
+        }
+      ],
+      "os_peak": 242434816
+    },
+    {
+      "name": "default--paused--candidate-high--2",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 32061,
+          "stop_us": 101719
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 30177,
+          "stop_us": 100075
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 27227,
+          "stop_us": 97625
+        }
+      ],
+      "os_peak": 192037608
+    },
+    {
+      "name": "default--paused--candidate-high--3",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31875,
+          "stop_us": 106186
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29308,
+          "stop_us": 106920
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29046,
+          "stop_us": 103403
+        }
+      ],
+      "os_peak": 192545512
+    },
+    {
+      "name": "default--paused--candidate-low--1",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 31098,
+          "stop_us": 6560
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 250
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 219
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "95AE83C448EEFFBF95755427BB159A2194B2545D712E4236D6A9944EEA12ECDE",
+          "report_hash": "218CAB59E4EB0A6285D4247BA6294843EB5623BD97B4AF1E04F9EC31AA33E76F",
+          "observation_us": 13269,
+          "stop_us": 3660
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1774
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 887
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "29DE760D507491B66782C9053A1EC865C172EBC1F8DF9D0649A0B6892A5F04C6",
+          "report_hash": "E50E339617C55273253647D52CD929781B19570B51E21D422A07FE2263339016",
+          "observation_us": 27925,
+          "stop_us": 7325
+        }
+      ],
+      "os_peak": 218710784
+    },
+    {
+      "name": "default--paused--candidate-low--2",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30616,
+          "stop_us": 6339
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1837
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 919
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "A396D2C014432030FC01C8661E65853541C12B900FC4B3F8DA45ED31A4623A6E",
+          "report_hash": "0B7BFBFE0746154304C9BE67CB2B1CAFC902204DC05CB816F45A0D458846C4CD",
+          "observation_us": 27461,
+          "stop_us": 6157
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "04385131F592922E4EE1944B799744A8C7DE303E1A20CA79B04EB3BC3B036FA3",
+          "report_hash": "F9F8B7638E401D4A944B44A6BE726C75BF6046A20BF0B111C9751C0EFBDB03B2",
+          "observation_us": 30292,
+          "stop_us": 6301
+        }
+      ],
+      "os_peak": 254558952
+    },
+    {
+      "name": "default--paused--candidate-low--3",
+      "mode": "default",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 31867,
+          "stop_us": 7981
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1769
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "FD475F9DA44D1EC7090FB9A20B32FD135618F323A4E273AF12C9301B61708B08",
+          "report_hash": "583A10C231C41B4B972F24EF36E10603220595A769C4A38D3BA7FBC362AF42F7",
+          "observation_us": 27060,
+          "stop_us": 5825
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 882
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "B257DAE0FFC9E51F57C6A86E0B71FFDC53349FE788D73C0E68A699F06E024C0F",
+          "report_hash": "9A57954C89A4A175DD37DDA8DEFF5B24B1E1262847728D33716EBF75F19DF00C",
+          "observation_us": 29149,
+          "stop_us": 6770
+        }
+      ],
+      "os_peak": 236372712
+    },
+    {
+      "name": "default--running--baseline--1",
+      "mode": "default",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31242,
+          "stop_us": 66589
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 28650,
+          "stop_us": 65985
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29027,
+          "stop_us": 66192
+        }
+      ],
+      "os_peak": 222757608
+    },
+    {
+      "name": "default--running--baseline--2",
+      "mode": "default",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31385,
+          "stop_us": 78454
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29037,
+          "stop_us": 68537
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 27977,
+          "stop_us": 68380
+        }
+      ],
+      "os_peak": 216892136
+    },
+    {
+      "name": "default--running--baseline--3",
+      "mode": "default",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31259,
+          "stop_us": 71128
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 30372,
+          "stop_us": 66571
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 27395,
+          "stop_us": 67270
+        }
+      ],
+      "os_peak": 223970048
+    },
+    {
+      "name": "default--running--candidate-high--1",
+      "mode": "default",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31241,
+          "stop_us": 67795
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29388,
+          "stop_us": 46592
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31557,
+          "stop_us": 66718
+        }
+      ],
+      "os_peak": 194527976
+    },
+    {
+      "name": "default--running--candidate-high--2",
+      "mode": "default",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 32805,
+          "stop_us": 44648
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 30307,
+          "stop_us": 68606
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 28249,
+          "stop_us": 66455
+        }
+      ],
+      "os_peak": 192103144
+    },
+    {
+      "name": "default--running--candidate-high--3",
+      "mode": "default",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31183,
+          "stop_us": 69442
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29872,
+          "stop_us": 42782
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29748,
+          "stop_us": 68475
+        }
+      ],
+      "os_peak": 188547816
+    },
+    {
+      "name": "default--running--candidate-low--1",
+      "mode": "default",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30703,
+          "stop_us": 1170
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "04385131F592922E4EE1944B799744A8C7DE303E1A20CA79B04EB3BC3B036FA3",
+          "report_hash": "F9F8B7638E401D4A944B44A6BE726C75BF6046A20BF0B111C9751C0EFBDB03B2",
+          "observation_us": 29577,
+          "stop_us": 1249
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1769
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 884
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "603BB6FBF80C1F088FCC8E0D83E3227664AB08970B94C3AA1240BDF73A879846",
+          "report_hash": "DA7F32E0918EEBF65C005D785AA82D6E36FFF7572F93515775363D386D6E6299",
+          "observation_us": 29772,
+          "stop_us": 1195
+        }
+      ],
+      "os_peak": 183010048
+    },
+    {
+      "name": "default--running--candidate-low--2",
+      "mode": "default",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30995,
+          "stop_us": 1143
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "04385131F592922E4EE1944B799744A8C7DE303E1A20CA79B04EB3BC3B036FA3",
+          "report_hash": "F9F8B7638E401D4A944B44A6BE726C75BF6046A20BF0B111C9751C0EFBDB03B2",
+          "observation_us": 29897,
+          "stop_us": 1157
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E053CF055BDC1C11E48ACB280FB775DC212743BF7CD6CE2B73461B06C119DCEE",
+          "report_hash": "99E3D4B1F8B16C905576719A8C29AB778566C9B8472D03A7E004DBB4A3AD0ED9",
+          "observation_us": 28110,
+          "stop_us": 1123
+        }
+      ],
+      "os_peak": 221184720
+    },
+    {
+      "name": "default--running--candidate-low--3",
+      "mode": "default",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30862,
+          "stop_us": 1194
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E053CF055BDC1C11E48ACB280FB775DC212743BF7CD6CE2B73461B06C119DCEE",
+          "report_hash": "99E3D4B1F8B16C905576719A8C29AB778566C9B8472D03A7E004DBB4A3AD0ED9",
+          "observation_us": 27656,
+          "stop_us": 1159
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 884
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "FAFE38D08ACB18A5BB1F71C50CC520E48EB5D1AB3E0D3F2BC677EC6727DDA031",
+          "report_hash": "184D9DD60D9B04CBFEDD7943677D6D92BDBDBC7DA23524F206E6096D55D4D7B1",
+          "observation_us": 29252,
+          "stop_us": 1178
+        }
+      ],
+      "os_peak": 186467000
+    },
+    {
+      "name": "default--slow10--baseline--1",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31816,
+          "stop_us": 7795
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31108,
+          "stop_us": 7651
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29823,
+          "stop_us": 8633
+        }
+      ],
+      "os_peak": 253707008
+    },
+    {
+      "name": "default--slow10--baseline--2",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 32021,
+          "stop_us": 7749
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 30040,
+          "stop_us": 8220
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 27055,
+          "stop_us": 8683
+        }
+      ],
+      "os_peak": 230359784
+    },
+    {
+      "name": "default--slow10--baseline--3",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 32174,
+          "stop_us": 7524
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29530,
+          "stop_us": 8184
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 30148,
+          "stop_us": 57263
+        }
+      ],
+      "os_peak": 226001616
+    },
+    {
+      "name": "default--slow10--candidate-high--1",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31536,
+          "stop_us": 8499
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29634,
+          "stop_us": 8349
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29726,
+          "stop_us": 65160
+        }
+      ],
+      "os_peak": 192381672
+    },
+    {
+      "name": "default--slow10--candidate-high--2",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31573,
+          "stop_us": 8705
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29068,
+          "stop_us": 8708
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 32152,
+          "stop_us": 59753
+        }
+      ],
+      "os_peak": 250839808
+    },
+    {
+      "name": "default--slow10--candidate-high--3",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31415,
+          "stop_us": 8884
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 29548,
+          "stop_us": 8989
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "2827C8B21E75BE0D92647D030FF31158709DB3B569EB4EA22382CE027C3D8547",
+          "report_hash": "9A090F44EC7A72221448FB20100EF1EAD25574BF58E49111B847F6C6EA3CC5BD",
+          "observation_us": 31286,
+          "stop_us": 8344
+        }
+      ],
+      "os_peak": 189399808
+    },
+    {
+      "name": "default--slow10--candidate-low--1",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30150,
+          "stop_us": 1367
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1762
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 881
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E053CF055BDC1C11E48ACB280FB775DC212743BF7CD6CE2B73461B06C119DCEE",
+          "report_hash": "99E3D4B1F8B16C905576719A8C29AB778566C9B8472D03A7E004DBB4A3AD0ED9",
+          "observation_us": 26746,
+          "stop_us": 1470
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 885
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "04385131F592922E4EE1944B799744A8C7DE303E1A20CA79B04EB3BC3B036FA3",
+          "report_hash": "F9F8B7638E401D4A944B44A6BE726C75BF6046A20BF0B111C9751C0EFBDB03B2",
+          "observation_us": 28505,
+          "stop_us": 1157
+        }
+      ],
+      "os_peak": 181224120
+    },
+    {
+      "name": "default--slow10--candidate-low--2",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30960,
+          "stop_us": 1230
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1772
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "EA5DEFCB3B3DD92E90A28F38EC2F213407732FAAB179E1AA747781B06C68B6FF",
+          "report_hash": "1ED7D916AE08F4298A2C10F134461233CBB4DCBF8A63B5FA8CDC51A5B64DDC82",
+          "observation_us": 30945,
+          "stop_us": 1462
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1763
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 882
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "B257DAE0FFC9E51F57C6A86E0B71FFDC53349FE788D73C0E68A699F06E024C0F",
+          "report_hash": "9A57954C89A4A175DD37DDA8DEFF5B24B1E1262847728D33716EBF75F19DF00C",
+          "observation_us": 27574,
+          "stop_us": 1348
+        }
+      ],
+      "os_peak": 217989864
+    },
+    {
+      "name": "default--slow10--candidate-low--3",
+      "mode": "default",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 943
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "5E0160161FDF03D5283E2EFF5F130FCB0A362043D257C5A11DACF232B5923B0A",
+          "report_hash": "E8C5CA29B55B16D92FC3F7DE9E99E3C70B59DB7F26F6DB83F2364765721041B8",
+          "observation_us": 30528,
+          "stop_us": 1205
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1817
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 909
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "68C9C9880189147613528973B6E77B1CF87C68C1113035EC2A2B8EA0B95A45BB",
+          "report_hash": "E35B7E5E76E0B5DD65847BFC602758F9C779EA733932C13F5C937450EA28F5A7",
+          "observation_us": 28444,
+          "stop_us": 1225
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1812
+            },
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 939
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E7191562EB9D6E04CABF7FCF572905118B6C1F17FC1AB9911CABA8923A81109C",
+          "report_hash": "5A202769C99C571073BC4AD5572FD9E369ACD9E6CCD9079F84E45509B927DCC0",
+          "observation_us": 29084,
+          "stop_us": 1357
+        }
+      ],
+      "os_peak": 241550080
+    },
+    {
+      "name": "structural--paused--baseline--1",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10453,
+          "stop_us": 7571
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10518,
+          "stop_us": 8112
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 8896,
+          "stop_us": 7813
+        }
+      ],
+      "os_peak": 150176416
+    },
+    {
+      "name": "structural--paused--baseline--2",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10277,
+          "stop_us": 8319
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10432,
+          "stop_us": 7232
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9548,
+          "stop_us": 7227
+        }
+      ],
+      "os_peak": 164037328
+    },
+    {
+      "name": "structural--paused--baseline--3",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10439,
+          "stop_us": 7500
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9900,
+          "stop_us": 7188
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 8995,
+          "stop_us": 7828
+        }
+      ],
+      "os_peak": 151700104
+    },
+    {
+      "name": "structural--paused--candidate-high--1",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10438,
+          "stop_us": 7419
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9803,
+          "stop_us": 8292
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9706,
+          "stop_us": 7395
+        }
+      ],
+      "os_peak": 126616248
+    },
+    {
+      "name": "structural--paused--candidate-high--2",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10381,
+          "stop_us": 7056
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10271,
+          "stop_us": 8081
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9653,
+          "stop_us": 7281
+        }
+      ],
+      "os_peak": 126648968
+    },
+    {
+      "name": "structural--paused--candidate-high--3",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10535,
+          "stop_us": 8328
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10613,
+          "stop_us": 8456
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9460,
+          "stop_us": 8392
+        }
+      ],
+      "os_peak": 151519952
+    },
+    {
+      "name": "structural--paused--candidate-low--1",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10268,
+          "stop_us": 3847
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10106,
+          "stop_us": 3732
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9272,
+          "stop_us": 3599
+        }
+      ],
+      "os_peak": 129778336
+    },
+    {
+      "name": "structural--paused--candidate-low--2",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10195,
+          "stop_us": 3763
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9396,
+          "stop_us": 3902
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 544
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "656B716A14F7152DB8A4518BB9C96951F57C03502BCC974E1388F07030EEAC93",
+          "report_hash": "9D95B25321B93E9AB2FB552045C9D909B56573AE70CA32F99470C4E02A6511E8",
+          "observation_us": 5418,
+          "stop_us": 2563
+        }
+      ],
+      "os_peak": 145605304
+    },
+    {
+      "name": "structural--paused--candidate-low--3",
+      "mode": "structural",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10753,
+          "stop_us": 4119
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 11226,
+          "stop_us": 3659
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9885,
+          "stop_us": 3614
+        }
+      ],
+      "os_peak": 130237136
+    },
+    {
+      "name": "structural--running--baseline--1",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10592,
+          "stop_us": 4684
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10033,
+          "stop_us": 5125
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9142,
+          "stop_us": 5111
+        }
+      ],
+      "os_peak": 128697016
+    },
+    {
+      "name": "structural--running--baseline--2",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10142,
+          "stop_us": 4834
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10305,
+          "stop_us": 4781
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10115,
+          "stop_us": 4684
+        }
+      ],
+      "os_peak": 155615904
+    },
+    {
+      "name": "structural--running--baseline--3",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10458,
+          "stop_us": 7212
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10232,
+          "stop_us": 5300
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9573,
+          "stop_us": 4242
+        }
+      ],
+      "os_peak": 126059192
+    },
+    {
+      "name": "structural--running--candidate-high--1",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10628,
+          "stop_us": 4200
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10624,
+          "stop_us": 4587
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9617,
+          "stop_us": 4168
+        }
+      ],
+      "os_peak": 166953704
+    },
+    {
+      "name": "structural--running--candidate-high--2",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10299,
+          "stop_us": 4081
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10067,
+          "stop_us": 5164
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9326,
+          "stop_us": 3949
+        }
+      ],
+      "os_peak": 151896760
+    },
+    {
+      "name": "structural--running--candidate-high--3",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10369,
+          "stop_us": 4102
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10374,
+          "stop_us": 6418
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9400,
+          "stop_us": 5493
+        }
+      ],
+      "os_peak": 160416464
+    },
+    {
+      "name": "structural--running--candidate-low--1",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10507,
+          "stop_us": 1297
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10497,
+          "stop_us": 10206
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9361,
+          "stop_us": 1064
+        }
+      ],
+      "os_peak": 156025528
+    },
+    {
+      "name": "structural--running--candidate-low--2",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10385,
+          "stop_us": 1166
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9124,
+          "stop_us": 1088
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9132,
+          "stop_us": 1381
+        }
+      ],
+      "os_peak": 156877520
+    },
+    {
+      "name": "structural--running--candidate-low--3",
+      "mode": "structural",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10268,
+          "stop_us": 1119
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10242,
+          "stop_us": 1070
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9542,
+          "stop_us": 1120
+        }
+      ],
+      "os_peak": 134283936
+    },
+    {
+      "name": "structural--slow10--baseline--1",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10350,
+          "stop_us": 4148
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10258,
+          "stop_us": 4122
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 8273,
+          "stop_us": 4031
+        }
+      ],
+      "os_peak": 126862008
+    },
+    {
+      "name": "structural--slow10--baseline--2",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10459,
+          "stop_us": 4065
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10108,
+          "stop_us": 4169
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9318,
+          "stop_us": 4657
+        }
+      ],
+      "os_peak": 109134472
+    },
+    {
+      "name": "structural--slow10--baseline--3",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10461,
+          "stop_us": 4914
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10670,
+          "stop_us": 4269
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 8965,
+          "stop_us": 4764
+        }
+      ],
+      "os_peak": 154387176
+    },
+    {
+      "name": "structural--slow10--candidate-high--1",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10588,
+          "stop_us": 4276
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10475,
+          "stop_us": 4323
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9133,
+          "stop_us": 5055
+        }
+      ],
+      "os_peak": 153486056
+    },
+    {
+      "name": "structural--slow10--candidate-high--2",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10327,
+          "stop_us": 4321
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10511,
+          "stop_us": 4365
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9136,
+          "stop_us": 5150
+        }
+      ],
+      "os_peak": 151765664
+    },
+    {
+      "name": "structural--slow10--candidate-high--3",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10441,
+          "stop_us": 4373
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 10506,
+          "stop_us": 4192
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "4AB31D061D5DB93CC6D5CC284710EEC5D05857E25AC3D9E745B7BD971C93311C",
+          "report_hash": "877DE6AD12DAF58B0C0EDB31E23EEAFCCE1DCE99C5B8A40569EA2888A075DC48",
+          "observation_us": 9069,
+          "stop_us": 4849
+        }
+      ],
+      "os_peak": 128909984
+    },
+    {
+      "name": "structural--slow10--candidate-low--1",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10296,
+          "stop_us": 1208
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 531
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "51463E8D3CBAE6FC76E16EFB350A8C6150A27B48D8D523238058762E73395A2E",
+          "report_hash": "8D2647668579A9E6AE91930452A23744CADE19DD677EE63579F0ACB6E4119607",
+          "observation_us": 5356,
+          "stop_us": 1109
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9002,
+          "stop_us": 1033
+        }
+      ],
+      "os_peak": 116048544
+    },
+    {
+      "name": "structural--slow10--candidate-low--2",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10610,
+          "stop_us": 1236
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10456,
+          "stop_us": 1384
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9519,
+          "stop_us": 1056
+        }
+      ],
+      "os_peak": 128713376
+    },
+    {
+      "name": "structural--slow10--candidate-low--3",
+      "mode": "structural",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10532,
+          "stop_us": 1230
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 10790,
+          "stop_us": 1031
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.FunctionClauses",
+              "limit": 64,
+              "observed": 1000
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "7789994D2F0D4A60117E700554B16BC3F3068F40057D6342F7779542E8BF09B5",
+          "report_hash": "D9A1CEEF024D50D62A1FB117026D4784F38AFCBABA9CEE3A054DC8139BA1268C",
+          "observation_us": 9628,
+          "stop_us": 1175
+        }
+      ],
+      "os_peak": 153748152
+    },
+    {
+      "name": "typespec--paused--baseline--1",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21206,
+          "stop_us": 165545
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20573,
+          "stop_us": 92191
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20382,
+          "stop_us": 92899
+        }
+      ],
+      "os_peak": 155681464
+    },
+    {
+      "name": "typespec--paused--baseline--2",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21446,
+          "stop_us": 90809
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 19296,
+          "stop_us": 94332
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20583,
+          "stop_us": 93551
+        }
+      ],
+      "os_peak": 154337976
+    },
+    {
+      "name": "typespec--paused--baseline--3",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20874,
+          "stop_us": 96200
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 19663,
+          "stop_us": 95468
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20365,
+          "stop_us": 97776
+        }
+      ],
+      "os_peak": 205079248
+    },
+    {
+      "name": "typespec--paused--candidate-high--1",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21513,
+          "stop_us": 95513
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 18870,
+          "stop_us": 94062
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20472,
+          "stop_us": 94261
+        }
+      ],
+      "os_peak": 153584336
+    },
+    {
+      "name": "typespec--paused--candidate-high--2",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21135,
+          "stop_us": 167678
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20118,
+          "stop_us": 99198
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20569,
+          "stop_us": 92169
+        }
+      ],
+      "os_peak": 202949352
+    },
+    {
+      "name": "typespec--paused--candidate-high--3",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20996,
+          "stop_us": 95056
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20348,
+          "stop_us": 106466
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20916,
+          "stop_us": 95171
+        }
+      ],
+      "os_peak": 198853280
+    },
+    {
+      "name": "typespec--paused--candidate-low--1",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "349115664B142CEA2412CA4B6E61885824A33551B8943FAF4E08F60436EF0027",
+          "report_hash": "229C5866216945BFEA1EBB45C72E6C8D9725CA3D9121B98B4860FD774250329E",
+          "observation_us": 21014,
+          "stop_us": 5775
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "986601ADF42009242062A95E827BC2816397147B6CA73CCD98B429DC1538C4BE",
+          "report_hash": "905AA8A1CB41388B90A8FC6632EE769D22F03ECF4F7524E3A0C5D640008F68A2",
+          "observation_us": 20904,
+          "stop_us": 6516
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 19818,
+          "stop_us": 5879
+        }
+      ],
+      "os_peak": 150766288
+    },
+    {
+      "name": "typespec--paused--candidate-low--2",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "349115664B142CEA2412CA4B6E61885824A33551B8943FAF4E08F60436EF0027",
+          "report_hash": "229C5866216945BFEA1EBB45C72E6C8D9725CA3D9121B98B4860FD774250329E",
+          "observation_us": 20817,
+          "stop_us": 5774
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 17874,
+          "stop_us": 5200
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1800
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "FF04E62F376C3704C6E0890ADEB69334102946E5C04EB0E7BFE26A328F14F6B2",
+          "report_hash": "0FBFFAACB50146C12BC5EBFCCF77499F87F1DCD19F5E83A9F27277F7616AFE21",
+          "observation_us": 18823,
+          "stop_us": 4878
+        }
+      ],
+      "os_peak": 154108600
+    },
+    {
+      "name": "typespec--paused--candidate-low--3",
+      "mode": "typespec",
+      "speed": "paused",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 583
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "CF933389EB8A25AC16A315DBE9B1FFE452F295C7A04DBBD540653C6E08767350",
+          "report_hash": "C0726540EE7D070FCE69834559985B2F7AA44244A7CADFDDCABD4225DA8E70F2",
+          "observation_us": 6166,
+          "stop_us": 1543
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1872
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "335CB2637D23CFA033ED554EFD0B0C2DDF8452D1C0D32CC502C21A40FF7D6A17",
+          "report_hash": "89003AE5F878F86849B7CCFF33527F5517445F1CE0967418893945AD1ADC8706",
+          "observation_us": 18723,
+          "stop_us": 5133
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 19546,
+          "stop_us": 4990
+        }
+      ],
+      "os_peak": 198066896
+    },
+    {
+      "name": "typespec--running--baseline--1",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20657,
+          "stop_us": 45799
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20292,
+          "stop_us": 63877
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 19522,
+          "stop_us": 61193
+        }
+      ],
+      "os_peak": 202179328
+    },
+    {
+      "name": "typespec--running--baseline--2",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20435,
+          "stop_us": 66787
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20101,
+          "stop_us": 107752
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20830,
+          "stop_us": 65040
+        }
+      ],
+      "os_peak": 154944184
+    },
+    {
+      "name": "typespec--running--baseline--3",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20467,
+          "stop_us": 64068
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20004,
+          "stop_us": 63216
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 17985,
+          "stop_us": 60337
+        }
+      ],
+      "os_peak": 201818856
+    },
+    {
+      "name": "typespec--running--candidate-high--1",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20847,
+          "stop_us": 100553
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20556,
+          "stop_us": 61621
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20590,
+          "stop_us": 91739
+        }
+      ],
+      "os_peak": 203096784
+    },
+    {
+      "name": "typespec--running--candidate-high--2",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20716,
+          "stop_us": 63463
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20444,
+          "stop_us": 64933
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 18945,
+          "stop_us": 63371
+        }
+      ],
+      "os_peak": 152601224
+    },
+    {
+      "name": "typespec--running--candidate-high--3",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21216,
+          "stop_us": 64588
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20262,
+          "stop_us": 63139
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20618,
+          "stop_us": 63921
+        }
+      ],
+      "os_peak": 147505848
+    },
+    {
+      "name": "typespec--running--candidate-low--1",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "349115664B142CEA2412CA4B6E61885824A33551B8943FAF4E08F60436EF0027",
+          "report_hash": "229C5866216945BFEA1EBB45C72E6C8D9725CA3D9121B98B4860FD774250329E",
+          "observation_us": 19588,
+          "stop_us": 44
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "349115664B142CEA2412CA4B6E61885824A33551B8943FAF4E08F60436EF0027",
+          "report_hash": "229C5866216945BFEA1EBB45C72E6C8D9725CA3D9121B98B4860FD774250329E",
+          "observation_us": 19013,
+          "stop_us": 40
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1800
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "FF04E62F376C3704C6E0890ADEB69334102946E5C04EB0E7BFE26A328F14F6B2",
+          "report_hash": "0FBFFAACB50146C12BC5EBFCCF77499F87F1DCD19F5E83A9F27277F7616AFE21",
+          "observation_us": 18734,
+          "stop_us": 140
+        }
+      ],
+      "os_peak": 201097936
+    },
+    {
+      "name": "typespec--running--candidate-low--2",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 65
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "AB2979826839EA5719D2BE8489C6037502E8858562AE85E8E8BBF4EB171E5CEA",
+          "report_hash": "868A4BFD43C3091A371C875E16A8331D6BD8A02FD9963F943D9BFDF32867C483",
+          "observation_us": 932,
+          "stop_us": 44
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 67
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "0591062C22DACF70A6EF544F667440F07B5E62D31F858774E8B707A30C88C60E",
+          "report_hash": "AEB0CF9DEBA73E59F425FD34DA95B40331236D90C8A9C6B3A820798F60B82A98",
+          "observation_us": 921,
+          "stop_us": 54
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "986601ADF42009242062A95E827BC2816397147B6CA73CCD98B429DC1538C4BE",
+          "report_hash": "905AA8A1CB41388B90A8FC6632EE769D22F03ECF4F7524E3A0C5D640008F68A2",
+          "observation_us": 18790,
+          "stop_us": 120
+        }
+      ],
+      "os_peak": 145474232
+    },
+    {
+      "name": "typespec--running--candidate-low--3",
+      "mode": "typespec",
+      "speed": "running",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1886
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "349115664B142CEA2412CA4B6E61885824A33551B8943FAF4E08F60436EF0027",
+          "report_hash": "229C5866216945BFEA1EBB45C72E6C8D9725CA3D9121B98B4860FD774250329E",
+          "observation_us": 19916,
+          "stop_us": 331
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1770
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "6976B34783AF37C58FF8D519FFF6B671B76E73898C06E2709F2D64990C62FB0B",
+          "report_hash": "320574B8FD6B74ABB497572E897FAFCD37E0F56332DEC0EE084B5A59DBAB16E8",
+          "observation_us": 18818,
+          "stop_us": 64
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 18014,
+          "stop_us": 168
+        }
+      ],
+      "os_peak": 144540344
+    },
+    {
+      "name": "typespec--slow10--baseline--1",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21190,
+          "stop_us": 3284
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20335,
+          "stop_us": 3716
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20694,
+          "stop_us": 2611
+        }
+      ],
+      "os_peak": 202408680
+    },
+    {
+      "name": "typespec--slow10--baseline--2",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21400,
+          "stop_us": 2688
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20848,
+          "stop_us": 3689
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20495,
+          "stop_us": 3275
+        }
+      ],
+      "os_peak": 152077008
+    },
+    {
+      "name": "typespec--slow10--baseline--3",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 0,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21436,
+          "stop_us": 2615
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20909,
+          "stop_us": 3471
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 16588,
+          "stop_us": 4216
+        }
+      ],
+      "os_peak": 153502344
+    },
+    {
+      "name": "typespec--slow10--candidate-high--1",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21406,
+          "stop_us": 2760
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20549,
+          "stop_us": 3248
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20133,
+          "stop_us": 3589
+        }
+      ],
+      "os_peak": 198312680
+    },
+    {
+      "name": "typespec--slow10--candidate-high--2",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 20895,
+          "stop_us": 3838
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 19437,
+          "stop_us": 4141
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 18520,
+          "stop_us": 3115
+        }
+      ],
+      "os_peak": 154976952
+    },
+    {
+      "name": "typespec--slow10--candidate-high--3",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 4096,
+      "cycles": [
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21683,
+          "stop_us": 3352
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 21122,
+          "stop_us": 3160
+        },
+        {
+          "incomplete": [],
+          "status": "complete",
+          "coverage_hash": "95924EC5604DADBE782A4796FBA9FDA7E9BDE0BF5484B9A1A968F23C49C6A36D",
+          "report_hash": "E55C0FCBCD8DCC1DD5CC8EACAD5A8B18CA3CEABAED0324741741475C9B34FB41",
+          "observation_us": 18582,
+          "stop_us": 2821
+        }
+      ],
+      "os_peak": 202900200
+    },
+    {
+      "name": "typespec--slow10--candidate-low--1",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1887
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E9F12A4F4BF28519FA5366EEF9051E39B621863ACA29112637201E14F2856BBB",
+          "report_hash": "0B66466B9EF89B6C0EA39039F2BCDD4C321E8250447D8A1CBE8CC98D61C7D3B2",
+          "observation_us": 20940,
+          "stop_us": 115
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1798
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "03650B01DD30C1E351E80D50A2BE4EF07A080BD0DC6930577803E47997BA8A91",
+          "report_hash": "4A0D7C82B14CDD47EE252C0F9EFDA807059B16B3728B23BB8AF00DD1C4F5BBA3",
+          "observation_us": 20342,
+          "stop_us": 250
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 18693,
+          "stop_us": 39
+        }
+      ],
+      "os_peak": 136217296
+    },
+    {
+      "name": "typespec--slow10--candidate-low--2",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 797
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "39663E0D55E6098ABA652C9FA810D39D7F135A0B76BFCB6A05FFA38AEC4B1319",
+          "report_hash": "B46CEBD70AE6D9170542F03AB27FA0D8DBFE7191DBF8357EE9F55F7842317502",
+          "observation_us": 8482,
+          "stop_us": 85
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1872
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "335CB2637D23CFA033ED554EFD0B0C2DDF8452D1C0D32CC502C21A40FF7D6A17",
+          "report_hash": "89003AE5F878F86849B7CCFF33527F5517445F1CE0967418893945AD1ADC8706",
+          "observation_us": 20216,
+          "stop_us": 54
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1768
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "986601ADF42009242062A95E827BC2816397147B6CA73CCD98B429DC1538C4BE",
+          "report_hash": "905AA8A1CB41388B90A8FC6632EE769D22F03ECF4F7524E3A0C5D640008F68A2",
+          "observation_us": 21171,
+          "stop_us": 77
+        }
+      ],
+      "os_peak": 163332840
+    },
+    {
+      "name": "typespec--slow10--candidate-low--3",
+      "mode": "typespec",
+      "speed": "slow10",
+      "limit": 64,
+      "cycles": [
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1887
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "E9F12A4F4BF28519FA5366EEF9051E39B621863ACA29112637201E14F2856BBB",
+          "report_hash": "0B66466B9EF89B6C0EA39039F2BCDD4C321E8250447D8A1CBE8CC98D61C7D3B2",
+          "observation_us": 21348,
+          "stop_us": 34
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 19134,
+          "stop_us": 157
+        },
+        {
+          "incomplete": [
+            {
+              "reason": "trace_queue_limit",
+              "check": "Elixir.Bylaw.Contract.Check.Typespec",
+              "limit": 64,
+              "observed": 1883
+            }
+          ],
+          "status": "incomplete",
+          "coverage_hash": "1F242D94528C4E411CB8C51F25A4C5B6F480ACD0AD41AF48218E72355207C64D",
+          "report_hash": "6DAF3ABC754D9AF648407F6AE9F7A97F7A36D47A7EA6FA87237CBA28E3EE1DCD",
+          "observation_us": 17305,
+          "stop_us": 57
+        }
+      ],
+      "os_peak": 152699576
+    }
+  ]
+}

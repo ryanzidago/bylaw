@@ -95,17 +95,11 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
 
   defp classify(state, clauses, arguments, mfa) do
     classifier = Map.fetch!(state.classifiers_by_mfa, mfa)
-    classification = StructuralCoverage.classify(state.shadow, classifier, clauses, arguments)
-
-    clause_outcomes =
-      Enum.reduce(classification.outcomes, state.clause_outcomes, fn {id, outcome}, outcomes ->
-        Map.update(outcomes, id, new_outcome_counts(outcome), fn counts ->
-          add_outcome(counts, outcome)
-        end)
-      end)
+    {selected, raw_outcomes} = StructuralCoverage.classify(state.shadow, classifier, arguments)
+    clause_outcomes = count_outcomes(clauses, raw_outcomes, selected, state.clause_outcomes)
 
     unmatched_clause_calls =
-      if classification.selected == :no_clause do
+      if selected == :no_clause do
         Map.update(state.unmatched_clause_calls, mfa, 1, &(&1 + 1))
       else
         state.unmatched_clause_calls
@@ -114,22 +108,33 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
     {clause_outcomes, unmatched_clause_calls}
   end
 
-  defp new_outcome_counts(outcome) do
-    %{
-      head_matches: boolean_count(outcome.head_matches?),
-      guard_passes: boolean_count(outcome.guard_passes?),
-      guard_rejections: boolean_count(outcome.guard_rejected?),
-      selected: boolean_count(outcome.selected?)
-    }
-  end
+  defp count_outcomes([], [], _selected, counts), do: counts
 
-  defp add_outcome(counts, outcome) do
-    %{
-      head_matches: counts.head_matches + boolean_count(outcome.head_matches?),
-      guard_passes: counts.guard_passes + boolean_count(outcome.guard_passes?),
-      guard_rejections: counts.guard_rejections + boolean_count(outcome.guard_rejected?),
-      selected: counts.selected + boolean_count(outcome.selected?)
-    }
+  defp count_outcomes([clause | clauses], [{head, guard} | outcomes], selected, counts) do
+    head_count = boolean_count(head)
+    guard_count = boolean_count(guard)
+    rejection_count = boolean_count(clause.guarded? and head and not guard)
+    selected_count = boolean_count(selected == clause.position)
+    updated = Map.get(counts, clause.id)
+
+    entry =
+      if updated do
+        %{
+          head_matches: updated.head_matches + head_count,
+          guard_passes: updated.guard_passes + guard_count,
+          guard_rejections: updated.guard_rejections + rejection_count,
+          selected: updated.selected + selected_count
+        }
+      else
+        %{
+          head_matches: head_count,
+          guard_passes: guard_count,
+          guard_rejections: rejection_count,
+          selected: selected_count
+        }
+      end
+
+    count_outcomes(clauses, outcomes, selected, Map.put(counts, clause.id, entry))
   end
 
   defp boolean_count(true), do: 1
