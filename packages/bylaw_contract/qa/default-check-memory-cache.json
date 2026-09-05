@@ -1,0 +1,250 @@
+{
+  "revision": "f8cb8ec6852e4e5b6a38cad7b3635ba4813829ed",
+  "runtime": "Elixir 1.20.2 / OTP 29.0.3",
+  "fixture": "default paused 1 1 0 2048 1 1000 3 return_payload",
+  "limit_mib": 384,
+  "sampling_ms": 20,
+  "disabled_flags": "+MMmcs 0",
+  "trials": [
+    {
+      "name": "default-1",
+      "status": "complete",
+      "os_peak": 254427928,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 46,
+            "segment_bytes": 53051392
+          },
+          "allocator_blocks": 38013568,
+          "allocator_carriers": 67010560,
+          "beam_peak": 52963611,
+          "os_peak": 154616528
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 54,
+            "segment_bytes": 54099968
+          },
+          "allocator_blocks": 38159176,
+          "allocator_carriers": 68059136,
+          "beam_peak": 52950131,
+          "os_peak": 192201448
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 55,
+            "segment_bytes": 54362112
+          },
+          "allocator_blocks": 37531968,
+          "allocator_carriers": 68059136,
+          "beam_peak": 52297843,
+          "os_peak": 206275328
+        }
+      ]
+    },
+    {
+      "name": "default-2",
+      "status": "complete",
+      "os_peak": 260375272,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 27,
+            "segment_bytes": 61702144
+          },
+          "allocator_blocks": 36453768,
+          "allocator_carriers": 73564160,
+          "beam_peak": 51810299,
+          "os_peak": 105808520
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 37,
+            "segment_bytes": 62226432
+          },
+          "allocator_blocks": 36415488,
+          "allocator_carriers": 73826304,
+          "beam_peak": 51690363,
+          "os_peak": 162497208
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 40,
+            "segment_bytes": 62226432
+          },
+          "allocator_blocks": 35899072,
+          "allocator_carriers": 73826304,
+          "beam_peak": 51120211,
+          "os_peak": 162267832
+        }
+      ]
+    },
+    {
+      "name": "default-3",
+      "status": "complete",
+      "os_peak": 238371584,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 31,
+            "segment_bytes": 54886400
+          },
+          "allocator_blocks": 37895496,
+          "allocator_carriers": 67010560,
+          "beam_peak": 52982995,
+          "os_peak": 143950568
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 34,
+            "segment_bytes": 54886400
+          },
+          "allocator_blocks": 38230680,
+          "allocator_carriers": 68583424,
+          "beam_peak": 53054787,
+          "os_peak": 139510504
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 43,
+            "segment_bytes": 63799296
+          },
+          "allocator_blocks": 37463944,
+          "allocator_carriers": 75137024,
+          "beam_peak": 52354699,
+          "os_peak": 187204352
+        }
+      ]
+    },
+    {
+      "name": "disabled-1",
+      "status": "complete",
+      "os_peak": 174506704,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 55148544
+          },
+          "allocator_blocks": 37856696,
+          "allocator_carriers": 69107712,
+          "beam_peak": 52844325,
+          "os_peak": 76858016
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 56197120
+          },
+          "allocator_blocks": 37919648,
+          "allocator_carriers": 69369856,
+          "beam_peak": 52932869,
+          "os_peak": 78561952
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 54886400
+          },
+          "allocator_blocks": 37047256,
+          "allocator_carriers": 66748416,
+          "beam_peak": 52231861,
+          "os_peak": 77464200
+        }
+      ]
+    },
+    {
+      "name": "disabled-2",
+      "status": "complete",
+      "os_peak": 184615632,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 61177856
+          },
+          "allocator_blocks": 36922128,
+          "allocator_carriers": 74612736,
+          "beam_peak": 51833637,
+          "os_peak": 84378272
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 63275008
+          },
+          "allocator_blocks": 36762632,
+          "allocator_carriers": 76447744,
+          "beam_peak": 51700933,
+          "os_peak": 86885024
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 62226432
+          },
+          "allocator_blocks": 35874016,
+          "allocator_carriers": 73826304,
+          "beam_peak": 51130701,
+          "os_peak": 86540960
+        }
+      ]
+    },
+    {
+      "name": "disabled-3",
+      "status": "complete",
+      "os_peak": 174228176,
+      "cycles": [
+        {
+          "cycle": 1,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 61964288
+          },
+          "allocator_blocks": 37666888,
+          "allocator_carriers": 74088448,
+          "beam_peak": 52849333,
+          "os_peak": 77595296
+        },
+        {
+          "cycle": 2,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 53575680
+          },
+          "allocator_blocks": 37422784,
+          "allocator_carriers": 64126976,
+          "beam_peak": 52680597,
+          "os_peak": 75498120
+        },
+        {
+          "cycle": 3,
+          "segments": {
+            "cached_segments": 0,
+            "segment_bytes": 53837824
+          },
+          "allocator_blocks": 37109992,
+          "allocator_carriers": 65699840,
+          "beam_peak": 52222149,
+          "os_peak": 76055176
+        }
+      ]
+    }
+  ]
+}
