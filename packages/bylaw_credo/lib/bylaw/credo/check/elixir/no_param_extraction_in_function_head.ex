@@ -329,6 +329,7 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHead do
   end
 
   defp struct_name(atom) when is_atom(atom), do: Atom.to_string(atom)
+  defp struct_name(_dynamic_struct), do: "value"
 
   defp dispatch_only_pattern({name, _meta, context}, guard_vars)
        when is_atom(name) and is_atom(context) do

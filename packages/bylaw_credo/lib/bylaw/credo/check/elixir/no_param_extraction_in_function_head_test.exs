@@ -269,6 +269,23 @@ defmodule Bylaw.Credo.Check.Elixir.NoParamExtractionInFunctionHeadTest do
     |> assert_issue()
   end
 
+  test "module-relative struct patterns produce an actionable issue" do
+    """
+    defmodule Example do
+      def configured?(%__MODULE__{config: %config_mod{} = config}) do
+        config_mod.configured?(config)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(NoParamExtractionInFunctionHead)
+    |> assert_issue(%{
+      line_no: 2,
+      trigger: "%__MODULE__{config: %config_mod{} = config}",
+      message: ~r/bind the whole param/
+    })
+  end
+
   # -- Should NOT flag --------------------------------------------------
 
   test "allows empty struct type check" do
