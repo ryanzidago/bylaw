@@ -63,6 +63,23 @@ check you want by listing its fully qualified module in the `checks:` list:
 See each check module's documentation for its examples, rationale, options, and
 check-specific `.credo.exs` usage.
 
+## Companion to Bylaw.Contract
+
+[Bylaw.Contract](https://hexdocs.pm/bylaw_contract/readme.html) measures which
+spec-derived cases tests exercise. Credo's built-in
+[`Specs`](https://hexdocs.pm/credo/Credo.Check.Readability.Specs.html) check
+requires specs to exist (`include_defp: true` includes private functions).
+
+Bylaw's
+[`NamedSpecParams`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.NamedSpecParams.html),
+[`FullyTypedOpts`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.FullyTypedOpts.html), and
+[`FullySpecifiedStructTypes`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes.html)
+checks help make specs explicit.
+[`NoRaise`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.NoRaise.html) and
+[`NoTryRescue`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.NoTryRescue.html)
+encourage explicit success/error results that can be declared as return unions
+for coverage.
+
 ## Function-level suppression
 
 ### What it solves
