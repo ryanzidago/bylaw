@@ -1,29 +1,31 @@
 defmodule Bylaw.Contract.Specs do
   @moduledoc false
 
+  alias Bylaw.Contract.FunctionSelection
+
   alias Bylaw.Contract.TypeMatcher
   alias Bylaw.Contract.TypeExpansion
 
   @types_cache_key {__MODULE__, :types_cache}
   @max_union_visits 4096
 
-  @spec load(modules :: list(module())) :: map()
-  def load(modules) do
+  @spec load(modules :: list(module()), selection :: FunctionSelection.t()) :: map()
+  def load(modules, selection \\ :all) do
     Process.put(@types_cache_key, %{})
 
     try do
-      do_load(modules)
+      do_load(FunctionSelection.modules(modules, selection), selection)
     after
       Process.delete(@types_cache_key)
     end
   end
 
-  defp do_load(modules) do
+  defp do_load(modules, selection) do
     {input_classes, boundaries, return_alternatives, warnings} =
       Enum.reduce(modules, {[], [], [], []}, fn module,
                                                 {input_classes, boundaries, return_alternatives,
                                                  warnings} ->
-        case load_module(module) do
+        case load_module(module, selection) do
           {:ok, module_classes, module_boundaries, module_returns, module_warnings} ->
             {
               module_classes ++ input_classes,
@@ -48,13 +50,19 @@ defmodule Bylaw.Contract.Specs do
     }
   end
 
-  defp load_module(module) do
+  defp load_module(module, selection) do
     with {:module, ^module} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module) do
       source_file = module.module_info(:compile) |> Keyword.get(:source) |> normalize_file()
 
       {input_classes, boundaries, return_alternatives, warnings} =
-        extract_specs(module, specs, source_file)
+        extract_specs(
+          module,
+          Enum.filter(specs, fn {{function, arity}, _} ->
+            FunctionSelection.member?(selection, module, function, arity)
+          end),
+          source_file
+        )
 
       {:ok, input_classes, boundaries, return_alternatives, warnings}
     else

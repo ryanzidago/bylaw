@@ -12,10 +12,11 @@ defmodule Bylaw.Contract.TraceWorker do
           check :: module(),
           opts :: list(),
           claims :: MapSet.t(),
-          max_trace_queue :: pos_integer()
+          max_trace_queue :: pos_integer(),
+          selection :: Bylaw.Contract.FunctionSelection.t()
         ) :: GenServer.on_start()
-  def start_link(modules, check, opts, claims, limit \\ 4096),
-    do: GenServer.start_link(__MODULE__, {modules, check, opts, claims, limit})
+  def start_link(modules, check, opts, claims, limit \\ 4096, selection \\ :all),
+    do: GenServer.start_link(__MODULE__, {modules, check, opts, claims, limit, selection})
 
   @doc false
   @spec claims(worker :: GenServer.server()) :: MapSet.t()
@@ -40,11 +41,18 @@ defmodule Bylaw.Contract.TraceWorker do
     do: GenServer.cast(worker, {:ex_unit_test_finished, label})
 
   @impl GenServer
-  def init({modules, check, opts, claims, limit}) do
+  def init({modules, check, opts, claims, limit, selection}) do
     Process.flag(:trap_exit, true)
     Process.flag(:message_queue_data, :off_heap)
 
-    case check.init(modules, opts, %{claims: claims}) do
+    context =
+      if selection == :all do
+        %{claims: claims}
+      else
+        %{claims: claims, only: selection}
+      end
+
+    case check.init(modules, opts, context) do
       {:ok, check_state, plan} ->
         runtime = %{
           module: check,

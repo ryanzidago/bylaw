@@ -22,7 +22,10 @@ defmodule Bylaw.Contract.Check do
   @type opts :: list({atom(), term()})
 
   @typedoc "Claims made by checks initialized earlier in the configured list."
-  @type context :: %{claims: MapSet.t(term())}
+  @type context :: %{
+          required(:claims) => MapSet.t(term()),
+          optional(:only) => MapSet.t(observed_mfa())
+        }
 
   @typedoc "Trace interests and claims produced while initializing a check."
   @type plan :: %{

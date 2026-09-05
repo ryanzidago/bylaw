@@ -384,3 +384,15 @@ complete full observation. FLAME's complete full and diff process ranges are
 close and the selected function is uncalled; they do not establish a general
 tracing speedup. Selection is useful first as an explicit adoption boundary;
 performance claims must remain tied to supported selections and complete runs.
+
+## Core API follow-up
+
+The runnable `runtime.exs`, `runtime_probe.exs`, and formatter adapter now use
+`Bylaw.Contract.start(modules, only: selected_mfas)` through the built-in checks.
+They no longer compile copied check modules. Selection precedes typespec expansion,
+structural classifier construction, and compiler alternative decoding. The QA
+formatter still owns Git/source mapping; the core receives explicit MFAs only.
+
+Retained measurements above and in result artifacts describe the original
+prototype at their recorded revisions, not measurements of this implementation.
+New runs retain `prototype_us: 0` because no copied checks are compiled.

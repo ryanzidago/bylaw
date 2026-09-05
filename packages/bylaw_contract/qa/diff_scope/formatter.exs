@@ -9,25 +9,11 @@ defmodule BylawDiffScope.Formatter do
     Code.prepend_path(System.fetch_env!("BYLAW_DIFF_EBIN"))
     mode = System.fetch_env!("BYLAW_DIFF_MODE")
 
-    {prototype_us, :ok} =
-      if mode == "diff" do
-        :timer.tc(fn -> BylawDiffScope.Runtime.install!(Path.expand("../..", __DIR__)) end)
-      else
-        {0, :ok}
-      end
-
     {selection_us, selection_result} = :timer.tc(fn -> selection(mode) end)
 
     case selection_result do
       {:ok, selection} ->
-        checks =
-          if mode == "diff",
-            do: BylawDiffScope.Runtime.checks(selection.selected),
-            else: [
-              Bylaw.Contract.Check.Typespec,
-              Bylaw.Contract.Check.FunctionClauses,
-              Bylaw.Contract.Check.ElixirCompiler
-            ]
+        observation_options = BylawDiffScope.Runtime.options(selection.selected)
 
         initial_memory = :erlang.memory(:total)
 
@@ -37,7 +23,7 @@ defmodule BylawDiffScope.Formatter do
               do: {:ok, %{tracer: nil}},
               else:
                 Bylaw.Contract.ExUnitFormatter.init(
-                  Keyword.put(options, :bylaw_contract, checks: checks)
+                  Keyword.put(options, :bylaw_contract, observation_options)
                 )
           end)
 
@@ -49,7 +35,7 @@ defmodule BylawDiffScope.Formatter do
            mode: mode,
            selection: selection,
            selection_us: selection_us,
-           prototype_us: prototype_us,
+           prototype_us: 0,
            init_us: init_us,
            initial_memory: initial_memory,
            initialized_memory: :erlang.memory(:total),
