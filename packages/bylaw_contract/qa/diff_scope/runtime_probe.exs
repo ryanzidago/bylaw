@@ -1,6 +1,4 @@
 Code.require_file("runtime.exs", __DIR__)
-package = Path.expand("../..", __DIR__)
-BylawDiffScope.Runtime.install!(package)
 module = BylawDiffFixture
 path = Path.join(System.tmp_dir!(), "bylaw-diff-runtime-#{System.unique_integer([:positive])}")
 File.mkdir_p!(path)
@@ -56,7 +54,7 @@ Code.prepend_path(path)
 selection = MapSet.new([{module, :zeta, 1}, {module, :unsupported, 1}])
 
 try do
-  compiler = BylawDiffScope.Bylaw.Contract.Check.ElixirCompiler
+  compiler = Bylaw.Contract.Check.ElixirCompiler
 
   {:ok, baseline, _} =
     Bylaw.Contract.Check.ElixirCompiler.init([module], [], %{claims: MapSet.new()})
@@ -68,7 +66,7 @@ try do
     do: raise("late function unexpectedly selected")
 
   Bylaw.Contract.Check.ElixirCompiler.terminate(baseline)
-  {:ok, state, _} = compiler.init([module], [selection: selection], %{claims: MapSet.new()})
+  {:ok, state, _} = compiler.init([module], [], %{claims: MapSet.new(), only: selection})
 
   try do
     selected = Map.keys(state.alternatives_by_mfa)
@@ -93,7 +91,7 @@ try do
 
   for _ <- 1..2 do
     {:ok, tracer} =
-      Bylaw.Contract.start([module], checks: BylawDiffScope.Runtime.checks(selection))
+      Bylaw.Contract.start([module], BylawDiffScope.Runtime.options(selection))
 
     :zero = module.zeta(:zero)
     :positive = module.zeta(:positive)

@@ -11,7 +11,7 @@ defmodule Bylaw.Contract.Check.Typespec do
 
   @impl Bylaw.Contract.Check
   def init(modules, [], context) do
-    loaded = Specs.load(modules)
+    loaded = Specs.load(modules, Map.get(context, :only, :all))
 
     return_alternatives =
       Enum.reject(loaded.return_alternatives, fn alternative ->

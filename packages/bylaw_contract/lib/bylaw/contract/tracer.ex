@@ -8,21 +8,30 @@ defmodule Bylaw.Contract.Tracer do
   @spec start_link(
           modules :: list(module()),
           checks :: list({module(), Check.opts()}),
-          max_trace_queue :: pos_integer()
+          max_trace_queue :: pos_integer(),
+          selection :: Bylaw.Contract.FunctionSelection.t()
         ) :: GenServer.on_start()
-  def start_link(modules, checks, limit \\ 4096),
-    do: GenServer.start_link(__MODULE__, {modules, checks, limit})
+  def start_link(modules, checks, limit \\ 4096, selection \\ :all),
+    do: GenServer.start_link(__MODULE__, {modules, checks, limit, selection})
 
   @spec stop(tracer :: GenServer.server()) :: map()
   def stop(tracer) do
-    tracer
-    |> GenServer.call(:stop, :infinity)
-    |> Enum.reduce(empty_coverage(), fn {check, check_coverage}, coverage ->
+    {results, selection} = GenServer.call(tracer, :stop, :infinity)
+
+    coverage =
+      results
+      |> Enum.reduce(empty_coverage(), fn {check, check_coverage}, coverage ->
+        coverage
+        |> put_in([:checks, check], check_coverage)
+        |> merge_coverage(check_coverage)
+      end)
+      |> mark_incomplete()
+
+    if selection == :all do
       coverage
-      |> put_in([:checks, check], check_coverage)
-      |> merge_coverage(check_coverage)
-    end)
-    |> mark_incomplete()
+    else
+      Map.put(coverage, :selected_functions, Enum.sort(selection))
+    end
   end
 
   defp mark_incomplete(%{incomplete: _} = coverage), do: Map.put(coverage, :status, :incomplete)
@@ -40,12 +49,19 @@ defmodule Bylaw.Contract.Tracer do
     do: GenServer.cast(tracer, {:ex_unit_test_finished, label})
 
   @impl GenServer
-  def init({modules, check_specs, limit}) do
+  def init({modules, check_specs, limit, selection}) do
     Process.flag(:trap_exit, true)
     Enum.each(modules, &Code.ensure_loaded/1)
 
-    case start_workers(modules, check_specs, limit) do
-      {:ok, workers} -> {:ok, %{workers: workers}}
+    check_specs =
+      if selection != :all and Enum.empty?(selection) do
+        []
+      else
+        check_specs
+      end
+
+    case start_workers(modules, check_specs, limit, selection) do
+      {:ok, workers} -> {:ok, %{workers: workers, selection: selection}}
       {:error, reason} -> {:stop, reason}
     end
   end
@@ -54,7 +70,7 @@ defmodule Bylaw.Contract.Tracer do
   def handle_call(:stop, _, state) do
     coverage = Enum.map(state.workers, &TraceWorker.stop/1)
 
-    {:stop, :normal, coverage, %{state | workers: []}}
+    {:stop, :normal, {coverage, state.selection}, %{state | workers: []}}
   end
 
   @impl GenServer
@@ -84,10 +100,10 @@ defmodule Bylaw.Contract.Tracer do
     :ok
   end
 
-  defp start_workers(modules, check_specs, limit) do
+  defp start_workers(modules, check_specs, limit, selection) do
     Enum.reduce_while(check_specs, {:ok, [], MapSet.new()}, fn {check, opts},
                                                                {:ok, workers, claims} ->
-      case TraceWorker.start_link(modules, check, opts, claims, limit) do
+      case TraceWorker.start_link(modules, check, opts, claims, limit, selection) do
         {:ok, worker} ->
           claims = MapSet.union(claims, TraceWorker.claims(worker))
           {:cont, {:ok, [worker | workers], claims}}

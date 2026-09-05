@@ -35,7 +35,7 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
   end
 
   defp init_with_limit(modules, context, max_functions) do
-    loaded = CompilerInference.load(modules)
+    loaded = CompilerInference.load(modules, Map.get(context, :only, :all))
 
     return_alternatives =
       Enum.reject(loaded.return_alternatives, fn alternative ->

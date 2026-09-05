@@ -108,6 +108,10 @@ defmodule Bylaw.Contract.Report do
     :ok
   end
 
+  def print(%{selected_functions: []}, device, _colors) do
+    IO.puts(device, "No functions selected for contract observation.")
+  end
+
   def print(coverage, device, colors) do
     print_typespec_gaps(coverage, device, colors)
     print_compiler_inference_gaps(coverage, device, colors)

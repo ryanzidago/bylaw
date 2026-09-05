@@ -8,8 +8,8 @@ defmodule Bylaw.Contract.Check.FunctionClauses do
   alias Bylaw.Contract.StructuralCoverage
 
   @impl Bylaw.Contract.Check
-  def init(modules, [], _context) do
-    loaded = StructuralCoverage.load(modules)
+  def init(modules, [], context) do
+    loaded = StructuralCoverage.load(modules, Map.get(context, :only, :all))
 
     with {:ok, shadow} <- StructuralCoverage.start_shadow(loaded.classifiers) do
       clauses_by_mfa = Enum.group_by(loaded.clauses, &mfa/1)

@@ -10,6 +10,7 @@ defmodule Bylaw.Contract do
   """
 
   alias Bylaw.Contract.Check
+  alias Bylaw.Contract.FunctionSelection
   alias Bylaw.Contract.Report
   alias Bylaw.Contract.Tracer
 
@@ -22,7 +23,10 @@ defmodule Bylaw.Contract do
   @type checks :: list(check_spec())
 
   @typedoc "Options controlling runtime contract observation."
-  @type start_option :: {:checks, checks()} | {:max_trace_queue, pos_integer()}
+  @type start_option ::
+          {:checks, checks()}
+          | {:max_trace_queue, pos_integer()}
+          | {:only, list(Check.observed_mfa())}
 
   @doc "Starts the default typespec and structural checks for `modules`."
   @spec start(modules :: list(module())) :: GenServer.on_start()
@@ -36,6 +40,15 @@ defmodule Bylaw.Contract do
   `Bylaw.Contract.Check.Typespec` and `Bylaw.Contract.Check.FunctionClauses`.
   Passing an empty check list disables all observation.
 
+  `:only` accepts exact `{module, function, arity}` tuples from the supplied
+  modules. Omit it to observe all functions. An explicit empty list starts no
+  check workers and produces an empty-selection diagnostic. Duplicate entries
+  are ignored. Default-argument arities are selected individually.
+
+  Selection happens before function metadata expansion, claims, classifier
+  compilation and compiler instrumentation limits. Scoped observation supports
+  the three built-in checks; custom checks reject `:only` explicitly.
+
   `:max_trace_queue` defaults to 4096 messages per check worker. Queues are
   checked before consuming trace events and independently every 5 milliseconds.
   Exceeding the threshold destroys that check's trace session and marks the result
@@ -45,7 +58,7 @@ defmodule Bylaw.Contract do
   """
   @spec start(modules :: list(module()), opts :: list(start_option())) :: GenServer.on_start()
   def start(modules, opts) when is_list(modules) and is_list(opts) do
-    opts = Keyword.validate!(opts, checks: @default_checks, max_trace_queue: 4096)
+    opts = Keyword.validate!(opts, [:only, checks: @default_checks, max_trace_queue: 4096])
     limit = Keyword.fetch!(opts, :max_trace_queue)
 
     unless is_integer(limit) and limit > 0,
@@ -53,7 +66,20 @@ defmodule Bylaw.Contract do
 
     checks = opts |> Keyword.fetch!(:checks) |> normalize_checks!()
 
-    Tracer.start_link(modules, checks, limit)
+    selection =
+      case Keyword.fetch(opts, :only) do
+        :error -> :all
+        {:ok, only} -> FunctionSelection.new!(only, modules)
+      end
+
+    if selection != :all do
+      for {check, _} <- checks,
+          check not in [Check.Typespec, Check.FunctionClauses, Check.ElixirCompiler] do
+        raise ArgumentError, "contract check #{inspect(check)} does not support :only"
+      end
+    end
+
+    Tracer.start_link(FunctionSelection.modules(modules, selection), checks, limit, selection)
   end
 
   @doc """
@@ -62,6 +88,8 @@ defmodule Bylaw.Contract do
   If any worker exceeded its queue budget, the map has `status: :incomplete`
   and an `:incomplete` list of check, reason, limit, and observed queue counts.
   Retained counters and targets then describe partial observation only.
+  Scoped observations also include `:selected_functions`, a sorted list of
+  the distinct MFAs supplied in `:only`.
   """
   @spec stop(tracer :: pid()) :: map()
   def stop(tracer), do: Tracer.stop(tracer)

@@ -1,6 +1,8 @@
 defmodule Bylaw.Contract.StructuralCoverage do
   @moduledoc false
 
+  alias Bylaw.Contract.FunctionSelection
+
   @shadow_modules for index <- 1..32, do: Module.concat(__MODULE__, "Shadow#{index}")
   @erlang_source_names %{
     :andalso => :and,
@@ -11,12 +13,13 @@ defmodule Bylaw.Contract.StructuralCoverage do
     :"=<" => :<=
   }
 
-  @spec load(modules :: list(module())) :: map()
-  def load(modules) do
+  @spec load(modules :: list(module()), selection :: FunctionSelection.t()) :: map()
+  def load(modules, selection \\ :all) do
     modules
+    |> FunctionSelection.modules(selection)
     |> Enum.uniq()
     |> Enum.reduce(empty_result(), fn module, result ->
-      case load_module(module) do
+      case load_module(module, selection) do
         {:ok, loaded} -> merge_loaded(result, loaded)
         {:error, reason} -> add_unsupported(result, module, reason)
       end
@@ -84,7 +87,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
     }
   end
 
-  defp load_module(module) do
+  defp load_module(module, selection) do
     with {:module, ^module} <- Code.ensure_loaded(module),
          {^module, binary, _} <- :code.get_object_code(module),
          {:ok, {^module, chunks}} <-
@@ -95,7 +98,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
            :beam_lib.chunks(binary, [:abstract_code]),
          {:ok, forms} <- abstract_forms(abstract_code),
          {:ok, loaded} <-
-           extract_module(module, definitions, unreachable, forms, source_file(chunks)) do
+           extract_module(module, definitions, unreachable, forms, source_file(chunks), selection) do
       {:ok, loaded}
     else
       {:error, reason} ->
@@ -128,7 +131,7 @@ defmodule Bylaw.Contract.StructuralCoverage do
   defp abstract_forms(:no_abstract_code), do: {:error, "BEAM abstract code is absent"}
   defp abstract_forms(_), do: {:error, "BEAM abstract code is unavailable or unsupported"}
 
-  defp extract_module(module, definitions, unreachable, forms, source_file) do
+  defp extract_module(module, definitions, unreachable, forms, source_file, selection) do
     functions =
       Enum.reduce(forms, %{}, fn
         {:function, annotation, function, arity, clauses}, acc ->
@@ -139,8 +142,9 @@ defmodule Bylaw.Contract.StructuralCoverage do
       end)
 
     relevant_definitions =
-      Enum.filter(definitions, fn definition ->
-        authored_definition?(definition) or default_wrapper_definition?(definition)
+      Enum.filter(definitions, fn {{function, arity}, _, _, _} = definition ->
+        FunctionSelection.member?(selection, module, function, arity) and
+          (authored_definition?(definition) or default_wrapper_definition?(definition))
       end)
 
     case Enum.reduce_while(

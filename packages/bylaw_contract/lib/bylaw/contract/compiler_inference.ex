@@ -1,16 +1,21 @@
 defmodule Bylaw.Contract.CompilerInference do
   @moduledoc false
 
+  alias Bylaw.Contract.FunctionSelection
+
   alias Bylaw.Contract.CompilerInference.Elixir120
 
   @module_timeout 100
 
   @doc false
-  @spec load(modules :: list(module())) :: map()
-  def load(modules) do
+  @spec load(modules :: list(module()), selection :: FunctionSelection.t()) :: map()
+  def load(modules, selection \\ :all) do
     modules
+    |> FunctionSelection.modules(selection)
     |> Enum.uniq()
-    |> Enum.reduce(empty_result(), &load_module_isolated/2)
+    |> Enum.reduce(empty_result(), fn module, result ->
+      load_module_isolated(module, result, selection)
+    end)
     |> sort_result()
   end
 
@@ -25,16 +30,21 @@ defmodule Bylaw.Contract.CompilerInference do
     }
   end
 
-  defp load_module_isolated(module, result) do
-    case isolated(fn -> load_module(module, empty_result()) end) do
+  defp load_module_isolated(module, result, selection) do
+    case isolated(fn -> load_module(module, empty_result(), selection) end) do
       {:ok, module_result} -> merge_results(result, module_result)
       {:error, reason} -> unsupported(result, module, reason)
     end
   end
 
-  defp load_module(module, result) do
+  defp load_module(module, result, selection) do
     case read_module(module) do
       {:ok, checker_version, exports, authorship} ->
+        exports =
+          Enum.filter(exports, fn {{function, arity}, _} ->
+            FunctionSelection.member?(selection, module, function, arity)
+          end)
+
         case Elixir120.return_alternatives(module, exports) do
           {:ok, decoded} ->
             {decoded, authorship} =
