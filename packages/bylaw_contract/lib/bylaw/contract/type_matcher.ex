@@ -131,7 +131,7 @@ defmodule Bylaw.Contract.TypeMatcher do
     do: yes(is_binary(value) and byte_size(value) > 0)
 
   defp do_match(value, {:bylaw_contract, :list_length, length, element_type}, definitions) do
-    if is_list(value) and list_length?(value, length) do
+    if proper_list?(value) and list_length?(value, length) do
       match_list(value, element_type, definitions)
     else
       :no_match
@@ -248,10 +248,10 @@ defmodule Bylaw.Contract.TypeMatcher do
 
   defp do_match([], {:type, _, nil, []}, _definitions), do: :match
   defp do_match(_, {:type, _, nil, []}, _definitions), do: :no_match
-  defp do_match(value, {:type, _, :list, []}, _definitions), do: yes(is_list(value))
+  defp do_match(value, {:type, _, :list, []}, _definitions), do: yes(proper_list?(value))
 
   defp do_match(value, {:type, _, :list, [element_type]}, definitions) do
-    if is_list(value) do
+    if proper_list?(value) do
       match_list(value, element_type, definitions)
     else
       :no_match
@@ -259,7 +259,7 @@ defmodule Bylaw.Contract.TypeMatcher do
   end
 
   defp do_match(value, {:type, _, :nonempty_list, [element_type]}, definitions) do
-    if is_list(value) and Enum.any?(value) do
+    if proper_list?(value) and Enum.any?(value) do
       match_list(value, element_type, definitions)
     else
       :no_match
@@ -358,13 +358,18 @@ defmodule Bylaw.Contract.TypeMatcher do
   defp yes(true), do: :match
   defp yes(false), do: :no_match
 
+  defp proper_list?([]), do: true
+  defp proper_list?([_ | tail]), do: proper_list?(tail)
+  defp proper_list?(_), do: false
+
   defp list_length?([], :empty), do: true
   defp list_length?([_], :singleton), do: true
   defp list_length?([_, _ | _], :multiple), do: true
   defp list_length?(_, _), do: false
 
   defp charlist?(value) when is_list(value) do
-    Enum.all?(value, &(is_integer(&1) and &1 >= 0 and &1 <= 0x10FFFF))
+    proper_list?(value) and
+      Enum.all?(value, &(is_integer(&1) and &1 >= 0 and &1 <= 0x10FFFF))
   end
 
   defp charlist?(_), do: false
