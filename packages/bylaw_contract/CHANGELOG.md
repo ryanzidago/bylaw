@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Match nonempty lists containing only `false` or `nil` according to their
+  element types, including observed return alternatives. Keep empty lists and
+  improper tails rejected.
+
 - Require Elixir 1.20 or newer, matching the compiler helpers used by the
   experimental compiler check. Elixir 1.19 is no longer supported.
 

@@ -259,7 +259,7 @@ defmodule Bylaw.Contract.TypeMatcher do
   end
 
   defp do_match(value, {:type, _, :nonempty_list, [element_type]}, definitions) do
-    if proper_list?(value) and Enum.any?(value) do
+    if proper_list?(value) and not Enum.empty?(value) do
       match_list(value, element_type, definitions)
     else
       :no_match

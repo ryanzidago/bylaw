@@ -1,0 +1,258 @@
+{
+  "issue": "bylaw-contract-match-falsey-nonempty-lists",
+  "note": "Candidate includes the uncommitted falsey-list fix on the recorded base. Source and BEAM hashes identify the tested candidate. All terminal outcomes, including the initial Livebook failure, are retained. Per-test timing arrays are omitted; raw captures remain at their recorded paths.",
+  "runs": [
+    {
+      "run": "ecto",
+      "project": "ecto",
+      "revision": "11784f821a1bb0eedeee59583e311d836cb39ee1",
+      "mode": "defaults",
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/ecto/1-defaults.etf",
+      "exit_code": 0,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "defaults",
+        "options": "[include: [], exclude: [], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "passed": 1591
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses"
+        ],
+        "coverage_status": "incomplete",
+        "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4322}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4108}]",
+        "failures": "[]",
+        "coverage_sha256": "ABDAECC22F62974116974DD9F2E1315BD843FCF0DCD5FA6D221AE0A82F289143"
+      }
+    },
+    {
+      "run": "livebook",
+      "project": "livebook",
+      "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+      "mode": "defaults",
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/livebook/1-defaults.etf",
+      "exit_code": 2,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "defaults",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "failed": 1,
+          "passed": 1510,
+          "excluded": 185
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses"
+        ],
+        "coverage_status": "incomplete",
+        "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4160}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4146}]",
+        "failures": "[{Livebook.Runtime.StandaloneTest, :\"test Runtime.disconnect/1 makes the node terminate\", {:failed, [{:error, %ExUnit.AssertionError{left: {:{}, [stop_generated: true, line: 38, column: 20], [:runtime_connect_done, {:^, [line: 38, column: 44], [{:pid, [line: 38, column: 45], nil}]}, {:ok, {:runtime, [line: 38, column: 56], nil}}]}, right: :ex_unit_no_meaningful_value, message: \"Assertion failed, no matching message after 5000ms\\nThe following variables were pinned:\\n  pid = #PID<0.4299.0>\\nShowing 1 of 1 message in the mailbox\", expr: {:assert_receive, [], [{:{}, [line: 38], [:runtime_connect_done, {:^, [line: 38], [{:pid, [line: 38], nil}]}, {:ok, {:runtime, [line: 38], nil}}]}]}, args: :ex_unit_no_meaningful_value, doctest: :ex_unit_no_meaningful_value, context: {:mailbox, [{{:pid, nil}, #PID<19503.4299.0>}], [{:runtime_connect_done, #PID<19503.4299.0>, {:error, \"standalone runtime node (:\\\"livebook_eldtwr52--xfsck4d5@127.0.0.1\\\") terminated unexpectedly on startup, please check your logs for errors. Reason: :normal\"}}]}}, [{Livebook.Runtime.StandaloneTest, :\"test Runtime.disconnect/1 makes the node terminate\", 1, [file: ~c\"test/livebook/runtime/standalone_test.exs\", line: 38]}]}]}}]",
+        "coverage_sha256": "C1CEEE25CA28129FC7C0653246B7EA1565D0D195537DF5883565DB6D55C31692"
+      }
+    },
+    {
+      "run": "livebook-focused",
+      "project": "livebook",
+      "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+      "mode": "defaults",
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "test/livebook/runtime/erl_dist/node_manager_test.exs",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/livebook-focused/1-defaults.etf",
+      "exit_code": 0,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "defaults",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "passed": 1
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses"
+        ],
+        "coverage_status": "complete",
+        "incomplete": "[]",
+        "failures": "[]",
+        "coverage_sha256": "699B1B990E0505C2444F2AEF998F98FF9D06D263F4C5D889D76A8A58DA2715EE"
+      }
+    },
+    {
+      "run": "livebook-comparison",
+      "project": "livebook",
+      "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+      "mode": "disabled",
+      "command": [
+        "elixir",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/livebook-comparison/1-disabled.etf",
+      "exit_code": 0,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "disabled",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "passed": 1511,
+          "excluded": 185
+        },
+        "checks": [],
+        "coverage_status": "disabled",
+        "incomplete": "nil",
+        "failures": "[]",
+        "coverage_sha256": "FC95EEE81C37E4805997AB9CA4C94A50329FDD9D94B8216369D103347753E9FB"
+      }
+    },
+    {
+      "run": "livebook-comparison",
+      "project": "livebook",
+      "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+      "mode": "defaults",
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/livebook-comparison/1-defaults.etf",
+      "exit_code": 0,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "defaults",
+        "options": "[include: [], exclude: [python: false, git: true, fly: true, teams_integration: true, unix: false, k8s: true, erl_docs: false], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "passed": 1511,
+          "excluded": 185
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses"
+        ],
+        "coverage_status": "incomplete",
+        "incomplete": "[%{reason: :trace_queue_limit, check: Bylaw.Contract.Check.Typespec, limit: 4096, observed: 4123}, %{reason: :trace_queue_limit, check: Bylaw.Contract.Check.FunctionClauses, limit: 4096, observed: 4581}]",
+        "failures": "[]",
+        "coverage_sha256": "2ACAFDB459B97D0A24D55BABF67A784E1DD94C9DB01731DB12D9BC0352737970"
+      }
+    },
+    {
+      "run": "livebook-standalone",
+      "project": "livebook",
+      "revision": "f18f2035bac89d6c08497f5f2d7e7c4f56e80716",
+      "mode": "defaults",
+      "command": [
+        "elixir",
+        "-pa",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/_build/test/lib/bylaw_contract/ebin",
+        "-r",
+        "/Users/ryanzidago/Projects/bylaw/.worktrees/codex-contract-match-falsey-nonempty-lists/packages/bylaw_contract/qa/overhead-capture.exs",
+        "-S",
+        "mix",
+        "test",
+        "test/livebook/runtime/standalone_test.exs:36",
+        "--seed",
+        "922331",
+        "--formatter",
+        "ExUnit.CLIFormatter",
+        "--formatter",
+        "BylawOverheadCapture"
+      ],
+      "capture": "/private/tmp/bylaw-falsey-20260906/livebook-standalone/1-defaults.etf",
+      "exit_code": 0,
+      "cutoff": null,
+      "capture_valid": true,
+      "result": {
+        "mode": "defaults",
+        "options": "[include: [location: {\"test/livebook/runtime/standalone_test.exs\", 36}], exclude: [:test], max_cases: 28, seed: 922331]",
+        "test_states": {
+          "passed": 1,
+          "excluded": 2
+        },
+        "checks": [
+          "Bylaw.Contract.Check.Typespec",
+          "Bylaw.Contract.Check.FunctionClauses"
+        ],
+        "coverage_status": "complete",
+        "incomplete": "[]",
+        "failures": "[]",
+        "coverage_sha256": "FADB47A5BD959474ED567A7C8F8868221BFA30FE355F26A4DCDFE977E872CA66"
+      }
+    }
+  ],
+  "bylaw_base_revision": "d3c535ebe95f2dde7c9ae74ea18eadc55b256d4d",
+  "bylaw_source_sha256": "2915b0cfe41be7063d6f6cf4c17bfd915fde18903181e24e13f3d0666bf6e31b",
+  "bylaw_ebin_sha256": "4fa2322b268acbb4da1dec053a0a6aadc1deb92374406cd6b22d5f7af1d8c985",
+  "toolchain": "Erlang/OTP 29 [erts-17.0.3] [source] [64-bit] [smp:14:14] [ds:14:14:10] [async-threads:1] [jit]\n\nElixir 1.20.2 (compiled with Erlang/OTP 29)\n"
+}
