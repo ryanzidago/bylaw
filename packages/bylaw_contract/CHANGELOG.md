@@ -2,8 +2,10 @@
 
 ## Unreleased
 
-- Require Elixir 1.20 or newer, matching the compiler helpers used by the
-  experimental compiler check. Elixir 1.19 is no longer supported.
+- Support Elixir 1.19 for default typespec and structural checks. Compile the
+  optional compiler-inference implementation only on Elixir 1.20 or newer;
+  explicitly selecting it on an unsupported runtime retains diagnostics
+  without producing false compiler gaps or disabling other checks.
 
 - Preserve structural coverage of surviving functions when Elixir eliminates
   private definitions explicitly marked unreachable in debug metadata. Validate

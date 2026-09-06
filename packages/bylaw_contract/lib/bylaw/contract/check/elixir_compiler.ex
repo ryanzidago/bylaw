@@ -9,6 +9,10 @@ defmodule Bylaw.Contract.Check.ElixirCompiler do
   Earlier checks remain authoritative. Compiler-inferred alternatives are
   omitted when an earlier check claims return alternatives for the same
   function.
+
+  This optional check requires Elixir 1.20 or newer and a supported compiler
+  checker format. On Elixir 1.19 it returns unsupported-module diagnostics
+  without adding compiler gaps. The default checks remain available.
   """
 
   @behaviour Bylaw.Contract.Check
