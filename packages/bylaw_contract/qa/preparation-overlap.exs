@@ -56,6 +56,7 @@ defmodule BylawPreparationGate do
 
     event(:require_started, %{
       files: length(files),
+      paths: Enum.map(files, &Path.expand/1),
       memory: memory(),
       compiler_options:
         Map.take(Code.compiler_options(), [:docs, :debug_info, :infer_signatures]),
