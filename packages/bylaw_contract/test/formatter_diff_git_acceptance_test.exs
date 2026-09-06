@@ -105,7 +105,7 @@ defmodule Bylaw.Contract.FormatterDiffGitAcceptanceTest do
     {output, status} = FormatterDiff.run(root, [], [{"BYLAW_CONTRACT_DIFF_BASE", "HEAD~1"}])
     assert status == 2, output
     assert output =~ "unsupported_definition_context"
-    assert output =~ "Result: 1 passed"
+    assert output =~ ~r/^(?:Result: 1 passed|1 test, 0 failures)\r?$/m
     assert output =~ "AUDIT_STOPPED=0"
   end
 
@@ -127,13 +127,13 @@ defmodule Bylaw.Contract.FormatterDiffGitAcceptanceTest do
 
     assert status == 2, output
     assert output =~ "selected_module_not_in_application"
-    assert output =~ "Result: 1 passed"
+    assert output =~ ~r/^(?:Result: 1 passed|1 test, 0 failures)\r?$/m
     assert output =~ "AUDIT_OBSERVERS=0"
   end
 
   test "stale compiled sources and mismatched loaded BEAMs are rejected", %{root: root} do
     {output, 0} = FormatterDiff.run(root, [])
-    assert output =~ "Result: 1 passed"
+    assert output =~ ~r/^(?:Result: 1 passed|1 test, 0 failures)\r?$/m
     path = Path.join(root, "lib/fixture.ex")
     File.write!(path, String.replace(File.read!(path), "value + 1", "1 + value"))
     FormatterDiff.git!(root, ["add", "lib"])
@@ -146,7 +146,7 @@ defmodule Bylaw.Contract.FormatterDiffGitAcceptanceTest do
 
     assert status == 2, output
     assert output =~ "compiled_source_mismatch"
-    assert output =~ "Result: 1 passed"
+    assert output =~ ~r/^(?:Result: 1 passed|1 test, 0 failures)\r?$/m
 
     replacement_root = FormatterDiff.create()
 
@@ -161,7 +161,7 @@ defmodule Bylaw.Contract.FormatterDiffGitAcceptanceTest do
 
       assert status == 2, output
       assert output =~ "loaded_beam_mismatch"
-      assert output =~ "Result: 1 passed"
+      assert output =~ ~r/^(?:Result: 1 passed|1 test, 0 failures)\r?$/m
       assert output =~ "AUDIT_STOPPED=0"
     after
       File.rm_rf!(replacement_root)
