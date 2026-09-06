@@ -244,6 +244,11 @@ mix usage_rules.search_docs "Enum.zip" --query-by title
 <!-- usage_rules:otp-end -->
 <!-- usage-rules-end -->
 
+## Beads task scope
+
+- Record out-of-scope issues as deferred in Beads; check for duplicates first.
+- Never promote or work on deferred or blocked issues without explicit user approval.
+
 ## Beads issue IDs
 
 Give every new Beads issue a concise, descriptive, human-readable ID prefixed
@@ -291,7 +296,7 @@ The managed Beads block is task-tracking guidance, not permission to override re
 
 This protocol applies when ending a Beads implementation workflow. It is subordinate to explicit user, repository, and orchestrator instructions.
 
-1. **File issues for remaining work** - Create beads for anything that needs follow-up
+1. **Record follow-ups** - Follow the Beads task scope rules above.
 2. **Run quality gates** (if code changed) - Tests, linters, builds
 3. **Update issue status** - Close finished work, update in-progress items
 4. **Handle git/sync by active profile**:
