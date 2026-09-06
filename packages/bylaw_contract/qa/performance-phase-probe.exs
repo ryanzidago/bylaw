@@ -1,8 +1,32 @@
 # Diagnostic only: wrap selected functions in source compiled in memory. Never use
 # these timings as unprofiled baseline timings. No inspected application is edited.
 defmodule BylawPerformancePhaseProbe do
-  def measure(mfa, function) do
+  @doc false
+  @spec require_tests(list(Path.t()), keyword()) :: term()
+  def require_tests(files, options) do
+    details = %{
+      test_file_count: length(files),
+      max_requires:
+        Keyword.get_lazy(options, :max_concurrency, fn ->
+          max(:erlang.system_info(:schedulers_online), 2)
+        end)
+    }
+
+    measure(
+      {"Mix.Compilers.Test", :require, 2},
+      fn -> Kernel.ParallelCompiler.require(files, options) end,
+      details
+    )
+  end
+
+  @doc false
+  @spec measure(term(), (-> term()), map()) :: term()
+  def measure(mfa, function, details \\ %{}) do
     started = System.monotonic_time(:microsecond)
+
+    if mfa == {"trace_worker.ex", :start_runtime, 1} do
+      send(BylawPerformanceQueueSampler, {:watch, self()})
+    end
 
     try do
       function.()
@@ -11,13 +35,49 @@ defmodule BylawPerformancePhaseProbe do
 
       :ets.insert(
         __MODULE__,
-        {System.unique_integer([:positive]), inspect(self()), inspect(mfa), started, finished}
+        {System.unique_integer([:positive]), inspect(self()), inspect(mfa), started, finished,
+         details}
       )
+    end
+  end
+
+  @doc false
+  @spec sample_queues(map()) :: :ok
+  def sample_queues(workers) do
+    workers =
+      Map.new(workers, fn {pid, values} ->
+        sampled =
+          case Process.info(pid, :message_queue_len) do
+            {:message_queue_len, count} ->
+              %{peak: max(count, values.peak), samples: values.samples + 1}
+
+            nil ->
+              values
+          end
+
+        {pid, sampled}
+      end)
+
+    receive do
+      {:watch, pid} ->
+        sample_queues(Map.put_new(workers, pid, %{peak: 0, samples: 0}))
+
+      {:snapshot, recipient} ->
+        send(
+          recipient,
+          {:queue_peaks, Map.new(workers, fn {pid, value} -> {inspect(pid), value} end)}
+        )
+
+        :ok
+    after
+      5 -> sample_queues(workers)
     end
   end
 end
 
 caller = self()
+queue_sampler = spawn(fn -> BylawPerformancePhaseProbe.sample_queues(%{}) end)
+Process.register(queue_sampler, BylawPerformanceQueueSampler)
 
 owner =
   spawn(fn ->
@@ -90,11 +150,9 @@ if File.regular?(mix_source) do
 
   mix_ast =
     Macro.postwalk(mix_ast, fn
-      {{:., _, [{:__aliases__, _, [:Kernel, :ParallelCompiler]}, :require]}, _, _} = call ->
+      {{:., _, [{:__aliases__, _, [:Kernel, :ParallelCompiler]}, :require]}, _, [files, options]} ->
         quote do
-          BylawPerformancePhaseProbe.measure({"Mix.Compilers.Test", :require, 2}, fn ->
-            unquote(call)
-          end)
+          BylawPerformancePhaseProbe.require_tests(unquote(files), unquote(options))
         end
 
       other ->
@@ -110,6 +168,14 @@ Code.compiler_options(ignore_module_conflict: false)
 
 System.at_exit(fn _ ->
   send(owner, {:snapshot, self()})
+  send(queue_sampler, {:snapshot, self()})
+
+  queue_peaks =
+    receive do
+      {:queue_peaks, peaks} -> peaks
+    after
+      5_000 -> raise "queue sampler did not respond"
+    end
 
   entries =
     receive do
@@ -119,15 +185,20 @@ System.at_exit(fn _ ->
     end
 
   spans =
-    for {_, pid, function, started, finished} <- entries do
+    for {_, pid, function, started, finished, details} <- entries do
       %{
         pid: pid,
         function: function,
         started_us: started,
         finished_us: finished,
-        duration_us: finished - started
+        duration_us: finished - started,
+        details: details
       }
     end
 
   File.write!(System.fetch_env!("BYLAW_PHASE_OUTPUT"), JSON.encode!(spans) <> "\n")
+
+  if output = System.get_env("BYLAW_QUEUE_OUTPUT") do
+    File.write!(output, JSON.encode!(%{interval_ms: 5, workers: queue_peaks}) <> "\n")
+  end
 end)
