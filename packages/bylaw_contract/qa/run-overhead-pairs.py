@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--seed", type=int, default=922331)
     parser.add_argument("--max-cases", type=int, default=28)
     parser.add_argument("--timeout", type=int, default=900)
-    parser.add_argument("--enabled-mode", choices=["all", "typespec", "structural", "compiler"],
+    parser.add_argument("--enabled-mode", choices=["all", "typespec", "structural", "defaults", "compiler"],
                         default="all")
     parser.add_argument("--selection", nargs="*", default=[])
     args = parser.parse_args()
