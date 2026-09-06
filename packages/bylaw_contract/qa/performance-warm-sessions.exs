@@ -10,7 +10,10 @@ ExUnit.start(
 )
 
 previous = Code.compiler_options(docs: false, debug_info: false, infer_signatures: false)
-{require_us, loaded} = :timer.tc(fn -> Code.require_file("test/classifiers_test.exs") end)
+
+{require_us, loaded} =
+  :timer.tc(fn -> "test/*_test.exs" |> Path.wildcard() |> Enum.flat_map(&Code.require_file/1) end)
+
 modules = Enum.map(loaded, &elem(&1, 0))
 output = System.fetch_env!("BYLAW_WARM_OUTPUT")
 

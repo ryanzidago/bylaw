@@ -47,6 +47,7 @@ summary = %{
   elixir: result.elixir,
   otp: result.otp,
   options: inspect(result.options),
+  concurrency: Map.get(result, :concurrency),
   init_us: result.init_us,
   monotonic_boundaries_us: Map.get(result, :monotonic_boundaries_us),
   observed_suite_us: result.observed_suite_us,

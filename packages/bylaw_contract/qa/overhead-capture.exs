@@ -59,6 +59,11 @@ defmodule BylawOverheadCapture do
        init_started_us: started,
        suite_started: nil,
        test_states: %{},
+       concurrency: %{
+         max_cases: Keyword.fetch!(options, :max_cases),
+         schedulers_online: :erlang.system_info(:schedulers_online),
+         case_tests: %{}
+       },
        failures: [],
        test_times_us: [],
        compiler_options:
@@ -76,6 +81,13 @@ defmodule BylawOverheadCapture do
     status = if is_tuple(test.state), do: elem(test.state, 0), else: test.state || :passed
     state = %{state | test_times_us: [test.time | state.test_times_us]}
     state = update_in(state.test_states, &Map.update(&1, status, 1, fn count -> count + 1 end))
+    case_mode = if test.module.__ex_unit__(:config).async?, do: :async, else: :sync
+
+    state =
+      update_in(
+        state.concurrency.case_tests,
+        &Map.update(&1, case_mode, 1, fn count -> count + 1 end)
+      )
 
     state =
       if status in [:failed, :invalid],
@@ -101,6 +113,7 @@ defmodule BylawOverheadCapture do
       elixir: System.version(),
       otp: System.otp_release(),
       options: state.options,
+      concurrency: state.concurrency,
       init_us: state.init_us,
       monotonic_boundaries_us: %{
         init_started: state.init_started_us,
