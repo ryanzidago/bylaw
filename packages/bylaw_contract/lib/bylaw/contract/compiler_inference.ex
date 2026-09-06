@@ -45,7 +45,8 @@ defmodule Bylaw.Contract.CompilerInference do
             FunctionSelection.member?(selection, module, function, arity)
           end)
 
-        case Elixir120.return_alternatives(module, exports) do
+        # The optional adapter has different result variants across compiler versions.
+        case apply(Elixir120, :return_alternatives, [module, exports]) do
           {:ok, decoded} ->
             {decoded, authorship} =
               if protocol_implementation?(module) do

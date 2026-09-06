@@ -8,7 +8,7 @@ defmodule BylawContract.MixProject do
     [
       app: :bylaw_contract,
       version: @version,
-      elixir: "~> 1.20",
+      elixir: "~> 1.19",
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_contract",

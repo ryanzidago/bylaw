@@ -30,9 +30,10 @@ def deps do
 end
 ```
 
-The package requires Elixir 1.20 or newer and Erlang/OTP 27 or newer. It uses
-isolated sessions from the recent `:trace` API. The Bylaw development toolchain
-currently tests it on Erlang/OTP 29 with Elixir 1.20.
+The package requires Elixir 1.19 or newer and Erlang/OTP 27 or newer for
+isolated `:trace` sessions. The default typespec and structural checks work on
+Elixir 1.19. The optional experimental compiler-inference check requires
+Elixir 1.20 or newer and a supported checker format.
 
 Checks initialize sequentially in their own workers, with earlier claims
 passed to later checks. Trace sessions activate after initialization succeeds.
@@ -262,9 +263,15 @@ ExUnit.start(
 )
 ```
 
-This integration is deliberately opt-in and versioned. It reads the compiled
-module already loaded by the test VM; it does not invoke or replay the
-compiler. The current adapter accepts only checker version
+This integration is deliberately opt-in and versioned. Its compiler-specific
+implementation is compiled only on Elixir 1.20 or newer; no additional setting
+is needed to use the default checks on Elixir 1.19. Explicitly selecting the
+compiler check on Elixir 1.19 retains unsupported-module diagnostics in
+`compiler_modules` and `compiler_warnings`, without producing compiler gaps or
+disabling the other selected checks.
+
+It reads the compiled module already loaded by the test VM; it does not invoke
+or replay the compiler. The current adapter accepts only checker version
 `:elixir_checker_v8`, as emitted by the tested Elixir 1.20 toolchains. Missing
 chunks, absent inference, incompatible checker versions, and descriptor shapes
 that cannot be matched safely remain explicit unassessable data rather than

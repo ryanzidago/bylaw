@@ -14,7 +14,7 @@ defmodule Bylaw.Contract.TestFixtures.FormatterDiff do
     File.write!(Path.join(root, "mix.exs"), """
     defmodule FormatterFixture.MixProject do
       use Mix.Project
-      def project, do: [app: :formatter_fixture, version: "0.1.0", elixir: "~> 1.20"]
+      def project, do: [app: :formatter_fixture, version: "0.1.0", elixir: "~> 1.19"]
       def application, do: [extra_applications: [:logger]]
     end
     """)

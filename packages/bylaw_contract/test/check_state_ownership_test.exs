@@ -205,7 +205,14 @@ defmodule Bylaw.Contract.CheckStateOwnershipTest do
     Check.ElixirCompiler.terminate(state)
 
     assert Enum.empty?(instrumented)
-    assert Enum.any?(coverage.compiler_warnings, &String.contains?(&1, "observer runtime"))
+
+    if Version.match?(System.version(), "~> 1.20") do
+      assert Enum.any?(coverage.compiler_warnings, &String.contains?(&1, "observer runtime"))
+    else
+      assert [%{status: :unsupported, reason: reason}] = coverage.compiler_modules
+      assert reason =~ "unsupported Elixir checker version"
+      assert Enum.empty?(coverage.compiler_return_alternatives)
+    end
 
     assert Enum.all?(
              coverage.compiler_return_alternatives,
