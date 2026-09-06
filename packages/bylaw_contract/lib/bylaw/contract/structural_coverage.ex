@@ -224,8 +224,14 @@ defmodule Bylaw.Contract.StructuralCoverage do
             end)
 
           classifier_clauses =
-            Enum.map(Enum.zip(clauses, abstract_clauses), fn {clause, abstract_clause} ->
-              %{id: clause.id, module: module, function: function, clause: abstract_clause}
+            Enum.map(Enum.zip(clauses, abstract_clauses), fn
+              {clause, {:clause, annotation, patterns, guards, _body}} ->
+                %{
+                  id: clause.id,
+                  module: module,
+                  function: function,
+                  clause: {:clause, annotation, patterns, guards, []}
+                }
             end)
 
           {:ok,
