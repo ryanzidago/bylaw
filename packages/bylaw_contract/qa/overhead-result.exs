@@ -17,6 +17,9 @@ expected_checks =
     "compiler" ->
       [Bylaw.Contract.Check.ElixirCompiler]
 
+    "defaults" ->
+      [Bylaw.Contract.Check.Typespec, Bylaw.Contract.Check.FunctionClauses]
+
     "all" ->
       [
         Bylaw.Contract.Check.Typespec,
@@ -45,8 +48,17 @@ summary = %{
   otp: result.otp,
   options: inspect(result.options),
   init_us: result.init_us,
+  monotonic_boundaries_us: Map.get(result, :monotonic_boundaries_us),
   observed_suite_us: result.observed_suite_us,
   stop_us: result.stop_us,
+  ex_unit_timings: result.ex_unit_timings,
+  test_times_us: Map.get(result, :test_times_us),
+  compiler_options: Map.get(result, :compiler_options),
+  coverage_sha256:
+    result.coverage
+    |> :erlang.term_to_binary([:deterministic])
+    |> then(&:crypto.hash(:sha256, &1))
+    |> Base.encode16(),
   test_states: result.test_states,
   failures: inspect(result.failures, limit: :infinity, printable_limit: :infinity),
   coverage_status: status,

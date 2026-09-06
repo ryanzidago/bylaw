@@ -1,5 +1,5 @@
 # Load with -r and select this formatter alongside ExUnit.CLIFormatter.
-# BYLAW_OVERHEAD_MODE: disabled, typespec, structural, compiler, or all.
+# BYLAW_OVERHEAD_MODE: disabled, typespec, structural, defaults, compiler, or all.
 # BYLAW_OVERHEAD_OUTPUT: unique ETF output path. Enabled modes also require
 # BYLAW_OVERHEAD_EBIN, restored after Mix adjusts dependency code paths.
 defmodule BylawOverheadCapture do
@@ -23,6 +23,9 @@ defmodule BylawOverheadCapture do
 
         "compiler" ->
           [Bylaw.Contract.Check.ElixirCompiler]
+
+        "defaults" ->
+          [Bylaw.Contract.Check.Typespec, Bylaw.Contract.Check.FunctionClauses]
 
         "all" ->
           [
@@ -53,9 +56,13 @@ defmodule BylawOverheadCapture do
        mode: mode,
        delegate: delegate,
        init_us: System.monotonic_time(:microsecond) - started,
+       init_started_us: started,
        suite_started: nil,
        test_states: %{},
        failures: [],
+       test_times_us: [],
+       compiler_options:
+         Map.take(Code.compiler_options(), [:docs, :debug_info, :infer_signatures]),
        options: Keyword.take(options, [:seed, :max_cases, :include, :exclude])
      }}
   end
@@ -67,6 +74,7 @@ defmodule BylawOverheadCapture do
 
   def handle_cast({:test_finished, test} = event, state) do
     status = if is_tuple(test.state), do: elem(test.state, 0), else: test.state || :passed
+    state = %{state | test_times_us: [test.time | state.test_times_us]}
     state = update_in(state.test_states, &Map.update(&1, status, 1, fn count -> count + 1 end))
 
     state =
@@ -94,9 +102,18 @@ defmodule BylawOverheadCapture do
       otp: System.otp_release(),
       options: state.options,
       init_us: state.init_us,
+      monotonic_boundaries_us: %{
+        init_started: state.init_started_us,
+        init_finished: state.init_started_us + state.init_us,
+        suite_started: state.suite_started,
+        stop_started: stopping,
+        stop_finished: System.monotonic_time(:microsecond)
+      },
       observed_suite_us: stopping - state.suite_started,
       stop_us: System.monotonic_time(:microsecond) - stopping,
       ex_unit_timings: timings,
+      test_times_us: Enum.reverse(state.test_times_us),
+      compiler_options: state.compiler_options,
       test_states: state.test_states,
       failures: Enum.reverse(state.failures),
       coverage: coverage
