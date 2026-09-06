@@ -1,5 +1,5 @@
 defmodule Bylaw.Contract.WarmSessionAcceptanceTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true, group: :contract_qa_fixture
 
   @tag :tmp_dir
   test "repeated loaded ExUnit runs preserve exact observations and reclaim owned resources",

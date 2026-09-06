@@ -1,5 +1,5 @@
 defmodule Bylaw.Contract.CompilerSafeDecodingTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true, group: :contract_qa_fixture
 
   test "checker-only struct field atoms remain unsupported until the defining module is loaded" do
     assert_fixture("ColdChecker", "cold_checker", "cold_checker_field", false)

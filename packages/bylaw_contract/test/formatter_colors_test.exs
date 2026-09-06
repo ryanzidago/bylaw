@@ -1,5 +1,5 @@
 defmodule Bylaw.Contract.FormatterColorsTest do
-  use ExUnit.Case
+  use ExUnit.Case, async: true, group: :contract_formatter
 
   test "the ExUnit runner forwards explicit color enabling to contract diagnostics" do
     output = run_formatter(false, enabled: true)

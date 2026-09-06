@@ -1,5 +1,5 @@
 defmodule Bylaw.Contract.FormatterDiffGitAcceptanceTest do
-  use ExUnit.Case, async: false
+  use ExUnit.Case, async: true, group: :contract_formatter
   alias Bylaw.Contract.TestFixtures.FormatterDiff
 
   setup do

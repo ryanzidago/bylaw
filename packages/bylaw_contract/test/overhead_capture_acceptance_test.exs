@@ -1,5 +1,5 @@
 defmodule Bylaw.Contract.OverheadCaptureAcceptanceTest do
-  use ExUnit.Case, async: true
+  use ExUnit.Case, async: true, group: :contract_qa_fixture
 
   setup %{tmp_dir: directory} do
     on_exit(fn -> File.rm_rf!(directory) end)
