@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Testing.RequireAsyncTests` to require test cases to
+  run with `async: true`, or to carry an explanatory comment when they cannot.
+
 - Fix `Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues` to report accurate
   line, column, scope, and trigger information for tagged-tuple violations.
 - Add

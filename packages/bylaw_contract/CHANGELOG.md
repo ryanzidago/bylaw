@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Match nonempty lists containing only `false` or `nil` according to their
+  element types, including observed return alternatives. Keep empty lists and
+  improper tails rejected.
+
 - Support Elixir 1.19 for default typespec and structural checks. Compile the
   optional compiler-inference implementation only on Elixir 1.20 or newer;
   explicitly selecting it on an unsupported runtime retains diagnostics

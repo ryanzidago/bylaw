@@ -58,6 +58,8 @@ defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest.MarkerCheckExtra do
 end
 
 defmodule Bylaw.Credo.Plugin.DisableForNextDefinitionTest do
+  # async: false because these tests exercise credo's process-wide source-file
+  # and execution state
   use ExUnit.Case, async: false
 
   alias Bylaw.Credo.Check.Elixir.NoRaise

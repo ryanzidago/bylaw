@@ -260,7 +260,8 @@ end
           {Bylaw.Credo.Check.Elixir.NoTryRescue, []},
           {Bylaw.Credo.Check.Elixir.SafeDateTimeComparison, false},
           {Bylaw.Credo.Check.Elixir.NoLowLevelProcessPrimitives, []},
-          {Bylaw.Credo.Check.Phoenix.URIDecodeQuery, []}
+          {Bylaw.Credo.Check.Phoenix.URIDecodeQuery, []},
+          {Bylaw.Credo.Check.Testing.RequireAsyncTests, []}
         ],
         disabled: [
           #
