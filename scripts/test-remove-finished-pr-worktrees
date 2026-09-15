@@ -32,6 +32,12 @@ if [[ "${1:-}" == "symbolic-ref" ]]; then
   exit 0
 fi
 
+# mise's env templates may run `git rev-parse --path-format=absolute
+# --git-common-dir` (e.g. for Beads) without -C while this shim is on PATH.
+if [[ "${1:-}" == "rev-parse" ]]; then
+  exit 0
+fi
+
 exit 1
 EOF
 
