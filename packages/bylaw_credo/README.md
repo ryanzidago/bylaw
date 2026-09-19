@@ -35,6 +35,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
         {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
         {Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort, []},
+        {Bylaw.Credo.Check.Ecto.TypeBeforeSchema, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
         {Bylaw.Credo.Check.HEEx.NoIndirectAssignAccess, []},
         {Bylaw.Credo.Check.HEEx.NoElementSpacing, []},
