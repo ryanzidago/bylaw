@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Ecto.TypeBeforeSchema` to require `@type`, `@typep`
+  and `@opaque` definitions to appear before a module's Ecto `schema` or
+  `embedded_schema` block.
 - Add `Bylaw.Credo.Check.Testing.RequireAsyncTests` to require test cases to
   run with `async: true`, or to carry an explanatory comment when they cannot.
 
