@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass` to forbid class
+  attributes on HEEx function components, so components expose named props
+  instead of being restyled by their callers. Components whose class attribute
+  is their documented interface can be listed in `:excluded_components`.
 - Add `Bylaw.Credo.Check.Ecto.TypeBeforeSchema` to require `@type`, `@typep`
   and `@opaque` definitions to appear before a module's Ecto `schema` or
   `embedded_schema` block.
