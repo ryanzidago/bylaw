@@ -45,6 +45,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.PreferLinkForNavigation, []},
         {Bylaw.Credo.Check.HEEx.RequireAccessibleButtonText, []},
         {Bylaw.Credo.Check.HEEx.NoJavascriptHref, []},
+        {Bylaw.Credo.Check.HEEx.NoRawSVG, []},
         {Bylaw.Credo.Check.HEEx.RequireButtonType, []},
         {Bylaw.Credo.Check.HEEx.RequireImageAlt, []},
         {Bylaw.Credo.Check.HEEx.RequireLabelForInput, []},
