@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr` to forbid
+  `class` and `*_class` attribute declarations on HEEx function components, so
+  renaming the attribute cannot sidestep its call-site counterpart. Components
+  whose class attribute is their documented interface can be listed in
+  `:excluded_components`.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass` to forbid class
   attributes on HEEx function components, so components expose named props
   instead of being restyled by their callers. Components whose class attribute
