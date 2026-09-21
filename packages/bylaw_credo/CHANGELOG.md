@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.NoRawSVG` to discourage raw SVG markup in HEEx
+  templates and direct custom SVGs into dedicated component modules.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr` to forbid
   `class` and `*_class` attribute declarations on HEEx function components, so
   renaming the attribute cannot sidestep its call-site counterpart. Components
