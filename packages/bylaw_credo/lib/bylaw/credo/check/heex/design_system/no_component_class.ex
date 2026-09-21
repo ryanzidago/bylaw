@@ -26,7 +26,9 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass do
   Plain HTML tags and slot tags are left alone, and both `class="..."` and
   `class={...}` are reported. Components whose class attribute is their
   documented interface, such as a framework's link or icon, belong in
-  `:excluded_components`. Embedded `~H` templates are checked during normal
+  `:excluded_components`. Its definition-site counterpart is
+  `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr`, which stops a
+  component declaring the attribute at all. Embedded `~H` templates are checked during normal
   Credo runs over Elixir files. Standalone `.html.heex` templates require
   enabling `Bylaw.Credo.Plugin.HEExSources` in Credo's `plugins` configuration.
 
