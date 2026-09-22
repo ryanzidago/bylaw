@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.RequireFormFieldIdOrName` to require native
+  `input`, `select` and `textarea` tags to carry an `id` or a `name`, which
+  Chrome otherwise reports as a DevTools issue on every page change.
 - Add `Bylaw.Credo.Check.HEEx.NoRawSVG` to discourage raw SVG markup in HEEx
   templates and direct custom SVGs into dedicated component modules.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr` to forbid
