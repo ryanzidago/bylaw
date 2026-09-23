@@ -58,6 +58,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs, []},
         {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []},
         {Bylaw.Credo.Check.Testing.NoDescribeBlocks, []},
+        {Bylaw.Credo.Check.Testing.NoSleepInTests, []},
         {Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml, []},
         {Bylaw.Credo.Check.Testing.RequireAsyncTests, []}
       ]
