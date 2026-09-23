@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Testing.NoSleepInTests` to report `Process.sleep/1`
+  and `:timer.sleep/1` in test files, which make tests slow and flaky.
 - Add `Bylaw.Credo.Check.HEEx.RequireFormFieldIdOrName` to require native
   `input`, `select` and `textarea` tags to carry an `id` or a `name`, which
   Chrome otherwise reports as a DevTools issue on every page change.
