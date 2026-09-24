@@ -49,7 +49,7 @@ defmodule Bylaw.Ecto.Query.Issue do
   """
   @spec format(t(), format_opts()) :: String.t()
   def format(%__MODULE__{} = issue, opts) when is_list(opts) do
-    base = "#{inspect(issue.check)}: #{issue.message}"
+    base = "#{inspect(issue.check)}: #{issue.message}#{source_suffix(issue.meta)}"
 
     if Keyword.get(opts, :meta, false) and issue.meta != %{} do
       base <> " " <> inspect(issue.meta)
@@ -80,4 +80,7 @@ defmodule Bylaw.Ecto.Query.Issue do
   def format_many(issues, opts) when is_list(issues) and is_list(opts) do
     Enum.map_join(issues, "\n", &format(&1, opts))
   end
+
+  defp source_suffix(%{source: source}) when is_binary(source), do: " (on #{inspect(source)})"
+  defp source_suffix(_meta), do: ""
 end

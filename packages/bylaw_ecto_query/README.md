@@ -21,7 +21,7 @@ Add `:bylaw_ecto_query` to your dependencies:
 ```elixir
 def deps do
   [
-    {:bylaw_ecto_query, "~> 0.3.0"}
+    {:bylaw_ecto_query, "~> 0.4.0"}
   ]
 end
 ```
@@ -29,8 +29,8 @@ end
 ## Usage
 
 For repo-wide validation, choose the query checks you want to enforce and pass
-them explicitly to `Bylaw.Ecto.Query.validate/3` from
-`c:Ecto.Repo.prepare_query/3`:
+them explicitly to `Bylaw.Ecto.Query.validate_repo_query/4` from
+`c:Ecto.Repo.prepare_query/3`, along with the repo options Ecto passes to it:
 
 ```elixir
 defmodule MyApp.Repo do
@@ -52,18 +52,27 @@ defmodule MyApp.Repo do
 
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
-    case Bylaw.Ecto.Query.validate(
-           operation,
-           query,
-           @query_checks,
-           Keyword.get(opts, :bylaw, [])
-         ) do
+    case Bylaw.Ecto.Query.validate_repo_query(operation, query, @query_checks, opts) do
       :ok -> {query, opts}
       {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
     end
   end
 end
 ```
+
+The repo options tell Bylaw about Ecto's own queries:
+
+- Migrator queries (`schema_migration: true`) are not checked.
+- Preload queries (`ecto_query: :preload`) skip the checks about how a query
+  was written (`NamedBindings`, `ManualJoinInsteadOfAssoc`,
+  `MandatoryWhereKeys`, `MandatoryJoinKeys`, `ExplicitVisibilityPredicates`).
+  Ecto builds them with unaliased joins filtered by the parents' keys, and the
+  query that loaded the parents was already checked. Safety checks such as
+  `RequiredOrder` still run.
+
+Each issue names the query's root source, e.g.
+`Bylaw.Ecto.Query.Checks.RequiredOrder: ... (on "posts")`, so a failure can be
+traced even when the stack trace has no application frames.
 
 ### Database-backed deterministic ordering
 
@@ -84,12 +93,7 @@ defp query_checks do
 end
 
 def prepare_query(operation, query, opts) do
-  case Bylaw.Ecto.Query.validate(
-         operation,
-         query,
-         query_checks(),
-         Keyword.get(opts, :bylaw, [])
-       ) do
+  case Bylaw.Ecto.Query.validate_repo_query(operation, query, query_checks(), opts) do
     :ok -> {query, opts}
     {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
   end
@@ -103,22 +107,8 @@ failures and malformed catalogues raise instead of silently falling back.
 
 ### Call-site overrides
 
-Ecto passes repo call options to `prepare_query/3`, but Bylaw only uses them
-when your repo explicitly passes them to `validate/4`:
-
-```elixir
-def prepare_query(operation, query, opts) do
-  case Bylaw.Ecto.Query.validate(
-         operation,
-         query,
-         @query_checks,
-         Keyword.get(opts, :bylaw, [])
-       ) do
-    :ok -> {query, opts}
-    {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
-  end
-end
-```
+Ecto passes repo call options to `prepare_query/3`, and
+`validate_repo_query/4` reads per-call Bylaw options from their `:bylaw` key:
 
 ```elixir
 Repo.all(query, bylaw: false)
@@ -164,14 +154,14 @@ defmodule MyApp.Repo do
   @impl Ecto.Repo
   def prepare_query(operation, query, opts) do
     if bylaw_ecto_query_enabled?() do
-      validate_query!(operation, query)
+      validate_query!(operation, query, opts)
     end
 
     {query, opts}
   end
 
-  defp validate_query!(operation, query) do
-    case Bylaw.Ecto.Query.validate(operation, query, @query_checks) do
+  defp validate_query!(operation, query, opts) do
+    case Bylaw.Ecto.Query.validate_repo_query(operation, query, @query_checks, opts) do
       :ok -> :ok
       {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
     end

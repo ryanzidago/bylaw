@@ -39,7 +39,10 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
   comparisons.
 
   This catches the common off-by-one interval boundary shapes `>` for a lower
-  bound and `<=` for an upper bound on root temporal fields.
+  bound and `<=` for an upper bound on root temporal fields, for fields bounded
+  on both sides. A lone bound is not an interval and passes: validity checks
+  such as `inserted_at > ago(7, "day")` or `expires_at > now` are correct as
+  written.
 
   ## Options
 
@@ -204,56 +207,67 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
 
   defp temporal_type?(type), do: type in @temporal_types
 
+  # Only a field bounded on both sides forms an interval; a lone bound, such as a
+  # validity window `inserted_at > ago(7, "day")`, is left alone.
   defp issues(operation, query, fields) do
     query
-    |> boundary_violations(fields)
+    |> boundaries(fields)
     |> Enum.group_by(& &1.field)
-    |> Enum.map(fn {field, violations} -> issue(operation, field, violations) end)
+    |> Enum.filter(fn {_field, boundaries} -> interval?(boundaries) end)
+    |> Enum.flat_map(fn {field, boundaries} -> field_issues(operation, field, boundaries) end)
     |> Enum.sort_by(& &1.meta.field)
   end
 
-  defp boundary_violations(query, fields) when is_map(query) do
+  defp interval?(boundaries) do
+    Enum.any?(boundaries, &(&1.boundary == :lower)) and
+      Enum.any?(boundaries, &(&1.boundary == :upper))
+  end
+
+  defp field_issues(operation, field, boundaries) do
+    case Enum.flat_map(boundaries, &violation/1) do
+      [] -> []
+      violations -> [issue(operation, field, violations)]
+    end
+  end
+
+  defp boundaries(query, fields) when is_map(query) do
     fields = MapSet.new(fields)
     root_aliases = Introspection.root_aliases(query)
 
     query
     |> Map.get(:wheres, [])
-    |> Enum.flat_map(&boundary_violations_in_where(&1, fields, root_aliases))
+    |> Enum.flat_map(&boundaries_in_where(&1, fields, root_aliases))
   end
 
-  defp boundary_violations(_query, _fields), do: []
+  defp boundaries(_query, _fields), do: []
 
-  defp boundary_violations_in_where(%{expr: expr}, fields, root_aliases) do
-    boundary_violations_in_expr(expr, fields, root_aliases)
+  defp boundaries_in_where(%{expr: expr}, fields, root_aliases) do
+    boundaries_in_expr(expr, fields, root_aliases)
   end
 
-  defp boundary_violations_in_where(_where, _fields, _root_aliases), do: []
+  defp boundaries_in_where(_where, _fields, _root_aliases), do: []
 
-  defp boundary_violations_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
+  defp boundaries_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
        when operator in [:and, :or] do
-    boundary_violations_in_expr(left, fields, root_aliases) ++
-      boundary_violations_in_expr(right, fields, root_aliases)
+    boundaries_in_expr(left, fields, root_aliases) ++
+      boundaries_in_expr(right, fields, root_aliases)
   end
 
-  defp boundary_violations_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
+  defp boundaries_in_expr({operator, _meta, [left, right]}, fields, root_aliases)
        when operator in @comparison_operators do
-    comparison_violation(left, right, operator, fields, root_aliases)
+    comparison_boundary(left, right, operator, fields, root_aliases)
   end
 
-  defp boundary_violations_in_expr(_expr, _fields, _root_aliases), do: []
+  defp boundaries_in_expr(_expr, _fields, _root_aliases), do: []
 
-  defp comparison_violation(left, right, operator, fields, root_aliases) do
+  defp comparison_boundary(left, right, operator, fields, root_aliases) do
     case {checked_root_field(left, fields, root_aliases),
           checked_root_field(right, fields, root_aliases)} do
       {{:ok, field}, _right_field} ->
-        field
-        |> field_violation(right, operator)
-        |> List.wrap()
+        field_boundary(field, right, operator)
 
       {:error, {:ok, field}} ->
-        field
-        |> field_violation(left, reverse_operator(operator))
-        |> List.wrap()
+        field_boundary(field, left, reverse_operator(operator))
 
       {:error, :error} ->
         []
@@ -278,33 +292,26 @@ defmodule Bylaw.Ecto.Query.Checks.HalfOpenTemporalIntervals do
     end
   end
 
-  defp field_violation(field, other_expr, operator) do
+  defp field_boundary(field, other_expr, operator) do
     if Introspection.field_reference?(other_expr) do
-      nil
+      []
     else
-      violation(field, operator)
+      [%{boundary: boundary(operator), field: field, operator: operator}]
     end
   end
 
-  defp violation(field, :>) do
-    %{
-      boundary: :lower,
-      field: field,
-      operator: :>,
-      expected_operator: :>=
-    }
+  defp boundary(operator) when operator in [:>, :>=], do: :lower
+  defp boundary(operator) when operator in [:<, :<=], do: :upper
+
+  defp violation(%{field: field, operator: :>}) do
+    [%{boundary: :lower, field: field, operator: :>, expected_operator: :>=}]
   end
 
-  defp violation(field, :<=) do
-    %{
-      boundary: :upper,
-      field: field,
-      operator: :<=,
-      expected_operator: :<
-    }
+  defp violation(%{field: field, operator: :<=}) do
+    [%{boundary: :upper, field: field, operator: :<=, expected_operator: :<}]
   end
 
-  defp violation(_field, _operator), do: nil
+  defp violation(_boundary), do: []
 
   defp reverse_operator(:<), do: :>
   defp reverse_operator(:<=), do: :>=

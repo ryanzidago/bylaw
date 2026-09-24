@@ -2,10 +2,10 @@ defmodule Bylaw.Ecto.Query do
   @moduledoc """
   Runs Ecto query checks from an explicit list of check specs.
 
-  `Bylaw.Ecto.Query.validate/3` and `Bylaw.Ecto.Query.validate/4` are the
-  public entry points for end-user query validation. Use them from
-  `c:Ecto.Repo.prepare_query/3` when you want repo-wide enforcement while
-  keeping check selection explicit:
+  `Bylaw.Ecto.Query.validate_repo_query/4` is the entry point for repo-wide
+  enforcement from `c:Ecto.Repo.prepare_query/3`, keeping check selection
+  explicit. `Bylaw.Ecto.Query.validate/3` and `Bylaw.Ecto.Query.validate/4`
+  run checks against any query:
 
       @query_checks [
         Bylaw.Ecto.Query.Checks.RequiredOrder,
@@ -19,12 +19,7 @@ defmodule Bylaw.Ecto.Query do
       ]
 
       def prepare_query(operation, query, opts) do
-        case Bylaw.Ecto.Query.validate(
-               operation,
-               query,
-               @query_checks,
-               Keyword.get(opts, :bylaw, [])
-             ) do
+        case Bylaw.Ecto.Query.validate_repo_query(operation, query, @query_checks, opts) do
           :ok -> {query, opts}
           {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
         end
@@ -95,27 +90,8 @@ defmodule Bylaw.Ecto.Query do
   Ecto passes repo call options to `c:Ecto.Repo.prepare_query/3`, so callers
   can pass per-call Bylaw options with `Repo.all(query, bylaw: ...)`.
 
-  Bylaw does not read those options automatically. Apps explicitly opt in by
-  passing `Keyword.get(opts, :bylaw, [])` to `Bylaw.Ecto.Query.validate/4`
-  inside `prepare_query/3`:
-
-      @query_checks [
-        Bylaw.Ecto.Query.Checks.RequiredOrder,
-        {Bylaw.Ecto.Query.Checks.MandatoryWhereKeys,
-         rules: [fields: [:organization_id]]}
-      ]
-
-      def prepare_query(operation, query, opts) do
-        case Bylaw.Ecto.Query.validate(
-               operation,
-               query,
-               @query_checks,
-               Keyword.get(opts, :bylaw, [])
-             ) do
-          :ok -> {query, opts}
-          {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
-        end
-      end
+  `validate_repo_query/4` reads them from the repo options it is given.
+  `validate/4` takes them explicitly, as `Keyword.get(opts, :bylaw, [])`.
 
   Repo-wide check specs define defaults. Call-site `bylaw:` specs replace
   matching repo-wide specs and append new checks after the unchanged repo-wide
@@ -155,10 +131,23 @@ defmodule Bylaw.Ecto.Query do
   alias Bylaw.CheckRunner
   alias Bylaw.Ecto.Query.Check
   alias Bylaw.Ecto.Query.CheckOptions
+  alias Bylaw.Ecto.Query.Checks
+  alias Bylaw.Ecto.Query.Introspection
   alias Bylaw.Ecto.Query.Issue
 
   @type check_spec :: module() | {module(), Check.opts()}
   @type checks :: list(check_spec())
+
+  # Ecto builds preload queries itself, with unaliased joins, filtered by the
+  # parents' keys. These checks judge how a query was written, so they don't
+  # apply to them.
+  @preload_skipped_checks [
+    Checks.NamedBindings,
+    Checks.ManualJoinInsteadOfAssoc,
+    Checks.MandatoryWhereKeys,
+    Checks.MandatoryJoinKeys,
+    Checks.ExplicitVisibilityPredicates
+  ]
 
   @doc """
   Runs the given query checks against a prepared Ecto query.
@@ -201,6 +190,53 @@ defmodule Bylaw.Ecto.Query do
 
     validate(operation, query, checks)
   end
+
+  @doc """
+  Runs query checks from `c:Ecto.Repo.prepare_query/3`, given the repo options
+  Ecto passes to it.
+
+  It is `validate/4` with the call-site options read from `repo_opts[:bylaw]`,
+  plus what Ecto's own queries need:
+
+    * migrator queries (`schema_migration: true`) are not checked;
+    * preload queries (`ecto_query: :preload`) skip the checks about how a query
+      was written: `NamedBindings`, `ManualJoinInsteadOfAssoc`,
+      `MandatoryWhereKeys`, `MandatoryJoinKeys`, and
+      `ExplicitVisibilityPredicates`. Ecto builds those queries, and the query
+      that loaded the parents was checked. A call-site spec for one of them
+      still runs it.
+
+      def prepare_query(operation, query, opts) do
+        case Bylaw.Ecto.Query.validate_repo_query(operation, query, @query_checks, opts) do
+          :ok -> {query, opts}
+          {:error, issues} -> raise Bylaw.Ecto.Query.Issue.format_many(issues)
+        end
+      end
+  """
+  @spec validate_repo_query(Check.operation(), Check.query(), checks(), keyword()) ::
+          :ok | {:error, nonempty_list(Issue.t())}
+  def validate_repo_query(operation, query, checks, repo_opts) when is_list(repo_opts) do
+    case Keyword.get(repo_opts, :schema_migration, false) do
+      true ->
+        :ok
+
+      false ->
+        validate(
+          operation,
+          query,
+          repo_checks(checks, Keyword.get(repo_opts, :ecto_query)),
+          Keyword.get(repo_opts, :bylaw, [])
+        )
+    end
+  end
+
+  defp repo_checks(checks, :preload) when is_list(checks) do
+    checks
+    |> normalize_checks!()
+    |> Enum.reject(fn {check, _opts} -> check in @preload_skipped_checks end)
+  end
+
+  defp repo_checks(checks, _ecto_query), do: checks
 
   defp normalize_checks!(checks) do
     checks
@@ -282,7 +318,25 @@ defmodule Bylaw.Ecto.Query do
   defp issues_for_check({check, opts}, operation, query) do
     result = check.validate(operation, query, opts)
 
-    apply(CheckRunner, :result!, [check, result, Issue, 3])
+    CheckRunner
+    |> apply(:result!, [check, result, Issue, 3])
+    |> put_source(source(query))
+  end
+
+  defp put_source(issues, nil), do: issues
+
+  defp put_source(issues, source) do
+    Enum.map(issues, fn %Issue{} = issue ->
+      %{issue | meta: Map.put_new(issue.meta, :source, source)}
+    end)
+  end
+
+  defp source(query) do
+    case {Introspection.root_prefix(query), Introspection.root_table(query)} do
+      {_prefix, nil} -> nil
+      {nil, table} -> table
+      {prefix, table} -> prefix <> "." <> table
+    end
   end
 
   defp result([]), do: :ok

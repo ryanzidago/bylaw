@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.4.0 - Unreleased
+
+- Add `Bylaw.Ecto.Query.validate_repo_query/4` for `prepare_query/3`: it reads
+  call-site options from the repo options, skips Ecto's migrator queries, and
+  skips the checks about how a query was written on Ecto-built preload queries.
+- Name the query's root source in each issue (`meta.source`, and
+  `(on "posts")` in formatted issues).
+- `HalfOpenTemporalIntervals` only flags fields bounded on both sides; a lone
+  bound such as `inserted_at > ago(7, "day")` passes.
+- `ecto_schemas:` matchers load the schema module before checking it, so rules
+  no longer fail when the schema has not been used yet.
+
 ## 0.3.0 - 2026-07-27
 
 - Allow `DeterministicOrder` to use a zero-arity resolver that returns verified
