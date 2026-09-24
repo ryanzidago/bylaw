@@ -165,7 +165,7 @@ defmodule Bylaw.Ecto.Query.RuleOptions do
   defp matcher_value?(:db_schema, value), do: non_empty_string?(value)
 
   defp ecto_schema?(value) when is_atom(value) and not is_nil(value) do
-    function_exported?(value, :__schema__, 1)
+    Code.ensure_loaded?(value) and function_exported?(value, :__schema__, 1)
   end
 
   defp ecto_schema?(_value), do: false
