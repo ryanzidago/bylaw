@@ -6,6 +6,10 @@
   Tailwind arbitrary values such as `w-[430px]` and arbitrary properties in
   HEEx class attributes, including string literals in dynamic `class={...}`
   expressions. Arbitrary variants and CSS variable shorthand are allowed.
+- Add `Bylaw.Credo.Check.HEEx.DesignSystem.PreferComponentOverTag` to report
+  raw HTML tags, such as `<button>` or `<input>`, that the design system renders
+  through a component. The `:tags` option maps each tag to its component; the
+  component modules are excluded with Credo's per-check `files` param.
 - Add `Bylaw.Credo.Check.Testing.NoSleepInTests` to report `Process.sleep/1`
   and `:timer.sleep/1` in test files, which make tests slow and flaky.
 - Add `Bylaw.Credo.Check.HEEx.RequireFormFieldIdOrName` to require native
