@@ -30,6 +30,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr, []},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
