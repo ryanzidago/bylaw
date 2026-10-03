@@ -75,8 +75,9 @@ check-specific `.credo.exs` usage.
 
 ## Companion to Bylaw.Contract
 
-[Bylaw.Contract](https://hexdocs.pm/bylaw_contract/readme.html) measures which
-spec-derived cases tests exercise. Credo's built-in
+[Bylaw.Contract](https://hexdocs.pm/bylaw_contract/readme.html) reports which
+declared properties of a function (clause heads, guards, and `@spec`
+alternatives) no test exercised. Credo's built-in
 [`Specs`](https://hexdocs.pm/credo/Credo.Check.Readability.Specs.html) check
 requires specs to exist (`include_defp: true` includes private functions).
 

@@ -12,7 +12,8 @@ defmodule BylawContract.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_contract",
-      description: "Test-time observations for alternatives declared in Elixir specs.",
+      description:
+        "Finds the untested properties of functions: clause heads, guards and typespecs.",
       package: package(),
       docs: docs(),
       deps: deps()

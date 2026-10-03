@@ -2,72 +2,20 @@
 
 ## Unreleased
 
-- Match nonempty lists containing only `false` or `nil` according to their
-  element types, including observed return alternatives. Keep empty lists and
-  improper tails rejected.
-
-- Support Elixir 1.19 for default typespec and structural checks. Compile the
-  optional compiler-inference implementation only on Elixir 1.20 or newer;
-  explicitly selecting it on an unsupported runtime retains diagnostics
-  without producing false compiler gaps or disabling other checks.
-
-- Preserve structural coverage of surviving functions when Elixir eliminates
-  private definitions explicitly marked unreachable in debug metadata. Validate
-  metadata before reconstructing abstract code, and retain diagnostics for
-  missing public functions and incompatible debug information.
-
-- Map normalized compiler input domains to actual source clauses before
-  injecting counters, preventing false return hits and misses when inference
-  merges or reorders clauses. Keep ambiguous mappings unassessable per function.
-
-- Initialize check state in its owning worker, avoid duplicate typespec target
-  indexes, release structural classifier ASTs, and assemble final coverage in
-  the caller to reduce process-copy amplification. Preserve ordered claims and
-  clean up initialized workers when startup fails.
-- Keep compiler observation of its own runtime modules unassessable with an
-  explicit warning, avoiding hot-reload termination of the active observer.
-
-- Store repeated typespec aliases as compact graphs, bound alias and union
-  expansion work, and stop expanding unsupported members while preserving
-  input partitions and source locations.
-
-- Preserve compiler alternatives and independent function inference when return
-  union normalization absorbs or merges clause labels; keep functions without
-  an exact clause mapping unassessable instead of rejecting the entire module.
-
-- Add opt-in, checker-versioned observation of unambiguous finite return
-  alternatives from Elixir 1.20's private compiler-inference BEAM chunk.
-- Limit compiler-inferred runtime obligations to authored functions using
-  Elixir debug metadata, excluding macro-generated exports without
-  library-specific name filters.
-- Isolate each private compiler-chunk decode behind a fixed per-module timeout
-  so pathological descriptor expansion remains bounded and unassessable.
-- Infer compiler alternatives from executed function clauses only when the
-  compiler's input-to-return rules identify one unique outcome, avoiding
-  runtime tracing and keeping ambiguous outcomes unassessable.
-- Match unambiguous compiler rules through narrowly injected clause counters
-  without enabling VM tracing, inspecting returned values, or starting the
-  `:cover` server; exclude protocol implementation modules and bound
-  instrumentation with a configurable function limit.
-- Make typespec, structural, and Elixir compiler observation independently
-  selectable through an explicit ordered list of contract check modules.
-- Report only actionable gaps in the default human-readable output, omitting
-  empty and all-clear sections.
-- Point each typespec-derived diagnostic to its persisted `@spec` source and
-  identify the precise input class, boundary, or return alternative involved.
-- Keep unassessable typespec targets, callable-arity misses, unsupported
-  structural-module details, loader warnings, and aggregate summaries out of
-  the default human report while retaining them for programmatic inspection.
-- Prefix every human-readable finding with a stable category such as
-  `Missed boundary` or `Missed return alternative`.
-
-## 0.1.0 - 2026-09-04
-
-Initial package migration.
-
-- Add test-time observation of deterministic input classes derived from specs.
-- Add independent observation of exact finite-range boundary values.
-- Add observation of alternatives declared by top-level return unions.
-- Add source-aware structural clause and callable-arity gap reporting.
-- Keep unsupported alternatives explicit instead of reporting false misses.
-- Use isolated trace sessions on Erlang/OTP 27 and newer.
+- Rewrite around one idea: report the untested properties of functions (clause
+  heads, guards, and `@spec` alternatives, boundaries and returns).
+- Observe with counters injected at load time instead of `:trace`, so observation
+  adds no processes and can no longer lose data.
+- Removed the trace-based checks, the Elixir compiler inference check, the
+  structural shadow-module classifier and `max_trace_queue`.
+- Add `bylaw_contract: [since: revision]` (or `BYLAW_CONTRACT_SINCE`) to report only
+  functions changed since a git revision.
+- Add `bylaw_contract: [baseline: path]` and `BYLAW_CONTRACT_UPDATE_BASELINE=1` to
+  record reviewed findings and print only new ones.
+- Report a guard only when a later clause's patterns could accept a call it rejects.
+- Report only declared alternatives: no invented "empty", "multiple" or "zero"
+  partitions of a single declared type.
+- Treat clauses a comprehension generates from one source line, or writes with
+  `unquote`, as generated, so they get no clause or guard properties.
+- The ExUnit formatter prints how many tests were excluded, skipped or failed,
+  because findings reflect only the tests that ran.

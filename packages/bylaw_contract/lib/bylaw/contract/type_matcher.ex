@@ -1,6 +1,11 @@
 defmodule Bylaw.Contract.TypeMatcher do
   @moduledoc false
 
+  # Lists are validated up to this many cells. Observed functions often recurse
+  # over a list, so validating every cell on every call would be quadratic.
+  # Problems beyond the prefix are not detected.
+  @list_inspection_limit 32
+
   @type result :: :match | :no_match | :unknown
 
   @spec match(value :: term(), type :: term()) :: result()
@@ -289,6 +294,7 @@ defmodule Bylaw.Contract.TypeMatcher do
 
   defp match_list(list, element_type, definitions) do
     list
+    |> Enum.take(@list_inspection_limit)
     |> Enum.map(&do_match(&1, element_type, definitions))
     |> all_result()
   end
@@ -358,9 +364,12 @@ defmodule Bylaw.Contract.TypeMatcher do
   defp yes(true), do: :match
   defp yes(false), do: :no_match
 
-  defp proper_list?([]), do: true
-  defp proper_list?([_ | tail]), do: proper_list?(tail)
-  defp proper_list?(_), do: false
+  defp proper_list?(value), do: proper_list?(value, @list_inspection_limit)
+
+  defp proper_list?([], _remaining), do: true
+  defp proper_list?(_value, 0), do: true
+  defp proper_list?([_ | tail], remaining), do: proper_list?(tail, remaining - 1)
+  defp proper_list?(_value, _remaining), do: false
 
   defp list_length?([], :empty), do: true
   defp list_length?([_], :singleton), do: true
@@ -369,7 +378,9 @@ defmodule Bylaw.Contract.TypeMatcher do
 
   defp charlist?(value) when is_list(value) do
     proper_list?(value) and
-      Enum.all?(value, &(is_integer(&1) and &1 >= 0 and &1 <= 0x10FFFF))
+      value
+      |> Enum.take(@list_inspection_limit)
+      |> Enum.all?(&(is_integer(&1) and &1 >= 0 and &1 <= 0x10FFFF))
   end
 
   defp charlist?(_), do: false

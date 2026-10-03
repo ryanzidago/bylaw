@@ -1,168 +1,229 @@
 defmodule Bylaw.Contract do
   @moduledoc """
-  Runtime observations produced by explicitly selected contract checks.
+  Finds the untested properties of functions.
 
-  Bylaw.Contract is intentionally narrower than code coverage. It observes calls
-  made during a test run and reports which declared input classes and exact
-  range boundaries were seen, plus which alternatives in top-level return
-  unions were returned, and which user-authored function clauses were selected.
-  It does not prove complete type or value-space coverage.
+  Line coverage tells you which lines ran. Bylaw.Contract tells you which
+  declared properties of a function no test exercised:
+
+    * **heads** - function clauses no test selected
+    * **guards** - guards that never rejected a call
+    * **types** - `@spec` argument alternatives, integer range boundaries and
+      return alternatives no test produced
+
+  Observation rewrites the loaded modules so each property bumps a counter in
+  the calling process. It adds no processes, loses no data, and restores the
+  original modules when it stops.
+
+      report = Bylaw.Contract.observe([MyApp.Accounts], fn -> run_tests() end)
+      Bylaw.Contract.Report.print(report)
+
+  See `Bylaw.Contract.ExUnitFormatter` to observe a whole test suite.
   """
 
-  alias Bylaw.Contract.Check
-  alias Bylaw.Contract.FunctionSelection
+  alias Bylaw.Contract.Counters
+  alias Bylaw.Contract.Instrumenter
+  alias Bylaw.Contract.Property
   alias Bylaw.Contract.Report
-  alias Bylaw.Contract.Tracer
+  alias Bylaw.Contract.Specs
 
-  @default_checks [Check.Typespec, Check.FunctionClauses]
+  @runtime_modules [
+    __MODULE__,
+    Bylaw.Contract.Baseline,
+    Bylaw.Contract.CallCycles,
+    Bylaw.Contract.ChangedCode,
+    Bylaw.Contract.Counters,
+    Bylaw.Contract.ExUnitFormatter,
+    Bylaw.Contract.Instrumenter,
+    Bylaw.Contract.Property,
+    Bylaw.Contract.Report,
+    Bylaw.Contract.Session,
+    Bylaw.Contract.Specs,
+    Bylaw.Contract.TypeExpansion,
+    Bylaw.Contract.TypeMatcher
+  ]
 
-  @typedoc "A check module or a check module with explicit options."
-  @type check_spec :: module() | {module(), Check.opts()}
+  @active_key {__MODULE__, :active_session}
 
-  @typedoc "The ordered contract checks to run."
-  @type checks :: list(check_spec())
+  defmodule Session do
+    @moduledoc false
 
-  @typedoc "Options controlling runtime contract observation."
-  @type start_option ::
-          {:checks, checks()}
-          | {:max_trace_queue, pos_integer()}
-          | {:only, list(Check.observed_mfa())}
+    @type t :: %__MODULE__{
+            token: integer(),
+            results: list(map()),
+            warnings: list(String.t())
+          }
 
-  @doc "Starts the default typespec and structural checks for `modules`."
-  @spec start(modules :: list(module())) :: GenServer.on_start()
-  def start(modules) when is_list(modules), do: start(modules, [])
-
-  @doc """
-  Starts tracing with an explicit ordered check list.
-
-  A check spec is either a module implementing `Bylaw.Contract.Check` or a
-  `{check_module, opts}` tuple. The default check list enables
-  `Bylaw.Contract.Check.Typespec` and `Bylaw.Contract.Check.FunctionClauses`.
-  Passing an empty check list disables all observation.
-
-  `:only` accepts exact `{module, function, arity}` tuples from the supplied
-  modules. Omit it to observe all functions. An explicit empty list starts no
-  check workers and produces an empty-selection diagnostic. Duplicate entries
-  are ignored. Default-argument arities are selected individually.
-
-  Selection happens before function metadata expansion, claims, classifier
-  compilation and compiler instrumentation limits. Scoped observation supports
-  the three built-in checks; custom checks reject `:only` explicitly.
-
-  `:max_trace_queue` defaults to 4096 messages per check worker. Queues are
-  checked before consuming trace events and independently every 5 milliseconds.
-  Exceeding the threshold destroys that check's trace session and marks the result
-  incomplete. Queues may overshoot between checks; this is not a byte-memory
-  limit. Partial data remains available, but reports do not classify gaps from
-  an incomplete observation.
-  """
-  @spec start(modules :: list(module()), opts :: list(start_option())) :: GenServer.on_start()
-  def start(modules, opts) when is_list(modules) and is_list(opts) do
-    opts = Keyword.validate!(opts, [:only, checks: @default_checks, max_trace_queue: 4096])
-    limit = Keyword.fetch!(opts, :max_trace_queue)
-
-    unless is_integer(limit) and limit > 0,
-      do: raise(ArgumentError, "expected :max_trace_queue to be a positive integer")
-
-    checks = opts |> Keyword.fetch!(:checks) |> normalize_checks!()
-
-    selection =
-      case Keyword.fetch(opts, :only) do
-        :error -> :all
-        {:ok, only} -> FunctionSelection.new!(only, modules)
-      end
-
-    if selection != :all do
-      for {check, _} <- checks,
-          check not in [Check.Typespec, Check.FunctionClauses, Check.ElixirCompiler] do
-        raise ArgumentError, "contract check #{inspect(check)} does not support :only"
-      end
-    end
-
-    Tracer.start_link(FunctionSelection.modules(modules, selection), checks, limit, selection)
+    defstruct [:token, results: [], warnings: []]
   end
 
   @doc """
-  Stops a tracer and returns its coverage data.
+  Observes `modules` while `fun` runs and returns a `Bylaw.Contract.Report`.
 
-  If any worker exceeded its queue budget, the map has `status: :incomplete`
-  and an `:incomplete` list of check, reason, limit, and observed queue counts.
-  Retained counters and targets then describe partial observation only.
-  Scoped observations also include `:selected_functions`, a sorted list of
-  the distinct MFAs supplied in `:only`.
+  Raises when another observation is already active.
   """
-  @spec stop(tracer :: pid()) :: map()
-  def stop(tracer), do: Tracer.stop(tracer)
+  @spec observe(modules :: list(module()), fun :: (-> term())) :: Report.t()
+  def observe(modules, fun) when is_list(modules) and is_function(fun, 0) do
+    case start(modules) do
+      {:ok, session} ->
+        try do
+          fun.()
+          stop(session)
+        catch
+          kind, reason ->
+            stop(session)
+            :erlang.raise(kind, reason, __STACKTRACE__)
+        end
+
+      {:error, :session_active} ->
+        raise ArgumentError, "another Bylaw.Contract observation is already active"
+    end
+  end
 
   @doc """
-  Prints actionable coverage gaps, or an incomplete-observation diagnostic.
+  Starts observing `modules`.
 
-  Diagnostic colors default to `IO.ANSI.enabled?/0`. Pass `colors: false` as the
-  third argument for escape-free output, or `colors: true` to force colors.
-  Summary data is never colored.
+  Only one observation can be active at a time. Modules that cannot be observed
+  produce warnings in the final report instead of failing the start.
   """
-  @spec print_report(
-          coverage :: map(),
-          device :: IO.device(),
-          options :: list({:colors, boolean()})
-        ) :: :ok
-  def print_report(coverage, device \\ :stdio, options \\ []),
-    do: Report.print(coverage, device, Keyword.get(options, :colors, IO.ANSI.enabled?()))
+  @spec start(modules :: list(module())) :: {:ok, Session.t()} | {:error, :session_active}
+  def start(modules) when is_list(modules) do
+    token = System.unique_integer([:positive, :monotonic])
 
-  @doc "Returns aggregate counters, or incomplete status and reasons when observation aborted."
-  @spec summary(coverage :: map()) :: map()
-  def summary(coverage), do: Report.summary(coverage)
+    case claim(token) do
+      :ok ->
+        {:ok, instrument(Enum.uniq(modules), token)}
 
-  defp normalize_checks!(checks) when is_list(checks) do
-    checks
-    |> Enum.reduce({MapSet.new(), []}, fn check_spec, {seen, normalized} ->
-      {check, check_opts} = normalize_check_spec!(check_spec)
+      :error ->
+        {:error, :session_active}
+    end
+  end
 
-      if MapSet.member?(seen, check) do
-        raise ArgumentError, "duplicate contract check: #{inspect(check)}"
+  @doc "Stops observing, restores the original modules, and returns the report."
+  @spec stop(session :: Session.t()) :: Report.t()
+  def stop(%Session{token: token} = session) do
+    properties = Enum.flat_map(session.results, &read_properties/1)
+
+    restore_warnings =
+      session.results
+      |> Enum.flat_map(fn
+        %{original: nil} -> []
+        %{original: original} -> restore(original)
+      end)
+
+    Counters.delete_session(token)
+    release(token)
+
+    %Report{
+      properties: Enum.sort_by(properties, &sort_key/1),
+      warnings:
+        session.warnings ++ Enum.flat_map(session.results, & &1.warnings) ++ restore_warnings
+    }
+  end
+
+  defp instrument(modules, token) do
+    {runtime, observed} = Enum.split_with(modules, &(&1 in @runtime_modules))
+    specs = Specs.load(observed)
+
+    targets =
+      Enum.group_by(
+        tag(specs.input_classes, :argument_class) ++
+          tag(specs.boundaries, :argument_boundary) ++
+          tag(specs.return_alternatives, :return_alternative),
+        & &1.module
+      )
+
+    results =
+      observed
+      |> Task.async_stream(
+        fn module ->
+          result = Instrumenter.instrument(module, Map.get(targets, module, []), token)
+          Map.put(result, :module, module)
+        end,
+        max_concurrency: System.schedulers_online(),
+        timeout: :infinity,
+        ordered: true
+      )
+      |> Enum.map(fn {:ok, result} -> result end)
+
+    sessions =
+      for %{counters: counters, module: module, descriptors: descriptors} <- results,
+          counters != nil,
+          into: %{},
+          do: {module, {counters, descriptors}}
+
+    Counters.put_session(token, sessions)
+
+    runtime_warnings =
+      Enum.map(runtime, &"#{inspect(&1)} is observer runtime code and cannot be observed")
+
+    %Session{token: token, results: results, warnings: specs.warnings ++ runtime_warnings}
+  end
+
+  defp tag(targets, kind), do: Enum.map(targets, &Map.put(&1, :kind, kind))
+
+  defp read_properties(%{counters: nil, properties: properties}), do: properties
+
+  defp read_properties(%{counters: counters, properties: properties}),
+    do: Enum.map(properties, &read_property(&1, counters))
+
+  defp read_property(%Property{status: :unassessable} = property, _counters), do: property
+  defp read_property(%Property{slot: nil} = property, _counters), do: property
+
+  defp read_property(%Property{} = property, counters) do
+    count = :counters.get(counters, property.slot)
+    unknown? = property.unknown_slot != nil and :counters.get(counters, property.unknown_slot) > 0
+
+    status =
+      cond do
+        count > 0 -> :observed
+        unknown? -> :unassessable
+        true -> :missed
       end
 
-      validate_check!(check)
-      {MapSet.put(seen, check), [{check, check_opts} | normalized]}
+    reason =
+      if status == :unassessable do
+        "the observed values could not be assessed"
+      end
+
+    %{property | count: count, status: status, reason: reason}
+  end
+
+  defp restore(original) do
+    case Instrumenter.restore(original) do
+      :ok -> []
+      {:error, reason} -> [reason]
+    end
+  end
+
+  defp sort_key(property),
+    do:
+      {property.module, property.function, property.arity, property.kind, property.clause || 0,
+       property.label || ""}
+
+  defp claim(token) do
+    :global.trans({@active_key, self()}, fn ->
+      case :persistent_term.get(@active_key, nil) do
+        nil ->
+          :persistent_term.put(@active_key, token)
+          :ok
+
+        _active ->
+          :error
+      end
     end)
-    |> elem(1)
-    |> Enum.reverse()
   end
 
-  defp normalize_checks!(checks) do
-    raise ArgumentError, "expected :checks to be a list, got: #{inspect(checks)}"
+  defp release(token) do
+    :global.trans({@active_key, self()}, fn ->
+      if :persistent_term.get(@active_key, nil) == token do
+        :persistent_term.erase(@active_key)
+      end
+    end)
+
+    :ok
   end
 
-  defp normalize_check_spec!(check) when is_atom(check), do: {check, []}
-
-  defp normalize_check_spec!({check, opts})
-       when is_atom(check) and is_list(opts) do
-    if Keyword.keyword?(opts) do
-      {check, opts}
-    else
-      invalid_check_spec!({check, opts})
-    end
-  end
-
-  defp normalize_check_spec!(check_spec), do: invalid_check_spec!(check_spec)
-
-  defp invalid_check_spec!(check_spec) do
-    raise ArgumentError,
-          "expected a contract check module or {module, keyword}, got: #{inspect(check_spec)}"
-  end
-
-  defp validate_check!(check) do
-    callbacks = [{:init, 3}, {:observe, 2}, {:coverage, 1}, {:terminate, 1}]
-
-    with {:module, ^check} <- Code.ensure_loaded(check),
-         true <-
-           Enum.all?(callbacks, fn {function, arity} ->
-             function_exported?(check, function, arity)
-           end) do
-      :ok
-    else
-      _ ->
-        raise ArgumentError, "expected #{inspect(check)} to implement Bylaw.Contract.Check"
-    end
-  end
+  @doc false
+  @spec runtime_modules() :: list(module())
+  def runtime_modules, do: @runtime_modules
 end

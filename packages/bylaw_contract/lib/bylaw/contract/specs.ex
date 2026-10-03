@@ -1,31 +1,29 @@
 defmodule Bylaw.Contract.Specs do
   @moduledoc false
 
-  alias Bylaw.Contract.FunctionSelection
-
-  alias Bylaw.Contract.TypeMatcher
   alias Bylaw.Contract.TypeExpansion
+  alias Bylaw.Contract.TypeMatcher
 
   @types_cache_key {__MODULE__, :types_cache}
   @max_union_visits 4096
 
-  @spec load(modules :: list(module()), selection :: FunctionSelection.t()) :: map()
-  def load(modules, selection \\ :all) do
+  @spec load(modules :: list(module())) :: map()
+  def load(modules) do
     Process.put(@types_cache_key, %{})
 
     try do
-      do_load(FunctionSelection.modules(modules, selection), selection)
+      do_load(modules)
     after
       Process.delete(@types_cache_key)
     end
   end
 
-  defp do_load(modules, selection) do
+  defp do_load(modules) do
     {input_classes, boundaries, return_alternatives, warnings} =
       Enum.reduce(modules, {[], [], [], []}, fn module,
                                                 {input_classes, boundaries, return_alternatives,
                                                  warnings} ->
-        case load_module(module, selection) do
+        case load_module(module) do
           {:ok, module_classes, module_boundaries, module_returns, module_warnings} ->
             {
               module_classes ++ input_classes,
@@ -50,19 +48,13 @@ defmodule Bylaw.Contract.Specs do
     }
   end
 
-  defp load_module(module, selection) do
+  defp load_module(module) do
     with {:module, ^module} <- Code.ensure_loaded(module),
          {:ok, specs} <- Code.Typespec.fetch_specs(module) do
       source_file = module.module_info(:compile) |> Keyword.get(:source) |> normalize_file()
 
       {input_classes, boundaries, return_alternatives, warnings} =
-        extract_specs(
-          module,
-          Enum.filter(specs, fn {{function, arity}, _} ->
-            FunctionSelection.member?(selection, module, function, arity)
-          end),
-          source_file
-        )
+        extract_specs(module, specs, source_file)
 
       {:ok, input_classes, boundaries, return_alternatives, warnings}
     else
@@ -140,7 +132,7 @@ defmodule Bylaw.Contract.Specs do
 
       class_specs =
         case members do
-          [_] -> partition_single_type(hd(members))
+          [_] -> declared_single_type_classes(hd(members))
           union_members -> Enum.map(union_members, &union_member_class/1)
         end
 
@@ -223,141 +215,24 @@ defmodule Bylaw.Contract.Specs do
     }
   end
 
-  defp partition_single_type({display_type, {:bylaw_contract, :type_graph, root, nodes}}) do
+  # A single declared type has one alternative; only boolean() is a declared
+  # union (true | false).
+  defp declared_single_type_classes({display_type, {:bylaw_contract, :type_graph, root, nodes}}) do
     {display_type, root}
-    |> partition_single_type()
+    |> declared_single_type_classes()
     |> Enum.map(fn class ->
       %{class | match_type: TypeExpansion.wrap(class.match_type, nodes)}
     end)
   end
 
-  defp partition_single_type({display_type, match_type}) do
-    source_label = format_type(display_type)
-    partitions_for(match_type, source_label)
-  end
-
-  defp partitions_for({:type, _, :integer, []}, source_label) do
+  defp declared_single_type_classes({_display_type, {:type, _, :boolean, []}}) do
     [
-      partition("negative", {:type, 0, :neg_integer, []}, :negative, source_label),
-      partition("zero", {:integer, 0, 0}, :zero, source_label),
-      partition("positive", {:type, 0, :pos_integer, []}, :positive, source_label)
+      %{label: "false", match_type: {:atom, 0, false}, partition: false},
+      %{label: "true", match_type: {:atom, 0, true}, partition: true}
     ]
   end
 
-  defp partitions_for({:type, _, :non_neg_integer, []}, source_label) do
-    [
-      partition("zero", {:integer, 0, 0}, :zero, source_label),
-      partition("positive", {:type, 0, :pos_integer, []}, :positive, source_label)
-    ]
-  end
-
-  defp partitions_for({:type, _, :pos_integer, []} = match_type, source_label) do
-    [partition("positive", match_type, :positive, source_label)]
-  end
-
-  defp partitions_for({:type, _, :neg_integer, []} = match_type, source_label) do
-    [partition("negative", match_type, :negative, source_label)]
-  end
-
-  defp partitions_for(
-         {:type, _, :range, [{:integer, _, first}, {:integer, _, last}]},
-         source_label
-       )
-       when first <= last do
-    range_partitions(first, last, source_label)
-  end
-
-  defp partitions_for({:type, _, :list, [element_type]}, source_label) do
-    list_partitions(element_type, [:empty, :singleton, :multiple], source_label)
-  end
-
-  defp partitions_for({:type, _, :list, []}, source_label) do
-    list_partitions({:type, 0, :any, []}, [:empty, :singleton, :multiple], source_label)
-  end
-
-  defp partitions_for({:type, _, :nonempty_list, [element_type]}, source_label) do
-    list_partitions(element_type, [:singleton, :multiple], source_label)
-  end
-
-  defp partitions_for({:type, _, :binary, []}, source_label) do
-    [
-      partition("empty", {:bylaw_contract, :binary_size, :empty}, :empty, source_label),
-      partition("non-empty", {:bylaw_contract, :binary_size, :nonempty}, :nonempty, source_label)
-    ]
-  end
-
-  defp partitions_for({:type, _, :nonempty_binary, []}, source_label) do
-    [partition("non-empty", {:bylaw_contract, :binary_size, :nonempty}, :nonempty, source_label)]
-  end
-
-  defp partitions_for({:type, _, :boolean, []}, source_label) do
-    [
-      partition("false", {:atom, 0, false}, false, source_label),
-      partition("true", {:atom, 0, true}, true, source_label)
-    ]
-  end
-
-  defp partitions_for(match_type, source_label) do
-    [partition(source_label, match_type, :declared_type, source_label)]
-  end
-
-  defp range_partitions(first, last, source_label) when first == last do
-    [
-      partition(
-        "minimum/maximum (#{first})",
-        {:integer, 0, first},
-        :minimum_maximum,
-        source_label
-      )
-    ]
-  end
-
-  defp range_partitions(first, last, source_label) when first + 1 == last do
-    [
-      partition("minimum (#{first})", {:integer, 0, first}, :minimum, source_label),
-      partition("maximum (#{last})", {:integer, 0, last}, :maximum, source_label)
-    ]
-  end
-
-  defp range_partitions(first, last, source_label) do
-    [
-      partition("minimum (#{first})", {:integer, 0, first}, :minimum, source_label),
-      partition(
-        "interior (#{first + 1}..#{last - 1})",
-        {:type, 0, :range, [{:integer, 0, first + 1}, {:integer, 0, last - 1}]},
-        :interior,
-        source_label
-      ),
-      partition("maximum (#{last})", {:integer, 0, last}, :maximum, source_label)
-    ]
-  end
-
-  defp list_partitions(element_type, lengths, source_label) do
-    Enum.map(lengths, fn length ->
-      label =
-        if length == :multiple do
-          "multiple"
-        else
-          Atom.to_string(length)
-        end
-
-      partition(
-        label,
-        {:bylaw_contract, :list_length, length, element_type},
-        length,
-        source_label
-      )
-    end)
-  end
-
-  defp partition(label, match_type, partition, source_label) do
-    %{
-      label: label,
-      match_type: match_type,
-      partition: partition,
-      source_label: source_label
-    }
-  end
+  defp declared_single_type_classes(_member), do: []
 
   defp range_boundaries({display_type, match_type}) do
     case match_type do
