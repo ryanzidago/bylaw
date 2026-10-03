@@ -43,6 +43,7 @@ defmodule Bylaw.Contract do
   ]
 
   @active_key {__MODULE__, :active_session}
+  @replaced_reason "the module was replaced by other code during observation"
 
   defmodule Session do
     @moduledoc false
@@ -101,12 +102,13 @@ defmodule Bylaw.Contract do
   @doc "Stops observing, restores the original modules, and returns the report."
   @spec stop(session :: Session.t()) :: Report.t()
   def stop(%Session{token: token} = session) do
-    properties = Enum.flat_map(session.results, &read_properties/1)
+    results = Enum.map(session.results, &Map.put(&1, :replaced?, replaced?(&1)))
+    properties = Enum.flat_map(results, &read_properties/1)
 
     restore_warnings =
-      session.results
-      |> Enum.flat_map(fn
+      Enum.flat_map(results, fn
         %{original: nil} -> []
+        %{replaced?: true} -> []
         %{original: original} -> restore(original)
       end)
 
@@ -116,8 +118,19 @@ defmodule Bylaw.Contract do
     %Report{
       properties: Enum.sort_by(properties, &sort_key/1),
       warnings:
-        session.warnings ++ Enum.flat_map(session.results, & &1.warnings) ++ restore_warnings
+        session.warnings ++
+          Enum.flat_map(results, & &1.warnings) ++ restore_warnings ++ replaced_warnings(results)
     }
+  end
+
+  defp replaced?(%{module: module, loaded_md5: loaded_md5}),
+    do: Instrumenter.replaced?(module, loaded_md5)
+
+  defp replaced_warnings(results) do
+    for %{replaced?: true, module: module} <- results,
+        do:
+          "#{inspect(module)} was replaced by other code during observation; " <>
+            "its properties could not be assessed"
   end
 
   defp instrument(modules, token) do
@@ -160,6 +173,9 @@ defmodule Bylaw.Contract do
   end
 
   defp tag(targets, kind), do: Enum.map(targets, &Map.put(&1, :kind, kind))
+
+  defp read_properties(%{replaced?: true, properties: properties}),
+    do: Enum.map(properties, &Instrumenter.mark_unassessable(&1, @replaced_reason))
 
   defp read_properties(%{counters: nil, properties: properties}), do: properties
 

@@ -158,6 +158,10 @@ repository:
 - Lists are checked against their types up to 32 cells per call, so a malformed
   list beyond that prefix can match.
 - Modules need debug information and a BEAM file. Others produce a warning.
+- A module that other code replaces during observation, for example a test-double
+  library stubbing it, is reported as `:unassessable` with a warning, because calls
+  after the replacement are not counted. The replacement stays loaded when
+  observation stops.
 - One observation can be active at a time.
 - A module that processes are still executing cannot be reloaded or restored;
   it is skipped with a warning and never forcibly purged.

@@ -13,6 +13,8 @@
 - Add `bylaw_contract: [baseline: path]` and `BYLAW_CONTRACT_UPDATE_BASELINE=1` to
   record reviewed findings and print only new ones.
 - Report a guard only when a later clause's patterns could accept a call it rejects.
+- Report the properties of a module that other code replaces during observation
+  (for example a test-double library) as unassessable with a warning, instead of missed.
 - Report only declared alternatives: no invented "empty", "multiple" or "zero"
   partitions of a single declared type.
 - Treat clauses a comprehension generates from one source line, or writes with

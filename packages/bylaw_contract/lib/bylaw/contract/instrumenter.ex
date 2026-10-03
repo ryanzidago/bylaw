@@ -25,6 +25,7 @@ defmodule Bylaw.Contract.Instrumenter do
           original: original() | nil,
           properties: list(Property.t()),
           counters: :counters.counters_ref() | nil,
+          loaded_md5: binary() | nil,
           descriptors: tuple(),
           warnings: list(String.t())
         }
@@ -53,6 +54,16 @@ defmodule Bylaw.Contract.Instrumenter do
     end
   end
 
+  @doc false
+  @spec replaced?(module :: module(), loaded_md5 :: binary() | nil) :: boolean()
+  def replaced?(_module, nil), do: false
+
+  def replaced?(module, loaded_md5) do
+    module.module_info(:md5) != loaded_md5
+  catch
+    :error, :undef -> true
+  end
+
   defp fetch(module) do
     with {^module, binary, filename} <- :code.get_object_code(module),
          {:ok, {^module, [{:abstract_code, {:raw_abstract_v1, forms}}]}} <-
@@ -78,6 +89,7 @@ defmodule Bylaw.Contract.Instrumenter do
         original: nil,
         properties: analysis.properties,
         counters: nil,
+        loaded_md5: nil,
         descriptors: {},
         warnings: analysis.warnings
       }
@@ -91,6 +103,7 @@ defmodule Bylaw.Contract.Instrumenter do
             original: original,
             properties: analysis.properties,
             counters: counters,
+            loaded_md5: module.module_info(:md5),
             descriptors: List.to_tuple(Enum.reverse(analysis.descriptors)),
             warnings: analysis.warnings
           }
@@ -109,12 +122,15 @@ defmodule Bylaw.Contract.Instrumenter do
       properties:
         Enum.map(targets, &(&1 |> spec_property(nil, nil) |> mark_unassessable(reason))),
       counters: nil,
+      loaded_md5: nil,
       descriptors: {},
       warnings: ["#{inspect(module)} cannot be observed: #{reason}"]
     }
   end
 
-  defp mark_unassessable(property, reason),
+  @doc false
+  @spec mark_unassessable(property :: Property.t(), reason :: String.t()) :: Property.t()
+  def mark_unassessable(property, reason),
     do: %{property | status: :unassessable, reason: reason}
 
   # Analysis
