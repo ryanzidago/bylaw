@@ -1,326 +1,170 @@
 defmodule Bylaw.Contract.Report do
-  @moduledoc false
+  @moduledoc """
+  The properties found in the observed modules and which of them were observed.
 
-  @spec summary(coverage :: map()) :: map()
-  def summary(%{status: :incomplete} = coverage), do: Map.take(coverage, [:status, :incomplete])
+  The printed report lists only actionable findings: `:missed` properties.
+  `:unassessable` properties stay in `properties` and are never reported as
+  missed.
+  """
 
-  def summary(coverage) do
-    supported_classes = Enum.filter(coverage.input_classes, & &1.supported?)
-    observed_classes = Enum.count(supported_classes, &observed?(&1, coverage))
-    observed_boundaries = Enum.count(coverage.boundaries, &observed?(&1, coverage))
-    supported_returns = Enum.filter(coverage.return_alternatives, & &1.supported?)
-    observed_returns = Enum.count(supported_returns, &observed?(&1, coverage))
-    compiler_returns = Map.get(coverage, :compiler_return_alternatives, [])
-    supported_compiler_returns = Enum.filter(compiler_returns, & &1.supported?)
+  alias Bylaw.Contract.Property
 
-    assessable_compiler_returns =
-      Enum.reject(supported_compiler_returns, &MapSet.member?(coverage.unknown, &1.id))
+  @type t :: %__MODULE__{
+          properties: list(Property.t()),
+          warnings: list(String.t())
+        }
 
-    observed_compiler_returns =
-      Enum.count(assessable_compiler_returns, &observed?(&1, coverage))
+  @type summary :: %{
+          properties: non_neg_integer(),
+          observed: non_neg_integer(),
+          missed: non_neg_integer(),
+          unassessable: non_neg_integer()
+        }
 
-    clauses = Map.get(coverage, :clauses, [])
-    clause_outcomes = Map.get(coverage, :clause_outcomes, %{})
-    guarded_clauses = Enum.filter(clauses, & &1.guarded?)
+  defstruct properties: [], warnings: []
+
+  @resolution "Each gap is one of: a missing test, a spec or guard wider than the code, or dead code. " <>
+                "Resolve it: add a test, narrow the spec or guard, or delete the unreachable code.\n"
+
+  @kind_order [
+    :clause,
+    :guard_rejection,
+    :argument_class,
+    :argument_boundary,
+    :return_alternative
+  ]
+
+  @doc "Returns the properties that no test exercised."
+  @spec missed(report :: t()) :: list(Property.t())
+  def missed(%__MODULE__{properties: properties}),
+    do: Enum.filter(properties, &(&1.status == :missed))
+
+  @doc "Counts properties by status."
+  @spec summary(report :: t()) :: summary()
+  def summary(%__MODULE__{properties: properties}) do
+    counts = Enum.frequencies_by(properties, & &1.status)
 
     %{
-      functions:
-        (coverage.input_classes ++ coverage.return_alternatives)
-        |> Enum.map(&{&1.module, &1.function, &1.arity})
-        |> Enum.uniq()
-        |> Enum.count(),
-      arguments:
-        coverage.input_classes
-        |> Enum.map(&{&1.module, &1.function, &1.arity, &1.clause, &1.argument})
-        |> Enum.uniq()
-        |> Enum.count(),
-      calls: Enum.sum(Map.values(coverage.calls)),
-      input_classes: Enum.count(coverage.input_classes),
-      supported_input_classes: Enum.count(supported_classes),
-      observed_input_classes: observed_classes,
-      missed_input_classes: Enum.count(supported_classes) - observed_classes,
-      unsupported_input_classes:
-        Enum.count(coverage.input_classes) - Enum.count(supported_classes),
-      boundaries: Enum.count(coverage.boundaries),
-      observed_boundaries: observed_boundaries,
-      missed_boundaries: Enum.count(coverage.boundaries) - observed_boundaries,
-      return_groups:
-        coverage.return_alternatives
-        |> Enum.map(&{&1.module, &1.function, &1.arity, &1.clause})
-        |> Enum.uniq()
-        |> Enum.count(),
-      return_events: Enum.sum(Map.values(coverage.return_events)),
-      return_alternatives: Enum.count(coverage.return_alternatives),
-      supported_return_alternatives: Enum.count(supported_returns),
-      observed_return_alternatives: observed_returns,
-      missed_return_alternatives: Enum.count(supported_returns) - observed_returns,
-      unsupported_return_alternatives:
-        Enum.count(coverage.return_alternatives) - Enum.count(supported_returns),
-      compiler_return_groups:
-        compiler_returns
-        |> Enum.map(&{&1.module, &1.function, &1.arity})
-        |> Enum.uniq()
-        |> Enum.count(),
-      compiler_call_events: Enum.sum(Map.values(Map.get(coverage, :compiler_calls, %{}))),
-      compiler_return_alternatives: Enum.count(compiler_returns),
-      supported_compiler_return_alternatives: Enum.count(assessable_compiler_returns),
-      observed_compiler_return_alternatives: observed_compiler_returns,
-      missed_compiler_return_alternatives:
-        Enum.count(assessable_compiler_returns) - observed_compiler_returns,
-      unsupported_compiler_return_alternatives:
-        Enum.count(compiler_returns) - Enum.count(assessable_compiler_returns),
-      compiler_modules: Enum.count(Map.get(coverage, :compiler_modules, [])),
-      compiler_unsupported:
-        coverage
-        |> Map.get(:compiler_modules, [])
-        |> Enum.count(&(&1.status == :unsupported)),
-      compiler_warnings: Enum.count(Map.get(coverage, :compiler_warnings, [])),
-      clauses: Enum.count(clauses),
-      clauses_selected: count_observed(clauses, clause_outcomes, :selected),
-      clauses_head_matched: count_observed(clauses, clause_outcomes, :head_matches),
-      guarded_clauses: Enum.count(guarded_clauses),
-      guards_passed: count_observed(guarded_clauses, clause_outcomes, :guard_passes),
-      guards_rejected: count_observed(guarded_clauses, clause_outcomes, :guard_rejections),
-      callable_arities: Enum.count(Map.get(coverage, :arities, [])),
-      arity_calls: Enum.sum(Map.values(Map.get(coverage, :arity_calls, %{}))),
-      structural_unsupported:
-        coverage
-        |> Map.get(:structural_modules, [])
-        |> Enum.count(&(&1.status == :unsupported)),
-      warnings: Enum.count(coverage.warnings)
+      properties: Enum.count(properties),
+      observed: Map.get(counts, :observed, 0),
+      missed: Map.get(counts, :missed, 0),
+      unassessable: Map.get(counts, :unassessable, 0)
     }
   end
 
-  @doc false
-  @spec print(coverage :: map(), device :: IO.device(), colors :: boolean()) :: :ok
-  def print(coverage, device, colors \\ IO.ANSI.enabled?())
+  @doc """
+  Formats the missed properties, or returns an empty string when there are none.
 
-  def print(%{status: :incomplete, incomplete: reasons}, device, _colors) do
-    IO.puts(device, "Bylaw.Contract observation incomplete; coverage gaps were not assessed.")
+  Options: `:colors` (default `IO.ANSI.enabled?/0`).
+  """
+  @spec format(report :: t(), options :: list({:colors, boolean()})) :: String.t()
+  def format(%__MODULE__{} = report, options \\ []) do
+    colors? = Keyword.get(options, :colors, IO.ANSI.enabled?())
 
-    Enum.each(reasons, fn reason ->
-      IO.puts(
-        device,
-        "#{inspect(reason.check)}: trace queue exceeded #{reason.limit} messages (observed #{reason.observed})."
-      )
-    end)
+    case missed(report) do
+      [] ->
+        ""
 
-    :ok
-  end
+      missed ->
+        groups =
+          missed
+          |> Enum.sort_by(&sort_key/1)
+          |> Enum.group_by(&{&1.module, &1.function, &1.arity})
+          |> Enum.sort_by(fn {_function, [first | _rest]} ->
+            {first.module, first.file, first.line}
+          end)
 
-  def print(%{selected_functions: []}, device, _colors) do
-    IO.puts(device, "No functions selected for contract observation.")
-  end
+        body =
+          Enum.map_join(groups, "\n", fn {{module, function, arity}, properties} ->
+            heading = "#{inspect(module)}.#{function}/#{arity}"
+            findings = Enum.map_join(properties, "\n", &finding(&1, colors?))
+            "#{heading}\n#{findings}\n"
+          end)
 
-  def print(coverage, device, colors) do
-    print_typespec_gaps(coverage, device, colors)
-    print_compiler_inference_gaps(coverage, device, colors)
-    print_structural_coverage(coverage, device, colors)
-    :ok
-  end
-
-  defp print_typespec_gaps(coverage, device, colors) do
-    gaps =
-      coverage
-      |> typespec_targets()
-      |> Enum.filter(fn {_, target} -> assessable?(target, coverage) end)
-      |> Enum.reject(fn {_, target} -> observed?(target, coverage) end)
-
-    if Enum.any?(gaps) do
-      IO.puts(device, "\nBylaw.Contract typespec gaps")
-
-      gaps
-      |> Enum.group_by(fn {_, target} ->
-        {target.module, target.function, target.arity}
-      end)
-      |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_typespec_group(&1, device, colors))
+        "Bylaw.Contract gaps\n\n" <> body <> @resolution
     end
   end
 
-  defp typespec_targets(coverage) do
-    Enum.map(coverage.input_classes, &{:input, &1}) ++
-      Enum.map(coverage.boundaries, &{:boundary, &1}) ++
-      Enum.map(coverage.return_alternatives, &{:return, &1})
+  @doc "Prints the formatted report to a device."
+  @spec print(report :: t(), device :: IO.device(), options :: list({:colors, boolean()})) :: :ok
+  def print(%__MODULE__{} = report, device \\ :stdio, options \\ []) do
+    case format(report, options) do
+      "" -> :ok
+      output -> IO.puts(device, output)
+    end
   end
 
-  defp print_typespec_group({{module, function, arity}, targets}, device, colors) do
-    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
-
-    Enum.each(targets, fn {kind, target} ->
-      IO.puts(
-        device,
-        "    #{style("✗", :red, colors)} #{style(typespec_source_location(target), :cyan, colors)}\n" <>
-          "      #{target_diagnostic(kind, target, colors)}:\n\n" <>
-          style(indent_spec_source(target.spec_source), :faint, colors) <>
-          "\n\n" <>
-          "      #{style(target_label(kind, target), :red, colors)}\n"
-      )
-    end)
+  defp sort_key(property) do
+    {Enum.find_index(@kind_order, &(&1 == property.kind)), property.clause || 0,
+     property.argument || 0, property.label || ""}
   end
 
-  defp assessable?(target, coverage) do
-    target.supported? and not MapSet.member?(coverage.unknown, target.id)
+  defp finding(property, colors?) do
+    location = "#{relative(property.file)}:#{property.line}"
+
+    [
+      paint("    ✗ ", :red, colors?) <> paint(location, :cyan, colors?),
+      "      #{title(property)}",
+      "",
+      indent(source(property), colors?),
+      detail(property)
+    ]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join("\n")
+    |> Kernel.<>("\n")
   end
 
-  defp target_diagnostic(kind, target, colors) do
-    "#{style(diagnostic_category(kind, target), :red, colors)} - " <>
-      "no test exercises this #{target_description(kind, target)}"
+  defp title(%{kind: :clause, clause: clause}),
+    do: "Untested clause - no test selected clause #{clause}:"
+
+  defp title(%{kind: :guard_rejection, clause: clause}),
+    do: "Untested guard - no test made the guard of clause #{clause} reject a call:"
+
+  defp title(%{kind: :argument_class}),
+    do: "Untested argument alternative - no test passed this declared alternative:"
+
+  defp title(%{kind: :argument_boundary}),
+    do: "Untested argument boundary - no test passed this declared boundary value:"
+
+  defp title(%{kind: :return_alternative}),
+    do: "Untested return alternative - no test returned this declared alternative:"
+
+  defp detail(%{kind: :clause, clause: clause}), do: "\n      clause #{clause}"
+  defp detail(%{kind: :guard_rejection, clause: clause}), do: "\n      guard of clause #{clause}"
+
+  defp detail(%{kind: :argument_class} = property),
+    do: "\n      argument #{property.argument}: #{property.label}"
+
+  defp detail(%{kind: :argument_boundary} = property),
+    do: "\n      argument #{property.argument} boundary: #{property.label}"
+
+  defp detail(%{kind: :return_alternative} = property), do: "\n      return: #{property.label}"
+
+  defp source(%{kind: kind, source: source}) when kind not in [:clause, :guard_rejection],
+    do: source || ""
+
+  defp source(%{file: file, line: line}), do: source_line(file, line)
+
+  defp source_line(file, line) when is_binary(file) and is_integer(line) do
+    case File.read(file) do
+      {:ok, content} -> content |> String.split("\n") |> Enum.at(line - 1, "") |> String.trim()
+      {:error, _reason} -> ""
+    end
   end
 
-  defp diagnostic_category(:input, %{partition: :union_member}),
-    do: "Missed input alternative"
+  defp source_line(_file, _line), do: ""
 
-  defp diagnostic_category(:input, _), do: "Missed input class"
-  defp diagnostic_category(:boundary, _), do: "Missed boundary"
-  defp diagnostic_category(:return, _), do: "Missed return alternative"
-
-  defp target_description(:input, %{partition: :union_member}),
-    do: "declared input alternative"
-
-  defp target_description(:input, _), do: "typespec-derived input class"
-  defp target_description(:boundary, _), do: "declared boundary value"
-  defp target_description(:return, _), do: "declared return alternative"
-
-  defp target_label(:input, target), do: "argument #{target.argument}: #{target.label}"
-
-  defp target_label(:boundary, target),
-    do: "argument #{target.argument} boundary: #{target.label}"
-
-  defp target_label(:return, target), do: "return: #{target.label}"
-
-  defp typespec_source_location(%{spec_file: file, spec_line: line}) when is_binary(file) do
-    "#{display_file(file)}:#{line}"
-  end
-
-  defp typespec_source_location(%{spec_line: line}), do: "line #{line}"
-
-  defp indent_spec_source(source) do
-    source
-    |> format_spec_source()
+  defp indent(text, colors?) do
+    text
     |> String.split("\n")
-    |> Enum.map_join("\n", &"      #{&1}")
+    |> Enum.map_join("\n", &paint("      " <> &1, :faint, colors?))
   end
 
-  defp format_spec_source(source) do
-    source
-    |> Code.format_string!(line_length: 72)
-    |> IO.iodata_to_binary()
-    |> String.trim_trailing()
-  rescue
-    _ -> source
-  end
+  defp relative(nil), do: "unknown"
+  defp relative(file), do: Path.relative_to_cwd(file)
 
-  defp observed?(target, coverage), do: Map.get(coverage.hits, target.id, 0) > 0
-
-  defp print_compiler_inference_gaps(coverage, device, colors) do
-    gaps =
-      coverage
-      |> Map.get(:compiler_return_alternatives, [])
-      |> Enum.filter(& &1.supported?)
-      |> Enum.reject(&MapSet.member?(coverage.unknown, &1.id))
-      |> Enum.reject(&observed?(&1, coverage))
-
-    if Enum.any?(gaps) do
-      IO.puts(device, "\nBylaw.Contract compiler-inferred gaps")
-
-      gaps
-      |> Enum.group_by(&{&1.module, &1.function, &1.arity})
-      |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_compiler_inference_group(&1, device, colors))
-    end
-  end
-
-  defp print_compiler_inference_group({{module, function, arity}, alternatives}, device, colors) do
-    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
-
-    Enum.each(alternatives, fn alternative ->
-      IO.puts(
-        device,
-        "    #{style("✗", :red, colors)} compiler-inferred return\n" <>
-          "      #{style("Missed compiler-inferred return alternative", :red, colors)} - no test observes:\n\n" <>
-          "      #{style("return: #{alternative.label}", :red, colors)}\n"
-      )
-    end)
-  end
-
-  defp print_structural_coverage(coverage, device, colors) do
-    clauses = Map.get(coverage, :clauses, [])
-    unobserved_clauses = Enum.reject(clauses, &clause_observed?(&1, coverage))
-
-    if Enum.any?(unobserved_clauses) do
-      IO.puts(device, "\nBylaw.Contract structural clause gaps")
-
-      unobserved_clauses
-      |> Enum.group_by(&{&1.module, &1.function, &1.arity})
-      |> Enum.sort_by(fn {mfa, _} -> mfa end)
-      |> Enum.each(&print_clause_group(&1, device, colors))
-    end
-  end
-
-  defp print_clause_group({{module, function, arity}, clauses}, device, colors) do
-    IO.puts(device, "\n#{inspect(module)}.#{function}/#{arity}")
-
-    Enum.each(clauses, fn clause ->
-      IO.puts(
-        device,
-        "    #{style("✗", :red, colors)} #{style(source_location(clause), :cyan, colors)}\n" <>
-          "      #{style("Missed function clause", :red, colors)} - no test exercises this clause:\n\n" <>
-          style(indent_clause_source(clause.source), :red, colors) <> "\n"
-      )
-    end)
-  end
-
-  defp clause_observed?(clause, coverage) do
-    coverage.clause_outcomes
-    |> Map.get(clause.id, %{})
-    |> Map.get(:selected, 0)
-    |> Kernel.>(0)
-  end
-
-  defp source_location(%{file: file, line: line}) when is_binary(file) do
-    "#{display_file(file)}:#{line}"
-  end
-
-  defp source_location(%{line: line}), do: "line #{line}"
-
-  defp display_file(file) do
-    relative = Path.relative_to(file, File.cwd!())
-
-    if relative == ".." or String.starts_with?(relative, "../") do
-      file
-    else
-      relative
-    end
-  end
-
-  defp indent_clause_source(source) do
-    source
-    |> format_clause_source()
-    |> String.split("\n")
-    |> Enum.map_join("\n", &"      #{&1}")
-  end
-
-  defp format_clause_source(source) when byte_size(source) <= 72, do: source
-
-  defp format_clause_source(source) do
-    (source <> ", do: nil")
-    |> Code.format_string!(line_length: 72)
-    |> IO.iodata_to_binary()
-    |> String.replace(~r/,\s*do: nil\z/, "")
-  rescue
-    _ -> source
-  end
-
-  defp count_observed(clauses, outcomes, field) do
-    Enum.count(clauses, fn clause ->
-      Map.get(Map.get(outcomes, clause.id, %{}), field, 0) > 0
-    end)
-  end
-
-  defp style(text, color, colors) do
-    [color, text, :reset]
-    |> IO.ANSI.format_fragment(colors)
-    |> IO.iodata_to_binary()
-  end
+  defp paint(text, _color, false), do: text
+  defp paint(text, :red, true), do: IO.ANSI.red() <> text <> IO.ANSI.reset()
+  defp paint(text, :cyan, true), do: IO.ANSI.cyan() <> text <> IO.ANSI.reset()
+  defp paint(text, :faint, true), do: IO.ANSI.faint() <> text <> IO.ANSI.reset()
 end

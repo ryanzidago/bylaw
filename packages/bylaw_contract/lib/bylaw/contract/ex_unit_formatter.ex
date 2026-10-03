@@ -1,267 +1,192 @@
 defmodule Bylaw.Contract.ExUnitFormatter do
   @moduledoc """
-  ExUnit formatter adapter for running Bylaw.Contract against an application.
+  ExUnit formatter that observes a test suite and prints the untested properties
+  of the application's functions when the suite ends.
 
-  It inspects the current Mix project's application by default. Set
-  `BYLAW_CONTRACT_APPS` to a comma-separated list of OTP application names when a
-  suite exercises more than one application. Set `BYLAW_CONTRACT_REPORT=summary`
-  for compact, machine-readable output.
+      # test/test_helper.exs
+      ExUnit.start(formatters: [ExUnit.CLIFormatter, Bylaw.Contract.ExUnitFormatter])
 
-  `BYLAW_CONTRACT_DIFF_BASE` optionally scopes observation to committed source
-  changes from the reference's merge-base with the checked-out HEAD. Explicit
-  `bylaw_contract: [diff_base: ref]` overrides the environment; `false` disables
-  diff scope. `diff_paths` defaults to `["lib"]`, relative to `diff_root` (the
-  current directory by default). Source paths must be clean and selected modules
-  must match the application's compiled source and loaded BEAMs.
-
-  Invalid or incomplete scoped observation yields exit status 2 after the suite,
-  preserving an existing nonzero status. Empty selection runs the normal suite
-  without check workers. Ordinary observational gaps do not fail the process.
-
-  Human diagnostics honor ExUnit's `colors: [enabled: boolean]` option, defaulting
-  to `IO.ANSI.enabled?/0`. Summary output never contains ANSI styling.
-
-  Select checks through the arbitrary ExUnit option passed to formatters:
+  By default it observes the modules of the current Mix application. Pass the
+  modules explicitly to observe something else:
 
       ExUnit.start(
-        bylaw_contract: [
-          checks: [
-            Bylaw.Contract.Check.Typespec,
-            Bylaw.Contract.Check.FunctionClauses,
-            Bylaw.Contract.Check.ElixirCompiler
-          ]
-        ]
+        formatters: [ExUnit.CLIFormatter, Bylaw.Contract.ExUnitFormatter],
+        bylaw_contract: [modules: [MyApp.Accounts]]
       )
+
+  Functions that cannot be fully observed (recursive return values, modules
+  without debug information) are summarised as a warning count. Pass
+  `bylaw_contract: [warnings: true]` to print each warning.
+
+  Pass `bylaw_contract: [since: "origin/main"]` (or set the `BYLAW_CONTRACT_SINCE`
+  environment variable) to report only the functions that changed since a git
+  revision, which turns the report into a review of a pull request.
+
+  Pass `bylaw_contract: [baseline: "test/bylaw_contract_baseline.txt"]` to hide
+  findings a team has reviewed and accepted (see `Bylaw.Contract.Baseline`). Run
+  the suite with `BYLAW_CONTRACT_UPDATE_BASELINE=1` to rewrite that file.
+
+  The formatter never changes the suite's result.
   """
 
   use GenServer
 
-  alias Bylaw.Contract.Tracer
-  alias Bylaw.Contract.FormatterDiffScope
+  alias Bylaw.Contract
+  alias Bylaw.Contract.Baseline
+  alias Bylaw.Contract.ChangedCode
+  alias Bylaw.Contract.Report
 
+  @doc false
   @impl GenServer
-  def init(ex_unit_options) do
-    case observation_options(ex_unit_options) do
-      {:ok, options} -> initialize(ex_unit_options, options)
-      {:error, reason} -> {:ok, %{tracer: nil, error: reason, completion: track_completion()}}
+  def init(options) do
+    config = Keyword.get(options, :bylaw_contract, [])
+    modules = Keyword.get_lazy(config, :modules, &default_modules/0)
+
+    case Contract.start(modules) do
+      {:ok, session} ->
+        {:ok,
+         %{
+           session: session,
+           colors: Keyword.get(options, :colors, []),
+           warnings?: Keyword.get(config, :warnings, false),
+           baseline: Keyword.get(config, :baseline),
+           since:
+             Keyword.get_lazy(config, :since, fn -> System.get_env("BYLAW_CONTRACT_SINCE") end),
+           not_run: 0,
+           failed: 0
+         }}
+
+      {:error, :session_active} ->
+        IO.puts("Bylaw.Contract: another observation is active; skipping")
+
+        {:ok,
+         %{
+           session: nil,
+           colors: [],
+           warnings?: false,
+           since: nil,
+           baseline: nil,
+           not_run: 0,
+           failed: 0
+         }}
     end
   end
 
-  defp initialize(ex_unit_options, options) do
-    base = FormatterDiffScope.base(options)
-
-    completion =
-      if base == {:ok, :all} do
-        nil
-      else
-        track_completion()
-      end
-
-    state = %{
-      tracer: nil,
-      error: nil,
-      colors: colors_enabled?(ex_unit_options),
-      completion: completion
-    }
-
-    try do
-      with {:ok, modules} <- application_modules(),
-           {:ok, options} <- FormatterDiffScope.options(modules, options, base),
-           {:ok, tracer} <- Bylaw.Contract.start(modules, options) do
-        {:ok, %{state | tracer: tracer}}
-      else
-        {:error, reason} -> {:ok, %{state | error: reason}}
-      end
-    rescue
-      error -> {:ok, %{state | error: Exception.message(error)}}
-    end
-  end
-
-  defp track_completion do
-    completion = :atomics.new(1, [])
-    :atomics.put(completion, 1, 2)
-
-    System.at_exit(fn status ->
-      if status == 0 and :atomics.get(completion, 1) != 0 do
-        exit({:shutdown, 2})
-      end
-    end)
-
-    completion
-  end
-
-  defp observation_options(ex_unit_options) do
-    case Keyword.get(ex_unit_options, :bylaw_contract, []) do
-      options when is_list(options) ->
-        if Keyword.keyword?(options) do
-          {:ok, options}
-        else
-          {:error, "expected :bylaw_contract to be a keyword list, got: #{inspect(options)}"}
-        end
-
-      options ->
-        {:error, "expected :bylaw_contract to be a keyword list, got: #{inspect(options)}"}
-    end
-  end
-
+  @doc false
   @impl GenServer
-  def handle_cast({:suite_started, _}, %{tracer: tracer} = state) when is_pid(tracer) do
-    Tracer.start_observation_window(tracer)
-    {:noreply, state}
+  def handle_cast({:suite_finished, _times}, %{session: session} = state) when session != nil do
+    full = Contract.stop(session)
+    update_baseline(full, state.baseline)
+    {report, suppressed} = full |> restrict(state.since) |> apply_baseline(state.baseline)
+    Report.print(report, :stdio, colors: colors?(state.colors))
+    print_suppressed(suppressed)
+    print_warnings(report, state.warnings?)
+    print_test_run_note(state)
+    {:noreply, %{state | session: nil}}
   end
 
-  def handle_cast({:test_started, test}, %{tracer: tracer} = state) when is_pid(tracer) do
-    Tracer.ex_unit_test_started(tracer, {test.case, test.name})
-    {:noreply, state}
-  end
+  def handle_cast({:test_finished, %ExUnit.Test{state: {:excluded, _reason}}}, state),
+    do: {:noreply, %{state | not_run: state.not_run + 1}}
 
-  def handle_cast({:test_finished, test}, %{tracer: tracer} = state) when is_pid(tracer) do
-    Tracer.ex_unit_test_finished(tracer, {test.case, test.name})
-    {:noreply, state}
-  end
+  def handle_cast({:test_finished, %ExUnit.Test{state: {:skipped, _reason}}}, state),
+    do: {:noreply, %{state | not_run: state.not_run + 1}}
 
-  def handle_cast({:suite_finished, _}, %{tracer: tracer} = state) when is_pid(tracer) do
-    coverage = Bylaw.Contract.stop(tracer)
-    print_result(coverage, state.colors)
+  def handle_cast({:test_finished, %ExUnit.Test{state: {:failed, _failures}}}, state),
+    do: {:noreply, %{state | failed: state.failed + 1}}
 
-    if state.completion && Map.get(coverage, :status) != :incomplete do
-      :atomics.put(state.completion, 1, 0)
-    end
+  def handle_cast(_event, state), do: {:noreply, state}
 
-    {:noreply, %{state | tracer: nil}}
-  end
-
-  def handle_cast({:suite_finished, _}, %{error: error} = state) do
-    IO.puts("Bylaw.Contract QA error: #{inspect(error)}")
-    {:noreply, state}
-  end
-
-  def handle_cast(_, state), do: {:noreply, state}
-
+  @doc false
   @impl GenServer
-  def terminate(_, %{tracer: tracer}) when is_pid(tracer) do
-    if Process.alive?(tracer) do
-      Bylaw.Contract.stop(tracer)
-    end
-
+  def terminate(_reason, %{session: session}) when session != nil do
+    Contract.stop(session)
     :ok
   end
 
-  def terminate(_, _), do: :ok
+  def terminate(_reason, _state), do: :ok
 
-  defp application_modules do
-    with {:ok, applications} <- applications() do
-      result =
-        Enum.reduce_while(applications, {:ok, []}, fn application, {:ok, modules} ->
-          case Application.spec(application, :modules) do
-            nil -> {:halt, {:error, "OTP application #{inspect(application)} is not loaded"}}
-            application_modules -> {:cont, {:ok, application_modules ++ modules}}
-          end
-        end)
+  @doc """
+  Returns the modules of the current Mix application, excluding the observer's
+  own runtime modules and modules compiled from the test directory.
+  """
+  @spec default_modules() :: list(module())
+  def default_modules do
+    case Mix.Project.config()[:app] do
+      nil ->
+        []
 
-      case result do
-        {:ok, modules} -> {:ok, Enum.uniq(modules)}
-        error -> error
-      end
+      app ->
+        app |> Application.spec(:modules) |> List.wrap() |> Enum.reject(&excluded?/1)
     end
   end
 
-  defp applications do
-    names =
-      case System.get_env("BYLAW_CONTRACT_APPS") do
-        nil ->
-          [Mix.Project.config()[:app]]
-
-        value ->
-          value
-          |> String.split(",", trim: true)
-          |> Enum.map(&String.trim/1)
-      end
-
-    Enum.reduce_while(names, {:ok, []}, fn
-      nil, _ ->
-        {:halt, {:error, "could not determine the current Mix application"}}
-
-      name, {:ok, applications} when is_atom(name) ->
-        {:cont, {:ok, [name | applications]}}
-
-      name, {:ok, applications} ->
-        try do
-          {:cont, {:ok, [String.to_existing_atom(name) | applications]}}
-        rescue
-          ArgumentError -> {:halt, {:error, "unknown OTP application #{inspect(name)}"}}
-        end
-    end)
+  defp excluded?(module) do
+    module in Contract.runtime_modules() or test_support?(module)
   end
 
-  defp colors_enabled?(options) do
-    options
-    |> Keyword.get(:colors, [])
-    |> Keyword.get(:enabled, IO.ANSI.enabled?())
-  end
-
-  defp print_result(%{status: :incomplete} = coverage, colors) do
-    Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
-  end
-
-  defp print_result(coverage, colors) do
-    if System.get_env("BYLAW_CONTRACT_REPORT") == "summary" do
-      case coverage do
-        %{selected_functions: []} -> Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
-        _ -> :ok
-      end
-
-      summary = Bylaw.Contract.summary(coverage)
-
-      IO.puts(
-        "Bylaw.Contract QA: " <>
-          Enum.map_join(
-            [
-              :functions,
-              :arguments,
-              :calls,
-              :input_classes,
-              :supported_input_classes,
-              :observed_input_classes,
-              :missed_input_classes,
-              :unsupported_input_classes,
-              :boundaries,
-              :observed_boundaries,
-              :missed_boundaries,
-              :return_groups,
-              :return_events,
-              :return_alternatives,
-              :supported_return_alternatives,
-              :observed_return_alternatives,
-              :missed_return_alternatives,
-              :unsupported_return_alternatives,
-              :compiler_return_groups,
-              :compiler_call_events,
-              :compiler_return_alternatives,
-              :supported_compiler_return_alternatives,
-              :observed_compiler_return_alternatives,
-              :missed_compiler_return_alternatives,
-              :unsupported_compiler_return_alternatives,
-              :compiler_modules,
-              :compiler_unsupported,
-              :compiler_warnings,
-              :clauses,
-              :clauses_selected,
-              :clauses_head_matched,
-              :guarded_clauses,
-              :guards_passed,
-              :guards_rejected,
-              :callable_arities,
-              :arity_calls,
-              :structural_unsupported,
-              :warnings
-            ],
-            " ",
-            &"#{&1}=#{Map.fetch!(summary, &1)}"
-          )
-      )
+  defp test_support?(module) do
+    with {:module, ^module} <- Code.ensure_loaded(module),
+         source when not is_nil(source) <- module.module_info(:compile)[:source] do
+      source |> to_string() |> Path.relative_to_cwd() |> String.starts_with?("test/")
     else
-      Bylaw.Contract.print_report(coverage, :stdio, colors: colors)
+      _unknown -> false
     end
+  end
+
+  defp update_baseline(report, path) when is_binary(path) do
+    if System.get_env("BYLAW_CONTRACT_UPDATE_BASELINE") in [nil, "", "0"] do
+      :ok
+    else
+      Baseline.write(report, path)
+      IO.puts("Bylaw.Contract: wrote #{Enum.count(Report.missed(report))} findings to #{path}")
+    end
+  end
+
+  defp update_baseline(_report, _path), do: :ok
+
+  defp apply_baseline(report, path) when is_binary(path), do: Baseline.apply(report, path)
+  defp apply_baseline(report, _path), do: {report, 0}
+
+  defp print_suppressed(0), do: :ok
+
+  defp print_suppressed(count),
+    do: IO.puts("Bylaw.Contract: #{count} findings hidden by the baseline")
+
+  defp restrict(report, nil), do: report
+  defp restrict(report, since), do: ChangedCode.filter(report, since: since)
+
+  defp colors?(options) when is_list(options),
+    do: Keyword.get(options, :enabled, IO.ANSI.enabled?())
+
+  defp colors?(_options), do: IO.ANSI.enabled?()
+
+  defp print_test_run_note(%{not_run: 0, failed: 0}), do: :ok
+
+  defp print_test_run_note(%{not_run: not_run, failed: failed}) do
+    IO.puts(
+      "Bylaw.Contract: findings reflect only the tests that ran: " <>
+        "#{not_run} excluded or skipped, #{failed} failed"
+    )
+  end
+
+  defp print_warnings(%Report{warnings: []}, _all?), do: :ok
+
+  defp print_warnings(%Report{warnings: warnings}, true),
+    do: Enum.each(warnings, &IO.puts("Bylaw.Contract warning: #{&1}"))
+
+  defp print_warnings(%Report{warnings: warnings}, false) do
+    count = Enum.count(warnings)
+
+    noun =
+      if count == 1 do
+        "warning"
+      else
+        "warnings"
+      end
+
+    IO.puts(
+      "Bylaw.Contract: #{count} #{noun} about functions that could not be fully observed " <>
+        "(set bylaw_contract: [warnings: true] to print them)"
+    )
   end
 end
