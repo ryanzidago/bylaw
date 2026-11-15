@@ -27,6 +27,7 @@ check you want by listing its fully qualified module in the `checks:` list:
       ],
       checks: [
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
+        {Bylaw.Credo.Check.Elixir.NoComments, []},
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
         {Bylaw.Credo.Check.Elixir.NetworkOnlyInIntegrations, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
