@@ -81,6 +81,36 @@ for package in "${packages[@]}"; do
   }
 done
 
+# mix deps.get only warns about security advisories and retired packages;
+# mix hex.audit exits non-zero on them, so a known advisory fails QA.
+audit_failed=false
+for package in "${packages[@]}"; do
+  if ! output="$(cd "packages/${package}" && mix hex.audit 2>&1)"; then
+    affected="$(
+      printf '%s\n' "${output}" |
+        sed -nE 's/^  ([a-z0-9_]+) [0-9][^ ]* - .*/\1/p' |
+        sort -u |
+        tr '\n' ' ' |
+        sed 's/ $//'
+    )"
+
+    echo "==> failed: hex.audit (packages/${package})"
+    printf '%s\n' "${output}"
+    echo
+    echo "Fix: cd packages/${package} && mix deps.update ${affected:-<package>}"
+    echo "If the fixed version is outside a requirement in mix.exs, raise that"
+    echo "requirement and note it in the CHANGELOG. To accept an advisory that"
+    echo "does not apply, add its ID to hex: [ignore_advisories: [...]] in"
+    echo "mix.exs with a comment explaining why."
+    echo
+    audit_failed=true
+  fi
+done
+
+if [[ "${audit_failed}" == true ]]; then
+  exit 1
+fi
+
 run_stage "format" mix format --check-formatted
 run_stage "compile" mix compile --warnings-as-errors
 run_stage "credo" mix credo --strict
