@@ -20,6 +20,12 @@ defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
         |> select([user: u, profile: p], {u.id, p.display_name})
 
 
+  The check reports a query clause or join whose binding list holds a
+  positional binding (a plain variable such as `[u]` or `[u, p]`), whether it
+  is piped or called directly, and a schema piped straight into a clause
+  without a named binding. Named bindings (`[user: u]`) and interpolated names
+  (`[{^name, u}]`) are allowed.
+
   Positional bindings make every later query clause depend on the order of
   earlier joins. Adding, removing, or reordering a join can silently change
   what `[u, p]` means in the rest of the pipeline.
@@ -123,34 +129,56 @@ defmodule Bylaw.Credo.Check.Ecto.NamedBinding do
   end
 
   defp traverse(
-         {:|>, _pipe_meta,
-          [
-            {query_var, _var_meta, nil},
-            {func, func_meta,
-             [[{binding, _binding_meta, _binding_context} | _rest] | _other_args]}
-          ]} = ast,
+         {:|>, _pipe_meta, [_query, {func, func_meta, [bindings | _other_args]}]} = ast,
          issues,
          issue_meta
        )
-       when func in @ecto_query_functions and is_atom(binding) and is_atom(query_var) do
-    {ast, [issue_for(issue_meta, func_meta[:line] || 0) | issues]}
+       when func in @ecto_query_functions and is_list(bindings) do
+    {ast, maybe_add_issue(issues, issue_meta, bindings, func_meta)}
   end
 
   defp traverse(
-         {:|>, _pipe_meta,
-          [
-            {query_var, _var_meta, nil},
-            {func, func_meta,
-             [_join_type, [{binding, _binding_meta, _binding_context} | _rest] | _other_args]}
-          ]} = ast,
+         {:|>, _pipe_meta, [_query, {func, func_meta, [_join_type, bindings | _other_args]}]} =
+           ast,
          issues,
          issue_meta
        )
-       when func in @ecto_join_functions and is_atom(binding) and is_atom(query_var) do
-    {ast, [issue_for(issue_meta, func_meta[:line] || 0) | issues]}
+       when func in @ecto_join_functions and is_list(bindings) do
+    {ast, maybe_add_issue(issues, issue_meta, bindings, func_meta)}
+  end
+
+  defp traverse(
+         {func, func_meta, [_query, bindings, _expr | _other_args]} = ast,
+         issues,
+         issue_meta
+       )
+       when func in @ecto_query_functions and is_list(bindings) do
+    {ast, maybe_add_issue(issues, issue_meta, bindings, func_meta)}
+  end
+
+  defp traverse(
+         {func, func_meta, [_query, join_type, bindings, _expr | _other_args]} = ast,
+         issues,
+         issue_meta
+       )
+       when func in @ecto_join_functions and is_atom(join_type) and is_list(bindings) do
+    {ast, maybe_add_issue(issues, issue_meta, bindings, func_meta)}
   end
 
   defp traverse(ast, issues, _issue_meta), do: {ast, issues}
+
+  defp maybe_add_issue(issues, issue_meta, bindings, func_meta) do
+    if Enum.any?(bindings, &positional_binding?/1) do
+      [issue_for(issue_meta, func_meta[:line] || 0) | issues]
+    else
+      issues
+    end
+  end
+
+  defp positional_binding?({name, _meta, context}) when is_atom(name) and is_atom(context),
+    do: true
+
+  defp positional_binding?(_binding), do: false
 
   defp issue_for(issue_meta, line_no) do
     format_issue(

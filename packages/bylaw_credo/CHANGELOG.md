@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Widen `Bylaw.Credo.Check.Ecto.NamedBinding` to report positional bindings
+  anywhere in a query pipeline, such as `from(e in Entry, as: :entry) |>
+  where([e], ...)` or a later `|> select([e], ...)`, and in direct calls such
+  as `where(query, [e], ...)` and `join(query, :inner, [e], ...)`. Before, it
+  only looked at a clause piped from a schema or a bare variable. Named
+  bindings and `[{^name, x}]` stay allowed.
+- Fix `Bylaw.Credo.Check.Ecto.PipeBasedQueries` so `prefix:` in `from/2` is
+  allowed next to `as:` and `hints:`: a source prefix has no pipe equivalent.
+
 - Add `Bylaw.Credo.Check.Phoenix.NoRepoInWeb` to keep database access out of
   the web layer. In files under `:paths` (default `["_web/"]`, never
   `_test.exs`) it reports any call on a module whose last segment is `Repo`,

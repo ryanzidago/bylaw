@@ -14,10 +14,11 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
         |> where([u], u.active)
         |> order_by([u], asc: u.inserted_at)
 
-  Plain `from/1` usage is still allowed, and `from/2` with only `as:` is
-  allowed for named bindings. This check only flags query clauses like
-  `where`, `order_by`, joins, `select`, and similar clauses attached
-  directly to `from`.
+  Plain `from/1` usage is still allowed, and so is `from/2` with only the
+  source options `as:`, `prefix:` and `hints:`, which have no pipe
+  equivalent: `from(r in "vat_rules", prefix: "tax", as: :rule)`. This check
+  only flags query clauses like `where`, `order_by`, joins, `select`, and
+  similar clauses attached directly to `from`.
 
 
   Pipelines make each query transformation visible as a composable step. This
@@ -75,7 +76,6 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueries do
     :or_having,
     :or_where,
     :order_by,
-    :prefix,
     :preload,
     :right_join,
     :select,
