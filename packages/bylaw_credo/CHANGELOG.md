@@ -13,6 +13,23 @@
   templates, so lasting reasons go into `@moduledoc`, `@doc` or `@typedoc`.
   Tool directives listed in `:allowed_directives` (default `["credo:"]`) and a
   first-line shebang are allowed.
+- Add `Bylaw.Credo.Check.Testing.HTTPStubsOnlyInClientTests` to keep HTTP stub
+  calls and imports (`Req.Test` by default, configurable with `:modules`) in
+  the HTTP clients' own tests (`:allowed_paths`, by default any
+  `integrations/` directory under `test/`), so other tests expect on the
+  integration's behaviour mock.
+- Add `Bylaw.Credo.Check.Elixir.NetworkOnlyInIntegrations` to keep calls to
+  HTTP, socket and email delivery libraries (`Req`, `Finch`, `Mint`,
+  `HTTPoison`, `Tesla`, `:httpc`, `:hackney`, `Swoosh` adapters and mailers,
+  `:gen_tcp.connect`, `:ssl.connect`) inside the integration layer. It resolves
+  aliases; `:allowed_paths`, `:modules`, `:allowed_modules` and `:functions`
+  configure it.
+- Add `Bylaw.Credo.Check.Elixir.PreferStructOverMapType` to report closed
+  map types with literal atom keys, such as `%{id: integer(), name: String.t()}`,
+  in `@type`, `@typep`, `@opaque`, `@spec`, `@callback` and `@macrocallback`,
+  and suggest a struct with `@enforce_keys` and a `t()` type instead. Maps with
+  non-literal keys and struct types are not reported. `:min_keys` (default `2`)
+  and `:excluded_paths` tune it.
 - Add `Bylaw.Credo.Check.HEEx.NoUntranslatedText` to report literal readable
   text in `~H` sigils and `.html.heex` templates: text nodes with a letter, and
   letters in user-visible attributes (`alt`, `title`, `placeholder`,

@@ -29,7 +29,9 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.DocBeforeSpec, []},
         {Bylaw.Credo.Check.Elixir.NoComments, []},
         {Bylaw.Credo.Check.Elixir.NoRemoteCallsInModuleAttributes, []},
+        {Bylaw.Credo.Check.Elixir.NetworkOnlyInIntegrations, []},
         {Bylaw.Credo.Check.Elixir.PreferEmptyListChecks, []},
+        {Bylaw.Credo.Check.Elixir.PreferStructOverMapType, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitrarySpacing, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass, []},
@@ -63,6 +65,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs, []},
         {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []},
         {Bylaw.Credo.Check.Testing.NoDescribeBlocks, []},
+        {Bylaw.Credo.Check.Testing.HTTPStubsOnlyInClientTests, []},
         {Bylaw.Credo.Check.Testing.NoSleepInTests, []},
         {Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml, []},
         {Bylaw.Credo.Check.Testing.RequireAsyncTests, []}
