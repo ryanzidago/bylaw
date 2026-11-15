@@ -53,10 +53,11 @@ defmodule Bylaw.Credo.Heex do
     # Normalized HEEx text content.
 
     @enforce_keys [:content]
-    defstruct [:content]
+    defstruct [:content, :line_end]
 
     @type t :: %__MODULE__{
-            content: String.t()
+            content: String.t(),
+            line_end: pos_integer() | nil
           }
   end
 
@@ -319,8 +320,8 @@ defmodule Bylaw.Credo.Heex do
     ]
   end
 
-  defp normalize_token({:text, content, _meta}) do
-    [%Text{content: content}]
+  defp normalize_token({:text, content, meta}) do
+    [%Text{content: content, line_end: meta[:line_end]}]
   end
 
   defp normalize_token({:eex, _type, source, meta}) do

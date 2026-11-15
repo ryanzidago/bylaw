@@ -30,6 +30,12 @@
   and suggest a struct with `@enforce_keys` and a `t()` type instead. Maps with
   non-literal keys and struct types are not reported. `:min_keys` (default `2`)
   and `:excluded_paths` tune it.
+- Add `Bylaw.Credo.Check.HEEx.NoUntranslatedText` to report literal readable
+  text in `~H` sigils and `.html.heex` templates: text nodes with a letter, and
+  letters in user-visible attributes (`alt`, `title`, `placeholder`,
+  `aria-label`, `aria-description`, `label`, `phx-disable-with`, configurable
+  with `:visible_attributes`) and in the `value` of submit, button and reset
+  inputs. `Bylaw.Credo.Heex.Text` tokens now carry their `line_end`.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues` to forbid
   Tailwind arbitrary values such as `w-[430px]` and arbitrary properties in
   HEEx class attributes, including string literals in dynamic `class={...}`

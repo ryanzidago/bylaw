@@ -60,6 +60,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.RequireLinkHref, []},
         {Bylaw.Credo.Check.HEEx.RequireLinkText, []},
         {Bylaw.Credo.Check.HEEx.RequireTargetBlankRel, []},
+        {Bylaw.Credo.Check.HEEx.NoUntranslatedText, []},
         {Bylaw.Credo.Check.PhoenixLiveView.RequireExplicitConnectionStateHandlingInMount, []},
         {Bylaw.Credo.Check.PhoenixLiveView.RequireFunctionComponentAttrs, []},
         {Bylaw.Credo.Check.Elixir.PreferListTypeSyntax, []},
