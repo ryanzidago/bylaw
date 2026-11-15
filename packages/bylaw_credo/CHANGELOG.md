@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Testing.HTTPStubsOnlyInClientTests` to keep HTTP stub
+  calls and imports (`Req.Test` by default, configurable with `:modules`) in
+  the HTTP clients' own tests (`:allowed_paths`, by default any
+  `integrations/` directory under `test/`), so other tests expect on the
+  integration's behaviour mock.
 - Add `Bylaw.Credo.Check.Elixir.NetworkOnlyInIntegrations` to keep calls to
   HTTP, socket and email delivery libraries (`Req`, `Finch`, `Mint`,
   `HTTPoison`, `Tesla`, `:httpc`, `:hackney`, `Swoosh` adapters and mailers,
