@@ -70,4 +70,35 @@ defmodule Bylaw.Credo.Check.Ecto.PipeBasedQueriesTest do
     |> run_check(PipeBasedQueries)
     |> refute_issues()
   end
+
+  test "does not report from/2 with only source options" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def query do
+        from(r in "vat_rules", prefix: "tax", as: :rule, hints: ["USE INDEX FOO"])
+        |> where([rule: r], r.active)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(PipeBasedQueries)
+    |> refute_issues()
+  end
+
+  test "reports query clauses next to source options in from/2" do
+    """
+    defmodule Example do
+      import Ecto.Query
+
+      def query do
+        from(r in "vat_rules", prefix: "tax", where: r.active)
+      end
+    end
+    """
+    |> to_source_file()
+    |> run_check(PipeBasedQueries)
+    |> assert_issue(%{line_no: 5, trigger: "from"})
+  end
 end
