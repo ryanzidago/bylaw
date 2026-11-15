@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Fix `Bylaw.Credo.Check.Testing.NoDescribeBlocks` so a whole-module import of
+  a non-ExUnit module, such as `import Phoenix.LiveViewTest`, no longer stops
+  `describe` blocks from being reported in a test module that uses
+  `ExUnit.Case` or a case template. Only an explicit
+  `import Module, only: [describe: 2]` still marks `describe` as non-ExUnit
+  there.
+- Add `Bylaw.Credo.Check.Elixir.NoComments` to forbid `#` comments in Elixir
+  files and `<%!-- --%>` / `<!-- -->` comments in `~H` sigils and `.html.heex`
+  templates, so lasting reasons go into `@moduledoc`, `@doc` or `@typedoc`.
+  Tool directives listed in `:allowed_directives` (default `["credo:"]`) and a
+  first-line shebang are allowed.
 - Add `Bylaw.Credo.Check.HEEx.NoUntranslatedText` to report literal readable
   text in `~H` sigils and `.html.heex` templates: text nodes with a letter, and
   letters in user-visible attributes (`alt`, `title`, `placeholder`,

@@ -186,7 +186,7 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     source_file
     |> Credo.SourceFile.ast()
     |> remove_quoted_code()
-    |> collect_imported_describe_lines(false, %{})
+    |> collect_imported_describe_lines(false, false, %{})
   end
 
   defp remove_quoted_code(ast) do
@@ -334,28 +334,44 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
     MapSet.union(local_lines, nested_lines)
   end
 
-  defp collect_imported_describe_lines(body, inherited_non_ex_unit_import?, inherited_aliases) do
-    body
-    |> top_level_expressions()
+  defp collect_imported_describe_lines(
+         body,
+         inherited_non_ex_unit_import?,
+         inherited_ex_unit_case?,
+         inherited_aliases
+       ) do
+    expressions = top_level_expressions(body)
+    ex_unit_case? = inherited_ex_unit_case? or Enum.any?(expressions, &use?/1)
+
+    expressions
     |> Enum.reduce(
       {inherited_non_ex_unit_import?, inherited_aliases, MapSet.new()},
-      &collect_import_scope_expression/2
+      &collect_import_scope_expression(&1, &2, ex_unit_case?)
     )
     |> elem(2)
   end
 
+  # Every ExUnit test module uses `ExUnit.Case`, directly or through a case
+  # template, which imports `ExUnit.Case.describe/2`.
+  defp use?({:use, _meta, _args}), do: true
+  defp use?(_expression), do: false
+
   defp collect_import_scope_expression(
          {:alias, _meta, _args} = alias_ast,
-         {imported?, aliases, lines}
+         {imported?, aliases, lines},
+         _ex_unit_case?
        ) do
     {imported?, update_aliases(aliases, alias_ast), lines}
   end
 
   defp collect_import_scope_expression(
          {:import, _meta, _args} = import_ast,
-         {imported?, aliases, lines}
+         {imported?, aliases, lines},
+         ex_unit_case?
        ) do
     case describe_import_origin(import_ast, aliases) do
+      :explicit_non_ex_unit -> {true, aliases, lines}
+      :non_ex_unit when ex_unit_case? -> {imported?, aliases, lines}
       :non_ex_unit -> {true, aliases, lines}
       :ex_unit -> {false, aliases, lines}
       :unrelated -> {imported?, aliases, lines}
@@ -364,58 +380,73 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
   defp collect_import_scope_expression(
          {:defmodule, _meta, [_module, options]},
-         {imported?, aliases, lines}
+         {imported?, aliases, lines},
+         ex_unit_case?
        )
        when is_list(options) do
     nested_lines =
       options
       |> Keyword.get(:do)
-      |> collect_imported_describe_lines(imported?, aliases)
+      |> collect_imported_describe_lines(imported?, ex_unit_case?, aliases)
 
     {imported?, aliases, MapSet.union(lines, nested_lines)}
   end
 
   defp collect_import_scope_expression(
          {:__block__, _meta, expressions},
-         {imported?, aliases, lines}
+         {imported?, aliases, lines},
+         ex_unit_case?
        ) do
-    Enum.reduce(expressions, {imported?, aliases, lines}, &collect_import_scope_expression/2)
+    Enum.reduce(
+      expressions,
+      {imported?, aliases, lines},
+      &collect_import_scope_expression(&1, &2, ex_unit_case?)
+    )
   end
 
   defp collect_import_scope_expression(
          {:describe, meta, [_name, [do: _body]]},
-         {true, aliases, lines}
+         {true, aliases, lines},
+         _ex_unit_case?
        ) do
     {true, aliases, MapSet.put(lines, meta[:line])}
   end
 
   defp collect_import_scope_expression(
          {_name, _meta, arguments},
-         {imported?, aliases, lines}
+         {imported?, aliases, lines},
+         ex_unit_case?
        )
        when is_list(arguments) do
-    collect_nested_import_lines(arguments, imported?, aliases, lines)
+    collect_nested_import_lines(arguments, {imported?, aliases, lines}, ex_unit_case?)
   end
 
-  defp collect_import_scope_expression(expression, {imported?, aliases, lines})
+  defp collect_import_scope_expression(expression, {imported?, aliases, lines}, ex_unit_case?)
        when is_list(expression) do
-    collect_nested_import_lines(expression, imported?, aliases, lines)
+    collect_nested_import_lines(expression, {imported?, aliases, lines}, ex_unit_case?)
   end
 
-  defp collect_import_scope_expression({_key, value}, {imported?, aliases, lines}) do
+  defp collect_import_scope_expression(
+         {_key, value},
+         {imported?, aliases, lines},
+         ex_unit_case?
+       ) do
     {_nested_imported?, _nested_aliases, nested_lines} =
-      collect_import_scope_expression(value, {imported?, aliases, MapSet.new()})
+      collect_import_scope_expression(value, {imported?, aliases, MapSet.new()}, ex_unit_case?)
 
     {imported?, aliases, MapSet.union(lines, nested_lines)}
   end
 
-  defp collect_import_scope_expression(_expression, scope), do: scope
+  defp collect_import_scope_expression(_expression, scope, _ex_unit_case?), do: scope
 
-  defp collect_nested_import_lines(expressions, imported?, aliases, lines) do
-    Enum.reduce(expressions, {imported?, aliases, lines}, fn expression,
-                                                             {imported?, aliases, lines} ->
+  defp collect_nested_import_lines(expressions, scope, ex_unit_case?) do
+    Enum.reduce(expressions, scope, fn expression, {imported?, aliases, lines} ->
       {_nested_imported?, _nested_aliases, nested_lines} =
-        collect_import_scope_expression(expression, {imported?, aliases, MapSet.new()})
+        collect_import_scope_expression(
+          expression,
+          {imported?, aliases, MapSet.new()},
+          ex_unit_case?
+        )
 
       {imported?, aliases, MapSet.union(lines, nested_lines)}
     end)
@@ -453,7 +484,10 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocks do
 
   defp describe_only_import_origin(imports, module_parts, aliases) when is_list(imports) do
     if Enum.any?(imports, &match?({:describe, 2}, &1)) do
-      import_origin(module_parts, aliases)
+      case import_origin(module_parts, aliases) do
+        :non_ex_unit -> :explicit_non_ex_unit
+        origin -> origin
+      end
     else
       :unrelated
     end
