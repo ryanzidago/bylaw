@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Fix `Bylaw.Credo.Check.Testing.NoDescribeBlocks` so a whole-module import of
+  a non-ExUnit module, such as `import Phoenix.LiveViewTest`, no longer stops
+  `describe` blocks from being reported in a test module that uses
+  `ExUnit.Case` or a case template. Only an explicit
+  `import Module, only: [describe: 2]` still marks `describe` as non-ExUnit
+  there.
 - Add `Bylaw.Credo.Check.Elixir.PreferStructOverMapType` to report closed
   map types with literal atom keys, such as `%{id: integer(), name: String.t()}`,
   in `@type`, `@typep`, `@opaque`, `@spec`, `@callback` and `@macrocallback`,
