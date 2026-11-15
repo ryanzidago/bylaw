@@ -71,7 +71,15 @@ run_stage() {
   fi
 }
 
-run_stage "deps.get" mix deps.get
+# Parallel deps.get runs share the Hex cache and can read each other's
+# half-written tarballs on a cold cache, so fetch dependencies one at a time.
+for package in "${packages[@]}"; do
+  (cd "packages/${package}" && mix deps.get) || {
+    echo "==> failed: deps.get (packages/${package})"
+    exit 1
+  }
+done
+
 run_stage "format" mix format --check-formatted
 run_stage "compile" mix compile --warnings-as-errors
 run_stage "credo" mix credo --strict
