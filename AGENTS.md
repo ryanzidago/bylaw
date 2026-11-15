@@ -32,9 +32,19 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - Use `wt step diff` to review the full task diff from the branch point.
 - Create an explicitly stacked worktree from the current branch with
   `wt stack <branch>`.
-- The `pre-switch` hook refreshes the primary worktree from its upstream with a
+- The `pre-switch` hook refreshes the local `main` from `origin/main` with a
   fast-forward-only update. Investigate failures instead of bypassing the hook
   or changing the primary checkout.
+- The repository may be a bare `.git` at the root with every checkout a linked
+  worktree. Worktrunk then reads `.config/wt.toml` from the local `main` branch
+  when run from the root, and from the checked-out file when run inside a
+  worktree. A worktree whose branch predates a hook fix still runs the old
+  hook, so run `wt -C <repo root> switch --create <branch>` from there instead.
+  If the hook fails because the local `main` itself is too old to carry a
+  working hook, fast-forward it with
+  `git -C <repo root>/.git fetch origin main:main` (it refuses anything but a
+  fast-forward) and switch again. `scripts/test-pre-switch-hook` runs the hook
+  through the pinned `wt` for both layouts.
 - Do not use raw `git worktree` commands for routine task work unless `wt`
   cannot handle the case.
 - Do not close, reopen, merge, or delete GitHub PRs or remote branches unless
