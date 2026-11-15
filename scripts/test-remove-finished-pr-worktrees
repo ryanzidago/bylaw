@@ -273,6 +273,7 @@ EOF
 
   pre_switch="$(sed -n 's/^pre-switch = "\(.*\)"$/\1/p' "$repository_root/.config/wt.toml")"
   [[ -n "$pre_switch" ]]
+  pre_switch="$(printf '%s' "$pre_switch" | sed -e 's/^{% if primary_worktree_path is defined %}//' -e 's/{% else %}.*$//')"
   printf -v quoted_primary '%q' "$primary"
   pre_switch="${pre_switch//\{\{ primary_worktree_path \}\}/$quoted_primary}"
   : >"$fixture_root/removed"
@@ -323,7 +324,40 @@ test_explicit_switch_context_preserves_all_worktrees() {
   fi
 }
 
+test_bare_primary_switch_fast_forwards_default_branch() (
+  # Git hooks export these; they would point the fixture commands at this repo.
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_PREFIX GIT_COMMON_DIR
+
+  local upstream="$fixture_root/upstream"
+  local bare="$fixture_root/bare primary/.git"
+  local pre_switch quoted_bare
+
+  git init --quiet --initial-branch=main "$upstream"
+  git -C "$upstream" -c user.name=t -c user.email=t@t commit --quiet --allow-empty -m first
+  git clone --quiet --bare "$upstream" "$bare"
+  git -C "$bare" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+  git -C "$upstream" -c user.name=t -c user.email=t@t commit --quiet --allow-empty -m second
+
+  pre_switch="$(sed -n 's/^pre-switch = "\(.*\)"$/\1/p' "$repository_root/.config/wt.toml")"
+  pre_switch="${pre_switch#*\{% else %\}}"
+  pre_switch="${pre_switch%\{% endif %\}}"
+  printf -v quoted_bare '%q' "$bare"
+  pre_switch="${pre_switch//\{\{ repo_path \}\}/$quoted_bare}"
+  pre_switch="${pre_switch//\{\{ remote \}\}/origin}"
+  pre_switch="${pre_switch//\{\{ default_branch \}\}/main}"
+
+  if ! bash -c "$pre_switch"; then
+    echo "the pre-switch hook must succeed for a bare primary" >&2
+    return 1
+  fi
+  if [[ "$(git -C "$bare" rev-parse main)" != "$(git -C "$upstream" rev-parse main)" ]]; then
+    echo "the pre-switch hook must fast-forward a bare primary's default branch" >&2
+    return 1
+  fi
+)
+
 test_active_switch_survives_nested_post_merge_cleanup
+test_bare_primary_switch_fast_forwards_default_branch
 test_explicit_switch_context_preserves_all_worktrees
 
 echo "Finished PR worktree cleanup tests passed."
