@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Phoenix.NoRepoInWeb` to keep database access out of
+  the web layer. In files under `:paths` (default `["_web/"]`, never
+  `_test.exs`) it reports any call on a module whose last segment is `Repo`,
+  `import Ecto.Query`, `alias Ecto.Query` and calls on `Ecto.Query`, so
+  LiveViews, components, controllers and plugs call context or core functions
+  instead. `Ecto.Changeset` stays allowed. `:excluded_paths` skips files.
+
 - Add `Bylaw.Credo.Check.Ecto.NoRepoInLoop` to report N+1 queries: a repo
   call inside a function given to `Enum`, `Stream` or `Task.async_stream`, or
   inside a `for` comprehension's body, filters and later generators. It
