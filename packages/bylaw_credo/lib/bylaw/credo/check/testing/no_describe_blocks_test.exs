@@ -455,4 +455,91 @@ defmodule Bylaw.Credo.Check.Testing.NoDescribeBlocksTest do
     |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
     |> refute_issues()
   end
+
+  @doc """
+  Issue: A whole-module import of any non-ExUnit module, such as
+  `import Phoenix.LiveViewTest`, stops every `describe` block in an ExUnit test
+  module from being reported.
+  Why it matters: Test modules routinely import helper modules, so the check
+  silently stops working in most real test files. A test module that uses
+  `ExUnit.Case`, directly or through a case template, already imports
+  `ExUnit.Case.describe/2`; a second `describe/2` from a whole-module import
+  would make the call ambiguous and fail to compile, so the import cannot be
+  where `describe` comes from.
+  """
+  test "reports describe blocks after a whole-module non-ExUnit import in an ExUnit test module" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case, async: true
+
+      import Phoenix.LiveViewTest
+
+      describe "creation" do
+        test "creates a record" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue(fn issue -> assert issue.line_no == 6 end)
+  end
+
+  test "reports describe blocks after a whole-module import in a case template test module" do
+    """
+    defmodule MyAppWeb.PageLiveTest do
+      use MyAppWeb.ConnCase, async: true
+
+      import MyApp.Factory
+      import Phoenix.LiveViewTest, only: :functions
+      import MyApp.Helpers, except: [format: 1]
+
+      describe "index" do
+        test "renders" do
+          assert true
+        end
+      end
+    end
+    """
+    |> to_source_file("test/my_app_web/page_live_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  test "reports describe blocks in nested modules of an ExUnit test module with a whole-module import" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+
+      import Phoenix.LiveViewTest
+
+      defmodule Nested do
+        describe "nested" do
+          test "works" do
+            assert true
+          end
+        end
+      end
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> assert_issue()
+  end
+
+  test "still honours an explicit describe import in an ExUnit test module" do
+    """
+    defmodule ExampleTest do
+      use ExUnit.Case
+      import ExUnit.Case, except: [describe: 2]
+      import Formatter, only: [describe: 2]
+
+      describe "result", do: :ok
+    end
+    """
+    |> to_source_file("test/example_test.exs")
+    |> run_check(Bylaw.Credo.Check.Testing.NoDescribeBlocks)
+    |> refute_issues()
+  end
 end
