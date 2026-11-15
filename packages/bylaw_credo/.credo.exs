@@ -252,6 +252,7 @@ end
           {Bylaw.Credo.Check.Elixir.NoResultTupleArgument,
            [excluded_paths: [~r{^lib/bylaw/credo/check/}]]},
           {Bylaw.Credo.Check.Phoenix.NoRepoInController, []},
+          {Bylaw.Credo.Check.Phoenix.NoRepoInWeb, []},
           {Bylaw.Credo.Check.Ecto.NoRepoPreloadAfterQuery, []},
           {Bylaw.Credo.Check.Ecto.ComposablePreloadQueries, []},
           {Bylaw.Credo.Check.Ecto.NoRepoTransaction, []},
