@@ -8,6 +8,11 @@
   `ExUnit.Case` or a case template. Only an explicit
   `import Module, only: [describe: 2]` still marks `describe` as non-ExUnit
   there.
+- Add `Bylaw.Credo.Check.Elixir.NoComments` to forbid `#` comments in Elixir
+  files and `<%!-- --%>` / `<!-- -->` comments in `~H` sigils and `.html.heex`
+  templates, so lasting reasons go into `@moduledoc`, `@doc` or `@typedoc`.
+  Tool directives listed in `:allowed_directives` (default `["credo:"]`) and a
+  first-line shebang are allowed.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues` to forbid
   Tailwind arbitrary values such as `w-[430px]` and arbitrary properties in
   HEEx class attributes, including string literals in dynamic `class={...}`
