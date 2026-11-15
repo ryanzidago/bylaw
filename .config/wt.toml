@@ -1,5 +1,8 @@
 # A bare primary has no primary_worktree_path, so fetch into the bare repo and
 # fast-forward the local default branch unless a worktree has it checked out.
+# From a bare root, Worktrunk reads this file from the local default branch, so
+# a hook that fails to expand also stops that branch from ever being refreshed.
+# scripts/test-pre-switch-hook runs this hook through the pinned wt.
 pre-switch = "{% if primary_worktree_path is defined %}if git -C {{ primary_worktree_path }} rev-parse --verify '@{upstream}' >/dev/null 2>&1; then git -C {{ primary_worktree_path }} fetch --quiet && BYLAW_WORKTREE_SWITCH=1 git -C {{ primary_worktree_path }} merge --ff-only '@{upstream}'; fi{% else %}git -C {{ repo_path }} fetch --quiet {{ remote }} && if ! git -C {{ repo_path }} worktree list --porcelain | grep -qx 'branch refs/heads/{{ default_branch }}'; then git -C {{ repo_path }} fetch --quiet {{ remote }} '{{ default_branch }}:{{ default_branch }}'; fi{% endif %}"
 
 [pre-start]

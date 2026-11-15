@@ -15,6 +15,7 @@ echo "qa running ..."
 
 scripts/test-reject-main
 scripts/test-remove-finished-pr-worktrees
+scripts/test-pre-switch-hook
 
 run_stage() {
   local stage="$1"

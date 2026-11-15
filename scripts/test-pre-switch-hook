@@ -1,0 +1,168 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Runs the real pinned Worktrunk against throwaway repositories so the
+# pre-switch hook in .config/wt.toml is expanded exactly as `wt switch` expands
+# it: an undefined template variable or a layout the hook does not handle fails
+# here instead of in someone's `wt switch --create`.
+
+# Git hooks export these; they would point the fixture commands at this repo.
+unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY GIT_PREFIX GIT_COMMON_DIR
+unset BYLAW_WORKTREE_SWITCH
+
+repository_root="$(cd "$(dirname "$0")/.." && pwd)"
+
+if ! wt_bin="$(command -v wt)"; then
+  echo "wt is not on PATH; run QA through mise (mise run qa) so the pinned Worktrunk is used" >&2
+  exit 1
+fi
+
+fixture_root="$(mktemp -d)"
+trap 'rm -rf "$fixture_root"' EXIT HUP INT TERM
+
+# An empty user config keeps Ryan's own Worktrunk settings and approvals out of
+# the fixture.
+: >"$fixture_root/user-config.toml"
+
+fixture_git() {
+  git -c user.name=fixture -c user.email=fixture@example.com "$@"
+}
+
+run_pre_switch() {
+  local source="$1"
+  "$wt_bin" --config "$fixture_root/user-config.toml" -C "$source" hook pre-switch --yes \
+    >"$fixture_root/hook-output" 2>&1
+}
+
+# Creates an upstream repository that carries this repo's .config/wt.toml and
+# prints its path.
+make_upstream() {
+  local name="$1"
+  local upstream="$fixture_root/$name/upstream"
+  git init --quiet --initial-branch=main "$upstream"
+  mkdir "$upstream/.config"
+  cp "$repository_root/.config/wt.toml" "$upstream/.config/wt.toml"
+  git -C "$upstream" add .config/wt.toml
+  fixture_git -C "$upstream" commit --quiet -m first
+  printf '%s\n' "$upstream"
+}
+
+# Mirrors this repository's layout: a bare repository in `<root>/.git` with
+# task worktrees under `<root>/.worktrees/`. Prints the bare directory.
+make_bare_clone() {
+  local upstream="$1"
+  local bare
+  bare="$(dirname "$upstream")/repo root/.git"
+  git clone --quiet --bare "$upstream" "$bare"
+  git -C "$bare" config remote.origin.fetch '+refs/heads/*:refs/remotes/origin/*'
+  git -C "$bare" fetch --quiet origin
+  git -C "$bare" branch --quiet --set-upstream-to=origin/main main
+  git -C "$bare" worktree add --quiet "$(dirname "$bare")/.worktrees/task" -b task main
+  printf '%s\n' "$bare"
+}
+
+advance_upstream() {
+  fixture_git -C "$1" commit --quiet --allow-empty -m "upstream moved on"
+}
+
+expect_same_commit() {
+  local message="$1" actual="$2" expected="$3"
+  if [[ "$actual" != "$expected" ]]; then
+    echo "$message" >&2
+    return 1
+  fi
+}
+
+test_switch_from_task_worktree_fast_forwards_bare_default_branch() {
+  local upstream bare
+  upstream="$(make_upstream task-worktree)"
+  bare="$(make_bare_clone "$upstream")"
+  advance_upstream "$upstream"
+
+  if ! run_pre_switch "$(dirname "$bare")/.worktrees/task"; then
+    echo "the pre-switch hook must succeed from a task worktree of a bare repository" >&2
+    return 1
+  fi
+  expect_same_commit \
+    "the pre-switch hook must fast-forward the bare repository's main" \
+    "$(git -C "$bare" rev-parse main)" "$(git -C "$upstream" rev-parse main)"
+}
+
+test_switch_from_bare_root_fast_forwards_default_branch() {
+  local upstream bare
+  upstream="$(make_upstream bare-root)"
+  bare="$(make_bare_clone "$upstream")"
+  advance_upstream "$upstream"
+
+  if ! run_pre_switch "$bare"; then
+    echo "the pre-switch hook must succeed from the bare repository itself" >&2
+    return 1
+  fi
+  expect_same_commit \
+    "the pre-switch hook must fast-forward main when run from the bare repository" \
+    "$(git -C "$bare" rev-parse main)" "$(git -C "$upstream" rev-parse main)"
+}
+
+test_switch_fast_forwards_default_branch_checked_out_in_a_worktree() {
+  local upstream bare main_worktree
+  upstream="$(make_upstream main-worktree)"
+  bare="$(make_bare_clone "$upstream")"
+  main_worktree="$(dirname "$bare")/.worktrees/main"
+  git -C "$bare" worktree add --quiet "$main_worktree" main
+  advance_upstream "$upstream"
+
+  if ! run_pre_switch "$(dirname "$bare")/.worktrees/task"; then
+    echo "the pre-switch hook must succeed while main is checked out in a worktree" >&2
+    return 1
+  fi
+  expect_same_commit \
+    "the pre-switch hook must fast-forward the worktree that has main checked out" \
+    "$(git -C "$main_worktree" rev-parse HEAD)" "$(git -C "$upstream" rev-parse main)"
+}
+
+test_switch_fast_forwards_non_bare_primary_checkout() {
+  local upstream primary
+  upstream="$(make_upstream non-bare)"
+  primary="$fixture_root/non-bare/primary"
+  git clone --quiet "$upstream" "$primary"
+  git -C "$primary" worktree add --quiet "$primary/.worktrees/task" -b task main
+  advance_upstream "$upstream"
+
+  if ! run_pre_switch "$primary/.worktrees/task"; then
+    echo "the pre-switch hook must succeed with a non-bare primary checkout" >&2
+    return 1
+  fi
+  expect_same_commit \
+    "the pre-switch hook must fast-forward a non-bare primary checkout of main" \
+    "$(git -C "$primary" rev-parse HEAD)" "$(git -C "$upstream" rev-parse main)"
+}
+
+test_switch_never_rewrites_a_diverged_default_branch() {
+  local upstream bare local_main
+  upstream="$(make_upstream diverged)"
+  bare="$(make_bare_clone "$upstream")"
+  local_main="$(fixture_git -C "$bare" commit-tree -p main -m "local only" "main^{tree}")"
+  git -C "$bare" update-ref refs/heads/main "$local_main"
+  advance_upstream "$upstream"
+
+  if run_pre_switch "$(dirname "$bare")/.worktrees/task"; then
+    echo "the pre-switch hook must fail instead of moving a diverged main" >&2
+    return 1
+  fi
+  if ! grep -q 'pre-switch command failed' "$fixture_root/hook-output"; then
+    echo "the pre-switch hook must fail in its git commands, not while expanding its template:" >&2
+    cat "$fixture_root/hook-output" >&2
+    return 1
+  fi
+  expect_same_commit \
+    "the pre-switch hook must leave a diverged main where it was" \
+    "$(git -C "$bare" rev-parse main)" "$local_main"
+}
+
+test_switch_from_task_worktree_fast_forwards_bare_default_branch
+test_switch_from_bare_root_fast_forwards_default_branch
+test_switch_fast_forwards_default_branch_checked_out_in_a_worktree
+test_switch_fast_forwards_non_bare_primary_checkout
+test_switch_never_rewrites_a_diverged_default_branch
+
+echo "Pre-switch hook tests passed."
