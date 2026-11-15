@@ -35,15 +35,12 @@ Keep APIs minimal and direct. Add only the surface area needed to get the job do
 - The `pre-switch` hook refreshes the local `main` from `origin/main` with a
   fast-forward-only update. Investigate failures instead of bypassing the hook
   or changing the primary checkout.
-- The repository may be a bare `.git` at the root with every checkout a linked
-  worktree. Worktrunk then reads `.config/wt.toml` from the local `main` branch
-  when run from the root, and from the checked-out file when run inside a
-  worktree. A worktree whose branch predates a hook fix still runs the old
-  hook, so run `wt -C <repo root> switch --create <branch>` from there instead.
-  If the hook fails because the local `main` itself is too old to carry a
-  working hook, fast-forward it with
-  `git -C <repo root>/.git fetch origin main:main` (it refuses anything but a
-  fast-forward) and switch again. `scripts/test-pre-switch-hook` runs the hook
+- The repository root is the primary checkout of `main`, and task worktrees
+  live under `<repo root>/.worktrees/`. Keep the root on a clean `main` so the
+  `pre-switch` hook can fast-forward it. A worktree whose branch predates a
+  hook fix still runs the old hook from its own `.config/wt.toml`, so run
+  `wt -C <repo root> switch --create <branch>` from there instead. The hook
+  also handles a bare `.git` root, and `scripts/test-pre-switch-hook` runs it
   through the pinned `wt` for both layouts.
 - Do not use raw `git worktree` commands for routine task work unless `wt`
   cannot handle the case.
