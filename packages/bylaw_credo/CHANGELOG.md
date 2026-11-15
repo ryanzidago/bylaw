@@ -8,6 +8,22 @@
   `ExUnit.Case` or a case template. Only an explicit
   `import Module, only: [describe: 2]` still marks `describe` as non-ExUnit
   there.
+- Add `Bylaw.Credo.Check.Elixir.NoComments` to forbid `#` comments in Elixir
+  files and `<%!-- --%>` / `<!-- -->` comments in `~H` sigils and `.html.heex`
+  templates, so lasting reasons go into `@moduledoc`, `@doc` or `@typedoc`.
+  Tool directives listed in `:allowed_directives` (default `["credo:"]`) and a
+  first-line shebang are allowed.
+- Add `Bylaw.Credo.Check.Testing.HTTPStubsOnlyInClientTests` to keep HTTP stub
+  calls and imports (`Req.Test` by default, configurable with `:modules`) in
+  the HTTP clients' own tests (`:allowed_paths`, by default any
+  `integrations/` directory under `test/`), so other tests expect on the
+  integration's behaviour mock.
+- Add `Bylaw.Credo.Check.Elixir.NetworkOnlyInIntegrations` to keep calls to
+  HTTP, socket and email delivery libraries (`Req`, `Finch`, `Mint`,
+  `HTTPoison`, `Tesla`, `:httpc`, `:hackney`, `Swoosh` adapters and mailers,
+  `:gen_tcp.connect`, `:ssl.connect`) inside the integration layer. It resolves
+  aliases; `:allowed_paths`, `:modules`, `:allowed_modules` and `:functions`
+  configure it.
 - Add `Bylaw.Credo.Check.Elixir.PreferStructOverMapType` to report closed
   map types with literal atom keys, such as `%{id: integer(), name: String.t()}`,
   in `@type`, `@typep`, `@opaque`, `@spec`, `@callback` and `@macrocallback`,
