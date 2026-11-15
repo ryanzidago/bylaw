@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Elixir.PreferStructOverMapType` to report closed
+  map types with literal atom keys, such as `%{id: integer(), name: String.t()}`,
+  in `@type`, `@typep`, `@opaque`, `@spec`, `@callback` and `@macrocallback`,
+  and suggest a struct with `@enforce_keys` and a `t()` type instead. Maps with
+  non-literal keys and struct types are not reported. `:min_keys` (default `2`)
+  and `:excluded_paths` tune it.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues` to forbid
   Tailwind arbitrary values such as `w-[430px]` and arbitrary properties in
   HEEx class attributes, including string literals in dynamic `class={...}`
