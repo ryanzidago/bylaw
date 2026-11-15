@@ -68,19 +68,23 @@ defmodule Bylaw.Credo.RemoteCalls do
 
   defp line(meta, fallback), do: Keyword.get(meta, :line) || Keyword.get(fallback, :line, 0)
 
-  defp resolve({:__aliases__, _meta, [first | rest]}, aliases) when is_atom(first) do
+  @doc false
+  @spec resolve(Macro.t(), %{optional(atom()) => list(atom())}) :: String.t() | nil
+  def resolve({:__aliases__, _meta, [first | rest]}, aliases) when is_atom(first) do
     aliases
     |> Map.get(first, [first])
     |> Enum.concat(rest)
     |> Enum.map_join(".", &Atom.to_string/1)
   end
 
-  defp resolve(module, _aliases) when is_atom(module) and module not in [nil, true, false],
+  def resolve(module, _aliases) when is_atom(module) and module not in [nil, true, false],
     do: inspect(module)
 
-  defp resolve(_module_ast, _aliases), do: nil
+  def resolve(_module_ast, _aliases), do: nil
 
-  defp aliases(ast) do
+  @doc false
+  @spec aliases(Macro.t()) :: %{optional(atom()) => list(atom())}
+  def aliases(ast) do
     ast
     |> Macro.prewalk(%{}, fn node, acc -> {node, Map.merge(acc, alias_entries(node))} end)
     |> elem(1)

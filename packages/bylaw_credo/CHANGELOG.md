@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Ecto.NoRepoInLoop` to report N+1 queries: a repo
+  call inside a function given to `Enum`, `Stream` or `Task.async_stream`, or
+  inside a `for` comprehension's body, filters and later generators. It
+  follows the module's own functions that call the repo. `:repo_modules`
+  (default: any module ending in `Repo`), `:loop_modules`, `:loop_functions`
+  (for an application's own iterators), `:included_paths` (default
+  `["lib/"]`) and `:excluded_paths` configure it.
+
 - Fix `Bylaw.Credo.Check.Testing.NoDescribeBlocks` so a whole-module import of
   a non-ExUnit module, such as `import Phoenix.LiveViewTest`, no longer stops
   `describe` blocks from being reported in a test module that uses
