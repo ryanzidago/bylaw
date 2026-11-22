@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- Add five checks against the common causes of flaky tests. Each message
+  names the fix.
+  - `Bylaw.Credo.Check.Elixir.NoWallClock` reports reads of the wall clock
+    (`DateTime.utc_now`, `DateTime.now`, `NaiveDateTime.utc_now`,
+    `Date.utc_today`, `Time.utc_now`, `System.os_time`,
+    `System.system_time`, and the `:os`, `:erlang` and `:calendar`
+    equivalents) outside the modules in `:allowed_modules` and the files in
+    `:allowed_paths`. Monotonic time and `:timer.tc` are allowed.
+  - `Bylaw.Credo.Check.Testing.NoUnseededRandomness` reports `:rand.uniform`,
+    `:rand.uniform_real`, `:rand.normal`, `:rand.bytes`, `Enum.random`,
+    `Enum.shuffle` and `Enum.take_random` in tests and `test/support/`, except
+    inside `property`, `check all`, `gen all` and `StreamData` calls.
+    `System.unique_integer` is allowed unless listed in `:functions`.
+  - `Bylaw.Credo.Check.Testing.NoGlobalStateInAsyncTests` reports, in a
+    module with `use SomeCase, async: true`, writes to the application and
+    system environment, global Mox mode, `Logger.configure`, a fixed-name
+    `Process.register`, named ETS table or `name:` option, and a fixed-key
+    `:persistent_term.put`/`erase`.
+  - `Bylaw.Credo.Check.Testing.NoLiteralReceiveTimeout` reports a literal
+    timeout in `assert_receive` and `refute_receive`, and in the helpers
+    listed with their timeout position in `:functions`. A variable, module
+    attribute, helper call, `0` and `:infinity` are allowed.
+- Widen `Bylaw.Credo.Check.Testing.NoSleepInTests`: it now also reports a
+  `receive` with only an `after` clause (a sleep written differently) and
+  checks `test/support/` as well as `*_test.exs` files, configurable with
+  `:included_paths` and `:excluded_paths`. A sleep of `:infinity` is allowed.
+
 - Widen `Bylaw.Credo.Check.Ecto.NamedBinding` to report positional bindings
   anywhere in a query pipeline, such as `from(e in Entry, as: :entry) |>
   where([e], ...)` or a later `|> select([e], ...)`, and in direct calls such

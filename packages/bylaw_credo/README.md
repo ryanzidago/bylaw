@@ -68,6 +68,10 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Testing.NoDescribeBlocks, []},
         {Bylaw.Credo.Check.Testing.HTTPStubsOnlyInClientTests, []},
         {Bylaw.Credo.Check.Testing.NoSleepInTests, []},
+        {Bylaw.Credo.Check.Testing.NoUnseededRandomness, []},
+        {Bylaw.Credo.Check.Testing.NoGlobalStateInAsyncTests, []},
+        {Bylaw.Credo.Check.Testing.NoLiteralReceiveTimeout, []},
+        {Bylaw.Credo.Check.Elixir.NoWallClock, [allowed_modules: [MyApp.Clock]]},
         {Bylaw.Credo.Check.Testing.PreferSelectorAssertionsForHtml, []},
         {Bylaw.Credo.Check.Testing.RequireAsyncTests, []}
       ]
