@@ -136,9 +136,9 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle do
   defp literal_ast(_ast), do: :error
 
   defp both(left, right) do
-    with {:ok, left_text} <- literal_ast(left),
-         {:ok, right_text} <- literal_ast(right) do
-      {:ok, left_text <> ";" <> right_text}
+    case {literal_ast(left), literal_ast(right)} do
+      {{:ok, left_text}, {:ok, right_text}} -> {:ok, left_text <> ";" <> right_text}
+      _unreadable -> :error
     end
   end
 
