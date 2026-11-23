@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Add two checks that keep every stored instant a Postgres `timestamp with time
+  zone` held as `:utc_datetime_usec`. In a migration, `:utc_datetime`,
+  `:utc_datetime_usec`, `:naive_datetime`, `:naive_datetime_usec` and
+  `:timestamp` all create a column without a time zone; only `:timestamptz`
+  creates one with it.
+  - `Bylaw.Credo.Check.Ecto.UseTimestamptzInMigrations` reports `add`,
+    `add_if_not_exists` and `modify` with one of those types, `timestamps/1`
+    with such a type or with no type (unless `:allow_bare_timestamps`, for a
+    Repo with `migration_timestamps: [type: :timestamptz]`), and `execute`
+    SQL that types a column or cast as `timestamp` or `timestamp without time
+    zone`. `:excluded_paths` and `:ignore_migrations_before` skip migrations
+    that have already run.
+  - `Bylaw.Credo.Check.Ecto.UtcDatetimeUsecInSchemas` reports a `field` or
+    `timestamps/1` of another time type in a `schema` block, including a bare
+    `timestamps/1` (which holds `:naive_datetime`) and `@timestamps_opts`.
+    `embedded_schema` and `embeds_one`/`embeds_many` blocks are exempt.
+    `precision: :second` requires `:utc_datetime` instead.
+
 - Add two design-system checks for HEEx. Each message names the fix.
   - `Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle` reports a `style`
     attribute unless every declaration in it sets a custom property
