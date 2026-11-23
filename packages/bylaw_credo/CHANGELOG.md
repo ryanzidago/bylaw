@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Elixir.NoUntranslatedText`, the Elixir counterpart of
+  `Bylaw.Credo.Check.HEEx.NoUntranslatedText`. It reports a string literal, an
+  interpolated string or a `<>` join containing a letter when it is an argument
+  of a configured sink (`:sinks`, `{function, arity, positions}` with an
+  optional module; `put_flash/3` by default) or a value assigned to one of
+  `:assign_keys` (`:page_title` by default). The message names the text and
+  says to build it with gettext. Credo's `disable-for-next-line` exempts a
+  text meant literally.
 - Add two checks that keep every stored instant a Postgres `timestamp with time
   zone` held as `:utc_datetime_usec`. In a migration, `:utc_datetime`,
   `:utc_datetime_usec`, `:naive_datetime`, `:naive_datetime_usec` and
