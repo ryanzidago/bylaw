@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add two design-system checks for HEEx. Each message names the fix.
+  - `Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle` reports a `style`
+    attribute unless every declaration in it sets a custom property
+    (`style={"--progress: \#{@percent}%"}`). A style it cannot read, such as
+    `style={@style}`, is reported.
+  - `Bylaw.Credo.Check.HEEx.DesignSystem.NoHexColor` reports a hex colour in
+    the colour attributes of a tag (`:attributes`, by default `fill`, `stroke`,
+    `color`, `bgcolor`, `stop-color`, `flood-color`, `lighting-color` and
+    `style`), so `href="#add"` and text such as an order number pass.
 - Add five checks against the common causes of flaky tests. Each message
   names the fix.
   - `Bylaw.Credo.Check.Elixir.NoWallClock` reports reads of the wall clock
