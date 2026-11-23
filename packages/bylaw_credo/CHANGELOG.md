@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoElementStyling` so templates can
+  only compose components: it reports every `class` and `style` attribute on a
+  raw HTML element in `~H` sigils and `.html.heex` templates, whether the value
+  is a literal or an expression. Component and slot tags are left alone, since
+  `NoComponentClass` covers components. `:attributes` changes which names count
+  as styling. `:ceilings` maps a file path to the number of styling attributes
+  that file may still have, so an existing codebase can adopt the check and
+  only ever lower the numbers: a file at its ceiling reports nothing, above it
+  every attribute is reported, below it the check asks to lower the ceiling,
+  and at zero it asks to remove the entry. Exclude the component library's own
+  files with Credo's per-check `files` option.
+
 - Add five checks against the common causes of flaky tests. Each message
   names the fix.
   - `Bylaw.Credo.Check.Elixir.NoWallClock` reports reads of the wall clock
