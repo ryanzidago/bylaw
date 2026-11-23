@@ -36,6 +36,8 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoArbitraryValues, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClass, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoElementStyling,
+         [files: %{excluded: ["lib/my_app_web/components/"]}]},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoHexColor, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.PreferComponentOverTag,
