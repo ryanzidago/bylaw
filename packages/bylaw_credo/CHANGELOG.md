@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Add two design-system checks for HEEx. Each message names the fix.
+  - `Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle` reports a `style`
+    attribute unless every declaration in it sets a custom property
+    (`style={"--progress: #{@percent}%"}`). A style it cannot read, such as
+    `style={@style}`, is reported. A string behind `&&`, `||`, `and`, `or` or `if` is read the same way,
+    every branch included.
+  - `Bylaw.Credo.Check.HEEx.DesignSystem.NoHexColor` reports a hex colour in
+    the colour attributes of a tag (`:attributes`, by default `fill`, `stroke`,
+    `color`, `bgcolor`, `stop-color`, `flood-color`, `lighting-color` and
+    `style`), so `href="#add"` and text such as an order number pass.
 - Add `Bylaw.Credo.Check.HEEx.DesignSystem.NoElementStyling` so templates can
   only compose components: it reports every `class` and `style` attribute on a
   raw HTML element in `~H` sigils and `.html.heex` templates, whether the value

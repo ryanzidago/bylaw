@@ -38,6 +38,8 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoComponentClassAttr, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.NoElementStyling,
          [files: %{excluded: ["lib/my_app_web/components/"]}]},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoHexColor, []},
+        {Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle, []},
         {Bylaw.Credo.Check.HEEx.DesignSystem.PreferComponentOverTag,
          [tags: [button: ".button", input: ".input"], files: %{excluded: ["lib/my_app_web/components/"]}]},
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
