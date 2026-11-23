@@ -26,7 +26,9 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle do
   A `style` attribute passes when every declaration in it starts with `--`.
   Static strings and string literals with interpolation are read; any other
   expression, such as `style={@style}`, cannot be proven to set only custom
-  properties and is reported. Component calls are checked too, because a
+  properties and is reported. A string behind `&&`, `||`, `and`, `or` or
+  `if`, such as `style={@hero && "--hero: url(...)"}`, is read the same way,
+  every branch included. Component calls are checked too, because a
   component usually passes `style` on to an element.
 
   Embedded `~H` templates are checked during normal Credo runs over Elixir
@@ -111,6 +113,17 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle do
   defp literal(_value), do: :error
 
   defp literal_ast(value) when is_binary(value), do: {:ok, value}
+  defp literal_ast(value) when value in [nil, false], do: {:ok, ""}
+
+  defp literal_ast({operator, _meta, [_condition, branch]}) when operator in [:&&, :and],
+    do: literal_ast(branch)
+
+  defp literal_ast({operator, _meta, [left, right]}) when operator in [:||, :or],
+    do: both(left, right)
+
+  defp literal_ast({:if, _meta, [_condition, branches]}) when is_list(branches) do
+    both(Keyword.get(branches, :do), Keyword.get(branches, :else))
+  end
 
   defp literal_ast({:<<>>, _meta, parts}) do
     Enum.reduce_while(parts, {:ok, ""}, fn
@@ -121,6 +134,13 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle do
   end
 
   defp literal_ast(_ast), do: :error
+
+  defp both(left, right) do
+    case {literal_ast(left), literal_ast(right)} do
+      {{:ok, left_text}, {:ok, right_text}} -> {:ok, left_text <> ";" <> right_text}
+      _unreadable -> :error
+    end
+  end
 
   defp declarations_are_custom_properties?(text) do
     text

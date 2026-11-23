@@ -5,8 +5,9 @@
 - Add two design-system checks for HEEx. Each message names the fix.
   - `Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle` reports a `style`
     attribute unless every declaration in it sets a custom property
-    (`style={"--progress: \#{@percent}%"}`). A style it cannot read, such as
-    `style={@style}`, is reported.
+    (`style={"--progress: #{@percent}%"}`). A style it cannot read, such as
+    `style={@style}`, is reported. A string behind `&&`, `||`, `and`, `or` or `if` is read the same way,
+    every branch included.
   - `Bylaw.Credo.Check.HEEx.DesignSystem.NoHexColor` reports a hex colour in
     the colour attributes of a tag (`:attributes`, by default `fill`, `stroke`,
     `color`, `bgcolor`, `stop-color`, `flood-color`, `lighting-color` and
