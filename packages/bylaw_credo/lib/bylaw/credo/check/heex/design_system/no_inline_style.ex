@@ -113,10 +113,9 @@ defmodule Bylaw.Credo.Check.HEEx.DesignSystem.NoInlineStyle do
   defp literal_ast(value) when is_binary(value), do: {:ok, value}
 
   defp literal_ast({:<<>>, _meta, parts}) do
-    parts
-    |> Enum.reduce_while({:ok, ""}, fn
+    Enum.reduce_while(parts, {:ok, ""}, fn
       part, {:ok, text} when is_binary(part) -> {:cont, {:ok, text <> part}}
-      {:"::", _, _}, {:ok, text} -> {:cont, {:ok, text <> @placeholder}}
+      {:"::", _meta, _args}, {:ok, text} -> {:cont, {:ok, text <> @placeholder}}
       _part, _text -> {:halt, :error}
     end)
   end
