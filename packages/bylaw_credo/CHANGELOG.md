@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Elixir.BooleanFieldsIsPrefix`. It reports an Ecto
+  `field` or a migration `add` of type `:boolean`, a map or struct key
+  typed `boolean()` or `boolean() | nil` inside a typespec attribute, and
+  an OpenApiSpex `Schema` property with `type: :boolean`, whenever the name
+  does not start with one of `:allowed_prefixes` (`["is_"]` by default).
+  The message names the `is_` fix. Predicate functions (ending in `?`) and
+  non-literal or `{:array, :boolean}` types are left alone.
+- Add `Bylaw.Credo.Check.Elixir.NoTestPathsInDocs`. It reports a `@doc`,
+  `@moduledoc` or `@typedoc` whose literal string mentions a path under
+  `test/`. Docs say why a thing exists, never where its tests are.
 - Add `Bylaw.Credo.Check.Elixir.NoUntranslatedText`, the Elixir counterpart of
   `Bylaw.Credo.Check.HEEx.NoUntranslatedText`. It reports a string literal, an
   interpolated string or a `<>` join containing a letter when it is an argument
