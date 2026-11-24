@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Update `db_connection` to 2.10.3 for EEF-CVE-2026-133555 (code execution
+  through forged `DBConnection.Stream` structs; the structs never come from
+  untrusted input here).
+
 ## 0.3.0 - 2026-07-27
 
 - Add `Bylaw.Db.Adapters.Postgres.UniqueKeys` for reading conservative unique
