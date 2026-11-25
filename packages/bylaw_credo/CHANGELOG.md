@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.Check.Ecto.ExplicitAssociations` to report persisted
+  `*_id` fields in explicit `schema` blocks without matching `belongs_to`
+  associations. Exemptions use `{SchemaModule, field}` pairs. The check does
+  not expand shared schema macros and treats dynamic option values
+  conservatively.
 - Add `Bylaw.Credo.Check.Elixir.BooleanFieldsIsPrefix`. It reports an Ecto
   `field` or a migration `add` of type `:boolean`, a map or struct key
   typed `boolean()` or `boolean() | nil` inside a typespec attribute, and
