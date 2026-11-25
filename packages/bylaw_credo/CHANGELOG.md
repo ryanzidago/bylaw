@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Add `Bylaw.Credo.StructTypes.validate/2` to require a public `t/0` with
+  explicit fields for every supplied compiled struct. It compares parsed
+  declarations with actual struct fields, including macro-generated fields,
+  and reports missing fields, missing types and unverifiable declarations.
+
 - Add `Bylaw.Credo.Check.Ecto.ExplicitAssociations` to report persisted
   `*_id` fields in explicit `schema` blocks without matching `belongs_to`
   associations. Exemptions use `{SchemaModule, field}` pairs. The check does

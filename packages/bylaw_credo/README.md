@@ -111,6 +111,26 @@ Bylaw's
 [`FullyTypedOpts`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.FullyTypedOpts.html), and
 [`FullySpecifiedStructTypes`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.FullySpecifiedStructTypes.html)
 checks help make specs explicit.
+
+`FullySpecifiedStructTypes` rejects empty literals in source. To require a
+public `t/0` and every field for **all** application structs, run the compiled
+struct audit after compilation in a test or QA script:
+
+```elixir
+modules = Application.spec(:my_app, :modules)
+sources = Path.wildcard("lib/**/*.ex")
+:ok = Bylaw.Credo.StructTypes.validate(modules, sources)
+```
+
+The audit compares explicit source fields with actual compiled struct fields,
+including fields added by schema macros and exceptions. Empty and partial
+types fail; so do missing public `t/0` declarations. It returns
+`{:error, issues}` with module, source location and missing fields. Supply the
+whole application module list and all owned source files to cover existing
+and future structs. Sources are parsed without evaluation. Type aliases and
+macro-generated type declarations that cannot be attributed to an explicit
+source `t/0` fail with a diagnostic.
+
 [`NoRaise`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.NoRaise.html) and
 [`NoTryRescue`](https://hexdocs.pm/bylaw_credo/Bylaw.Credo.Check.Elixir.NoTryRescue.html)
 encourage explicit success/error results that can be declared as return unions
