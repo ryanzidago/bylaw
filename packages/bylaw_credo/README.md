@@ -45,6 +45,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Elixir.PreferBlockIf, []},
         {Bylaw.Credo.Check.Elixir.SimpleTaggedTupleValues, []},
         {Bylaw.Credo.Check.Ecto.NoDataChangesInSchemaMigrations, []},
+        {Bylaw.Credo.Check.Ecto.ExplicitAssociations, []},
         {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
         {Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort, []},
         {Bylaw.Credo.Check.Ecto.TypeBeforeSchema, []},
@@ -88,6 +89,15 @@ check you want by listing its fully qualified module in the `checks:` list:
 
 See each check module's documentation for its examples, rationale, options, and
 check-specific `.credo.exs` usage.
+
+`ExplicitAssociations` reports persisted `*_id` fields in `schema` blocks
+without a matching `belongs_to`. For intentional external identifiers, scope
+an exception to the schema and field:
+
+```elixir
+{Bylaw.Credo.Check.Ecto.ExplicitAssociations,
+ [ignore: [{MyApp.ExternalRecord, :provider_id}]]}
+```
 
 ## Companion to Bylaw.Contract
 
