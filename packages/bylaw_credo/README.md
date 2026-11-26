@@ -49,6 +49,7 @@ check you want by listing its fully qualified module in the `checks:` list:
         {Bylaw.Credo.Check.Ecto.PreferRepoOneOverAllFirst, []},
         {Bylaw.Credo.Check.Ecto.PreferOrderByOverRepoAllEnumSort, []},
         {Bylaw.Credo.Check.Ecto.TypeBeforeSchema, []},
+        {Bylaw.Credo.Check.Ecto.UUIDFieldTypes, []},
         {Bylaw.Credo.Check.Ecto.UseTimestamptzInMigrations, []},
         {Bylaw.Credo.Check.Ecto.UtcDatetimeUsecInSchemas, []},
         {Bylaw.Credo.Check.HEEx.NoDuplicateStaticIds, []},
@@ -121,6 +122,40 @@ modules = Application.spec(:my_app, :modules)
 sources = Path.wildcard("lib/**/*.ex")
 :ok = Bylaw.Credo.StructTypes.validate(modules, sources)
 ```
+
+For Ecto schemas, `UUIDFieldTypes` requires explicit `Ecto.UUID.t()` (optionally
+unioned with `nil`) for fields declared as `:binary_id` or `Ecto.UUID`. It
+recognizes source aliases, primary-key overrides, `belongs_to` types and native
+Ecto defaults. String business codes and external service IDs remain strings.
+The check does not expand custom schema wrappers or field macros.
+
+Use the compiled audit to cover fields and defaults supplied by those macros:
+
+```elixir
+:ok = Bylaw.Credo.StructTypes.validate(modules, sources,
+  uuid_fields: true,
+  uuid_primary_keys: true,
+  uuid_version: 7
+)
+```
+
+Each option is independent and disabled by default. `uuid_fields` checks all
+actual UUID fields, including virtual fields and embedded schemas, against the
+source `t/0`. `uuid_primary_keys` requires a nonempty key made entirely of UUID
+fields on persisted schemas, including shared and composite keys. Embedded
+schemas remain subject to field typing but are outside identity conventions.
+`uuid_version` accepts 4 or 7 and
+checks compiled autogeneration metadata: generated UUID keys must use native
+`Ecto.UUID` generation with that version. Nongenerated shared keys pass. Adapter
+generation and custom generator functions fail because their version cannot be
+proved. Database-side generation is outside the compiled audit's scope.
+
+Use the existing `TypeBeforeSchema` check to keep type declarations before
+`schema` and `embedded_schema`. `FullySpecifiedStructTypes` remains a separate,
+global source check; it is not restricted to Ecto schemas. For actual Postgres
+column types, `Bylaw.Db.Adapters.Postgres.Checks.PrimaryKeyType` in
+`bylaw_postgres` already supports `rules: [types: ["uuid"]]` and checks every
+column of composite keys as well as missing keys.
 
 The audit compares explicit source fields with actual compiled struct fields,
 including fields added by schema macros and exceptions. Empty and partial

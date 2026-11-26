@@ -34,6 +34,7 @@ defmodule BylawCredo.MixProject do
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:phoenix_live_view, "~> 1.0", optional: true},
       {:stream_data, "~> 1.4", only: :test},
+      {:ecto, "~> 3.14", only: :test},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
     ]
   end
