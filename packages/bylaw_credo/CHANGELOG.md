@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Add `Ecto.UUIDFieldTypes` for explicit UUID field types, and extend
+  `StructTypes.validate/3` with opt-in compiled UUID field, primary-key and
+  generation-version guards. Reuse `TypeBeforeSchema` for declaration order.
+
 - Add `Bylaw.Credo.StructTypes.validate/2` to require a public `t/0` with
   explicit fields for every supplied compiled struct. It compares parsed
   declarations with actual struct fields, including macro-generated fields,
