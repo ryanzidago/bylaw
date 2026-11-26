@@ -337,6 +337,7 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RedundantStoredFacts do
   end
 
   defp atomize_evidence(value) when is_list(value), do: Enum.map(value, &atomize_evidence/1)
+  defp atomize_evidence(:null), do: nil
   defp atomize_evidence(value), do: value
 
   defp table_issues(target, table, reviewer, rules) do

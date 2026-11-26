@@ -7,6 +7,25 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RedundantStoredFactsIntegrationTest 
   alias Bylaw.Db.Postgres.TestRepo
   alias Ecto.Adapters.SQL.Sandbox
 
+  defmodule NativeJson do
+    @moduledoc false
+
+    @doc false
+    @spec decode!(binary()) :: term()
+    def decode!(json), do: :json.decode(json)
+
+    @doc false
+    @spec encode_to_iodata!(term()) :: iodata()
+    def encode_to_iodata!(value), do: :json.encode(value)
+  end
+
+  Postgrex.Types.define(__MODULE__.NativeTypes, [], json: NativeJson)
+
+  defmodule NativeRepo do
+    @moduledoc false
+    use Ecto.Repo, otp_app: :bylaw_postgres, adapter: Ecto.Adapters.Postgres
+  end
+
   @moduletag :postgres
   @schema "bylaw_redundant_facts"
 
@@ -132,6 +151,57 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RedundantStoredFactsIntegrationTest 
     input = capture(target, "offers")
     assert [constraint] = input.table.constraints
     assert constraint.referenced_table == %{schema: "#{@schema}_reference", name: "items"}
+  end
+
+  test "normalizes actual Postgrex catalogue JSON from an Erlang native decoder" do
+    config =
+      Keyword.merge(TestRepo.config(),
+        types: __MODULE__.NativeTypes,
+        pool: DBConnection.ConnectionPool,
+        pool_size: 1
+      )
+
+    start_supervised!({NativeRepo, config})
+    assert %{rows: [[:null]]} = Ecto.Adapters.SQL.query!(NativeRepo, "SELECT 'null'::jsonb", [])
+
+    assert {:error, :fixture_complete} =
+             NativeRepo.transaction(fn ->
+               Ecto.Adapters.SQL.query!(NativeRepo, "CREATE SCHEMA #{@schema}_native", [])
+
+               Ecto.Adapters.SQL.query!(
+                 NativeRepo,
+                 "CREATE TABLE #{@schema}_native.facts (id bigint PRIMARY KEY)",
+                 []
+               )
+
+               Ecto.Adapters.SQL.query!(
+                 NativeRepo,
+                 "COMMENT ON COLUMN #{@schema}_native.facts.id IS 'null'",
+                 []
+               )
+
+               parent = self()
+
+               assert :ok =
+                        RedundantStoredFacts.validate(Postgres.target(repo: NativeRepo),
+                          rules: [where: [schemas: ["#{@schema}_native"]]],
+                          reviewer: fn input ->
+                            send(parent, {:native_input, input})
+                            {:ok, :no_violation}
+                          end
+                        )
+
+               assert_received {:native_input, %{table: table}}
+               assert table.comment == nil
+               assert [column] = table.columns
+               assert column.default == nil
+               assert column.generated_expression == nil
+               assert column.comment == "null"
+               assert column.type_details == nil
+               assert [constraint] = table.constraints
+               assert constraint.referenced_table == nil
+               NativeRepo.rollback(:fixture_complete)
+             end)
   end
 
   defp capture(target, table) do

@@ -180,6 +180,28 @@ defmodule Bylaw.Db.Adapters.Postgres.Checks.RedundantStoredFactsTest do
     assert Bylaw.Db.Issue.format(issue) =~ ~s("missing")
   end
 
+  test "normalizes Erlang JSON null recursively while preserving the literal null string" do
+    evidence = :json.decode(~s({"schema":"public","name":"orders","comment":null,
+      "columns":[{"name":"id","default":null,"comment":"null","type_details":null},
+        {"name":"price","default":null,"comment":null,"type_details":{
+          "kind":"domain","default":null,"constraints":[{"referenced_table":null}]}}],
+      "constraints":[{"referenced_table":null}]}))
+
+    assert evidence["comment"] == :null
+    assert :ok = run([evidence])
+    assert_received {:review, %{table: table}}
+    assert table.comment == nil
+    [id, price] = table.columns
+    assert id.default == nil
+    assert id.type_details == nil
+    assert id.comment == "null"
+    assert price.default == nil
+    assert price.comment == nil
+    assert price.type_details.default == nil
+    assert [%{referenced_table: nil}] = price.type_details.constraints
+    assert [%{referenced_table: nil}] = table.constraints
+  end
+
   defp pass(_input), do: {:ok, :no_violation}
 
   defp run(tables, opts \\ []) do
