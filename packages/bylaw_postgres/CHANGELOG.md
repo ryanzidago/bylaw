@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add the opt-in `RedundantStoredFacts` Postgres check with an injected reviewer,
+  catalogue evidence, scoped column exceptions and explicit failure issues.
+
 - Update `db_connection` to 2.10.3 for EEF-CVE-2026-133555 (code execution
   through forged `DBConnection.Stream` structs; the structs never come from
   untrusted input here).

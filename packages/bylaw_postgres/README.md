@@ -142,3 +142,77 @@ Top-level `validate: false` disables the whole check.
 Checks with no check-specific rule options accept only shared scope keys inside
 rules. Checks with required rule options document those options in their module
 docs with copyable rule examples.
+
+## Reviewing redundant stored facts
+
+A table can store the same current business fact in several columns. For
+example, an Offer-like table with `applies_to`, `menu_id` and `item_id` may
+represent its target twice. The redundant discriminator can drift from the
+foreign keys. `RedundantStoredFacts` supplies catalogue evidence to your own
+review function so it can assess whether a column duplicates a fact or
+preserves a deliberate historical value.
+
+```elixir
+checks = [
+  {Bylaw.Db.Adapters.Postgres.Checks.RedundantStoredFacts,
+   reviewer: &MyApp.SchemaReviewer.review/1,
+   rules: [
+     [
+       where: [schemas: ["public"], tables: ["order_lines"]],
+       exceptions: [
+         %{columns: ["unit_price"], reason: "Preserves the agreed purchase price"}
+       ]
+     ],
+     [
+       where: [schemas: ["public"]],
+       except: [tables: ["order_lines", "schema_migrations"]]
+     ]
+   ]}
+]
+
+assert :ok = Bylaw.Db.Adapters.Postgres.validate(MyApp.Repo, checks)
+```
+
+Your `MyApp.SchemaReviewer.review/1` receives one versioned map per selected
+table: `%{version: 1, invariant: %{id: ..., version: 1, text: ...}, table: ...,
+exceptions: ...}`. The documented `review_input` type describes all evidence.
+The function returns exactly one of:
+
+```elixir
+{:ok, :no_violation}
+{:ok, :violation}
+{:ok, :justified_exception}
+{:ok, :insufficient_context}
+{:error, :not_configured}
+{:error, :timeout}
+{:error, :request_failed}
+{:error, :invalid_response}
+{:error, :input_too_large}
+```
+
+Only `:no_violation` and `:justified_exception` pass. Other results become
+issues with distinct stable metadata for violations, uncertainty, reviewer
+failures, inspection failures or invalid exception columns. Malformed returns
+become `:invalid_response`. Tagged reviewer failures do not prevent review of
+other selected tables. The caller handles deadlines, expected error conversion
+and any provider integration; arbitrary caller exceptions propagate.
+
+Omit `rules:` to review all current user tables. Overlapping rules produce one
+call per selected table. `except:` skips that rule's matching table without a
+review call unless another rule selects it. Column exceptions apply only within
+their rule's scope, require existing columns and a nonblank reason, and supply
+context rather than automatically waiving the table or reviewer failures.
+`validate: false` performs no query or calls and needs no reviewer.
+
+The check reads a single catalogue snapshot, including comments, ordered
+columns, types, defaults, generated expressions, identity metadata, constraints
+and indexes. It reads no data rows, executes no stored expressions and does not
+truncate definitions. It includes direct enum labels and domain definitions,
+but does not export a dependency graph, related tables, function bodies,
+triggers or policies. Evidence and exception text are data, not instructions.
+
+This is an explicit opt-in check with no model SDK, credentials, HTTP client or
+automatic provider calls. It cannot prove business semantics or model
+correctness. Missing business meaning should produce `:insufficient_context`.
+The tests establish metadata and callback handling with fake reviewers; they
+do not assess a live model's review accuracy.
