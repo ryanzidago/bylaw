@@ -200,25 +200,13 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   defp ordered?(_query), do: false
 
-  defp exists_query?(:all, query) do
-    literal_select?(query, 1) and literal_limit?(query, 1)
-  end
-
-  defp exists_query?(_operation, _query), do: false
-
   defp ignore_exists_limit(required_by, operation, query) do
-    if exists_query?(operation, query) do
+    if Introspection.exists_query?(operation, query) do
       List.delete(required_by, :limit)
     else
       required_by
     end
   end
-
-  defp literal_select?(%{select: %{expr: value}}, value), do: true
-  defp literal_select?(_query, _value), do: false
-
-  defp literal_limit?(%{limit: %{expr: value}}, value), do: true
-  defp literal_limit?(_query, _value), do: false
 
   defp nested_missing_order_reasons(query) do
     query

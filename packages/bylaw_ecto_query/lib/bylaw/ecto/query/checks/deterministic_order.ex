@@ -61,6 +61,9 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
     * `:validate` - explicit `false` disables this check. It can be used in the
       repo-wide check list or in call-site overrides passed to
       `Bylaw.Ecto.Query.validate/4`.
+    * `:only` - `:limited` checks only queries with a limit or offset. The default
+      `:ordered` checks all ordered queries. Ecto existence queries without an
+      offset are exempt in limited mode.
     * `:unique_keys` - optional zero-arity function returning a map from
       `{database_schema, table}` to lists of unique database column sets:
 
@@ -81,6 +84,10 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   Run globally with defaults:
 
       Bylaw.Ecto.Query.Checks.DeterministicOrder
+
+  Check only limited or offset queries:
+
+      {Bylaw.Ecto.Query.Checks.DeterministicOrder, only: :limited}
 
   Run only for matching rule scopes:
 
@@ -124,7 +131,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @type unique_keys_resolver :: (-> unique_key_catalogue())
   @typedoc false
   @type check_opts ::
-          list({:validate, boolean()} | {:unique_keys, unique_keys_resolver()})
+          list(
+            {:validate, boolean()}
+            | {:only, :ordered | :limited}
+            | {:unique_keys, unique_keys_resolver()}
+          )
   @typedoc false
   @type opts :: check_opts()
 
@@ -136,12 +147,13 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   @spec validate(Bylaw.Ecto.Query.Check.operation(), Bylaw.Ecto.Query.Check.query(), opts()) ::
           Bylaw.Ecto.Query.Check.result()
   def validate(operation, query, opts) when is_list(opts) do
-    check_opts = CheckOptions.normalize!(opts, [:validate, :rules, :unique_keys])
-    scope_opts = Keyword.delete(check_opts, :unique_keys)
+    check_opts = CheckOptions.normalize!(opts, [:validate, :rules, :unique_keys, :only])
+    scope_opts = Keyword.drop(check_opts, [:unique_keys, :only])
+    only = only!(check_opts)
 
     if CheckOptions.enabled?(check_opts) and
          RuleOptions.scoped?(scope_opts, :deterministic_order, operation, query) and
-         ordered?(query) do
+         ordered?(query) and applicable?(only, operation, query) do
       validate_ordered_query(operation, query, check_opts)
     else
       :ok
@@ -150,6 +162,25 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
 
   def validate(_operation, _query, opts) do
     raise ArgumentError, "expected opts to be a keyword list, got: #{inspect(opts)}"
+  end
+
+  defp only!(opts) do
+    case Keyword.get(opts, :only, :ordered) do
+      value when value in [:ordered, :limited] ->
+        value
+
+      value ->
+        raise ArgumentError, "expected :only to be :ordered or :limited, got: #{inspect(value)}"
+    end
+  end
+
+  defp applicable?(:ordered, _operation, _query), do: true
+
+  defp applicable?(:limited, operation, query) do
+    offset? = not is_nil(Map.get(query, :offset))
+
+    offset? or
+      (not is_nil(Map.get(query, :limit)) and not Introspection.exists_query?(operation, query))
   end
 
   defp validate_ordered_query(operation, query, opts) do

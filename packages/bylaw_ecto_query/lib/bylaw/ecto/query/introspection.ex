@@ -1,6 +1,11 @@
 defmodule Bylaw.Ecto.Query.Introspection do
   @moduledoc false
 
+  @doc false
+  @spec exists_query?(atom(), term()) :: boolean()
+  def exists_query?(:all, %{select: %{expr: 1}, limit: %{expr: 1}}), do: true
+  def exists_query?(_operation, _query), do: false
+
   # Path from the root query into nested Ecto combination queries.
   @typedoc false
   @type branch_path :: list({atom(), non_neg_integer()})
