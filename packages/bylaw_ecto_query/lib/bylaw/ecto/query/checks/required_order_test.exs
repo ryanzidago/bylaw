@@ -200,7 +200,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
       assert :ok = RequiredOrder.validate(:all, query, [])
     end
 
-    test "returns an issue when an Ecto exists query rewrite preserves offset" do
+    test "passes when an Ecto exists query rewrite preserves offset" do
       query =
         Post
         |> offset(50)
@@ -211,11 +211,15 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrderTest do
         |> select(1)
         |> limit(1)
 
-      assert {:error, [%Issue{} = issue]} = RequiredOrder.validate(:all, query, [])
+      assert :ok = RequiredOrder.validate(:all, query, [])
+    end
 
-      assert issue.check == RequiredOrder
-      assert issue.message == "expected query with offset to include order_by"
-      assert issue.meta.required_by == [:offset]
+    test "checks limited subqueries under an existence query with offset" do
+      limited_posts = from(post in Post, limit: 10)
+      query = from(post in subquery(limited_posts), select: 1, limit: 1, offset: 2)
+
+      assert {:error, [%Issue{meta: %{required_by: [:limit]}}]} =
+               RequiredOrder.validate(:all, query, [])
     end
 
     test "returns an issue when a source subquery has limit and no order_by" do

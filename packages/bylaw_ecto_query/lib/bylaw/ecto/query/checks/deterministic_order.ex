@@ -62,8 +62,8 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
       repo-wide check list or in call-site overrides passed to
       `Bylaw.Ecto.Query.validate/4`.
     * `:only` - `:limited` checks only queries with a limit or offset. The default
-      `:ordered` checks all ordered queries. Ecto existence queries without an
-      offset are exempt in limited mode.
+      `:ordered` checks all ordered queries. Ecto existence queries are exempt
+      in limited mode, including when an offset is present.
     * `:unique_keys` - optional zero-arity function returning a map from
       `{database_schema, table}` to lists of unique database column sets:
 
@@ -179,8 +179,8 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrder do
   defp applicable?(:limited, operation, query) do
     offset? = not is_nil(Map.get(query, :offset))
 
-    offset? or
-      (not is_nil(Map.get(query, :limit)) and not Introspection.exists_query?(operation, query))
+    not Introspection.exists_query?(operation, query) and
+      (offset? or not is_nil(Map.get(query, :limit)))
   end
 
   defp validate_ordered_query(operation, query, opts) do
