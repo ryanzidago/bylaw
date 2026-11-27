@@ -42,7 +42,12 @@ make_upstream() {
   git init --quiet --initial-branch=main "$upstream"
   mkdir "$upstream/.config"
   cp "$repository_root/.config/wt.toml" "$upstream/.config/wt.toml"
-  git -C "$upstream" add .config/wt.toml
+  # A real switch runs pre-start after creating the worktree; keep this
+  # fixture focused on the pre-switch hook while allowing setup to finish.
+  mkdir "$upstream/scripts"
+  printf '#!/bin/sh\nexit 0\n' > "$upstream/scripts/install-hooks"
+  chmod +x "$upstream/scripts/install-hooks"
+  git -C "$upstream" add .config/wt.toml scripts/install-hooks
   fixture_git -C "$upstream" commit --quiet -m first
   printf '%s\n' "$upstream"
 }
@@ -94,7 +99,8 @@ test_switch_from_bare_root_fast_forwards_default_branch() {
   bare="$(make_bare_clone "$upstream")"
   advance_upstream "$upstream"
 
-  if ! run_pre_switch "$bare"; then
+  if ! "$wt_bin" --config "$fixture_root/user-config.toml" -C "$bare" \
+    switch --create new-task --yes --no-cd >"$fixture_root/hook-output" 2>&1; then
     echo "the pre-switch hook must succeed from the bare repository itself" >&2
     return 1
   fi
@@ -149,7 +155,7 @@ test_switch_never_rewrites_a_diverged_default_branch() {
     echo "the pre-switch hook must fail instead of moving a diverged main" >&2
     return 1
   fi
-  if ! grep -q 'pre-switch command failed' "$fixture_root/hook-output"; then
+  if ! grep -Eq 'pre-switch (command|project hook) failed' "$fixture_root/hook-output"; then
     echo "the pre-switch hook must fail in its git commands, not while expanding its template:" >&2
     cat "$fixture_root/hook-output" >&2
     return 1
