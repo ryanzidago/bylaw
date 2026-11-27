@@ -37,12 +37,11 @@ defmodule Bylaw.Ecto.Query.Checks.DeterministicOrderLimitedTest do
     assert :ok = DeterministicOrder.validate(:all, query, only: :limited)
   end
 
-  test "limited scope ignores existence shape unless it has an offset" do
+  test "limited scope ignores existence shape with or without an offset" do
     query = from(p in Post, order_by: p.title, select: 1, limit: 1)
     assert :ok = DeterministicOrder.validate(:all, query, only: :limited)
 
-    assert {:error, [%Issue{}]} =
-             DeterministicOrder.validate(:all, offset(query, 1), only: :limited)
+    assert :ok = DeterministicOrder.validate(:all, offset(query, 1), only: :limited)
   end
 
   test "limited scope rejects invalid scope options" do

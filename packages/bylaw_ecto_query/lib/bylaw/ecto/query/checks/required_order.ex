@@ -76,9 +76,8 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
       |> limit(10)
 
   Ecto rewrites `Repo.exists?/2` queries to `select 1` with `limit 1`. This
-  synthetic limit is ignored because existence checks do not depend on which row
-  is returned. A preserved `offset` still requires ordering because the skipped
-  rows are otherwise undefined.
+  synthetic limit and any offset are ignored because existence after an offset
+  depends on the number of matching rows, not their order.
 
   ## Options
 
@@ -159,7 +158,7 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
     required_by =
       operation
       |> required_by(query)
-      |> ignore_exists_limit(operation, query)
+      |> ignore_exists_ordering(operation, query)
 
     cond do
       Enum.empty?(required_by) -> []
@@ -200,9 +199,9 @@ defmodule Bylaw.Ecto.Query.Checks.RequiredOrder do
 
   defp ordered?(_query), do: false
 
-  defp ignore_exists_limit(required_by, operation, query) do
+  defp ignore_exists_ordering(required_by, operation, query) do
     if Introspection.exists_query?(operation, query) do
-      List.delete(required_by, :limit)
+      required_by -- [:limit, :offset]
     else
       required_by
     end
