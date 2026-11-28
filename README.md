@@ -18,6 +18,8 @@ Packages most applications start with:
   Postgres database structure and schema conventions.
 - [`packages/bylaw_credo`](packages/bylaw_credo/README.md) provides custom Credo
   checks for downstream development and test environments.
+- [`packages/bylaw_test`](packages/bylaw_test/README.md) runs selected consumer
+  tests while configured Ecto repos remain stopped.
 
 Supporting packages used by Bylaw itself:
 
@@ -34,6 +36,7 @@ Add the package you need to your dependencies:
 def deps do
   [
     {:bylaw_contract, "~> 0.1.0", only: :test},
+    {:bylaw_test, "~> 0.1.0", only: :test, runtime: false},
     {:bylaw_html, "~> 0.1.0-alpha.2", only: :test},
     {:bylaw_ecto_query, "~> 0.3.0"},
     {:bylaw_postgres, "~> 0.3.0"},

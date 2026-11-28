@@ -3,6 +3,7 @@ set -euo pipefail
 
 packages=(
   bylaw_contract
+  bylaw_test
   bylaw_core
   bylaw_db
   bylaw_ecto_query
