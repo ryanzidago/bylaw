@@ -1,89 +1,79 @@
 # Bylaw.Test
 
-`bylaw_test` provides a Mix task for running tests while selected Ecto repos
-remain stopped. It has no Ecto dependency, so an application can use the task
-without making Ecto part of its test tooling dependency graph.
+`bylaw_test` provides ExUnit runtime guards for Bylaw consumers. Today it
+provides `Bylaw.Test.SandboxUsage`, which detects passing tests that checked out
+an Ecto SQL sandbox without running any real SQL queries, so database-independent
+tests stay in `ExUnit.Case`.
+
+It has no Ecto dependency, listening instead to the application's configured
+query telemetry events.
 
 ## Installation
 
-Add it as a test-only, compile-time dependency:
+Add it as a test-only dependency:
 
 ```elixir
 def deps do
   [
-    {:bylaw_test, "~> 0.1.0", only: :test, runtime: false}
+    {:bylaw_test, "~> 0.1.0", only: :test}
   ]
 end
 ```
 
-Until the package is published, a checkout of this repository can use the
-package directory directly:
-
-```elixir
-{:bylaw_test, path: "../bylaw/packages/bylaw_test", only: :test, runtime: false}
-```
-
-After the package is available on GitHub, it can also be installed from its
-subdirectory without adding the rest of the repository:
+Until the package is published, it can also be installed from its GitHub
+subdirectory:
 
 ```elixir
 {:bylaw_test,
  git: "https://github.com/ryanzidago/bylaw.git",
  subdir: "packages/bylaw_test",
  branch: "main",
- only: :test,
- runtime: false}
+ only: :test}
 ```
 
-## Running tests without repos
+## Detecting unused database sandboxes
 
-Run the task from the consuming Mix application with `MIX_ENV=test`:
-
-```sh
-MIX_ENV=test mix bylaw_test.without_ecto_repo
-```
-
-With no file arguments, the task discovers `*_without_repo_test.exs` files
-under the application's `:test_paths`, or under `test/` when no paths are
-configured. It loads a `without_repo_helper.exs` once for each participating
-test root, in `:test_paths` order. For nested roots, a file belongs to the most
-specific root. Ordinary `test_helper.exs` files are not loaded.
-
-For example, with `:test_paths` set to `["lib", "test"]`, files named
-`lib/my_repo_without_repo_test.exs` and
-`test/my_other_repo_without_repo_test.exs` are discovered, with one optional
-`without_repo_helper.exs` loaded from each participating root.
-
-Passing one or more `.exs` paths replaces discovery. Explicit files can be
-outside configured test roots; those files do not cause a root helper to load.
-Duplicate paths are run once.
-
-By default, the task uses the consumer application's nonempty `:ecto_repos`
-list. Pass one or more `--repo Module.Name` options to select repos explicitly;
-this replaces the configured list. For example, pass
-`--repo MyApp.Repo --repo MyApp.AnalyticsRepo` to select both repos instead of
-the configured list. Each selected name must be a loaded Ecto repo
-module, and the task checks that no selected repo is registered before and after
-helpers and after tests finish. The task itself does not start the consumer app;
-project helpers control application startup, which is allowed when the selected
-repos remain stopped.
-
-The check observes registered repo processes at those boundaries. It does not
-detect a connection opened directly through a driver, nor a repo process that is
-started and stopped between checks.
-
-Use `Bylaw.Test.require_repo!/2` in a case template or setup that requires a
-particular repo. It raises an `ExUnit.AssertionError` when that repo is selected
-for a without-repo run, identifying the repo and the ExUnit case. It is a no-op
-for unselected repos and during ordinary ExUnit runs.
+1. Start `Bylaw.Test.SandboxUsage` in `test/test_helper.exs`, passing your repo's
+   query telemetry event(s) and any per-test plumbing queries to ignore.
+2. Add `Bylaw.Test.SandboxUsage.Formatter` to `ExUnit.start/1` and register
+   `ExUnit.after_suite(&Bylaw.Test.SandboxUsage.check!/1)`.
+3. Call `Bylaw.Test.SandboxUsage.watch/2` from your database case template setup.
 
 ```elixir
-defmodule MyApp.DatabaseCase do
-  use ExUnit.CaseTemplate
+# test/test_helper.exs
+{:ok, _} =
+  Bylaw.Test.SandboxUsage.start_link(
+    events: [[:my_app, :repo, :query]],
+    ignore: [~r/\bset_config\('application_name'/i]
+  )
 
-  setup context do
-    Bylaw.Test.require_repo!(MyApp.Repo, context)
-    :ok
+ExUnit.start(formatters: [ExUnit.CLIFormatter, Bylaw.Test.SandboxUsage.Formatter])
+ExUnit.after_suite(&Bylaw.Test.SandboxUsage.check!/1)
+```
+
+```elixir
+# test/support/data_case.ex
+setup tags do
+  pid = Ecto.Adapters.SQL.Sandbox.start_owner!(MyApp.Repo, shared: not tags[:async])
+  on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+
+  unless tags[:allow_unused_sandbox] do
+    Bylaw.Test.SandboxUsage.watch(tags)
   end
+
+  :ok
 end
 ```
+
+Built-in SQL transaction plumbing (`BEGIN`, `COMMIT`, `ROLLBACK`, `SAVEPOINT`,
+`RELEASE SAVEPOINT`, `ROLLBACK TO SAVEPOINT`) is ignored automatically.
+
+- Queries executed directly by the test process or by spawned processes with
+  `$callers` (such as `Task.async` or LiveView processes) are credited to that
+  test.
+- When `shared: true` (the default when `tags[:async]` is false/absent), queries
+  from background processes without `$callers` are credited to active shared
+  tests.
+- Failing or skipped tests do not produce unused-sandbox violations.
+- Any passing watched test that runs zero non-plumbing SQL queries fails
+  `check!/1` with its `file:line`, module, and test name.

@@ -9,23 +9,21 @@ defmodule BylawTest.MixProject do
       app: :bylaw_test,
       version: @version,
       elixir: "~> 1.19",
-      test_paths: test_paths(Mix.env()),
       source_url: @source_url,
       homepage_url: "https://hexdocs.pm/bylaw_test",
-      description: "Explicit test helpers and tasks for Bylaw consumers.",
+      description:
+        "ExUnit guards for Bylaw consumers, starting with unused database sandbox detection.",
       package: package(),
       docs: docs(),
       deps: deps()
     ]
   end
 
-  def application, do: [extra_applications: [:logger]]
-
-  defp test_paths(:test), do: ["lib"]
-  defp test_paths(_env), do: ["test"]
+  def application, do: [extra_applications: [:logger, :ex_unit]]
 
   defp deps do
     [
+      {:telemetry, "~> 1.0"},
       {:bylaw_credo, "== 0.4.0", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.39", only: [:dev, :test], runtime: false},
       {:usage_rules, "~> 1.2", only: :dev, runtime: false}
@@ -42,6 +40,13 @@ defmodule BylawTest.MixProject do
   end
 
   defp docs do
-    [main: "readme", source_ref: "v#{@version}", extras: ["README.md"]]
+    [
+      main: "readme",
+      source_ref: "v#{@version}",
+      extras: ["README.md"],
+      groups_for_modules: [
+        "Bylaw.Test": ~r/^(Elixir\.)?Bylaw\.Test/
+      ]
+    ]
   end
 end
