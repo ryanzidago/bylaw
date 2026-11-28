@@ -4,6 +4,7 @@ updates:
   - package-ecosystem: "mix"
     directories:
       - "/packages/bylaw_core"
+      - "/packages/bylaw_test"
       - "/packages/bylaw_credo"
       - "/packages/bylaw_db"
       - "/packages/bylaw_ecto_query"
